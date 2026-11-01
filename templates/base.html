@@ -1,0 +1,55 @@
+{% load i18n static %}<!doctype html>
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ClipCash{% endblock %} · ClipCash</title>
+  <link rel="stylesheet" href="{% static 'css/clipcash.css' %}">
+</head>
+<body>
+  <a class="skip-link" href="#content">{% translate "Skip to content" %}</a>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="{% if user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}">ClipCash</a>
+      {% if request %}{# Error pages rendered without a request get no forms. #}
+      <nav class="site-nav" aria-label="{% translate 'Account' %}">
+        {% if user.is_authenticated %}
+          <a href="{% url 'accounts:profile' %}">{% translate "My account" %}</a>
+          <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+            <button type="submit" class="button--link">{% translate "Sign out" %}</button>
+          </form>
+        {% else %}
+          <a href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a>
+          <a href="{% url 'accounts:register' %}">{% translate "Register" %}</a>
+        {% endif %}
+        <form class="language-form" method="post" action="{% url 'set_language' %}">{% csrf_token %}
+          <input name="next" type="hidden" value="{{ request.get_full_path }}">
+          <label class="visually-hidden" for="language-select">{% translate "Language" %}</label>
+          <select id="language-select" name="language">
+            {% get_available_languages as LANGUAGES %}
+            {% for code, name in LANGUAGES %}
+              <option value="{{ code }}"{% if code == LANGUAGE_CODE %} selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="button--link">{% translate "Change" %}</button>
+        </form>
+      </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  <main id="content" class="site-main{% block main_class %}{% endblock %}">
+    {% if messages %}
+      <ul class="messages" role="status">
+        {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    <section class="card">
+      {% block content %}{% endblock %}
+    </section>
+  </main>
+
+  <footer class="site-footer">ClipCash</footer>
+</body>
+</html>

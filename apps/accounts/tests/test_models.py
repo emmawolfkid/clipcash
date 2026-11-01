@@ -149,6 +149,80 @@ class AccessFlagDerivationTests(TestCase):
         self.assertFalse(root.has_perm("accounts.delete_user"))
 
 
+class EmailVerificationIntegrityTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("v@example.com", PASSWORD, status=User.Status.ACTIVE)
+        self.user.email_verified = True
+        self.user.save()
+        self.user = User.objects.get(pk=self.user.pk)
+
+    def test_changing_email_clears_verification(self):
+        self.user.email = "new@example.com"
+        self.user.save()
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.email_verified)
+
+    def test_changing_email_with_update_fields_clears_verification(self):
+        self.user.email = "new@example.com"
+        self.user.save(update_fields=["email"])
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.email_verified)
+
+    def test_case_only_change_keeps_verification(self):
+        self.user.email = "V@Example.com"
+        self.user.save()
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.email_verified)
+
+    def test_unrelated_save_keeps_verification(self):
+        self.user.first_name = "Neema"
+        self.user.save()
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.email_verified)
+
+
+class StatusTransitionModelTests(TestCase):
+    def test_cannot_return_to_pending(self):
+        user = User.objects.create_user("m@example.com", PASSWORD, status=User.Status.ACTIVE)
+        user = User.objects.get(pk=user.pk)
+        user.status = User.Status.PENDING
+        with self.assertRaises(ValidationError) as ctx:
+            user.full_clean()
+        self.assertIn("status", ctx.exception.message_dict)
+
+    def test_pending_may_stay_pending(self):
+        user = User.objects.get(pk=User.objects.create_user("p@example.com").pk)
+        user.first_name = "Asha"
+        user.full_clean()
+
+
+class LastSuperAdminTests(TestCase):
+    def setUp(self):
+        self.root = User.objects.create_superuser("root@example.com", PASSWORD)
+
+    def test_cannot_demote_or_deactivate_last_super_admin(self):
+        for field, value in (("role", User.Role.MEMBER), ("status", User.Status.SUSPENDED)):
+            with self.subTest(field=field):
+                root = User.objects.get(pk=self.root.pk)
+                setattr(root, field, value)
+                with self.assertRaises(ValidationError) as ctx:
+                    root.full_clean()
+                self.assertEqual(ctx.exception.error_dict["__all__"][0].code, "last_super_admin")
+
+    def test_can_demote_when_another_active_super_admin_exists(self):
+        User.objects.create_superuser("root2@example.com", PASSWORD)
+        self.root.role = User.Role.MEMBER
+        self.root.full_clean()
+
+    def test_suspended_super_admin_does_not_count(self):
+        other = User.objects.create_superuser("root2@example.com", PASSWORD)
+        other.status = User.Status.SUSPENDED
+        other.save()
+        self.root.status = User.Status.DISABLED
+        with self.assertRaises(ValidationError):
+            self.root.full_clean()
+
+
 class PhoneNumberModelTests(TestCase):
     def test_optional_and_blank_stored_as_null(self):
         first = User.objects.create_user("a@example.com", PASSWORD, phone_number="")

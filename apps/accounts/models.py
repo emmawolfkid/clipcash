@@ -2,13 +2,14 @@ import uuid
 
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, router, transaction
 from django.db.models import Q
 from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 
 from .managers import DERIVED_ACCESS_FIELDS, UserManager
 from .phone_numbers import E164_PATTERN, normalize_phone_number, validate_e164
+from .roles import sync_role_group
 
 DUPLICATE_EMAIL_MESSAGE = _("A user with this email address already exists.")
 DUPLICATE_PHONE_MESSAGE = _("A user with this phone number already exists.")
@@ -201,9 +202,44 @@ class User(AbstractUser):
         if errors:
             raise ValidationError(errors)
 
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        instance._loaded_email = instance.__dict__.get("email")
+        instance._loaded_role = instance.__dict__.get("role")
+        instance._loaded_status = instance.__dict__.get("status")
+        return instance
+
+    def is_last_active_super_admin(self):
+        """True if this saved account is the only ACTIVE Super Administrator."""
+        if self._state.adding:
+            return False
+        active_super_admins = type(self)._default_manager.filter(
+            role=self.Role.SUPER_ADMIN, status=self.Status.ACTIVE
+        )
+        return (
+            active_super_admins.filter(pk=self.pk).exists()
+            and not active_super_admins.exclude(pk=self.pk).exists()
+        )
+
     def clean(self):
         super().clean()
         self.sync_access_flags()
+        loaded_status = getattr(self, "_loaded_status", None)
+        if (
+            loaded_status not in (None, self.Status.PENDING)
+            and self.status == self.Status.PENDING
+        ):
+            raise ValidationError(
+                {"status": _("An account cannot be returned to Pending.")},
+                code="invalid_transition",
+            )
+        remains_super_admin = self.role == self.Role.SUPER_ADMIN and self.status == self.Status.ACTIVE
+        if not remains_super_admin and self.is_last_active_super_admin():
+            raise ValidationError(
+                _("At least one active Super Administrator must remain."),
+                code="last_super_admin",
+            )
 
     def validate_constraints(self, exclude=None):
         # Email uniqueness is reported once, as a field error, by validate_unique() on
@@ -220,10 +256,28 @@ class User(AbstractUser):
         self.sync_access_flags()
 
         update_fields = kwargs.get("update_fields")
+        saves_email = update_fields is None or "email" in update_fields
+
+        loaded_email = getattr(self, "_loaded_email", None)
+        email_changed = saves_email and loaded_email is not None and self.email != loaded_email
+        if email_changed:
+            # Verification belongs to an address, not to the account.
+            self.email_verified = False
+
         if update_fields is not None:
             update_fields = set(update_fields)
             if update_fields & ({"role", "status"} | set(DERIVED_ACCESS_FIELDS)):
                 update_fields |= set(DERIVED_ACCESS_FIELDS)
+            if email_changed:
+                update_fields.add("email_verified")
             kwargs["update_fields"] = update_fields
 
-        super().save(*args, **kwargs)
+        role_changed = self._state.adding or self.role != getattr(self, "_loaded_role", None)
+        with transaction.atomic(using=kwargs.get("using") or router.db_for_write(type(self))):
+            super().save(*args, **kwargs)
+            if role_changed and (update_fields is None or "role" in update_fields):
+                sync_role_group(self)
+        if saves_email:
+            self._loaded_email = self.email
+        self._loaded_role = self.role
+        self._loaded_status = self.status

@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "My account" %}{% endblock %}
+{% block main_class %} site-main--wide{% endblock %}
+{% block content %}
+<h1>{% translate "My account" %}</h1>
+<dl class="details">
+  <dt>{% translate "Email address" %}</dt><dd>{{ user.email }}</dd>
+  <dt>{% translate "Name" %}</dt><dd>{{ user.get_full_name|default:"—" }}</dd>
+  <dt>{% translate "Phone number" %}</dt><dd>{{ user.phone_number|default:"—" }}</dd>
+  <dt>{% translate "Account type" %}</dt><dd>{{ user.get_role_display }}</dd>
+  <dt>{% translate "Status" %}</dt><dd>{{ user.get_status_display }}</dd>
+  <dt>{% translate "Member since" %}</dt><dd>{{ user.date_joined|date:"DATE_FORMAT" }}</dd>
+</dl>
+<ul class="links">
+  <li><a href="{% url 'accounts:password_change' %}">{% translate "Change password" %}</a></li>
+  <li><a href="{% url 'accounts:logout' %}">{% translate "Sign out" %}</a></li>
+</ul>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Send a new verification link" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Send a new verification link" %}</h1>
+<p class="lead">{% translate "Enter the email address you registered with." %}</p>
+{% include "components/form.html" with button=_("Send link") %}
+{% endblock %}

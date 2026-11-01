@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Confirm your email" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Confirm your email" %}</h1>
+<p>{% translate "Confirm that this email address belongs to you." %}</p>
+<form method="post">{% csrf_token %}
+  <button type="submit" class="button">{% translate "Confirm email address" %}</button>
+</form>
+{% endblock %}

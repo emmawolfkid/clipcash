@@ -1,0 +1,1 @@
+{% load i18n %}{% translate "Confirm your email to finish creating your ClipCash account" %}

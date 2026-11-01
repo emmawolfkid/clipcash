@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Sign in" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Sign in" %}</h1>
+{% include "components/form.html" with button=_("Sign in") %}
+<ul class="links">
+  <li><a href="{% url 'accounts:password_reset' %}">{% translate "Forgot your password?" %}</a></li>
+  <li><a href="{% url 'accounts:resend_verification' %}">{% translate "Need a new verification link?" %}</a></li>
+  <li><a href="{% url 'accounts:register' %}">{% translate "Create an account" %}</a></li>
+</ul>
+{% endblock %}

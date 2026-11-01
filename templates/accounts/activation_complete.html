@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Account activated" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Account activated" %}</h1>
+<p>{% translate "Your account is active. You can now sign in with your email address and new password." %}</p>
+<div class="actions"><a href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a></div>
+{% endblock %}

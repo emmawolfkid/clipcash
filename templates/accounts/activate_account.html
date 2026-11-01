@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Choose your password" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Choose your password" %}</h1>
+{% if validlink %}
+<p class="lead">{% translate "Your email address is confirmed. Choose a password to activate your account." %}</p>
+{% include "components/form.html" with button=_("Activate account") %}
+{% else %}
+<p>{% translate "This activation link is invalid, has expired or has already been used." %}</p>
+<ul class="links">
+  <li><a href="{% url 'accounts:resend_verification' %}">{% translate "Send a new link" %}</a></li>
+  <li><a href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a></li>
+</ul>
+{% endif %}
+{% endblock %}

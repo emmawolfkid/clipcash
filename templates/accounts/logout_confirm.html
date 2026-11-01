@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Sign out" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Sign out" %}</h1>
+<p>{% translate "Do you want to sign out of ClipCash on this device?" %}</p>
+<div class="actions">
+<form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+  <button type="submit" class="button">{% translate "Sign out" %}</button>
+</form>
+<a href="{% url 'accounts:profile' %}">{% translate "Cancel" %}</a>
+</div>
+{% endblock %}

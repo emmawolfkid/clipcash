@@ -4,51 +4,52 @@ ClipCash is a planned Tanzanian video membership platform with advertiser-funded
 Members pay for access to video content; any rewards are funded only by genuine, available
 advertiser campaign budgets.
 
-> **Status: early foundation.** No user-facing features are implemented yet. Real-money
-> rewards, payments and payouts are not implemented and must remain disabled until legal,
+> **Status: authentication foundation (Phase 01).** Accounts, sign-in and account security
+> are implemented. Video, membership, payment, reward and withdrawal features are **not**
+> implemented. Real-money rewards, payments and payouts must remain disabled until legal,
 > payment-provider and operational requirements are satisfied. Membership fees are not an
 > investment and do not guarantee any return.
 
 ## Technology stack
 
-| Component      | Version / choice                          |
-| -------------- | ----------------------------------------- |
-| Python         | 3.13                                      |
-| Django         | 5.2 (LTS)                                 |
-| Database       | PostgreSQL 18 (driver: psycopg 3)         |
-| Configuration  | django-environ, `.env` file               |
-| Video provider | Bunny Stream (planned, not yet integrated)|
-| Frontend       | Server-rendered Django templates (planned)|
+| Component      | Version / choice                                  |
+| -------------- | ------------------------------------------------- |
+| Python         | 3.13                                              |
+| Django         | 5.2 (LTS)                                         |
+| Database       | PostgreSQL 18 (driver: psycopg 3)                 |
+| Configuration  | django-environ, `.env` file                       |
+| Video provider | Bunny Stream (planned, not yet integrated)        |
+| Frontend       | Server-rendered Django templates, `static/css/clipcash.css` |
 
 ## Project layout
 
 ```
-config/          Django project (settings, URLs, WSGI/ASGI)
-apps/            Django applications
-  accounts/      Custom user model (email login, UUID primary key, role, status)
-  core/ administration/ memberships/ videos/ viewing/ advertising/ payments/
-  rewards/ wallets/ withdrawals/ notifications/ audit/ reports/ support/
-                 Registered application stubs (no models or views yet)
+config/          Settings, URLs, WSGI/ASGI, PostgreSQL-only test runner
+apps/accounts/   Users, authentication, account security (see docs/architecture/authentication.md)
+apps/<others>/   Registered application stubs (no models or views yet)
+templates/       base.html, components/, accounts/, error pages
+static/css/      Site stylesheet
+scripts/database/  Reviewed PostgreSQL provisioning scripts
+docs/            Architecture and security documentation
 requirements/    Pinned dependencies (base.txt, dev.txt)
-templates/ static/ docs/ scripts/ tests/
-                 Directory scaffold (currently empty)
 ```
 
 ## Current implementation status
 
-| Area                          | Status                                                        |
-| ----------------------------- | ------------------------------------------------------------- |
-| Project settings              | Environment-driven; development configuration only            |
-| Custom user model             | Hardened (Phase 01A): normalized email, optional E.164 phone, role/status invariants enforced by the model and database constraints. Initial migration generated. **Not yet applied.** |
-| Django admin for users        | Registered; access flags read-only. Privilege-escalation hardening pending (Phase 01B) |
-| Account status enforcement    | **Partial**: non-ACTIVE accounts fail password authentication, but existing sessions are not ended and no dedicated backend or middleware exists yet (Phase 01B) |
-| Localization                  | English and Swahili configured; no translations written yet   |
-| Registration, login, password reset views | Not implemented                                 |
-| Memberships, videos, viewing, advertising | Not implemented                                 |
-| Payments, rewards, wallets, withdrawals   | Not implemented                                 |
-| Notifications, audit, reports, support    | Not implemented                                 |
-| Automated tests               | Accounts model, manager and phone tests; require PostgreSQL test-database access (see below) |
-| Production deployment config  | Not implemented                                               |
+| Area | Status |
+| --- | --- |
+| Custom user model | UUID primary key; normalized, case-insensitively unique email; optional E.164 phone; role and status with derived access flags enforced by database constraints |
+| Registration | Email only; the inbox owner sets the password from a single-use link (prevents password planting); anti-enumeration responses |
+| Sign-in / sign-out | Email login (case-insensitive), ACTIVE accounts only, rate limited, POST-only sign-out with confirmation page |
+| Passwords | Reset (ACTIVE accounts, 1 h single-use links) and change; both end other sessions |
+| Account status | PENDING / ACTIVE / SUSPENDED / DISABLED with validated transitions; suspension ends sessions on the next request |
+| Roles | SUPER_ADMIN, CONTENT_MANAGER, MEMBER with synced Django Groups; centralized role/status service; admin privilege-escalation protections |
+| Rate limiting | Cache-backed; shared cache required (startup check) when `DEBUG` is off |
+| Localization | English and Swahili selectable; strings marked for translation. **No Swahili translations yet** (requires GNU gettext and review) |
+| Security logging | Console `clipcash.security` logger; permanent audit records planned for Phase 02 |
+| Memberships, videos, viewing, advertising, payments, rewards, wallets, withdrawals, notifications, audit, reports, support | Not implemented |
+
+Details: [docs/architecture/authentication.md](docs/architecture/authentication.md).
 
 ## Local setup (Windows 11)
 
@@ -62,26 +63,20 @@ python -m pip install -r requirements\dev.txt
 
 ### 2. PostgreSQL
 
-Create a dedicated role and database (run as a PostgreSQL administrator, e.g. in `psql`):
+Create the application role and development database (as a PostgreSQL administrator):
 
 ```sql
 CREATE ROLE clipcash_user WITH LOGIN PASSWORD 'choose-a-strong-password';
 CREATE DATABASE clipcash_db OWNER clipcash_user ENCODING 'UTF8';
 ```
 
-The test suite runs against PostgreSQL. The preferred least-privilege setup is a
-pre-created test database owned by the application role, reused with `--keepdb`, so the
-role never needs `CREATEDB`:
-
-```sql
-CREATE DATABASE test_clipcash_db OWNER clipcash_user ENCODING 'UTF8';
-```
+Provision the disposable **test** database with the reviewed, idempotent script. It creates
+`test_clipcash_db` owned by `clipcash_user`, revokes access from other roles, and grants no
+`CREATEDB`/superuser rights. You are prompted for the administrator password:
 
 ```powershell
-python manage.py test --keepdb
+& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -h 127.0.0.1 -d postgres -f scripts\database\create_test_database.sql
 ```
-
-Do not grant `CREATEDB` or superuser rights to application roles in production.
 
 ### 3. Environment variables
 
@@ -90,34 +85,73 @@ Copy-Item .env.example .env
 python -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
-Paste the generated value into `DJANGO_SECRET_KEY` in `.env` and set your database password.
-`.env` is ignored by Git and must never be committed.
+Paste the generated value into `DJANGO_SECRET_KEY` and set `DB_PASSWORD`. `.env` is ignored
+by Git and must never be committed. All options are listed in `.env.example`:
 
-| Variable               | Required | Default               | Description                                  |
-| ---------------------- | -------- | --------------------- | -------------------------------------------- |
-| `DJANGO_SECRET_KEY`    | Yes      | none                  | Unique, random secret. Never reuse or share. |
-| `DJANGO_DEBUG`         | No       | `False`               | `True` for local development only.           |
-| `DJANGO_ALLOWED_HOSTS` | No       | `127.0.0.1,localhost` | Comma-separated host names.                  |
-| `DB_NAME`              | Yes      | none                  | PostgreSQL database name.                    |
-| `DB_USER`              | Yes      | none                  | PostgreSQL role.                             |
-| `DB_PASSWORD`          | Yes      | none                  | PostgreSQL role password.                    |
-| `DB_HOST`              | No       | `127.0.0.1`           | PostgreSQL host.                             |
-| `DB_PORT`              | No       | `5432`                | PostgreSQL port.                             |
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DJANGO_SECRET_KEY` | required | Unique random secret |
+| `DJANGO_DEBUG` | `False` | `True` only for local development |
+| `DJANGO_ALLOWED_HOSTS` | `127.0.0.1,localhost` | Served host names |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD` | required | Application database |
+| `DB_HOST`, `DB_PORT` | `127.0.0.1`, `5432` | Database server |
+| `DB_TEST_NAME` | `test_clipcash_db` | Disposable test database |
+| `DJANGO_CACHE_URL` | `locmemcache://clipcash` | Cache; use a shared cache in production |
+| `DJANGO_THROTTLE_REQUIRE_SHARED_CACHE` | `not DEBUG` | Fail startup if the cache is per-process |
+| `DJANGO_TRUSTED_PROXY_COUNT` | `0` | Trusted reverse proxies for client IPs |
+| `DJANGO_SECURE_COOKIES` | `not DEBUG` | HTTPS-only session and CSRF cookies |
+| `DJANGO_SESSION_COOKIE_AGE` | `43200` | Session lifetime (seconds) |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | empty | HTTPS origins allowed to POST |
+| `DJANGO_SECURE_SSL_REDIRECT`, `DJANGO_SECURE_HSTS_SECONDS`, `DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS`, `DJANGO_SECURE_PROXY_SSL_HEADER` | off | HTTPS hardening for production |
+| `DJANGO_EMAIL_BACKEND`, `DJANGO_DEFAULT_FROM_EMAIL` | console backend | Outgoing email |
+| `DJANGO_SECURITY_LOG_LEVEL` | `INFO` | `clipcash.security` log level |
 
-### 4. Verify the setup
+### 4. Tests (PostgreSQL only)
 
-These commands do not modify the database:
+```powershell
+python manage.py test apps.accounts --keepdb
+```
+
+The project test runner refuses to run on anything other than PostgreSQL, refuses test
+database names that are not a distinct `test_*` database, and verifies the live connection
+before running. `--keepdb` reuses the provisioned database, so no `CREATEDB` privilege is
+needed. Concurrency tests run only on PostgreSQL.
+
+### 5. Migrations
 
 ```powershell
 python manage.py check
-python manage.py makemigrations --check --dry-run
-python manage.py showmigrations
-python -m pip check
+python manage.py makemigrations --check --dry-run   # must report "No changes detected"
+python manage.py showmigrations                      # review applied state
+python manage.py migrate --plan                      # review before applying
+python manage.py migrate
+python manage.py createsuperuser                     # the only way to create a Super Administrator
 ```
 
-Do **not** run `python manage.py migrate` until the custom user model has been finalized in
-Phase 01. Once migrations are applied, changes to the initial user migration require a new
-migration instead of regeneration.
+Never reset, drop or fake migrations. After migrations are applied anywhere, every model
+change needs a new migration.
+
+## Security configuration (production)
+
+Set `DJANGO_DEBUG=False` and, at minimum: a shared cache (`DJANGO_CACHE_URL`, e.g.
+`dbcache://clipcash_cache` followed by `python manage.py createcachetable`),
+`DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, HTTPS settings, and a real email
+backend. Then run:
+
+```powershell
+python manage.py check --deploy
+```
+
+It must report no `accounts.*` errors. Deployment hardening is completed in Phase 16.
+
+## Known limitations
+
+- Rate limiting is per account+IP, per account and per IP; very large distributed attacks
+  need upstream protection (WAF/CDN).
+- Emails are sent during the request; a background task system is a Phase 02 decision.
+- No two-factor authentication for staff yet.
+- Swahili translations are not written; the interface is English only in practice.
+- Security events are logged to the console only until the Phase 02 audit app.
 
 ## Development conventions
 

@@ -1,0 +1,14 @@
+{% load i18n %}{# Usage: {% include "components/form.html" with form=form button=_("Sign in") %} #}
+<form class="form" method="post" novalidate>{% csrf_token %}
+  {% if form.non_field_errors %}
+    <ul class="errorlist nonfield" role="alert">
+      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+  {% for field in form.visible_fields %}
+    {{ field.as_field_group }}
+  {% endfor %}
+  {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <button type="submit" class="button button--block">{{ button }}</button>
+</form>

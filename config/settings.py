@@ -36,6 +36,18 @@ ALLOWED_HOSTS = env.list(
     default=["127.0.0.1", "localhost"],
 )
 
+CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
+
+# HTTPS hardening. Off by default for local HTTP development; enable in
+# production (see README "Security configuration").
+SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=False)
+SECURE_HSTS_SECONDS = env.int("DJANGO_SECURE_HSTS_SECONDS", default=0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False)
+SECURE_HSTS_PRELOAD = False
+if env.bool("DJANGO_SECURE_PROXY_SSL_HEADER", default=False):
+    # Only behind a proxy that always sets this header itself.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 
 # Application definition
 
@@ -73,6 +85,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.accounts.middleware.AccountStatusMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -82,7 +95,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -110,8 +123,14 @@ DATABASES = {
         "PORT": env.int("DB_PORT", default=5432),
         "CONN_MAX_AGE": 60,
         "CONN_HEALTH_CHECKS": True,
+        # Disposable test database, provisioned by
+        # scripts/database/create_test_database.sql. The test runner refuses
+        # any non-PostgreSQL engine or a name that is not a distinct test_* database.
+        "TEST": {"NAME": env("DB_TEST_NAME", default="test_clipcash_db")},
     }
 }
+
+TEST_RUNNER = "config.test_runner.PostgreSQLTestRunner"
 
 
 # Password validation
@@ -123,6 +142,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 10},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -131,6 +151,77 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+# Authentication
+
+AUTHENTICATION_BACKENDS = ["apps.accounts.backends.AccountStatusBackend"]
+
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "accounts:profile"
+LOGOUT_REDIRECT_URL = "accounts:login"
+
+# Token lifetimes. PASSWORD_RESET_TIMEOUT is Django's outer limit for every
+# token generator and must be >= both values below.
+ACCOUNTS_PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
+ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT = 60 * 60 * 24  # 24 hours
+PASSWORD_RESET_TIMEOUT = max(ACCOUNTS_PASSWORD_RESET_TIMEOUT, ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT)
+
+
+# Sessions and cookies
+
+SESSION_COOKIE_AGE = env.int("DJANGO_SESSION_COOKIE_AGE", default=60 * 60 * 12)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = env.bool("DJANGO_SECURE_COOKIES", default=not DEBUG)
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+CSRF_COOKIE_SAMESITE = "Lax"
+
+
+# Email
+
+EMAIL_BACKEND = env(
+    "DJANGO_EMAIL_BACKEND",
+    default="django.core.mail.backends.console.EmailBackend",
+)
+DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="ClipCash <no-reply@localhost>")
+
+
+# Cache. Rate limiting needs a cache shared by every worker in production, e.g.
+# DJANGO_CACHE_URL=dbcache://clipcash_cache (run createcachetable; no extra
+# service needed). The default per-process cache is for local development only.
+
+CACHES = {"default": env.cache_url("DJANGO_CACHE_URL", default="locmemcache://clipcash")}
+
+ACCOUNTS_THROTTLE_CACHE = "default"
+ACCOUNTS_THROTTLE_REQUIRE_SHARED_CACHE = env.bool(
+    "DJANGO_THROTTLE_REQUIRE_SHARED_CACHE", default=not DEBUG
+)
+# Number of trusted reverse proxies in front of Django. 0 = ignore X-Forwarded-For.
+ACCOUNTS_TRUSTED_PROXY_COUNT = env.int("DJANGO_TRUSTED_PROXY_COUNT", default=0)
+
+
+# Logging. Security events carry account ids and IPs, never emails, passwords
+# or tokens.
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "standard"},
+    },
+    "loggers": {
+        "clipcash.security": {
+            "handlers": ["console"],
+            "level": env("DJANGO_SECURITY_LOG_LEVEL", default="INFO"),
+            "propagate": False,
+        },
+        "django.security": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+    },
+}
 
 
 # Internationalization
@@ -156,6 +247,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

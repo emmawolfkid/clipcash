@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Link not valid" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Link not valid" %}</h1>
+<p>{% translate "This link is invalid, has expired or has already been used." %}</p>
+<ul class="links">
+  <li><a href="{% url 'accounts:resend_verification' %}">{% translate "Send a new verification link" %}</a></li>
+  <li><a href="{% url 'accounts:password_reset' %}">{% translate "Reset your password" %}</a></li>
+  <li><a href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a></li>
+</ul>
+{% endblock %}

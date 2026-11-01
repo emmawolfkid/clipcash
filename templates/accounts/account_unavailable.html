@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Account unavailable" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Account unavailable" %}</h1>
+<p>{% translate "You have been signed out because this account is no longer active." %}</p>
+<p class="lead">{% translate "If you think this is a mistake, contact ClipCash support." %}</p>
+{% endblock %}

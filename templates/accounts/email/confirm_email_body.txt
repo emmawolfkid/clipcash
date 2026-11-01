@@ -1,0 +1,8 @@
+{% load i18n %}{% autoescape off %}{% translate "Please confirm the email address on your ClipCash account." %}
+
+{{ url }}
+
+{% blocktranslate count hours=valid_hours %}The link expires in {{ hours }} hour and can be used once.{% plural %}The link expires in {{ hours }} hours and can be used once.{% endblocktranslate %}
+
+{% translate "If you do not have a ClipCash account, ignore this email." %}
+{% endautoescape %}
