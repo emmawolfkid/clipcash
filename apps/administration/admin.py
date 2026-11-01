@@ -124,3 +124,124 @@ class SiteConfigurationAdmin(SuperAdminOnlyMixin, admin.ModelAdmin):
         except PermissionError:
             raise PermissionDenied
         obj.version = saved.version
+
+
+# --- Operations workspace (background jobs, workers, schedules) -------------------
+#
+# Viewing needs core.view_operations; retrying, cancelling and schedule changes
+# each need their own permission and are validated and audited by services.
+# There is no way to create or execute arbitrary jobs here.
+
+from django.contrib import messages  # noqa: E402
+from django.db import transaction  # noqa: E402
+
+from apps.audit.services import record_business_event  # noqa: E402
+from apps.core.jobs import services as job_services  # noqa: E402
+from apps.core.models import Job, ScheduledTask, WorkerHeartbeat  # noqa: E402
+
+
+def can_view_operations(user):
+    return bool(user.is_authenticated and user.is_active and user.is_staff
+                and user.has_perm("core.view_operations"))
+
+
+class OperationsReadOnlyAdmin(admin.ModelAdmin):
+    list_per_page = 50
+    show_full_result_count = False
+
+    def has_module_permission(self, request):
+        return can_view_operations(request.user)
+
+    def has_view_permission(self, request, obj=None):
+        return can_view_operations(request.user)
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_readonly_fields(self, request, obj=None):
+        return [f.name for f in self.model._meta.fields]
+
+
+@admin.register(Job)
+class JobAdmin(OperationsReadOnlyAdmin):
+    list_display = ("created_at", "job_type", "status", "attempts_display", "run_after",
+                    "worker_id", "last_error_class", "last_error")
+    list_filter = ("status", "job_type", "last_error_class")
+    search_fields = ("job_type", "worker_id", "request_id", "idempotency_key")
+    date_hierarchy = "created_at"
+    actions = ["retry_selected", "cancel_selected"]
+
+    @admin.display(description=_("attempts"))
+    def attempts_display(self, obj):
+        return f"{obj.attempts}/{obj.max_attempts}"
+
+    def has_retry_permission(self, request):
+        return can_view_operations(request.user) and request.user.has_perm("core.retry_job")
+
+    def has_cancel_permission(self, request):
+        return can_view_operations(request.user) and request.user.has_perm("core.cancel_job")
+
+    def _apply(self, request, queryset, action, verb):
+        done, refused = 0, 0
+        for job in queryset:
+            try:
+                action(job, actor=request.user)
+                done += 1
+            except job_services.JobActionError:
+                refused += 1
+        if done:
+            self.message_user(request, _("%(count)s job(s) %(verb)s.") % {"count": done, "verb": verb})
+        if refused:
+            self.message_user(request, _("%(count)s job(s) were not eligible.") % {"count": refused},
+                              level=messages.WARNING)
+
+    @admin.action(description=_("Retry selected failed or cancelled jobs"), permissions=["retry"])
+    def retry_selected(self, request, queryset):
+        self._apply(request, queryset, job_services.retry_job, _("queued for retry"))
+
+    @admin.action(description=_("Cancel selected pending or failed jobs"), permissions=["cancel"])
+    def cancel_selected(self, request, queryset):
+        self._apply(request, queryset, job_services.cancel_job, _("cancelled"))
+
+
+@admin.register(WorkerHeartbeat)
+class WorkerHeartbeatAdmin(OperationsReadOnlyAdmin):
+    list_display = ("worker_id", "last_seen_at", "last_run_seconds", "last_processed", "last_succeeded",
+                    "last_failed", "total_processed", "cache_ok", "cache_checked_at")
+    actions = None
+
+
+@admin.register(ScheduledTask)
+class ScheduledTaskAdmin(OperationsReadOnlyAdmin):
+    list_display = ("name", "enabled", "next_run_at", "last_enqueued_at")
+    actions = ["enable_selected", "disable_selected"]
+
+    def has_manage_schedules_permission(self, request):
+        return can_view_operations(request.user) and request.user.has_perm("core.manage_schedules")
+
+    def _set_enabled(self, request, queryset, enabled):
+        changed = 0
+        with transaction.atomic():
+            for task in queryset.select_for_update():
+                if task.enabled == enabled:
+                    continue
+                task.enabled = enabled
+                task.save(update_fields=["enabled"])
+                record_business_event("jobs.schedule.changed", actor=request.user, target=task,
+                                      metadata={"schedule": task.name, "enabled": enabled})
+                changed += 1
+        self.message_user(request, _("%(count)s scheduled task(s) updated.") % {"count": changed})
+
+    @admin.action(description=_("Enable selected scheduled tasks"), permissions=["manage_schedules"])
+    def enable_selected(self, request, queryset):
+        self._set_enabled(request, queryset, True)
+
+    @admin.action(description=_("Pause selected scheduled tasks"), permissions=["manage_schedules"])
+    def disable_selected(self, request, queryset):
+        self._set_enabled(request, queryset, False)

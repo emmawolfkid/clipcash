@@ -25,6 +25,7 @@ class Category:
     CONFIGURATION = "CONFIGURATION"
     AUDIT = "AUDIT"
     LEDGER = "LEDGER"
+    OPERATIONS = "OPERATIONS"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -33,6 +34,7 @@ class Category:
         (CONFIGURATION, "Configuration"),
         (AUDIT, "Audit"),
         (LEDGER, "Ledger"),
+        (OPERATIONS, "Operations"),
     ]
 
 
@@ -91,6 +93,12 @@ EVENT_TYPES = {
         _event("ledger.entry.reversed", Category.LEDGER, BUSINESS,
                ["posting_type", "total_amount", "original_entry"]),
         _event("ledger.posting.rejected", Category.LEDGER, SECURITY, ["posting_type", "reason", "source_type"]),
+        # Background processing (routine successes are not audited: no noise)
+        _event("jobs.job.failed", Category.OPERATIONS, BUSINESS, ["job_type", "attempts", "error_class"]),
+        _event("jobs.job.retried", Category.OPERATIONS, BUSINESS, ["job_type", "previous_status"]),
+        _event("jobs.job.cancelled", Category.OPERATIONS, BUSINESS, ["job_type", "previous_status"]),
+        _event("jobs.schedule.changed", Category.OPERATIONS, BUSINESS, ["schedule", "enabled"]),
+        _event("notifications.email.failed", Category.OPERATIONS, BUSINESS, ["kind", "error_class", "attempts"]),
     )
 }
 

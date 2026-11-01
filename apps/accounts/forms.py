@@ -110,6 +110,17 @@ class AccountPasswordResetForm(PasswordResetForm):
         )
         return (user for user in users if user.has_usable_password())
 
+    def save(self, *, request=None, **kwargs):
+        """Queue reset emails in the durable outbox instead of sending inline.
+        The link token is generated at delivery, dated to this request."""
+        from apps.notifications.services import base_url, enqueue_email
+
+        from .emails import PASSWORD_RESET
+
+        for user in self.get_users(self.cleaned_data["email"]):
+            enqueue_email(PASSWORD_RESET, recipient=user.email, user=user,
+                          context={"base_url": base_url(request)})
+
 
 class AccessChangeFormMixin:
     """

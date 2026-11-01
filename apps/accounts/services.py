@@ -15,15 +15,9 @@ ever recorded.
 
 import logging
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
-from django.template.loader import render_to_string
-from django.urls import reverse
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 
 from apps.audit.services import (
@@ -33,6 +27,9 @@ from apps.audit.services import (
     record_security_event,
 )
 
+from apps.notifications.services import base_url, enqueue_email
+
+from . import emails
 from .tokens import verification_token_generator
 
 security_log = logging.getLogger("clipcash.security")
@@ -51,50 +48,18 @@ STATUS_TRANSITIONS = {
 CREATION_STATUSES = {Status.PENDING, Status.ACTIVE}
 
 
-# --- Email -------------------------------------------------------------------
-
-
-def _send_email(template_prefix, recipient, context):
-    subject = render_to_string(f"accounts/email/{template_prefix}_subject.txt", context)
-    body = render_to_string(f"accounts/email/{template_prefix}_body.txt", context)
-    send_mail(" ".join(subject.split()), body, None, [recipient])
-
-
-def _token_url(request, url_name, user):
-    path = reverse(
-        url_name,
-        kwargs={
-            "uidb64": urlsafe_base64_encode(force_bytes(user.pk)),
-            "token": verification_token_generator.make_token(user),
-        },
-    )
-    return request.build_absolute_uri(path)
-
-
-def _hours(setting_name):
-    return max(1, getattr(settings, setting_name) // 3600)
+# --- Email (durable outbox; see apps.accounts.emails) ------------------------------
 
 
 def send_verification_email(user, request):
-    """Send the right verification link for the account's state, if any."""
+    """Queue the right verification email for the account's state, if any.
+    Delivery happens after commit; nothing is sent if the caller rolls back."""
     if user.status == Status.PENDING:
-        _send_email(
-            "activate_account",
-            user.email,
-            {
-                "url": _token_url(request, "accounts:activate", user),
-                "valid_hours": _hours("ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT"),
-            },
-        )
+        enqueue_email(emails.ACTIVATION, recipient=user.email, user=user,
+                      context={"base_url": base_url(request)})
     elif user.status == Status.ACTIVE and not user.email_verified:
-        _send_email(
-            "confirm_email",
-            user.email,
-            {
-                "url": _token_url(request, "accounts:confirm_email", user),
-                "valid_hours": _hours("ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT"),
-            },
-        )
+        enqueue_email(emails.CONFIRM_EMAIL, recipient=user.email, user=user,
+                      context={"base_url": base_url(request)})
 
 
 # --- Registration and verification ---------------------------------------------
@@ -118,13 +83,14 @@ def register(*, email, request):
             with transaction.atomic():
                 user = User.objects.create_user(email, password=None, role=Role.MEMBER)
                 record_business_event("account.registration.started", actor=None, target=user)
+                # Same transaction: no account, no email (and vice versa).
+                send_verification_email(user, request)
         except (IntegrityError, ValidationError):
             # A concurrent request registered the same address first.
             user = User.objects.filter(email=email).first()
             if user is None:
                 raise
         else:
-            send_verification_email(user, request)
             return
 
     record_security_event(
@@ -137,14 +103,8 @@ def register(*, email, request):
     if user.status == Status.PENDING:
         send_verification_email(user, request)
     elif user.status == Status.ACTIVE:
-        _send_email(
-            "already_registered",
-            user.email,
-            {
-                "login_url": request.build_absolute_uri(reverse("accounts:login")),
-                "reset_url": request.build_absolute_uri(reverse("accounts:password_reset")),
-            },
-        )
+        enqueue_email(emails.ALREADY_REGISTERED, recipient=user.email, user=user,
+                      context={"base_url": base_url(request)})
 
 
 def request_verification_email(email, request):

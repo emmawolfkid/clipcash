@@ -195,13 +195,34 @@ DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="ClipCash <no-repl
 # service needed). The default per-process cache is for local development only.
 
 CACHES = {"default": env.cache_url("DJANGO_CACHE_URL", default="locmemcache://clipcash")}
+# Namespaced keys and an explicit default TTL for every cache entry.
+CACHES["default"].setdefault("KEY_PREFIX", env("DJANGO_CACHE_KEY_PREFIX", default="clipcash"))
+CACHES["default"].setdefault("TIMEOUT", 300)
 
 ACCOUNTS_THROTTLE_CACHE = "default"
+# "database": atomic PostgreSQL counters, consistent across processes (production).
+# "cache": the Django cache (local development and tests).
+ACCOUNTS_THROTTLE_BACKEND = env("DJANGO_THROTTLE_BACKEND", default="cache" if DEBUG else "database")
 ACCOUNTS_THROTTLE_REQUIRE_SHARED_CACHE = env.bool(
     "DJANGO_THROTTLE_REQUIRE_SHARED_CACHE", default=not DEBUG
 )
 # Number of trusted reverse proxies in front of Django. 0 = ignore X-Forwarded-For.
 ACCOUNTS_TRUSTED_PROXY_COUNT = env.int("DJANGO_TRUSTED_PROXY_COUNT", default=0)
+
+
+# Background jobs (apps.core.jobs) and the email outbox (apps.notifications).
+# run_jobs is invoked by cron; each run is bounded by these limits.
+JOBS_MAX_RUN_SECONDS = env.int("DJANGO_JOBS_MAX_RUN_SECONDS", default=50)
+JOBS_MAX_BATCH = env.int("DJANGO_JOBS_MAX_BATCH", default=100)
+JOBS_LEASE_SECONDS = env.int("DJANGO_JOBS_LEASE_SECONDS", default=300)
+JOBS_HEARTBEAT_STALE_SECONDS = env.int("DJANGO_JOBS_HEARTBEAT_STALE_SECONDS", default=300)
+JOBS_BACKLOG_ALERT_SECONDS = env.int("DJANGO_JOBS_BACKLOG_ALERT_SECONDS", default=900)
+JOBS_RETENTION_DAYS = 30
+JOBS_FAILED_RETENTION_DAYS = 90
+# Override schedule intervals, e.g. DJANGO_JOBS_SCHEDULE_INTERVALS=core.health_check=600
+JOBS_SCHEDULE_INTERVALS = env.dict("DJANGO_JOBS_SCHEDULE_INTERVALS", cast={"value": int}, default={})
+NOTIFICATIONS_DEFAULT_EMAIL_TTL = 60 * 60 * 24 * 3  # Non-token emails stay deliverable 3 days.
+NOTIFICATIONS_OUTBOX_RETENTION_DAYS = 90
 
 
 # Audit (apps.audit). IP addresses and user agents are recorded for security
@@ -232,6 +253,8 @@ LOGGING = {
             "propagate": False,
         },
         "django.security": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+        "clipcash.jobs": {"handlers": ["console"], "level": env("DJANGO_JOBS_LOG_LEVEL", default="INFO"),
+                          "propagate": False},
     },
 }
 

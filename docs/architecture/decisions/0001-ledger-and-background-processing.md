@@ -1,6 +1,6 @@
 # ADR 0001: Financial ledger (Phase 02C) and background processing (Phase 02D)
 
-Status: **Phase 02C accepted and implemented** (see [../ledger.md](../ledger.md)); Phase 02D still **proposed**.
+Status: **Phase 02C accepted and implemented** (see [../ledger.md](../ledger.md)); Phase 02D **accepted and implemented** (see [../background-processing.md](../background-processing.md)).
 Real-money features stay locked off in code until legal, payment-provider and
 operational sign-off.
 

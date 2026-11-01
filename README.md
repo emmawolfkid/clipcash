@@ -4,8 +4,8 @@ ClipCash is a planned Tanzanian video membership platform with advertiser-funded
 Members pay for access to video content; any rewards are funded only by genuine, available
 advertiser campaign budgets.
 
-> **Status: core, audit and ledger foundations (Phases 01–02A).** Accounts, sign-in, account security, site
-> configuration, feature flags, money conventions, permanent audit records and the double-entry ledger foundation are implemented. Video, membership, payment, reward and withdrawal features are **not**
+> **Status: platform foundations (Phases 01–02A).** Accounts, sign-in, account security, site
+> configuration, feature flags, money conventions, permanent audit records, the double-entry ledger foundation and background processing are implemented. Video, membership, payment, reward and withdrawal features are **not**
 > implemented. Real-money rewards, payments and payouts must remain disabled until legal,
 > payment-provider and operational requirements are satisfied. Membership fees are not an
 > investment and do not guarantee any return.
@@ -30,6 +30,7 @@ apps/core/      Base models, site configuration, feature flags, money (see docs/
 apps/administration/  Admin branding and configuration admin
 apps/audit/     Append-only audit events, audit workspace, export/purge (see docs/architecture/audit.md)
 apps/wallets/   Double-entry ledger: chart of accounts, posting service, DB integrity (see docs/architecture/ledger.md)
+apps/notifications/  Durable email outbox (see docs/architecture/background-processing.md)
 apps/<others>/   Registered application stubs (no models or views yet)
 templates/       base.html, components/, accounts/, core/, error pages
 static/css/      Site stylesheet
@@ -55,9 +56,11 @@ requirements/    Pinned dependencies (base.txt, dev.txt)
 | Money | Integer whole-shilling TZS amounts, immutable `Money` type, no floats; no balances or ledger yet |
 | Audit | Append-only audit events (database trigger + ORM guards) for sign-in, account, access-control and configuration actions; read-only admin workspace; export and retention commands |
 | Ledger | Double-entry journal with database-enforced balance, immutability, overdraft protection and funding separation; read-only admin. **All posting types locked off: no real money, balances, rewards or withdrawals** |
-| Memberships, videos, viewing, advertising, payments, rewards, withdrawals, notifications, reports, support | Not implemented |
+| Background processing | PostgreSQL job queue (SKIP LOCKED, leases, retries with jitter), cron-driven `run_jobs`, scheduled tasks, `jobs_status` health check, operations admin |
+| Email | Durable outbox written in the business transaction; tokens generated at delivery and dated to the request; never stored |
+| Memberships, videos, viewing, advertising, payments, rewards, withdrawals, reports, support | Not implemented |
 
-Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md), [docs/architecture/audit.md](docs/architecture/audit.md), [docs/architecture/ledger.md](docs/architecture/ledger.md).
+Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md), [docs/architecture/audit.md](docs/architecture/audit.md), [docs/architecture/ledger.md](docs/architecture/ledger.md), [docs/architecture/background-processing.md](docs/architecture/background-processing.md).
 
 ## Local setup (Windows 11)
 
@@ -129,7 +132,20 @@ database, which the application role is not allowed to do. The runner also resto
 role groups and site configuration row before each run, because `--keepdb` does not
 re-run data migrations. Concurrency tests run only on PostgreSQL.
 
-### 5. Migrations
+### 5. Background jobs and email
+
+Emails and maintenance tasks are processed by a bounded command. Locally, run it whenever
+you need queued email delivered (the console email backend prints it):
+
+```powershell
+python manage.py run_jobs
+python manage.py jobs_status     # JSON health report; exit code 1 when unhealthy
+```
+
+In production, cron runs `run_jobs` every minute (see
+[docs/architecture/background-processing.md](docs/architecture/background-processing.md)).
+
+### 6. Migrations
 
 ```powershell
 python manage.py check
@@ -160,7 +176,8 @@ It must report no `accounts.*` errors. Deployment hardening is completed in Phas
 
 - Rate limiting is per account+IP, per account and per IP; very large distributed attacks
   need upstream protection (WAF/CDN).
-- Emails are sent during the request; a background task system is a Phase 02 decision.
+- Emails are delivered by `run_jobs` (cron); without cron running, no email is sent. Run
+  `python manage.py run_jobs` locally to deliver queued email to the console backend.
 - No two-factor authentication for staff yet.
 - Swahili translations are not written; the interface is English only in practice.
 - Audit protections can be bypassed by the database owner; production needs the role
