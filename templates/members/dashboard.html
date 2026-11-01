@@ -1,0 +1,38 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Dashboard" %}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{% blocktranslate with name=user.first_name|default:user.email %}Welcome, {{ name }}{% endblocktranslate %}</h1>
+<div class="card-grid">
+  <section class="panel">
+    <h2 class="panel__title">{% translate "Membership" %}</h2>
+    {% if membership %}
+      <p><span class="badge badge--{{ membership.status|lower }}">{{ membership.get_status_display }}</span> {{ membership.plan_name }}</p>
+      <p class="lead">{% blocktranslate with date=membership.expires_at|date:"DATE_FORMAT" %}Valid until {{ date }}{% endblocktranslate %}</p>
+    {% elif pending %}
+      <p><span class="badge badge--pending">{{ pending.get_status_display }}</span> {{ pending.plan_name }}</p>
+      <p class="lead">{% translate "Waiting for payment. Online payment is not available yet." %}</p>
+    {% else %}
+      <p class="lead">{% translate "You do not have an active membership." %}</p>
+    {% endif %}
+    {% if features.memberships %}<a class="button button--secondary" href="{% url 'memberships:mine' %}">{% translate "Manage membership" %}</a>{% endif %}
+  </section>
+  <section class="panel">
+    <h2 class="panel__title">{% translate "Rewards" %}</h2>
+    <p class="lead">{% translate "Coming soon. Rewards are not available yet." %}</p>
+  </section>
+  <section class="panel">
+    <h2 class="panel__title">{% translate "Wallet" %}</h2>
+    <p class="lead">{% translate "Coming soon. There is no wallet balance yet." %}</p>
+  </section>
+</div>
+{% if features.videos %}
+<section class="section">
+  <div class="section__header"><h2>{% translate "Latest videos" %}</h2><a href="{% url 'videos:library' %}">{% translate "See all" %}</a></div>
+  {% if recent_videos %}
+    <ul class="video-grid">{% for video in recent_videos %}{% include "components/video_card.html" %}{% endfor %}</ul>
+  {% else %}
+    <p class="empty-state">{% translate "No videos have been published yet." %}</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

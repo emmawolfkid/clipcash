@@ -1,0 +1,34 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Video management" %}{% endblock %}
+{% block console_content %}
+<div class="section__header"><h1 class="page-title">{% translate "Video management" %}</h1>
+{% if can_manage %}<a class="button" href="{% url 'administration:video_create' %}">{% translate "New video" %}</a>{% endif %}</div>
+<form class="toolbar" method="get">
+  <label class="visually-hidden" for="q">{% translate "Search" %}</label>
+  <input id="q" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search title or slug' %}">
+  <label class="visually-hidden" for="f-category">{% translate "Category" %}</label>
+  <select id="f-category" name="category"><option value="">{% translate "All categories" %}</option>{% for c in categories %}<option value="{{ c.slug }}"{% if filters.category == c.slug %} selected{% endif %}>{{ c.name }}{% if not c.is_active %} ({% translate "inactive" %}){% endif %}</option>{% endfor %}</select>
+  <label class="visually-hidden" for="f-processing">{% translate "Processing" %}</label>
+  <select id="f-processing" name="processing"><option value="">{% translate "Any processing" %}</option>{% for value, label in processing_choices %}<option value="{{ value }}"{% if filters.processing == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <label class="visually-hidden" for="f-publication">{% translate "Publication" %}</label>
+  <select id="f-publication" name="publication"><option value="">{% translate "Any status" %}</option>{% for value, label in publication_choices %}<option value="{{ value }}"{% if filters.publication == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <button type="submit" class="button button--secondary">{% translate "Filter" %}</button>
+</form>
+{% if page.object_list %}
+<table class="table">
+  <thead><tr><th scope="col">{% translate "Title" %}</th><th scope="col">{% translate "Category" %}</th><th scope="col">{% translate "Processing" %}</th><th scope="col">{% translate "Publication" %}</th><th scope="col">{% translate "Created" %}</th></tr></thead>
+  <tbody>{% for video in page.object_list %}
+    <tr>
+      <td><a href="{% url 'administration:video_detail' video.pk %}">{{ video.title }}</a>{% if video.is_demo %} <span class="badge badge--pending">{% translate "Demo" %}</span>{% endif %}</td>
+      <td>{{ video.category.name|default:"—" }}</td>
+      <td><span class="badge badge--{{ video.processing_status|lower }}">{{ video.get_processing_status_display }}</span></td>
+      <td><span class="badge badge--{{ video.publication_status|lower }}">{{ video.get_publication_status_display }}</span></td>
+      <td>{{ video.created_at|date:"DATE_FORMAT" }}</td>
+    </tr>{% endfor %}
+  </tbody>
+</table>
+{% if page.has_other_pages %}<nav class="pagination" aria-label="{% translate 'Pages' %}">{% if page.has_previous %}<a href="?{% if page_query %}{{ page_query }}&amp;{% endif %}page={{ page.previous_page_number }}">{% translate "Previous" %}</a>{% endif %}<span>{{ page.number }} / {{ page.paginator.num_pages }}</span>{% if page.has_next %}<a href="?{% if page_query %}{{ page_query }}&amp;{% endif %}page={{ page.next_page_number }}">{% translate "Next" %}</a>{% endif %}</nav>{% endif %}
+{% else %}
+<p class="empty-state">{% translate "No videos found." %}</p>
+{% endif %}
+{% endblock %}

@@ -149,6 +149,8 @@ def _fail_or_retry(job, error_class, summary, now, *, permanent=False):
 def run_job(job, worker_id):
     """Execute a claimed job. Returns its resulting status."""
     definition = get_job_type(job.job_type)
+    if not definition.transactional:
+        return _run_non_transactional(job, worker_id, definition)
     try:
         with transaction.atomic():
             locked = Job.objects.select_for_update().get(pk=job.pk)
@@ -179,6 +181,47 @@ def run_job(job, worker_id):
                 last_error_class=Job.ErrorClass.INTERRUPTED, last_error="Worker interrupted",
             )
         raise
+
+
+def _still_mine(job_pk, worker_id):
+    return Job.objects.filter(pk=job_pk, status=S.RUNNING, worker_id=worker_id).first()
+
+
+def _run_non_transactional(job, worker_id, definition):
+    """Handler runs with no transaction (no lock held during HTTP calls); the
+    claim is re-checked before and after. If the worker dies mid-handler, the
+    lease expires and the job is recovered (handlers must be idempotent)."""
+    current = _still_mine(job.pk, worker_id)
+    if current is None:
+        return Job.objects.get(pk=job.pk).status
+    try:
+        definition.handler(dict(current.payload), current)
+    except Exception as error:  # noqa: BLE001 - every handler failure is classified
+        error_class, summary = sanitize_error(error)
+        with transaction.atomic():
+            locked = Job.objects.select_for_update().get(pk=job.pk)
+            if locked.status != S.RUNNING or locked.worker_id != worker_id:
+                return locked.status
+            return _fail_or_retry(locked, error_class, summary, timezone.now(),
+                                  permanent=error_class == Job.ErrorClass.PERMANENT)
+    except BaseException:
+        Job.objects.filter(pk=job.pk, status=S.RUNNING, worker_id=worker_id).update(
+            status=S.RETRY_WAIT, run_after=timezone.now(), lease_expires_at=None,
+            last_error_class=Job.ErrorClass.INTERRUPTED, last_error="Worker interrupted",
+        )
+        raise
+    with transaction.atomic():
+        locked = Job.objects.select_for_update().get(pk=job.pk)
+        if locked.status != S.RUNNING or locked.worker_id != worker_id:
+            log.warning("job_lease_lost id=%s worker=%s", job.pk, worker_id)
+            return locked.status
+        locked.status = S.SUCCEEDED
+        locked.finished_at = timezone.now()
+        locked.lease_expires_at = None
+        locked.last_error_class = ""
+        locked.last_error = ""
+        locked.save()
+        return S.SUCCEEDED
 
 
 def recover_expired_leases(now=None, limit=100):

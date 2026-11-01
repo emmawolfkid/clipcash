@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% load i18n %}
+{% block main %}
+<div class="app-shell app-shell--console">
+  <aside class="app-sidebar">
+    <p class="app-sidebar__title">{% translate "Administration" %}</p>
+    <nav aria-label="{% translate 'Administration menu' %}">
+      <ul class="app-nav__list">
+        <li><a class="app-nav__link{% if nav == 'overview' %} is-current{% endif %}"{% if nav == 'overview' %} aria-current="page"{% endif %} href="{% url 'administration:overview' %}">{% translate "Overview" %}</a></li>
+        {% if can.members %}<li><a class="app-nav__link" href="{% url 'admin:accounts_user_changelist' %}">{% translate "Members" %}</a></li>{% endif %}
+        {% if can.plans %}<li><a class="app-nav__link" href="{% url 'admin:memberships_membershipplan_changelist' %}">{% translate "Membership plans" %}</a></li>{% endif %}
+        {% if can.videos %}<li><a class="app-nav__link{% if nav == 'videos' %} is-current{% endif %}"{% if nav == 'videos' %} aria-current="page"{% endif %} href="{% url 'administration:videos' %}">{% translate "Video management" %}</a></li>{% endif %}
+        {% if can.categories %}<li><a class="app-nav__link{% if nav == 'categories' %} is-current{% endif %}"{% if nav == 'categories' %} aria-current="page"{% endif %} href="{% url 'administration:categories' %}">{% translate "Categories" %}</a></li>{% endif %}
+        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Advertisers" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Campaigns" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Rewards" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Payments" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Withdrawals" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Reports" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        {% if can.settings %}<li><a class="app-nav__link" href="{% url 'admin:core_siteconfiguration_changelist' %}">{% translate "System settings" %}</a></li>{% endif %}
+        {% if can.audit %}<li><a class="app-nav__link" href="{% url 'admin:audit_auditevent_changelist' %}">{% translate "Audit logs" %}</a></li>{% endif %}
+      </ul>
+    </nav>
+  </aside>
+  <main id="content" class="app-main">
+    {% include "components/messages.html" %}
+    {% block console_content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

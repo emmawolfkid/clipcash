@@ -35,6 +35,9 @@ class JobType:
     admin_retryable: bool = True
     # Called inside the transaction that marks the job FAILED (terminal).
     on_failure: Callable | None = None
+    # False: run the handler OUTSIDE a database transaction (for handlers that
+    # make external HTTP calls); the handler opens its own short transactions.
+    transactional: bool = True
     description: str = ""
 
 

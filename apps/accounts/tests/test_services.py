@@ -143,9 +143,27 @@ class RoleGroupTests(AccountsTestCase):
         )
 
     def test_role_groups_carry_no_account_permissions(self):
+        # Content Managers hold video-content permissions only (Phase 04); no role
+        # group holds account, membership or financial permissions.
         for name in ROLE_GROUP_NAMES.values():
             with self.subTest(group=name):
-                self.assertFalse(Group.objects.get(name=name).permissions.exists())
+                apps = set(Group.objects.get(name=name).permissions.values_list("content_type__app_label", flat=True))
+                self.assertTrue(apps <= {"videos"}, apps)
+        self.assertFalse(Group.objects.get(name="Members").permissions.exists())
+
+    def test_role_group_sync_is_additive(self):
+        from django.contrib.auth.models import Permission
+
+        from apps.accounts.roles import sync_role_groups
+
+        group = Group.objects.get(name="Content Managers")
+        custom = Permission.objects.get(codename="view_user", content_type__app_label="accounts")
+        publish = Permission.objects.get(codename="publish_videos", content_type__app_label="videos")
+        group.permissions.add(custom)
+        group.permissions.remove(publish)
+        sync_role_groups()
+        self.assertTrue(group.permissions.filter(pk=custom.pk).exists())  # Superuser's choice kept.
+        self.assertTrue(group.permissions.filter(pk=publish.pk).exists())  # Role permission restored.
 
 
 class ActivationServiceTests(AccountsTestCase):

@@ -27,6 +27,7 @@ class Category:
     LEDGER = "LEDGER"
     OPERATIONS = "OPERATIONS"
     MEMBERSHIP = "MEMBERSHIP"
+    CONTENT = "CONTENT"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -37,6 +38,7 @@ class Category:
         (LEDGER, "Ledger"),
         (OPERATIONS, "Operations"),
         (MEMBERSHIP, "Membership"),
+        (CONTENT, "Content"),
     ]
 
 
@@ -113,6 +115,24 @@ EVENT_TYPES = {
           for name in ("activated", "cancelled", "suspended", "reinstated", "expired")],
         _event("membership.action.denied", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
         _event("membership.activation.rejected", Category.MEMBERSHIP, SECURITY, ["reason", "subscription"]),
+        # Video content (routine playback is not audited)
+        _event("video.category.created", Category.CONTENT, BUSINESS, ["slug"]),
+        _event("video.category.updated", Category.CONTENT, BUSINESS, ["slug", "fields"]),
+        _event("video.category.status_changed", Category.CONTENT, BUSINESS, ["slug", "active"]),
+        _event("video.created", Category.CONTENT, BUSINESS, ["provider", "slug"]),
+        _event("video.updated", Category.CONTENT, BUSINESS, ["fields"]),
+        _event("video.upload.initiated", Category.CONTENT, BUSINESS, ["content_type", "size_mb"]),
+        _event("video.upload.completed", Category.CONTENT, BUSINESS),
+        _event("video.upload.failed", Category.CONTENT, BUSINESS, ["reason"]),
+        _event("video.processing.completed", Category.CONTENT, BUSINESS, ["duration_seconds"]),
+        _event("video.processing.failed", Category.CONTENT, BUSINESS, ["status_code"]),
+        _event("video.published", Category.CONTENT, BUSINESS, ["from_status"]),
+        _event("video.unpublished", Category.CONTENT, BUSINESS, ["from_status"]),
+        _event("video.archived", Category.CONTENT, BUSINESS, ["from_status"]),
+        _event("video.media.deletion_requested", Category.CONTENT, BUSINESS),
+        _event("video.media.deleted", Category.CONTENT, BUSINESS),
+        _event("video.provider.sync_failed", Category.CONTENT, BUSINESS, ["job_type", "error_class"]),
+        _event("video.action.denied", Category.CONTENT, SECURITY, ["action", "reason"]),
     )
 }
 

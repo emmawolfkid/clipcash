@@ -1,0 +1,18 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Overview" %}{% endblock %}
+{% block console_content %}
+<h1 class="page-title">{% translate "Overview" %}</h1>
+{% if provider == "demo" %}<p class="notice">{% translate "Video provider: DEMO. No Bunny Stream connection; demo videos are labelled as samples." %}</p>{% endif %}
+<div class="stat-grid">
+  <div class="stat"><span class="stat__value">{{ stats.members }}</span><span class="stat__label">{% translate "Members" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.active_members }}</span><span class="stat__label">{% translate "Active member accounts" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.active_memberships }}</span><span class="stat__label">{% translate "Active memberships" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.pending_memberships }}</span><span class="stat__label">{% translate "Pending memberships" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.published_videos }}</span><span class="stat__label">{% translate "Published videos" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.draft_videos }}</span><span class="stat__label">{% translate "Draft videos" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.processing_videos }}</span><span class="stat__label">{% translate "Videos processing" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.failed_jobs }}</span><span class="stat__label">{% translate "Failed jobs (24 h)" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.pending_emails }}</span><span class="stat__label">{% translate "Emails waiting" %}</span></div>
+</div>
+<p class="lead">{% translate "All figures are live database counts. Advertising, rewards, payments and withdrawals are not available yet." %}</p>
+{% endblock %}

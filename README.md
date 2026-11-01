@@ -60,9 +60,10 @@ requirements/    Pinned dependencies (base.txt, dev.txt)
 | Background processing | PostgreSQL job queue (SKIP LOCKED, leases, retries with jitter), cron-driven `run_jobs`, scheduled tasks, `jobs_status` health check, operations admin |
 | Email | Durable outbox written in the business transaction; tokens generated at delivery and dated to the request; never stored |
 | Memberships | Plans with immutable price versions; subscription lifecycle enforced by the database; member pages; access-check service. **Paid activation waits for verified payments (not available yet)** |
-| Videos, viewing, advertising, payments, rewards, withdrawals, reports, support | Not implemented |
+| Videos | Categories and catalogue with separate processing/publication status; Bunny Stream (direct TUS upload, status sync jobs, short-lived signed playback) or a labelled demo provider; administration console at `/manage/`; membership-gated library at `/videos/`; member dashboard at `/dashboard/`. **Watching is not verified viewing and earns nothing** |
+| Verified viewing, advertising, payments, rewards, withdrawals, reports, support | Not implemented |
 
-Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md), [docs/architecture/audit.md](docs/architecture/audit.md), [docs/architecture/ledger.md](docs/architecture/ledger.md), [docs/architecture/background-processing.md](docs/architecture/background-processing.md), [docs/architecture/memberships.md](docs/architecture/memberships.md).
+Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md), [docs/architecture/audit.md](docs/architecture/audit.md), [docs/architecture/ledger.md](docs/architecture/ledger.md), [docs/architecture/background-processing.md](docs/architecture/background-processing.md), [docs/architecture/memberships.md](docs/architecture/memberships.md), [docs/architecture/videos.md](docs/architecture/videos.md).
 
 ## Local setup (Windows 11)
 
@@ -181,6 +182,8 @@ It must report no `accounts.*` errors. Deployment hardening is completed in Phas
 - Emails are delivered by `run_jobs` (cron); without cron running, no email is sent. Run
   `python manage.py run_jobs` locally to deliver queued email to the console backend.
 - No two-factor authentication for staff yet.
+- Real Bunny Stream playback protection (embed + CDN token authentication) must be verified
+  against a real library before go-live; automated tests never call Bunny.
 - Swahili translations are not written; the interface is English only in practice.
 - Audit protections can be bypassed by the database owner; production needs the role
   separation in `scripts/database/production_roles.example.sql`.

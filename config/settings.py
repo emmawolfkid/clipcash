@@ -89,6 +89,7 @@ MIDDLEWARE = [
     'apps.accounts.middleware.AccountStatusMiddleware',
     'apps.audit.middleware.AuditContextMiddleware',
     'apps.core.middleware.SiteConfigurationMiddleware',
+    'apps.core.csp.ContentSecurityPolicyMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -230,6 +231,26 @@ NOTIFICATIONS_OUTBOX_RETENTION_DAYS = 90
 MEMBERSHIPS_PENDING_DAYS = env.int("DJANGO_MEMBERSHIPS_PENDING_DAYS", default=7)
 MEMBERSHIPS_RENEWAL_WINDOW_DAYS = env.int("DJANGO_MEMBERSHIPS_RENEWAL_WINDOW_DAYS", default=14)
 MEMBERSHIPS_EXPIRING_SOON_DAYS = 7
+# Videos (apps.videos). "demo" works without Bunny (local/demo only); "bunny"
+# needs the four BUNNY_STREAM_* values. See docs/architecture/videos.md.
+VIDEO_PROVIDER = env("VIDEO_PROVIDER", default="demo" if DEBUG else "bunny")
+VIDEO_DEMO_ALLOWED = env.bool("VIDEO_DEMO_ALLOWED", default=False)  # Isolated demo deployments only.
+VIDEO_DEMO_SAMPLE_URL = env("VIDEO_DEMO_SAMPLE_URL", default="")  # A file you own or may use, e.g. /static/videos/sample.mp4
+BUNNY_STREAM_LIBRARY_ID = env("BUNNY_STREAM_LIBRARY_ID", default="")
+BUNNY_STREAM_API_KEY = env("BUNNY_STREAM_API_KEY", default="")
+BUNNY_STREAM_CDN_HOSTNAME = env("BUNNY_STREAM_CDN_HOSTNAME", default="")
+BUNNY_STREAM_TOKEN_SECURITY_KEY = env("BUNNY_STREAM_TOKEN_SECURITY_KEY", default="")
+BUNNY_STREAM_API_BASE = "https://video.bunnycdn.com"
+BUNNY_STREAM_EMBED_BASE = "https://player.mediadelivery.net/embed"
+BUNNY_STREAM_TIMEOUT_SECONDS = 10
+VIDEO_PLAYBACK_TOKEN_SECONDS = env.int("VIDEO_PLAYBACK_TOKEN_SECONDS", default=600)
+VIDEO_THUMBNAIL_TOKEN_SECONDS = 3600
+VIDEO_UPLOAD_AUTH_SECONDS = 3600 * 6
+VIDEO_UPLOAD_MAX_MB = env.int("VIDEO_UPLOAD_MAX_MB", default=4096)
+VIDEO_UPLOAD_CONTENT_TYPES = ("video/mp4", "video/quicktime", "video/webm", "video/x-matroska", "video/x-msvideo")
+VIDEO_UPLOAD_STALE_HOURS = 24
+VIDEO_LIBRARY_PAGE_SIZE = 12
+
 # Free memberships granted by a Super Administrator. Off unless a business
 # policy approves them.
 MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED = env.bool("DJANGO_MEMBERSHIPS_COMPLIMENTARY_GRANTS", default=False)

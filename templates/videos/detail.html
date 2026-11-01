@@ -1,0 +1,33 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{{ video.title }}{% endblock %}
+{% block member_content %}
+<article class="video-detail">
+  <div class="player">
+    {% if playback and playback.kind == "iframe" %}
+      <iframe class="player__frame" src="{{ playback.url }}" title="{{ video.title }}" loading="lazy"
+              allow="accelerometer; gyroscope; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+    {% elif playback and playback.kind == "video" %}
+      <video class="player__frame" src="{{ playback.url }}" controls preload="metadata" playsinline></video>
+    {% elif playback %}
+      <div class="player__message"><p><strong>{% translate "Demo sample" %}</strong></p><p>{% translate "This is a demonstration record. No video file has been configured for demo playback." %}</p></div>
+    {% else %}
+      <div class="player__message">
+        {% if thumbnail %}<img class="player__poster" src="{{ thumbnail }}" alt="">{% endif %}
+        <p>{{ playback_message }}</p>
+        {% if playback_reason == "not_authenticated" %}<a class="button" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">{% translate "Sign in" %}</a>
+        {% elif playback_reason == "no_membership" or playback_reason == "entitlement_missing" %}{% if features.memberships %}<a class="button" href="{% url 'memberships:plans' %}">{% translate "See membership plans" %}</a>{% endif %}
+        {% elif playback_reason == "email_unverified" %}<a class="button" href="{% url 'accounts:verification_required' %}">{% translate "Confirm email" %}</a>{% endif %}
+      </div>
+    {% endif %}
+  </div>
+  <h1 class="page-title">{{ video.title }}</h1>
+  <p class="video-detail__meta">
+    {% if video.category %}<a href="{% url 'videos:category' video.category.slug %}">{{ video.category.name }}</a>{% endif %}
+    {% if video.duration_display %} · {{ video.duration_display }}{% endif %}
+    {% if video.is_demo %} · <span class="badge badge--pending">{% translate "Demo sample" %}</span>{% endif %}
+  </p>
+  {% if video.description %}<p>{{ video.description|linebreaksbr }}</p>{% endif %}
+  <p class="lead">{% translate "Watching requires an active membership that includes this video." %}</p>
+  <ul class="links"><li><a href="{% url 'videos:library' %}">{% translate "Back to videos" %}</a></li></ul>
+</article>
+{% endblock %}

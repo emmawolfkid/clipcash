@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load i18n %}
+{% block main %}
+<div class="app-shell{% if not user.is_authenticated %} app-shell--plain{% endif %}">
+  {% if user.is_authenticated %}
+  <aside class="app-sidebar">
+    <nav aria-label="{% translate 'Member menu' %}">
+      <ul class="app-nav__list">
+        <li><a class="app-nav__link{% if nav == 'dashboard' %} is-current{% endif %}"{% if nav == 'dashboard' %} aria-current="page"{% endif %} href="{% url 'dashboard' %}">{% translate "Dashboard" %}</a></li>
+        {% if features.videos %}<li><a class="app-nav__link{% if nav == 'videos' %} is-current{% endif %}"{% if nav == 'videos' %} aria-current="page"{% endif %} href="{% url 'videos:library' %}">{% translate "Videos" %}</a></li>{% endif %}
+        {% if features.memberships %}<li><a class="app-nav__link{% if nav == 'membership' %} is-current{% endif %}"{% if nav == 'membership' %} aria-current="page"{% endif %} href="{% url 'memberships:mine' %}">{% translate "Membership" %}</a></li>{% endif %}
+        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Advertisements" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Rewards" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Wallet" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Withdrawals" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        <li><a class="app-nav__link" href="{% url 'accounts:profile' %}">{% translate "Profile" %}</a></li>
+        <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit" class="app-nav__link app-nav__button">{% translate "Sign out" %}</button></form></li>
+      </ul>
+    </nav>
+  </aside>
+  {% endif %}
+  <main id="content" class="app-main">
+    {% include "components/messages.html" %}
+    {% block member_content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}
