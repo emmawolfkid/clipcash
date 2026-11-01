@@ -26,13 +26,16 @@ class UserAdmin(BaseUserAdmin):
         "is_active",
     )
 
-    search_fields = ("email", "first_name", "last_name")
+    search_fields = ("email", "phone_number", "first_name", "last_name")
 
+    # Access flags are derived from role and status by the model.
     readonly_fields = (
         "id",
+        "is_active",
+        "is_staff",
+        "is_superuser",
         "date_joined",
         "last_login",
-        "created_at",
         "updated_at",
     )
 
@@ -40,7 +43,7 @@ class UserAdmin(BaseUserAdmin):
         (None, {"fields": ("email", "password")}),
         (
             "Personal Information",
-            {"fields": ("first_name", "last_name")},
+            {"fields": ("first_name", "last_name", "phone_number")},
         ),
         (
             "ClipCash Account",
@@ -64,7 +67,6 @@ class UserAdmin(BaseUserAdmin):
                 "fields": (
                     "last_login",
                     "date_joined",
-                    "created_at",
                     "updated_at",
                 )
             },
@@ -78,12 +80,11 @@ class UserAdmin(BaseUserAdmin):
                 "classes": ("wide",),
                 "fields": (
                     "email",
+                    "phone_number",
                     "password1",
                     "password2",
                     "role",
                     "status",
-                    "is_staff",
-                    "is_active",
                 ),
             },
         ),

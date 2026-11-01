@@ -39,14 +39,15 @@ templates/ static/ docs/ scripts/ tests/
 | Area                          | Status                                                        |
 | ----------------------------- | ------------------------------------------------------------- |
 | Project settings              | Environment-driven; development configuration only            |
-| Custom user model             | Written, with initial migration generated. **Not yet applied.** |
-| Django admin for users        | Registered; hardening pending (Phase 01)                      |
-| Account status enforcement    | **Not implemented**: suspended/pending users can still log in |
+| Custom user model             | Hardened (Phase 01A): normalized email, optional E.164 phone, role/status invariants enforced by the model and database constraints. Initial migration generated. **Not yet applied.** |
+| Django admin for users        | Registered; access flags read-only. Privilege-escalation hardening pending (Phase 01B) |
+| Account status enforcement    | **Partial**: non-ACTIVE accounts fail password authentication, but existing sessions are not ended and no dedicated backend or middleware exists yet (Phase 01B) |
+| Localization                  | English and Swahili configured; no translations written yet   |
 | Registration, login, password reset views | Not implemented                                 |
 | Memberships, videos, viewing, advertising | Not implemented                                 |
 | Payments, rewards, wallets, withdrawals   | Not implemented                                 |
 | Notifications, audit, reports, support    | Not implemented                                 |
-| Automated tests               | None yet                                                      |
+| Automated tests               | Accounts model, manager and phone tests; require PostgreSQL test-database access (see below) |
 | Production deployment config  | Not implemented                                               |
 
 ## Local setup (Windows 11)
@@ -68,11 +69,16 @@ CREATE ROLE clipcash_user WITH LOGIN PASSWORD 'choose-a-strong-password';
 CREATE DATABASE clipcash_db OWNER clipcash_user ENCODING 'UTF8';
 ```
 
-Running the Django test suite requires permission to create the test database. On a
-**local development server only**:
+The test suite runs against PostgreSQL. The preferred least-privilege setup is a
+pre-created test database owned by the application role, reused with `--keepdb`, so the
+role never needs `CREATEDB`:
 
 ```sql
-ALTER ROLE clipcash_user CREATEDB;
+CREATE DATABASE test_clipcash_db OWNER clipcash_user ENCODING 'UTF8';
+```
+
+```powershell
+python manage.py test --keepdb
 ```
 
 Do not grant `CREATEDB` or superuser rights to application roles in production.
