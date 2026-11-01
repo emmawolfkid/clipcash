@@ -4,6 +4,8 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 
+from apps.audit.services import record_business_event
+
 from . import services
 from .forms import AccessChangeFormMixin, AdminLoginForm
 from .models import User
@@ -160,8 +162,11 @@ class UserAdmin(BaseUserAdmin):
         if change:
             services.log_access_change(request.user, obj, old_role=old_role, old_status=old_status)
         else:
-            services.security_log.warning(
-                "account_created_by_staff user=%s actor=%s role=%s", obj.pk, request.user.pk, obj.role
+            record_business_event(
+                "account.created_by_staff",
+                actor=request.user,
+                target=obj,
+                metadata={"role": obj.role, "status": obj.status},
             )
 
     def delete_model(self, request, obj):
@@ -169,7 +174,14 @@ class UserAdmin(BaseUserAdmin):
         services.lock_active_super_admins()
         if obj.pk == request.user.pk or obj.is_last_active_super_admin():
             raise PermissionDenied
-        services.security_log.warning("account_deleted user=%s actor=%s", obj.pk, request.user.pk)
+        # Recorded before deletion so the target snapshot is complete; the
+        # admin delete view runs in one transaction, so both commit together.
+        record_business_event(
+            "account.deleted",
+            actor=request.user,
+            target=obj,
+            metadata={"role": obj.role, "status": obj.status},
+        )
         super().delete_model(request, obj)
 
 

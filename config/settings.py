@@ -86,6 +86,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'apps.accounts.middleware.AccountStatusMiddleware',
+    'apps.audit.middleware.AuditContextMiddleware',
     'apps.core.middleware.SiteConfigurationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -201,6 +202,15 @@ ACCOUNTS_THROTTLE_REQUIRE_SHARED_CACHE = env.bool(
 )
 # Number of trusted reverse proxies in front of Django. 0 = ignore X-Forwarded-For.
 ACCOUNTS_TRUSTED_PROXY_COUNT = env.int("DJANGO_TRUSTED_PROXY_COUNT", default=0)
+
+
+# Audit (apps.audit). IP addresses and user agents are recorded for security
+# investigation; set these to False to stop recording them. Events are kept at
+# least AUDIT_MIN_RETENTION_DAYS; the retention policy itself is documented in
+# docs/architecture/audit.md and applied with the audit_purge command.
+AUDIT_RECORD_IP_ADDRESS = env.bool("DJANGO_AUDIT_RECORD_IP_ADDRESS", default=True)
+AUDIT_RECORD_USER_AGENT = env.bool("DJANGO_AUDIT_RECORD_USER_AGENT", default=True)
+AUDIT_MIN_RETENTION_DAYS = 365
 
 
 # Logging. Security events carry account ids and IPs, never emails, passwords

@@ -109,8 +109,8 @@ reusable for future sensitive admin screens.
 
 ## Future audit integration
 
-Configuration changes are currently written to the `clipcash.security` log as
-`site_configuration_changed actor=<id> version=<n> fields=<names>` (field names
-only, no values). When the audit app lands (Phase 02B), the same call site in
-`update_site_configuration()` will also write a permanent audit event holding
-the actor, version and before/after values inside the same transaction.
+Implemented in Phase 02B. `update_site_configuration()` records one
+`config.updated` business event per version, in the same transaction, holding
+the actor, version, before/after values, changed feature flags and any
+maintenance-mode change (idempotency key `config.updated:<version>`). Rejected
+attempts record `config.update.denied`. See [audit.md](audit.md).

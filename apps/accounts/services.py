@@ -7,9 +7,10 @@ Lifecycle:
     ACTIVE <-> SUSPENDED, ACTIVE/SUSPENDED/PENDING -> DISABLED,
     DISABLED -> ACTIVE (Super Administrators only). Nothing returns to PENDING.
 
-Security events are written to the ``clipcash.security`` logger with account ids
-only (no email addresses, passwords or tokens). Permanent audit records arrive
-with the audit app in Phase 02.
+Auditable actions are recorded through apps.audit.services: business events
+inside the same transaction as the change, security events (denials) so that
+they survive the rollback of the rejected change. No passwords or tokens are
+ever recorded.
 """
 
 import logging
@@ -24,6 +25,13 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
+
+from apps.audit.services import (
+    DENIED,
+    SUCCESS,
+    record_business_event,
+    record_security_event,
+)
 
 from .tokens import verification_token_generator
 
@@ -109,21 +117,26 @@ def register(*, email, request):
         try:
             with transaction.atomic():
                 user = User.objects.create_user(email, password=None, role=Role.MEMBER)
+                record_business_event("account.registration.started", actor=None, target=user)
         except (IntegrityError, ValidationError):
             # A concurrent request registered the same address first.
             user = User.objects.filter(email=email).first()
             if user is None:
                 raise
         else:
-            security_log.info("registration_started user=%s", user.pk)
             send_verification_email(user, request)
             return
 
+    record_security_event(
+        "account.registration.repeated",
+        outcome=SUCCESS,
+        actor=None,
+        target=user,
+        metadata={"account_status": user.status},
+    )
     if user.status == Status.PENDING:
-        security_log.info("registration_retried user=%s", user.pk)
         send_verification_email(user, request)
     elif user.status == Status.ACTIVE:
-        security_log.info("registration_existing_account user=%s", user.pk)
         _send_email(
             "already_registered",
             user.email,
@@ -132,8 +145,6 @@ def register(*, email, request):
                 "reset_url": request.build_absolute_uri(reverse("accounts:password_reset")),
             },
         )
-    else:
-        security_log.info("registration_blocked_account user=%s", user.pk)
 
 
 def request_verification_email(email, request):
@@ -166,7 +177,7 @@ def activate_account(user_pk, token, password):
         user.email_verified = True
         user.status = Status.ACTIVE
         user.save()
-    security_log.info("account_activated user=%s", user.pk)
+        record_business_event("account.activated", actor=user, target=user)
     return user
 
 
@@ -183,7 +194,7 @@ def confirm_email(user_pk, token):
             return None
         user.email_verified = True
         user.save(update_fields=["email_verified", "updated_at"])
-    security_log.info("email_confirmed user=%s", user.pk)
+        record_business_event("account.email_confirmed", actor=user, target=user)
     return user
 
 
@@ -211,11 +222,13 @@ def validate_access_change(actor, user, *, role, status):
     ``user`` must hold its stored (pre-change) values; an unsaved ``user`` means
     the account is being created.
     """
-    if not (actor.is_authenticated and actor.is_active and actor.is_staff):
+    creating = user._state.adding
+    if not (actor is not None and actor.is_authenticated and actor.is_active and actor.is_staff):
+        _record_access_denial(actor, user, role, status, ["not_staff"])
         raise ValidationError(_("You are not allowed to manage accounts."), code="permission_denied")
 
-    creating = user._state.adding
     errors = []
+    reasons = []
 
     if not creating and user.role == Role.SUPER_ADMIN:
         lock_active_super_admins()
@@ -223,38 +236,58 @@ def validate_access_change(actor, user, *, role, status):
     if creating:
         if role != Role.MEMBER and not actor.is_superuser:
             errors.append(_("Only Super Administrators can create staff accounts."))
+            reasons.append("create_staff_requires_super_admin")
         if status not in CREATION_STATUSES:
             errors.append(_("New accounts must be Pending or Active."))
+            reasons.append("invalid_creation_status")
     else:
         if not actor.is_superuser and (user.role != Role.MEMBER or user.pk == actor.pk):
             errors.append(_("Only Super Administrators can manage staff accounts or their own account."))
+            reasons.append("staff_or_self_requires_super_admin")
         if role != user.role and not actor.is_superuser:
             errors.append(_("Only Super Administrators can change roles."))
+            reasons.append("role_change_requires_super_admin")
         if status != user.status:
             if status not in STATUS_TRANSITIONS[user.status]:
                 errors.append(
                     _("An account cannot move from %(old)s to %(new)s.")
                     % {"old": Status(user.status).label, "new": Status(status).label}
                 )
+                reasons.append("invalid_status_transition")
             elif user.status == Status.DISABLED and not actor.is_superuser:
                 errors.append(_("Only Super Administrators can reactivate disabled accounts."))
+                reasons.append("reactivation_requires_super_admin")
 
     if errors:
+        _record_access_denial(actor, user, role, status, reasons)
         raise ValidationError(errors, code="permission_denied")
 
 
+def _record_access_denial(actor, user, role, status, reasons):
+    record_security_event(
+        "account.access_change.denied",
+        outcome=DENIED,
+        actor=actor,
+        target=None if user._state.adding else user,
+        metadata={"requested_role": role, "requested_status": status, "reasons": reasons},
+    )
+
+
 def log_access_change(actor, user, *, old_role, old_status):
+    """Record role/status changes. Call inside the transaction that saved them."""
     if old_role != user.role:
-        security_log.warning(
-            "role_changed user=%s actor=%s from=%s to=%s", user.pk, actor.pk, old_role, user.role
+        record_business_event(
+            "account.role_changed",
+            actor=actor,
+            target=user,
+            metadata={"from_role": old_role, "to_role": user.role},
         )
     if old_status != user.status:
-        security_log.warning(
-            "status_changed user=%s actor=%s from=%s to=%s",
-            user.pk,
-            actor.pk,
-            old_status,
-            user.status,
+        record_business_event(
+            "account.status_changed",
+            actor=actor,
+            target=user,
+            metadata={"from_status": old_status, "to_status": user.status},
         )
 
 

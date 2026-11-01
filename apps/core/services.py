@@ -17,6 +17,8 @@ from django.core.exceptions import ValidationError
 from django.db import DatabaseError, transaction
 from django.utils.translation import gettext_lazy as _
 
+from apps.audit.services import DENIED, record_business_event, record_security_event
+
 from .models import SITE_CONFIGURATION_ID, SiteConfiguration
 
 security_log = logging.getLogger("clipcash.security")
@@ -104,10 +106,12 @@ def update_site_configuration(actor, *, expected_version, changes):
     ``expected_version`` is not the current version (someone else saved first).
     """
     if not can_change_site_configuration(actor):
+        _record_denial(actor, changes, "not_super_admin")
         raise PermissionError("Only active Super Administrators can change site configuration.")
 
     unknown = set(changes) - EDITABLE_FIELDS
     if unknown:
+        _record_denial(actor, changes, "not_editable")
         raise ValidationError(
             _("These settings cannot be changed here: %(fields)s.")
             % {"fields": ", ".join(sorted(unknown))},
@@ -136,14 +140,46 @@ def update_site_configuration(actor, *, expected_version, changes):
         config.updated_by = actor
         config.save()
 
+        from .features import FEATURES  # Local import: features imports this module.
+
+        flag_fields = {f.config_field for f in FEATURES.values() if f.config_field}
+        metadata = {
+            "version": config.version,
+            "fields": changed,
+            "changes": {name: _change(before[name], getattr(config, name)) for name in changed},
+            "feature_flags": [name for name in changed if name in flag_fields],
+        }
+        if "maintenance_mode" in changed:
+            metadata["maintenance_mode"] = _change(before["maintenance_mode"], config.maintenance_mode)
+        # One event per version: commits with the change, never duplicated.
+        record_business_event(
+            "config.updated",
+            actor=actor,
+            target=config,
+            metadata=metadata,
+            idempotency_key=f"config.updated:{config.version}",
+        )
+
         # Drop the cache now (this process) and again after commit (others).
         invalidate_site_configuration_cache()
         transaction.on_commit(invalidate_site_configuration_cache)
 
-    security_log.warning(
-        "site_configuration_changed actor=%s version=%s fields=%s",
-        actor.pk,
-        config.version,
-        ",".join(changed),
-    )
     return config
+
+
+def _change(old, new):
+    """Before/after values for the audit record (configuration is not secret)."""
+
+    def shorten(value):
+        return value[:200] if isinstance(value, str) else value
+
+    return {"from": shorten(old), "to": shorten(new)}
+
+
+def _record_denial(actor, changes, reason):
+    record_security_event(
+        "config.update.denied",
+        outcome=DENIED,
+        actor=actor if getattr(actor, "is_authenticated", False) else None,
+        metadata={"fields": sorted(str(name)[:64] for name in changes), "reason": reason},
+    )

@@ -104,7 +104,7 @@ limits fail closed on cache errors. `X-Forwarded-For` is ignored unless
 
 ## Security logging
 
-`clipcash.security` records sign-in, registration, activation, password and
-access-change events with account ids and IP addresses only, never email
-addresses, passwords or tokens. Permanent audit records are planned for the
-audit app in Phase 02.
+Sign-in, registration, activation, password and access-change events are
+permanent audit records (see [audit.md](audit.md)); each also writes one
+`clipcash.security` log line with ids and codes only. Registration and email
+request throttling remain log-only operational signals.

@@ -1,11 +1,11 @@
-import logging
-
 from django import forms
 from django.contrib.admin.forms import AdminAuthenticationForm
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+
+from apps.audit.services import DENIED, FAILURE, SUCCESS, hash_identifier, record_security_event
 
 from . import services
 from .throttling import (
@@ -14,8 +14,6 @@ from .throttling import (
     LOGIN_FAILURES_PER_IP,
     client_ip,
 )
-
-security_log = logging.getLogger("clipcash.security")
 
 User = get_user_model()
 
@@ -43,17 +41,20 @@ class RegistrationForm(forms.Form):
 
 class ThrottledLoginMixin:
     throttled_message = _("Too many failed sign-in attempts. Please wait a few minutes and try again.")
+    interface = "web"
 
     def clean(self):
         account = User.objects.normalize_email(self.cleaned_data.get("username"))
         ip = client_ip(self.request)
+        # Never store what was typed: people sometimes type a password here.
+        identifier = {"interface": self.interface, "identifier_hash": hash_identifier(account)}
 
         if (
             LOGIN_FAILURES_PER_ACCOUNT_IP.is_limited(account, ip)
             or LOGIN_FAILURES_PER_ACCOUNT.is_limited(account)
             or LOGIN_FAILURES_PER_IP.is_limited(ip)
         ):
-            security_log.warning("login_throttled ip=%s", ip)
+            record_security_event("auth.login.throttled", outcome=DENIED, metadata=identifier)
             raise ValidationError(self.throttled_message, code="throttled")
 
         try:
@@ -63,13 +64,25 @@ class ThrottledLoginMixin:
                 LOGIN_FAILURES_PER_ACCOUNT_IP.hit(account, ip)
                 LOGIN_FAILURES_PER_ACCOUNT.hit(account)
             LOGIN_FAILURES_PER_IP.hit(ip)
-            security_log.warning("login_failed ip=%s", ip)
+            target = User.objects.filter(email=account).first() if account else None
+            record_security_event(
+                "auth.login.failed",
+                outcome=FAILURE,
+                target=target,
+                metadata={**identifier, "account_exists": target is not None},
+            )
             raise
 
         user = self.get_user()
         if user is not None:
             LOGIN_FAILURES_PER_ACCOUNT_IP.reset(account, ip)
-            security_log.info("login_succeeded user=%s ip=%s", user.pk, ip)
+            record_security_event(
+                "auth.login.succeeded",
+                outcome=SUCCESS,
+                actor=user,
+                target=user,
+                metadata={"interface": self.interface},
+            )
         return cleaned_data
 
 
@@ -78,7 +91,7 @@ class LoginForm(ThrottledLoginMixin, AuthenticationForm):
 
 
 class AdminLoginForm(ThrottledLoginMixin, AdminAuthenticationForm):
-    pass
+    interface = "admin"
 
 
 class EmailRequestForm(forms.Form):

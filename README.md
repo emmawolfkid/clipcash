@@ -4,8 +4,8 @@ ClipCash is a planned Tanzanian video membership platform with advertiser-funded
 Members pay for access to video content; any rewards are funded only by genuine, available
 advertiser campaign budgets.
 
-> **Status: core foundation (Phases 01–02A).** Accounts, sign-in, account security, site
-> configuration, feature flags and money conventions are implemented. Video, membership, payment, reward and withdrawal features are **not**
+> **Status: core foundation and audit (Phases 01–02A).** Accounts, sign-in, account security, site
+> configuration, feature flags, money conventions and permanent audit records are implemented. Video, membership, payment, reward and withdrawal features are **not**
 > implemented. Real-money rewards, payments and payouts must remain disabled until legal,
 > payment-provider and operational requirements are satisfied. Membership fees are not an
 > investment and do not guarantee any return.
@@ -28,6 +28,7 @@ config/          Settings, URLs, WSGI/ASGI, PostgreSQL-only test runner
 apps/accounts/   Users, authentication, account security (see docs/architecture/authentication.md)
 apps/core/      Base models, site configuration, feature flags, money (see docs/architecture/core.md)
 apps/administration/  Admin branding and configuration admin
+apps/audit/     Append-only audit events, audit workspace, export/purge (see docs/architecture/audit.md)
 apps/<others>/   Registered application stubs (no models or views yet)
 templates/       base.html, components/, accounts/, core/, error pages
 static/css/      Site stylesheet
@@ -51,10 +52,10 @@ requirements/    Pinned dependencies (base.txt, dev.txt)
 | Site configuration | Single database row editable only by ACTIVE Super Administrators: branding, support contacts, regional defaults, maintenance mode, business feature flags; validated and versioned |
 | Feature flags | Registration (on), memberships / videos / advertisers (off); real-money rewards, live payments and withdrawals **locked off in code** |
 | Money | Integer whole-shilling TZS amounts, immutable `Money` type, no floats; no balances or ledger yet |
-| Security logging | Console `clipcash.security` logger; permanent audit records planned for Phase 02B |
+| Audit | Append-only audit events (database trigger + ORM guards) for sign-in, account, access-control and configuration actions; read-only admin workspace; export and retention commands |
 | Memberships, videos, viewing, advertising, payments, rewards, wallets, withdrawals, notifications, audit, reports, support | Not implemented |
 
-Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md).
+Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md), [docs/architecture/audit.md](docs/architecture/audit.md).
 
 ## Local setup (Windows 11)
 
@@ -110,6 +111,7 @@ by Git and must never be committed. All options are listed in `.env.example`:
 | `DJANGO_SECURE_SSL_REDIRECT`, `DJANGO_SECURE_HSTS_SECONDS`, `DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS`, `DJANGO_SECURE_PROXY_SSL_HEADER` | off | HTTPS hardening for production |
 | `DJANGO_EMAIL_BACKEND`, `DJANGO_DEFAULT_FROM_EMAIL` | console backend | Outgoing email |
 | `DJANGO_SECURITY_LOG_LEVEL` | `INFO` | `clipcash.security` log level |
+| `DJANGO_AUDIT_RECORD_IP_ADDRESS`, `DJANGO_AUDIT_RECORD_USER_AGENT` | `True` | Store client IP / user agent on audit events |
 
 ### 4. Tests (PostgreSQL only)
 
@@ -159,7 +161,8 @@ It must report no `accounts.*` errors. Deployment hardening is completed in Phas
 - Emails are sent during the request; a background task system is a Phase 02 decision.
 - No two-factor authentication for staff yet.
 - Swahili translations are not written; the interface is English only in practice.
-- Security events are logged to the console only until the Phase 02 audit app.
+- Audit protections can be bypassed by the database owner; production needs the role
+  separation in `scripts/database/production_roles.example.sql`.
 
 ## Development conventions
 

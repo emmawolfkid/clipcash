@@ -260,8 +260,11 @@ class AdminServerSideValidationTests(AccountsTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(User.objects.filter(email="x@example.com").exists())
 
-    def test_admin_changes_are_logged(self):
+    def test_admin_changes_are_audited(self):
+        from apps.audit.models import AuditEvent
+
         member = make_user()
-        with self.assertLogs("clipcash.security", "WARNING") as logs:
-            self.post_change(self.root, member, role=User.Role.CONTENT_MANAGER)
-        self.assertTrue(any("role_changed" in line for line in logs.output))
+        self.post_change(self.root, member, role=User.Role.CONTENT_MANAGER)
+        event = AuditEvent.objects.get(action="account.role_changed")
+        self.assertEqual((event.actor_id, event.source), (self.root.pk, "ADMIN"))
+        self.assertEqual(event.metadata, {"from_role": "MEMBER", "to_role": "CONTENT_MANAGER"})

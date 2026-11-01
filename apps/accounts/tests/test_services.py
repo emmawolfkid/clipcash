@@ -98,14 +98,20 @@ class ChangeAccessTests(AccountsTestCase):
         self.root.refresh_from_db()
         self.assertEqual((self.root.role, self.root.status), (Role.SUPER_ADMIN, Status.ACTIVE))
 
-    def test_changes_are_logged_without_email(self):
-        with self.assertLogs("clipcash.security", "WARNING") as logs:
+    def test_changes_are_audited_and_log_lines_omit_email(self):
+        from apps.audit.models import AuditEvent
+
+        with self.assertLogs("clipcash.security", "INFO") as logs:
             services.change_status(self.root, self.member, Status.SUSPENDED)
             services.assign_role(self.root, self.cm, Role.MEMBER)
         output = "\n".join(logs.output)
-        self.assertIn("status_changed", output)
-        self.assertIn("role_changed", output)
+        self.assertIn("action=account.status_changed", output)
+        self.assertIn("action=account.role_changed", output)
         self.assertNotIn("@example.com", output)
+        status_event = AuditEvent.objects.get(action="account.status_changed")
+        self.assertEqual(status_event.actor_id, self.root.pk)
+        self.assertEqual(status_event.target_id, str(self.member.pk))
+        self.assertEqual(status_event.metadata, {"from_status": "ACTIVE", "to_status": "SUSPENDED"})
 
     def test_role_change_syncs_groups(self):
         services.assign_role(self.root, self.member, Role.CONTENT_MANAGER)

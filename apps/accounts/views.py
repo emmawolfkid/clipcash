@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import INTERNAL_RESET_SESSION_TOKEN
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
@@ -12,6 +13,13 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import FormView, TemplateView
 
+from apps.audit.services import (
+    DENIED,
+    SUCCESS,
+    hash_identifier,
+    record_business_event,
+    record_security_event,
+)
 from apps.core import features
 
 from . import services
@@ -200,7 +208,7 @@ class LogoutView(auth_views.LogoutView):
 
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            security_log.info("logout user=%s", request.user.pk)
+            record_security_event("auth.logout", outcome=SUCCESS, target=request.user)
         return super().post(request, *args, **kwargs)
 
 
@@ -220,9 +228,15 @@ class PasswordResetView(auth_views.PasswordResetView):
     success_url = reverse_lazy("accounts:password_reset_done")
 
     def form_valid(self, form):
-        if not _email_request_allowed(self.request, form.cleaned_data["email"]):
+        email = form.cleaned_data["email"]
+        allowed = _email_request_allowed(self.request, email)
+        record_security_event(
+            "auth.password_reset.requested",
+            outcome=SUCCESS if allowed else DENIED,
+            metadata={"identifier_hash": hash_identifier(email), "throttled": not allowed},
+        )
+        if not allowed:
             return redirect(self.success_url)  # Same response; nothing is sent.
-        security_log.info("password_reset_requested ip=%s", client_ip(self.request))
         return super().form_valid(form)
 
 
@@ -241,8 +255,10 @@ class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
         return user if user is not None and user.status == User.Status.ACTIVE else None
 
     def form_valid(self, form):
-        security_log.info("password_reset_completed user=%s", form.user.pk)
-        return super().form_valid(form)
+        with transaction.atomic():
+            response = super().form_valid(form)  # Saves the new password.
+            record_business_event("auth.password_reset.completed", actor=form.user, target=form.user)
+        return response
 
 
 class PasswordResetCompleteView(auth_views.PasswordResetCompleteView):
@@ -256,8 +272,10 @@ class PasswordChangeView(auth_views.PasswordChangeView):
     success_url = reverse_lazy("accounts:password_change_done")
 
     def form_valid(self, form):
-        security_log.info("password_changed user=%s", self.request.user.pk)
-        return super().form_valid(form)
+        with transaction.atomic():
+            response = super().form_valid(form)  # Saves the password, keeps this session.
+            record_business_event("auth.password.changed", target=self.request.user)
+        return response
 
 
 class PasswordChangeDoneView(auth_views.PasswordChangeDoneView):

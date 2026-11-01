@@ -155,12 +155,31 @@ class UpdateServiceTests(ConfigTestCase):
         self.update(self.root, registration_enabled=False)
         self.assertFalse(services.get_site_configuration().registration_enabled)
 
-    def test_change_logged_without_values(self):
-        with self.assertLogs("clipcash.security", "WARNING") as logs:
-            self.update(self.root, support_email="help@clipcash.example")
-        output = "\n".join(logs.output)
-        self.assertIn("fields=support_email", output)
-        self.assertNotIn("help@clipcash.example", output)
+    def test_change_audited_once_per_version_and_log_line_omits_values(self):
+        from apps.audit.models import AuditEvent
+
+        with self.assertLogs("clipcash.security", "INFO") as logs:
+            self.update(self.root, support_email="help@clipcash.example", maintenance_mode=True,
+                        videos_enabled=True)
+        self.assertNotIn("help@clipcash.example", "\n".join(logs.output))
+
+        event = AuditEvent.objects.get(action="config.updated")
+        self.assertEqual(event.idempotency_key, "config.updated:2")
+        self.assertEqual(event.metadata["fields"], ["maintenance_mode", "support_email", "videos_enabled"])
+        self.assertEqual(event.metadata["feature_flags"], ["videos_enabled"])
+        self.assertEqual(event.metadata["maintenance_mode"], {"from": False, "to": True})
+        self.assertEqual(event.metadata["changes"]["support_email"], {"from": "", "to": "help@clipcash.example"})
+
+    def test_denied_change_audited(self):
+        from apps.audit.context import audit_scope
+        from apps.audit.models import AuditEvent
+
+        cm = staff(User.Role.CONTENT_MANAGER, "cm@example.com")
+        with audit_scope(), self.assertRaises(PermissionError):
+            self.update(cm, maintenance_mode=True)
+        event = AuditEvent.objects.get(action="config.update.denied")
+        self.assertEqual((event.outcome, event.actor_id), ("DENIED", cm.pk))
+        self.assertEqual(event.metadata, {"fields": ["maintenance_mode"], "reason": "not_super_admin"})
 
 
 @skipUnless(connection.vendor == "postgresql", "Row locking is verified on PostgreSQL.")
