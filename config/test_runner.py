@@ -57,3 +57,10 @@ class PostgreSQLTestRunner(DiscoverRunner):
         for name in ROLE_GROUP_NAMES.values():
             Group.objects.get_or_create(name=name)
         apps.get_model("core", "SiteConfiguration").objects.get_or_create(id=SITE_CONFIGURATION_ID)
+
+        # Platform ledger accounts (chart of accounts only; never entries).
+        import importlib
+
+        importlib.import_module("apps.wallets.migrations.0003_platform_accounts").create_platform_accounts(
+            apps, None
+        )

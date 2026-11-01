@@ -35,5 +35,15 @@ ALTER DEFAULT PRIVILEGES FOR ROLE clipcash_owner IN SCHEMA public
 ALTER DEFAULT PRIVILEGES FOR ROLE clipcash_owner IN SCHEMA public
     GRANT USAGE, SELECT ON SEQUENCES TO clipcash_app;
 
--- Re-run the audit REVOKE after any migration that recreates audit_auditevent.
--- Future append-only tables (e.g. ledger journal entries) get the same treatment.
+-- Ledger: journal entries and lines are append-only; accounts may only have
+-- their status/name changed (balances are maintained by database triggers).
+REVOKE UPDATE, DELETE, TRUNCATE ON wallets_journalentry, wallets_journalline FROM clipcash_app;
+GRANT SELECT, INSERT ON wallets_journalentry, wallets_journalline TO clipcash_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON wallets_ledgeraccount FROM clipcash_app;
+GRANT SELECT, INSERT ON wallets_ledgeraccount TO clipcash_app;
+GRANT UPDATE (status, name, updated_at) ON wallets_ledgeraccount TO clipcash_app;
+-- The balance trigger runs with the inserting role's rights, so it also needs:
+GRANT UPDATE (debit_balance) ON wallets_ledgeraccount TO clipcash_app;
+-- (Direct balance edits are still rejected by the ledger_account_guard trigger.)
+
+-- Re-run these REVOKEs after any migration that recreates these tables.

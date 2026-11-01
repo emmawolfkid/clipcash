@@ -4,8 +4,8 @@ ClipCash is a planned Tanzanian video membership platform with advertiser-funded
 Members pay for access to video content; any rewards are funded only by genuine, available
 advertiser campaign budgets.
 
-> **Status: core foundation and audit (Phases 01–02A).** Accounts, sign-in, account security, site
-> configuration, feature flags, money conventions and permanent audit records are implemented. Video, membership, payment, reward and withdrawal features are **not**
+> **Status: core, audit and ledger foundations (Phases 01–02A).** Accounts, sign-in, account security, site
+> configuration, feature flags, money conventions, permanent audit records and the double-entry ledger foundation are implemented. Video, membership, payment, reward and withdrawal features are **not**
 > implemented. Real-money rewards, payments and payouts must remain disabled until legal,
 > payment-provider and operational requirements are satisfied. Membership fees are not an
 > investment and do not guarantee any return.
@@ -29,6 +29,7 @@ apps/accounts/   Users, authentication, account security (see docs/architecture/
 apps/core/      Base models, site configuration, feature flags, money (see docs/architecture/core.md)
 apps/administration/  Admin branding and configuration admin
 apps/audit/     Append-only audit events, audit workspace, export/purge (see docs/architecture/audit.md)
+apps/wallets/   Double-entry ledger: chart of accounts, posting service, DB integrity (see docs/architecture/ledger.md)
 apps/<others>/   Registered application stubs (no models or views yet)
 templates/       base.html, components/, accounts/, core/, error pages
 static/css/      Site stylesheet
@@ -53,9 +54,10 @@ requirements/    Pinned dependencies (base.txt, dev.txt)
 | Feature flags | Registration (on), memberships / videos / advertisers (off); real-money rewards, live payments and withdrawals **locked off in code** |
 | Money | Integer whole-shilling TZS amounts, immutable `Money` type, no floats; no balances or ledger yet |
 | Audit | Append-only audit events (database trigger + ORM guards) for sign-in, account, access-control and configuration actions; read-only admin workspace; export and retention commands |
-| Memberships, videos, viewing, advertising, payments, rewards, wallets, withdrawals, notifications, audit, reports, support | Not implemented |
+| Ledger | Double-entry journal with database-enforced balance, immutability, overdraft protection and funding separation; read-only admin. **All posting types locked off: no real money, balances, rewards or withdrawals** |
+| Memberships, videos, viewing, advertising, payments, rewards, withdrawals, notifications, reports, support | Not implemented |
 
-Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md), [docs/architecture/audit.md](docs/architecture/audit.md).
+Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md), [docs/architecture/audit.md](docs/architecture/audit.md), [docs/architecture/ledger.md](docs/architecture/ledger.md).
 
 ## Local setup (Windows 11)
 

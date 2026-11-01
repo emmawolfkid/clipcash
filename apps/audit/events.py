@@ -24,6 +24,7 @@ class Category:
     AUTHORIZATION = "AUTHORIZATION"
     CONFIGURATION = "CONFIGURATION"
     AUDIT = "AUDIT"
+    LEDGER = "LEDGER"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -31,6 +32,7 @@ class Category:
         (AUTHORIZATION, "Authorization"),
         (CONFIGURATION, "Configuration"),
         (AUDIT, "Audit"),
+        (LEDGER, "Ledger"),
     ]
 
 
@@ -81,6 +83,14 @@ EVENT_TYPES = {
         # Audit administration
         _event("audit.exported", Category.AUDIT, SECURITY, ["count", "start", "end"]),
         _event("audit.purged", Category.AUDIT, BUSINESS, ["count", "before"]),
+        # Financial ledger (amounts are whole shillings; never payment credentials)
+        _event("ledger.account.opened", Category.LEDGER, BUSINESS, ["account_type", "scope_type"]),
+        _event("ledger.account.status_changed", Category.LEDGER, BUSINESS, ["from_status", "to_status"]),
+        _event("ledger.entry.posted", Category.LEDGER, BUSINESS,
+               ["posting_type", "total_amount", "line_count", "source_type"]),
+        _event("ledger.entry.reversed", Category.LEDGER, BUSINESS,
+               ["posting_type", "total_amount", "original_entry"]),
+        _event("ledger.posting.rejected", Category.LEDGER, SECURITY, ["posting_type", "reason", "source_type"]),
     )
 }
 
