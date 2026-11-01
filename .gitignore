@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local databases
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3
+
+# Logs
+*.log
+logs/*
+!logs/.gitkeep
+
+# Uploaded media
+media/*
+!media/.gitkeep
+
+# Static build output
+staticfiles/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# IDE and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.swp

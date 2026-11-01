@@ -1,0 +1,4 @@
+# Local development dependencies.
+# No development-only tools are installed yet; add them here, pinned, when adopted.
+
+-r base.txt

@@ -1,0 +1,10 @@
+# Runtime dependencies. Versions match the verified local environment (Python 3.13).
+
+Django==5.2.18
+django-environ==0.14.0
+psycopg[binary]==3.3.6
+
+# Pinned transitive dependencies
+asgiref==3.13.0
+sqlparse==0.6.0
+tzdata==2026.6
