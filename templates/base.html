@@ -4,14 +4,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}ClipCash{% endblock %} · ClipCash</title>
+  <title>{% block title %}{{ site_config.platform_name|default:"ClipCash" }}{% endblock %} · {{ site_config.platform_name|default:"ClipCash" }}</title>
   <link rel="stylesheet" href="{% static 'css/clipcash.css' %}">
 </head>
 <body>
   <a class="skip-link" href="#content">{% translate "Skip to content" %}</a>
   <header class="site-header">
     <div class="site-header__inner">
-      <a class="brand" href="{% if user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}">ClipCash</a>
+      <a class="brand" href="{% if user.is_authenticated %}{% url 'accounts:profile' %}{% else %}{% url 'accounts:login' %}{% endif %}">{{ site_config.platform_name|default:"ClipCash" }}</a>
       {% if request %}{# Error pages rendered without a request get no forms. #}
       <nav class="site-nav" aria-label="{% translate 'Account' %}">
         {% if user.is_authenticated %}
@@ -21,7 +21,7 @@
           </form>
         {% else %}
           <a href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a>
-          <a href="{% url 'accounts:register' %}">{% translate "Register" %}</a>
+          {% if features.registration %}<a href="{% url 'accounts:register' %}">{% translate "Register" %}</a>{% endif %}
         {% endif %}
         <form class="language-form" method="post" action="{% url 'set_language' %}">{% csrf_token %}
           <input name="next" type="hidden" value="{{ request.get_full_path }}">
@@ -50,6 +50,10 @@
     </section>
   </main>
 
-  <footer class="site-footer">ClipCash</footer>
+  <footer class="site-footer">
+    {{ site_config.company_name|default:site_config.platform_name|default:"ClipCash" }}
+    {% if site_config.support_email %} · <a href="mailto:{{ site_config.support_email }}">{{ site_config.support_email }}</a>{% endif %}
+    {% if site_config.support_phone %} · <a href="tel:{{ site_config.support_phone }}">{{ site_config.support_phone }}</a>{% endif %}
+  </footer>
 </body>
 </html>

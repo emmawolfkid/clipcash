@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Registration closed" %}{% endblock %}
+{% block content %}
+<h1>{% translate "Registration closed" %}</h1>
+<p>{% translate "New accounts cannot be created at the moment. Please try again later." %}</p>
+<ul class="links">
+  <li><a href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a></li>
+</ul>
+{% endblock %}

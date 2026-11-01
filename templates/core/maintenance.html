@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Maintenance" %}{% endblock %}
+{% block content %}
+<h1>{% translate "We will be back soon" %}</h1>
+{% if config.maintenance_message %}
+  <p>{{ config.maintenance_message }}</p>
+{% else %}
+  <p>{% blocktranslate with name=config.platform_name %}{{ name }} is undergoing maintenance. Please try again later.{% endblocktranslate %}</p>
+{% endif %}
+{% endblock %}

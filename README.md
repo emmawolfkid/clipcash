@@ -4,8 +4,8 @@ ClipCash is a planned Tanzanian video membership platform with advertiser-funded
 Members pay for access to video content; any rewards are funded only by genuine, available
 advertiser campaign budgets.
 
-> **Status: authentication foundation (Phase 01).** Accounts, sign-in and account security
-> are implemented. Video, membership, payment, reward and withdrawal features are **not**
+> **Status: core foundation (Phases 01–02A).** Accounts, sign-in, account security, site
+> configuration, feature flags and money conventions are implemented. Video, membership, payment, reward and withdrawal features are **not**
 > implemented. Real-money rewards, payments and payouts must remain disabled until legal,
 > payment-provider and operational requirements are satisfied. Membership fees are not an
 > investment and do not guarantee any return.
@@ -26,8 +26,10 @@ advertiser campaign budgets.
 ```
 config/          Settings, URLs, WSGI/ASGI, PostgreSQL-only test runner
 apps/accounts/   Users, authentication, account security (see docs/architecture/authentication.md)
+apps/core/      Base models, site configuration, feature flags, money (see docs/architecture/core.md)
+apps/administration/  Admin branding and configuration admin
 apps/<others>/   Registered application stubs (no models or views yet)
-templates/       base.html, components/, accounts/, error pages
+templates/       base.html, components/, accounts/, core/, error pages
 static/css/      Site stylesheet
 scripts/database/  Reviewed PostgreSQL provisioning scripts
 docs/            Architecture and security documentation
@@ -46,10 +48,13 @@ requirements/    Pinned dependencies (base.txt, dev.txt)
 | Roles | SUPER_ADMIN, CONTENT_MANAGER, MEMBER with synced Django Groups; centralized role/status service; admin privilege-escalation protections |
 | Rate limiting | Cache-backed; shared cache required (startup check) when `DEBUG` is off |
 | Localization | English and Swahili selectable; strings marked for translation. **No Swahili translations yet** (requires GNU gettext and review) |
-| Security logging | Console `clipcash.security` logger; permanent audit records planned for Phase 02 |
+| Site configuration | Single database row editable only by ACTIVE Super Administrators: branding, support contacts, regional defaults, maintenance mode, business feature flags; validated and versioned |
+| Feature flags | Registration (on), memberships / videos / advertisers (off); real-money rewards, live payments and withdrawals **locked off in code** |
+| Money | Integer whole-shilling TZS amounts, immutable `Money` type, no floats; no balances or ledger yet |
+| Security logging | Console `clipcash.security` logger; permanent audit records planned for Phase 02B |
 | Memberships, videos, viewing, advertising, payments, rewards, wallets, withdrawals, notifications, audit, reports, support | Not implemented |
 
-Details: [docs/architecture/authentication.md](docs/architecture/authentication.md).
+Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md).
 
 ## Local setup (Windows 11)
 
@@ -109,13 +114,16 @@ by Git and must never be committed. All options are listed in `.env.example`:
 ### 4. Tests (PostgreSQL only)
 
 ```powershell
-python manage.py test apps.accounts --keepdb
+python manage.py test apps --keepdb
 ```
 
 The project test runner refuses to run on anything other than PostgreSQL, refuses test
 database names that are not a distinct `test_*` database, and verifies the live connection
 before running. `--keepdb` reuses the provisioned database, so no `CREATEDB` privilege is
-needed. Concurrency tests run only on PostgreSQL.
+needed. Always pass `--keepdb`: without it Django tries to drop and re-create the test
+database, which the application role is not allowed to do. The runner also restores the
+role groups and site configuration row before each run, because `--keepdb` does not
+re-run data migrations. Concurrency tests run only on PostgreSQL.
 
 ### 5. Migrations
 

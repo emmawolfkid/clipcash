@@ -12,6 +12,8 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import FormView, TemplateView
 
+from apps.core import features
+
 from . import services
 from .access import VerifiedAccountRequiredMixin
 from .forms import AccountPasswordResetForm, EmailRequestForm, LoginForm, RegistrationForm
@@ -57,6 +59,12 @@ class RegisterView(AnonymousOnlyMixin, FormView):
     template_name = "accounts/register.html"
     form_class = RegistrationForm
     success_url = reverse_lazy("accounts:register_done")
+
+    def dispatch(self, request, *args, **kwargs):
+        # Checked on GET and POST; existing PENDING accounts can still activate.
+        if not request.user.is_authenticated and not features.is_enabled("registration"):
+            return render(request, "accounts/registration_closed.html", status=403)
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         ip = client_ip(self.request)

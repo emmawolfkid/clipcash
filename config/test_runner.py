@@ -36,4 +36,24 @@ class PostgreSQLTestRunner(DiscoverRunner):
                 raise ImproperlyConfigured(
                     f"Expected test database {test_name!r} but connected to {current!r}."
                 )
+
+        self._restore_baseline_data()
         return result
+
+    @staticmethod
+    def _restore_baseline_data():
+        """
+        Re-create rows that data migrations normally provide. With --keepdb the
+        migrations do not run again, and TransactionTestCase flushes every table
+        at the end of a run, so without this a second run would start without
+        them. Idempotent; runs only after the database identity check above.
+        """
+        from django.apps import apps
+
+        from apps.accounts.roles import ROLE_GROUP_NAMES
+        from apps.core.models import SITE_CONFIGURATION_ID
+
+        Group = apps.get_model("auth", "Group")
+        for name in ROLE_GROUP_NAMES.values():
+            Group.objects.get_or_create(name=name)
+        apps.get_model("core", "SiteConfiguration").objects.get_or_create(id=SITE_CONFIGURATION_ID)
