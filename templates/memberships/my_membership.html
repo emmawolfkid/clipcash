@@ -1,0 +1,61 @@
+{% extends "base.html" %}{% load i18n money %}
+{% block title %}{% translate "My membership" %}{% endblock %}
+{% block main_class %} site-main--wide{% endblock %}
+{% block content %}
+<h1>{% translate "My membership" %}</h1>
+{% if current %}
+  <div class="status-panel">
+    <p><span class="badge badge--{{ current.status|lower }}">{{ current.get_status_display }}</span> {{ current.plan_name }}</p>
+    <dl class="details">
+      <dt>{% translate "Started" %}</dt><dd>{{ current.starts_at|date:"DATETIME_FORMAT" }}</dd>
+      <dt>{% translate "Ends" %}</dt><dd>{{ current.expires_at|date:"DATETIME_FORMAT" }}</dd>
+    </dl>
+    {% if current.benefits %}<ul>{% for benefit in current.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
+    {% if current.status == "SUSPENDED" %}<p class="notice">{% translate "Your membership is suspended. Please contact support." %}</p>{% endif %}
+  </div>
+{% else %}
+  <p>{% translate "You do not have an active membership." %} <a href="{% url 'memberships:plans' %}">{% translate "See plans" %}</a></p>
+{% endif %}
+
+{% if queued %}
+  <h2>{% translate "Renewal" %}</h2>
+  <p>{% blocktranslate with plan=queued.plan_name start=queued.starts_at|date:"DATE_FORMAT" %}{{ plan }} starts on {{ start }}.{% endblocktranslate %}</p>
+{% elif renewal_opens %}
+  <h2>{% translate "Renewal" %}</h2>
+  {% if renewal_open_now %}
+    <p>{% translate "You can renew now. A renewal starts when your current membership ends." %} <a href="{% url 'memberships:plans' %}">{% translate "Choose a plan" %}</a></p>
+  {% else %}
+    <p>{% blocktranslate with date=renewal_opens|date:"DATE_FORMAT" %}Renewal opens on {{ date }}.{% endblocktranslate %}</p>
+  {% endif %}
+{% endif %}
+
+{% if pending %}
+  <h2>{% translate "Waiting for payment" %}</h2>
+  <p>{% blocktranslate with plan=pending.plan_name price=pending.price_amount|tzs until=pending.pending_until|date:"DATE_FORMAT" %}{{ plan }} for {{ price }}. This choice is kept until {{ until }}.{% endblocktranslate %}</p>
+  {% if not payments_available %}
+  <p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
+  {% endif %}
+  <form method="post" action="{% url 'memberships:cancel_pending' pending.pk %}">{% csrf_token %}
+    <button type="submit" class="button button--secondary">{% translate "Cancel this choice" %}</button>
+  </form>
+{% endif %}
+
+<h2>{% translate "History" %}</h2>
+{% if history %}
+<table class="table">
+  <thead><tr><th scope="col">{% translate "Plan" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Price" %}</th><th scope="col">{% translate "Period" %}</th></tr></thead>
+  <tbody>
+  {% for item in history %}
+    <tr>
+      <td><a href="{% url 'memberships:subscription_detail' item.pk %}">{{ item.plan_name }}</a></td>
+      <td><span class="badge badge--{{ item.status|lower }}">{{ item.get_status_display }}</span></td>
+      <td>{{ item.price_amount|tzs }}</td>
+      <td>{% if item.starts_at %}{{ item.starts_at|date:"DATE_FORMAT" }} – {{ item.expires_at|date:"DATE_FORMAT" }}{% else %}—{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>{% translate "No memberships yet." %}</p>
+{% endif %}
+{% endblock %}

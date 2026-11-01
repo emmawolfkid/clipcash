@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% load i18n money %}
+{% block title %}{{ plan.name }}{% endblock %}
+{% block content %}
+<h1>{{ plan.name }}</h1>
+<p class="plan-card__price">{{ plan.price_amount|tzs }}</p>
+<p class="lead">{% blocktranslate count days=plan.duration_days %}Membership for {{ days }} day.{% plural %}Membership for {{ days }} days.{% endblocktranslate %}</p>
+{% if plan.description %}<p>{{ plan.description|linebreaksbr }}</p>{% endif %}
+{% if plan.benefits %}<h2>{% translate "Benefits" %}</h2><ul>{% for benefit in plan.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
+{% if entitlement_labels %}<h2>{% translate "Includes" %}</h2><ul>{% for item in entitlement_labels %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+<p class="lead">{% translate "A membership gives access to content. It is not an investment and does not promise any earnings." %}</p>
+{% if not payments_available %}
+<p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
+{% endif %}
+{% if user.is_authenticated %}
+<form method="post" action="{% url 'memberships:choose' plan.code %}">{% csrf_token %}
+  <button type="submit" class="button">{% translate "Choose this plan" %}</button>
+</form>
+{% else %}
+<p><a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">{% translate "Sign in to choose this plan" %}</a></p>
+{% endif %}
+<ul class="links"><li><a href="{% url 'memberships:plans' %}">{% translate "All plans" %}</a></li></ul>
+{% endblock %}

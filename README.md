@@ -31,6 +31,7 @@ apps/administration/  Admin branding and configuration admin
 apps/audit/     Append-only audit events, audit workspace, export/purge (see docs/architecture/audit.md)
 apps/wallets/   Double-entry ledger: chart of accounts, posting service, DB integrity (see docs/architecture/ledger.md)
 apps/notifications/  Durable email outbox (see docs/architecture/background-processing.md)
+apps/memberships/  Plans, versions, subscriptions, access checks (see docs/architecture/memberships.md)
 apps/<others>/   Registered application stubs (no models or views yet)
 templates/       base.html, components/, accounts/, core/, error pages
 static/css/      Site stylesheet
@@ -58,9 +59,10 @@ requirements/    Pinned dependencies (base.txt, dev.txt)
 | Ledger | Double-entry journal with database-enforced balance, immutability, overdraft protection and funding separation; read-only admin. **All posting types locked off: no real money, balances, rewards or withdrawals** |
 | Background processing | PostgreSQL job queue (SKIP LOCKED, leases, retries with jitter), cron-driven `run_jobs`, scheduled tasks, `jobs_status` health check, operations admin |
 | Email | Durable outbox written in the business transaction; tokens generated at delivery and dated to the request; never stored |
-| Memberships, videos, viewing, advertising, payments, rewards, withdrawals, reports, support | Not implemented |
+| Memberships | Plans with immutable price versions; subscription lifecycle enforced by the database; member pages; access-check service. **Paid activation waits for verified payments (not available yet)** |
+| Videos, viewing, advertising, payments, rewards, withdrawals, reports, support | Not implemented |
 
-Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md), [docs/architecture/audit.md](docs/architecture/audit.md), [docs/architecture/ledger.md](docs/architecture/ledger.md), [docs/architecture/background-processing.md](docs/architecture/background-processing.md).
+Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md), [docs/architecture/audit.md](docs/architecture/audit.md), [docs/architecture/ledger.md](docs/architecture/ledger.md), [docs/architecture/background-processing.md](docs/architecture/background-processing.md), [docs/architecture/memberships.md](docs/architecture/memberships.md).
 
 ## Local setup (Windows 11)
 

@@ -1,0 +1,14 @@
+{% extends "admin/base_site.html" %}{% load i18n %}
+{% block content %}
+<h1>{{ title }}</h1>
+<p>{% translate "This applies immediately to the subscriptions below and is recorded in the audit log." %}</p>
+<ul>{% for subscription in queryset %}<li>{{ subscription }}</li>{% endfor %}</ul>
+<form method="post">{% csrf_token %}
+  {% for subscription in queryset %}<input type="hidden" name="{{ action_checkbox_name }}" value="{{ subscription.pk }}">{% endfor %}
+  <input type="hidden" name="action" value="{{ action }}">
+  <input type="hidden" name="apply" value="1">
+  {{ form.as_p }}
+  <input type="submit" value="{% translate 'Confirm' %}">
+  <a href="">{% translate "Go back" %}</a>
+</form>
+{% endblock %}

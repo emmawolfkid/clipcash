@@ -1,4 +1,8 @@
+from decimal import Decimal
+
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from .money import MAX_AMOUNT, validate_amount, validate_non_negative_amount
 
@@ -24,6 +28,14 @@ class AmountField(models.BigIntegerField):
             kwargs["non_negative"] = True
         kwargs.pop("validators", None)
         return name, path, args, kwargs
+
+    def to_python(self, value):
+        # IntegerField would silently truncate 99.5 to 99; money must never be rounded.
+        if isinstance(value, bool) or isinstance(value, float) or (
+            isinstance(value, Decimal) and value != value.to_integral_value()
+        ):
+            raise ValidationError(_("Enter a whole number of shillings."), code="invalid_amount")
+        return super().to_python(value)
 
     def formfield(self, **kwargs):
         bound = 0 if self.non_negative else -MAX_AMOUNT

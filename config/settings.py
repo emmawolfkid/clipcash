@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
 
     # ClipCash applications
     "apps.accounts.apps.AccountsConfig",
@@ -223,6 +224,15 @@ JOBS_FAILED_RETENTION_DAYS = 90
 JOBS_SCHEDULE_INTERVALS = env.dict("DJANGO_JOBS_SCHEDULE_INTERVALS", cast={"value": int}, default={})
 NOTIFICATIONS_DEFAULT_EMAIL_TTL = 60 * 60 * 24 * 3  # Non-token emails stay deliverable 3 days.
 NOTIFICATIONS_OUTBOX_RETENTION_DAYS = 90
+
+# Memberships (apps.memberships). Payments stay locked off; see
+# docs/architecture/memberships.md.
+MEMBERSHIPS_PENDING_DAYS = env.int("DJANGO_MEMBERSHIPS_PENDING_DAYS", default=7)
+MEMBERSHIPS_RENEWAL_WINDOW_DAYS = env.int("DJANGO_MEMBERSHIPS_RENEWAL_WINDOW_DAYS", default=14)
+MEMBERSHIPS_EXPIRING_SOON_DAYS = 7
+# Free memberships granted by a Super Administrator. Off unless a business
+# policy approves them.
+MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED = env.bool("DJANGO_MEMBERSHIPS_COMPLIMENTARY_GRANTS", default=False)
 
 
 # Audit (apps.audit). IP addresses and user agents are recorded for security

@@ -12,6 +12,7 @@
   <dt>{% translate "Member since" %}</dt><dd>{{ user.date_joined|date:"DATE_FORMAT" }}</dd>
 </dl>
 <ul class="links">
+  {% if features.memberships %}<li><a href="{% url 'memberships:mine' %}">{% translate "My membership" %}</a></li>{% endif %}
   <li><a href="{% url 'accounts:password_change' %}">{% translate "Change password" %}</a></li>
   <li><a href="{% url 'accounts:logout' %}">{% translate "Sign out" %}</a></li>
 </ul>

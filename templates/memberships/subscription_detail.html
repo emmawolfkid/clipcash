@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% load i18n money %}
+{% block title %}{{ subscription.plan_name }}{% endblock %}
+{% block content %}
+<h1>{{ subscription.plan_name }}</h1>
+<p><span class="badge badge--{{ subscription.status|lower }}">{{ subscription.get_status_display }}</span></p>
+<dl class="details">
+  <dt>{% translate "Price" %}</dt><dd>{{ subscription.price_amount|tzs }}</dd>
+  <dt>{% translate "Duration" %}</dt><dd>{% blocktranslate count days=subscription.duration_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</dd>
+  <dt>{% translate "Chosen" %}</dt><dd>{{ subscription.created_at|date:"DATETIME_FORMAT" }}</dd>
+  {% if subscription.starts_at %}<dt>{% translate "Started" %}</dt><dd>{{ subscription.starts_at|date:"DATETIME_FORMAT" }}</dd>
+  <dt>{% translate "Ends" %}</dt><dd>{{ subscription.expires_at|date:"DATETIME_FORMAT" }}</dd>{% endif %}
+  {% if subscription.activation_source %}<dt>{% translate "Activated by" %}</dt><dd>{{ subscription.get_activation_source_display }}</dd>{% endif %}
+  {% if subscription.cancelled_at %}<dt>{% translate "Cancelled" %}</dt><dd>{{ subscription.cancelled_at|date:"DATETIME_FORMAT" }} ({{ subscription.get_cancellation_reason_display }})</dd>{% endif %}
+</dl>
+{% if subscription.benefits %}<h2>{% translate "Benefits" %}</h2><ul>{% for benefit in subscription.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
+{% if entitlement_labels %}<h2>{% translate "Includes" %}</h2><ul>{% for item in entitlement_labels %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+{% if subscription.status == "PENDING" %}{% if not payments_available %}
+<p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
+{% endif %}{% endif %}
+<ul class="links"><li><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></li></ul>
+{% endblock %}

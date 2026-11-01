@@ -36,6 +36,14 @@ SCHEDULES = {
 }
 
 
+def register_schedule(schedule):
+    """Let an app add a recurring task (called from its ready())."""
+    existing = SCHEDULES.get(schedule.name)
+    if existing is not None and existing != schedule:
+        raise ValueError(f"Schedule {schedule.name!r} is already registered differently.")
+    SCHEDULES[schedule.name] = schedule
+
+
 def interval_for(schedule):
     seconds = int(settings.JOBS_SCHEDULE_INTERVALS.get(schedule.name, schedule.interval_seconds))
     return max(60, seconds)

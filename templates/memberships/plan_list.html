@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% load i18n money %}
+{% block title %}{% translate "Membership plans" %}{% endblock %}
+{% block main_class %} site-main--wide{% endblock %}
+{% block content %}
+<h1>{% translate "Membership plans" %}</h1>
+{% if not payments_available %}
+<p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
+{% endif %}
+{% if plans %}
+<ul class="plan-grid">
+  {% for plan in plans %}
+  <li class="plan-card">
+    <h2 class="plan-card__name">{{ plan.name }}</h2>
+    <p class="plan-card__price">{{ plan.price_amount|tzs }}</p>
+    <p class="plan-card__duration">{% blocktranslate count days=plan.duration_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</p>
+    {% if plan.benefits %}<ul class="plan-card__benefits">{% for benefit in plan.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
+    <a class="button button--secondary" href="{% url 'memberships:plan_detail' plan.code %}">{% translate "View details" %}</a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>{% translate "No membership plans are available at the moment." %}</p>
+{% endif %}
+{% if user.is_authenticated %}<ul class="links"><li><a href="{% url 'memberships:mine' %}">{% translate "My membership" %}</a></li></ul>{% endif %}
+{% endblock %}

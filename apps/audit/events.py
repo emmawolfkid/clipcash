@@ -26,6 +26,7 @@ class Category:
     AUDIT = "AUDIT"
     LEDGER = "LEDGER"
     OPERATIONS = "OPERATIONS"
+    MEMBERSHIP = "MEMBERSHIP"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -35,6 +36,7 @@ class Category:
         (AUDIT, "Audit"),
         (LEDGER, "Ledger"),
         (OPERATIONS, "Operations"),
+        (MEMBERSHIP, "Membership"),
     ]
 
 
@@ -99,6 +101,18 @@ EVENT_TYPES = {
         _event("jobs.job.cancelled", Category.OPERATIONS, BUSINESS, ["job_type", "previous_status"]),
         _event("jobs.schedule.changed", Category.OPERATIONS, BUSINESS, ["schedule", "enabled"]),
         _event("notifications.email.failed", Category.OPERATIONS, BUSINESS, ["kind", "error_class", "attempts"]),
+        # Memberships
+        _event("membership.plan.created", Category.MEMBERSHIP, BUSINESS, ["code", "price_amount", "duration_days"]),
+        _event("membership.plan.updated", Category.MEMBERSHIP, BUSINESS,
+               ["fields", "version", "price_amount", "new_version"]),
+        _event("membership.plan.status_changed", Category.MEMBERSHIP, BUSINESS, ["from_status", "to_status"]),
+        _event("membership.subscription.created", Category.MEMBERSHIP, BUSINESS,
+               ["plan_code", "price_amount", "renewal"]),
+        *[_event(f"membership.subscription.{name}", Category.MEMBERSHIP, BUSINESS,
+                 ["from_status", "to_status", "reason", "plan_code", "source", "queued"])
+          for name in ("activated", "cancelled", "suspended", "reinstated", "expired")],
+        _event("membership.action.denied", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
+        _event("membership.activation.rejected", Category.MEMBERSHIP, SECURITY, ["reason", "subscription"]),
     )
 }
 
