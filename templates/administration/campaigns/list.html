@@ -1,0 +1,23 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Campaigns" %}{% endblock %}
+{% block console_content %}
+<h1 class="page-title">{% translate "Campaign review" %}</h1>
+<form class="toolbar" method="get">
+  <label class="visually-hidden" for="q">{% translate "Search" %}</label>
+  <input id="q" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Campaign or advertiser' %}">
+  <label class="visually-hidden" for="f-status">{% translate "Status" %}</label>
+  <select id="f-status" name="status"><option value="all"{% if status == "all" %} selected{% endif %}>{% translate "All" %}</option>{% for value, label in statuses %}<option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <button class="button button--secondary" type="submit">{% translate "Filter" %}</button>
+</form>
+{% if page.object_list %}
+<table class="table">
+  <thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Advertiser" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Runs" %}</th><th scope="col">{% translate "Submitted" %}</th></tr></thead>
+  <tbody>{% for c in page.object_list %}
+    <tr><td><a href="{% url 'administration:campaign_review' c.pk %}">{{ c.name }}</a></td><td>{{ c.organization.display_name }}</td>
+      <td><span class="badge badge--{{ c.status|lower }}">{{ c.get_status_display }}</span></td>
+      <td>{{ c.starts_at|date:"SHORT_DATE_FORMAT" }} – {{ c.ends_at|date:"SHORT_DATE_FORMAT" }}</td><td>{{ c.submitted_at|date:"SHORT_DATE_FORMAT"|default:"—" }}</td></tr>
+  {% endfor %}</tbody>
+</table>
+{% include "components/pagination.html" %}
+{% else %}<p class="empty-state">{% translate "No campaigns in this list." %}</p>{% endif %}
+{% endblock %}

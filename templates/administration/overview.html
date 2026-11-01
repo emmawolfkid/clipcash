@@ -13,6 +13,10 @@
   <div class="stat"><span class="stat__value">{{ stats.processing_videos }}</span><span class="stat__label">{% translate "Videos processing" %}</span></div>
   <div class="stat"><span class="stat__value">{{ stats.failed_jobs }}</span><span class="stat__label">{% translate "Failed jobs (24 h)" %}</span></div>
   <div class="stat"><span class="stat__value">{{ stats.pending_emails }}</span><span class="stat__label">{% translate "Emails waiting" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.advertisers_pending }}</span><span class="stat__label">{% translate "Advertisers awaiting review" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.advertisers_approved }}</span><span class="stat__label">{% translate "Approved advertisers" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.campaigns_submitted }}</span><span class="stat__label">{% translate "Campaigns awaiting review" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ stats.campaigns_active }}</span><span class="stat__label">{% translate "Active campaigns (demo budgets)" %}</span></div>
 </div>
-<p class="lead">{% translate "All figures are live database counts. Advertising, rewards, payments and withdrawals are not available yet." %}</p>
+<p class="lead">{% translate "All figures are live database counts. Campaign budgets are demonstration figures; rewards, payments and withdrawals are not available yet." %}</p>
 {% endblock %}

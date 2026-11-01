@@ -28,6 +28,7 @@ class Category:
     OPERATIONS = "OPERATIONS"
     MEMBERSHIP = "MEMBERSHIP"
     CONTENT = "CONTENT"
+    ADVERTISING = "ADVERTISING"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -39,6 +40,7 @@ class Category:
         (OPERATIONS, "Operations"),
         (MEMBERSHIP, "Membership"),
         (CONTENT, "Content"),
+        (ADVERTISING, "Advertising"),
     ]
 
 
@@ -133,6 +135,26 @@ EVENT_TYPES = {
         _event("video.media.deleted", Category.CONTENT, BUSINESS),
         _event("video.provider.sync_failed", Category.CONTENT, BUSINESS, ["job_type", "error_class"]),
         _event("video.action.denied", Category.CONTENT, SECURITY, ["action", "reason"]),
+        # Advertisers and campaigns (demo budgets are not money; no payment data)
+        _event("advertiser.created", Category.ADVERTISING, BUSINESS, ["country"]),
+        _event("advertiser.updated", Category.ADVERTISING, BUSINESS, ["fields"]),
+        _event("advertiser.resubmitted", Category.ADVERTISING, BUSINESS),
+        *[_event(f"advertiser.verification.{name}", Category.ADVERTISING, BUSINESS, ["from_status", "reason"])
+          for name in ("approved", "rejected", "suspended", "reinstated")],
+        _event("advertiser.member.invited", Category.ADVERTISING, BUSINESS, ["role"]),
+        _event("advertiser.member.joined", Category.ADVERTISING, BUSINESS, ["role"]),
+        _event("advertiser.member.removed", Category.ADVERTISING, BUSINESS, ["role"]),
+        _event("advertiser.invitation.declined", Category.ADVERTISING, BUSINESS),
+        _event("advertiser.invitation.revoked", Category.ADVERTISING, BUSINESS),
+        _event("advertiser.video.granted", Category.ADVERTISING, BUSINESS, ["video"]),
+        _event("advertiser.video.revoked", Category.ADVERTISING, BUSINESS, ["video"]),
+        _event("advertiser.action.denied", Category.ADVERTISING, SECURITY, ["action", "reason"]),
+        _event("campaign.created", Category.ADVERTISING, BUSINESS, ["revision"]),
+        _event("campaign.updated", Category.ADVERTISING, BUSINESS, ["revision", "fields"]),
+        *[_event(f"campaign.{name}", Category.ADVERTISING, BUSINESS, ["from_status", "revision", "reason"])
+          for name in ("submitted", "withdrawn", "approved", "rejected", "activated", "paused", "resumed",
+                       "completed", "cancelled", "archived", "reopened")],
+        _event("campaign.funding.refused", Category.ADVERTISING, SECURITY, ["requested_status", "reason"]),
     )
 }
 

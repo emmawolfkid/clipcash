@@ -1,0 +1,17 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Campaigns" %}{% endblock %}
+{% block member_content %}
+{% include "advertising/_header.html" %}
+<div class="section__header"><h2>{% translate "Campaigns" %}</h2><a class="button" href="{% url 'advertising:campaign_create' organization.pk %}">{% translate "New campaign" %}</a></div>
+<form class="toolbar" method="get" role="search">
+  <label class="visually-hidden" for="q">{% translate "Search campaigns" %}</label>
+  <input id="q" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search campaigns' %}">
+  <label class="visually-hidden" for="f-status">{% translate "Status" %}</label>
+  <select id="f-status" name="status"><option value="">{% translate "Any status" %}</option>{% for value, label in statuses %}<option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <button type="submit" class="button button--secondary">{% translate "Filter" %}</button>
+</form>
+{% if page.object_list %}
+  {% include "advertising/_campaign_table.html" with campaigns=page.object_list %}
+  {% include "components/pagination.html" %}
+{% else %}<p class="empty-state">{% if query or status %}{% translate "No campaigns match these filters." %}{% else %}{% translate "No campaigns yet." %}{% endif %}</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{{ campaign.name }}{% endblock %}
+{% block console_content %}
+<div class="section__header"><h1 class="page-title">{{ campaign.name }}</h1>
+<span class="badge badge--{{ campaign.status|lower }}">{{ campaign.get_status_display }}</span></div>
+<p class="lead">{{ campaign.organization.display_name }} · <span class="badge badge--{{ campaign.organization.verification_status|lower }}">{{ campaign.organization.get_verification_status_display }}</span></p>
+<div class="card-grid">
+  <section class="panel">
+    <h2 class="panel__title">{% translate "Details" %}</h2>
+    <dl class="details">
+      <dt>{% translate "Video" %}</dt><dd>{{ campaign.video.title }}{% if not video_authorized %} <span class="badge badge--rejected">{% translate "Not authorized" %}</span>{% endif %}{% if not video_available %} <span class="badge badge--failed">{% translate "Not ready/published" %}</span>{% endif %}</dd>
+      <dt>{% translate "Runs" %}</dt><dd>{{ campaign.starts_at|date:"DATETIME_FORMAT" }} – {{ campaign.ends_at|date:"DATETIME_FORMAT" }}</dd>
+      <dt>{% translate "Audience" %}</dt><dd>{% if plans %}{% for plan in plans %}{{ plan.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}{% translate "All active members" %}{% endif %}</dd>
+      <dt>{% translate "Views per member" %}</dt><dd>{{ campaign.max_views_per_member }}</dd>
+      <dt>{% translate "Demo budget" %}</dt><dd>TZS {{ campaign.demo_budget_amount }} / TZS {{ campaign.demo_reward_per_view }} {% translate "per view" %} <span class="badge badge--pending">{% translate "Demo" %}</span></dd>
+      <dt>{% translate "Funding" %}</dt><dd>{{ campaign.get_funding_status_display }}</dd>
+      <dt>{% translate "Revision" %}</dt><dd>{{ campaign.revision }}{% if campaign.approved_revision %} ({% translate "approved" %}: {{ campaign.approved_revision }}){% endif %}</dd>
+      {% if campaign.review_notes %}<dt>{% translate "Review notes" %}</dt><dd>{{ campaign.review_notes }}</dd>{% endif %}
+      <dt>{% translate "Eligibility" %}</dt><dd>{% if eligibility %}{{ eligibility_message }}{% else %}<span class="badge badge--paused">{{ eligibility_message }}</span>{% endif %}</dd>
+    </dl>
+    {% if campaign.description %}<p>{{ campaign.description|linebreaksbr }}</p>{% endif %}
+  </section>
+  <section class="panel"><h2 class="panel__title">{% translate "Video preview" %}</h2>{% include "components/preview_player.html" %}</section>
+</div>
+<section class="panel section">
+  <h2 class="panel__title">{% translate "Decision" %}</h2>
+  <form method="post" class="form">{% csrf_token %}
+    <input type="hidden" name="expected_revision" value="{{ campaign.revision }}">
+    <label for="reason">{% translate "Notes / reason (required to reject, pause or cancel; shown to the advertiser)" %}</label>
+    <textarea id="reason" name="reason" rows="2" maxlength="300"></textarea>
+    <div class="actions">
+      {% if campaign.status == "SUBMITTED" %}<button class="button" name="action" value="approve" type="submit">{% translate "Approve" %}</button>
+      <button class="button button--secondary" name="action" value="reject" type="submit">{% translate "Request changes" %}</button>{% endif %}
+      {% if campaign.status == "SCHEDULED" or campaign.status == "ACTIVE" %}<button class="button button--secondary" name="action" value="pause" type="submit">{% translate "Pause" %}</button>{% endif %}
+      {% if campaign.status == "PAUSED" %}<button class="button" name="action" value="resume" type="submit">{% translate "Resume" %}</button>{% endif %}
+      {% if campaign.status == "COMPLETED" or campaign.status == "CANCELLED" or campaign.status == "REJECTED" %}<button class="button button--secondary" name="action" value="archive" type="submit">{% translate "Archive" %}</button>{% endif %}
+    </div>
+    {% if campaign.status != "COMPLETED" and campaign.status != "CANCELLED" and campaign.status != "ARCHIVED" %}
+    <div class="actions confirm-form"><label><input type="checkbox" name="confirm" value="yes"> {% translate "Cancelling is permanent" %}</label>
+      <button class="button button--secondary" name="action" value="cancel" type="submit">{% translate "Cancel campaign" %}</button></div>{% endif %}
+  </form>
+</section>
+{% include "components/demo_budget_notice.html" %}
+{% endblock %}

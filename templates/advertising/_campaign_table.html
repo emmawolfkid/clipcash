@@ -1,0 +1,10 @@
+{% load i18n %}
+<table class="table">
+  <thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Runs" %}</th><th scope="col">{% translate "Demo budget" %}</th></tr></thead>
+  <tbody>{% for campaign in campaigns %}
+    <tr><td><a href="{% url 'advertising:campaign' organization.pk campaign.pk %}">{{ campaign.name }}</a></td>
+      <td><span class="badge badge--{{ campaign.status|lower }}">{{ campaign.get_status_display }}</span></td>
+      <td>{{ campaign.starts_at|date:"SHORT_DATE_FORMAT" }} – {{ campaign.ends_at|date:"SHORT_DATE_FORMAT" }}</td>
+      <td>TZS {{ campaign.demo_budget_amount }} <span class="badge badge--pending">{% translate "Demo" %}</span></td></tr>
+  {% endfor %}</tbody>
+</table>

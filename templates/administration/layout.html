@@ -10,8 +10,8 @@
         {% if can.plans %}<li><a class="app-nav__link" href="{% url 'admin:memberships_membershipplan_changelist' %}">{% translate "Membership plans" %}</a></li>{% endif %}
         {% if can.videos %}<li><a class="app-nav__link{% if nav == 'videos' %} is-current{% endif %}"{% if nav == 'videos' %} aria-current="page"{% endif %} href="{% url 'administration:videos' %}">{% translate "Video management" %}</a></li>{% endif %}
         {% if can.categories %}<li><a class="app-nav__link{% if nav == 'categories' %} is-current{% endif %}"{% if nav == 'categories' %} aria-current="page"{% endif %} href="{% url 'administration:categories' %}">{% translate "Categories" %}</a></li>{% endif %}
-        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Advertisers" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
-        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Campaigns" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        {% if can.advertisers %}<li><a class="app-nav__link{% if nav == 'advertisers' %} is-current{% endif %}"{% if nav == 'advertisers' %} aria-current="page"{% endif %} href="{% url 'administration:advertisers' %}">{% translate "Advertisers" %}</a></li>{% endif %}
+        {% if can.campaigns %}<li><a class="app-nav__link{% if nav == 'campaigns' %} is-current{% endif %}"{% if nav == 'campaigns' %} aria-current="page"{% endif %} href="{% url 'administration:campaigns' %}">{% translate "Campaigns" %}</a></li>{% endif %}
         <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Rewards" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
         <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Payments" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
         <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Withdrawals" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>

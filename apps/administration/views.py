@@ -20,6 +20,8 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 
+from apps.advertising import services as advertising
+from apps.advertising.models import Campaign, Organization
 from apps.audit.admin import can_view_audit
 from apps.core.models import Job
 from apps.core.services import can_change_site_configuration
@@ -50,6 +52,8 @@ def console_links(user):
         "categories": videos.can_manage_categories(user),
         "settings": can_change_site_configuration(user),
         "audit": can_view_audit(user),
+        "advertisers": advertising.can_review_advertisers(user),
+        "campaigns": advertising.can_review_campaigns(user),
     }
     return can
 
@@ -73,6 +77,12 @@ class OverviewView(View):
             "failed_jobs": Job.objects.filter(status=Job.Status.FAILED,
                                               finished_at__gte=now - timedelta(days=1)).count(),
             "pending_emails": OutboundEmail.objects.filter(status=OutboundEmail.Status.PENDING).count(),
+            "advertisers_pending": Organization.objects.filter(
+                verification_status=Organization.Verification.PENDING).count(),
+            "advertisers_approved": Organization.objects.filter(
+                verification_status=Organization.Verification.APPROVED).count(),
+            "campaigns_submitted": Campaign.objects.filter(status=Campaign.Status.SUBMITTED).count(),
+            "campaigns_active": Campaign.objects.filter(status=Campaign.Status.ACTIVE).count(),
         }
         return render(request, "administration/overview.html",
                       {"nav": "overview", "stats": stats, "can": console_links(request.user), "provider": settings.VIDEO_PROVIDER})
@@ -310,3 +320,155 @@ class CategoryEditView(View):
                 _form_errors(form, error)
         return render(request, self.template_name, {"form": form, "category": category,
                                                     "can": console_links(request.user), "nav": "categories"})
+
+
+# --- Advertisers and campaigns (Phase 05) ------------------------------------------------
+
+
+def _reason_text(request):
+    return request.POST.get("reason", "")[:300]
+
+
+def _error_text(error):
+    return " ".join(getattr(error, "messages", [str(error)]))
+
+
+@console
+class AdvertiserQueueView(View):
+    def get(self, request):
+        if not advertising.can_review_advertisers(request.user):
+            raise PermissionDenied
+        status = request.GET.get("status", Organization.Verification.PENDING)
+        qs = Organization.objects.annotate(campaign_count=Count("campaigns")).order_by("submitted_at", "display_name")
+        if status in Organization.Verification.values:
+            qs = qs.filter(verification_status=status)
+        query = request.GET.get("q", "").strip()[:100]
+        if query:
+            qs = qs.filter(Q(display_name__icontains=query) | Q(legal_name__icontains=query))
+        page = Paginator(qs, 25).get_page(request.GET.get("page"))
+        params = request.GET.copy()
+        params.pop("page", None)
+        return render(request, "administration/advertisers/list.html", {
+            "page": page, "status": status, "query": query, "statuses": Organization.Verification.choices,
+            "page_query": params.urlencode(), "can": console_links(request.user), "nav": "advertisers"})
+
+
+@console
+class AdvertiserReviewView(View):
+    template_name = "administration/advertisers/detail.html"
+
+    def get(self, request, pk):
+        if not advertising.can_use_advertising_console(request.user):
+            raise PermissionDenied
+        organization = get_object_or_404(Organization, pk=pk)
+        can_review = advertising.can_review_advertisers(request.user)
+        grants = organization.video_grants.select_related("video").filter(revoked_at__isnull=True)
+        return render(request, self.template_name, {
+            "organization": organization, "can_review": can_review,
+            "can_grant": advertising.can_manage_advertiser_videos(request.user),
+            # Contact and identity details only for advertiser reviewers.
+            "members": organization.memberships.select_related("user").filter(is_active=True) if can_review else [],
+            "campaigns": organization.campaigns.order_by("-created_at")[:20],
+            "report": advertising.organization_report(organization),
+            "grants": grants,
+            "grantable": (Video.objects.exclude(publication_status=Video.Publication.ARCHIVED)
+                          .exclude(pk__in=grants.values("video_id")).order_by("title")[:200]),
+            "can": console_links(request.user), "nav": "advertisers"})
+
+    def post(self, request, pk):
+        organization = get_object_or_404(Organization, pk=pk)
+        action = request.POST.get("action", "")
+        try:
+            if action in advertising.ORG_DECISIONS:
+                advertising.review_organization(request.user, organization, action,
+                                                expected_status=request.POST.get("expected_status", ""),
+                                                reason=_reason_text(request))
+                messages.success(request, _("Decision saved."))
+            elif action == "grant":
+                video = get_object_or_404(Video, pk=request.POST.get("video"))
+                advertising.grant_video(request.user, organization, video)
+                messages.success(request, _("Video authorized for this advertiser."))
+            elif action == "revoke":
+                advertising.revoke_video_grant(request.user, organization, request.POST.get("grant"))
+                messages.success(request, _("Video authorization revoked."))
+            else:
+                raise PermissionDenied
+        except advertising.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, advertising.AdvertisingError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:advertiser_review", pk=pk)
+
+
+@console
+class CampaignQueueView(View):
+    def get(self, request):
+        if not advertising.can_review_campaigns(request.user):
+            raise PermissionDenied
+        status = request.GET.get("status", Campaign.Status.SUBMITTED)
+        qs = Campaign.objects.select_related("organization", "video").order_by("submitted_at", "-created_at")
+        if status in Campaign.Status.values:
+            qs = qs.filter(status=status)
+        query = request.GET.get("q", "").strip()[:100]
+        if query:
+            qs = qs.filter(Q(name__icontains=query) | Q(organization__display_name__icontains=query))
+        page = Paginator(qs, 25).get_page(request.GET.get("page"))
+        params = request.GET.copy()
+        params.pop("page", None)
+        return render(request, "administration/campaigns/list.html", {
+            "page": page, "status": status, "query": query, "statuses": Campaign.Status.choices,
+            "page_query": params.urlencode(), "can": console_links(request.user), "nav": "campaigns"})
+
+
+STAFF_CAMPAIGN_ACTIONS = {"approve", "reject", "pause", "resume", "cancel", "archive"}
+
+
+@console
+class CampaignReviewView(View):
+    def get(self, request, pk):
+        if not advertising.can_review_campaigns(request.user):
+            raise PermissionDenied
+        campaign = get_object_or_404(Campaign.objects.select_related("organization", "video", "video__category"),
+                                     pk=pk)
+        preview_reason, preview = advertising.preview_playback(request.user, campaign)
+        eligibility = advertising.campaign_eligibility(campaign)
+        return render(request, "administration/campaigns/detail.html", {
+            "campaign": campaign, "plans": campaign.target_plans.order_by("name"),
+            "eligibility": eligibility, "eligibility_message": advertising.eligibility_message(eligibility.reason),
+            "video_authorized": advertising.video_authorized(campaign.organization, campaign.video),
+            "video_available": advertising.video_available(campaign.video),
+            "preview": preview, "preview_reason": preview_reason,
+            "can": console_links(request.user), "nav": "campaigns"})
+
+    def post(self, request, pk):
+        campaign = get_object_or_404(Campaign, pk=pk)
+        action = request.POST.get("action", "")
+        if action not in STAFF_CAMPAIGN_ACTIONS:
+            raise PermissionDenied
+        try:
+            expected = int(request.POST.get("expected_revision", "-1"))
+        except ValueError:
+            expected = -1
+        try:
+            if action == "approve":
+                advertising.approve_campaign(request.user, campaign, expected_revision=expected,
+                                             notes=_reason_text(request))
+            elif action == "reject":
+                advertising.reject_campaign(request.user, campaign, expected_revision=expected,
+                                            reason=_reason_text(request))
+            elif action == "pause":
+                advertising.pause_campaign(request.user, campaign, reason=_reason_text(request))
+            elif action == "cancel":
+                if request.POST.get("confirm") != "yes":
+                    raise advertising.InvalidState("Tick the confirmation box first. This cannot be undone.")
+                advertising.cancel_campaign(request.user, campaign, reason=_reason_text(request))
+            elif action == "resume":
+                advertising.resume_campaign(request.user, campaign)
+            else:
+                advertising.archive_campaign(request.user, campaign)
+            messages.success(request, _("Campaign updated."))
+        except advertising.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, advertising.AdvertisingError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:campaign_review", pk=pk)

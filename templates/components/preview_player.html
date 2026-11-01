@@ -1,0 +1,13 @@
+{% load i18n %}
+<div class="player">
+  {% if preview and preview.kind == "iframe" %}
+    <iframe class="player__frame" src="{{ preview.url }}" title="{% translate 'Video preview' %}" loading="lazy"
+            allow="accelerometer; gyroscope; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+  {% elif preview and preview.kind == "video" %}
+    <video class="player__frame" src="{{ preview.url }}" controls preload="metadata" playsinline></video>
+  {% elif preview %}
+    <div class="player__message"><p><strong>{% translate "Demo sample" %}</strong></p><p>{% translate "No video file is configured for demo playback." %}</p></div>
+  {% else %}
+    <div class="player__message"><p>{% if preview_reason == "video_not_authorized" %}{% translate "This video is no longer authorized for this advertiser." %}{% else %}{% translate "The video is not published and ready, so it cannot be previewed or shown." %}{% endif %}</p></div>
+  {% endif %}
+</div>

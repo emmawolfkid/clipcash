@@ -1,0 +1,16 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{% if campaign %}{% translate "Edit campaign" %}{% else %}{% translate "New campaign" %}{% endif %}{% endblock %}
+{% block member_content %}
+{% include "advertising/_header.html" %}
+<h2>{% if campaign %}{% translate "Edit campaign" %}{% else %}{% translate "New campaign" %}{% endif %}</h2>
+{% include "components/demo_budget_notice.html" %}
+{% if not form.fields.video.queryset.exists %}<p class="notice notice--warning">{% translate "ClipCash has not authorized any videos for your advertiser account yet. Contact us to have your sponsored video uploaded and authorized." %}</p>{% endif %}
+<section class="panel">
+<form class="form" method="post" novalidate>{% csrf_token %}
+  {% if campaign %}<input type="hidden" name="revision" value="{{ campaign.revision }}">{% endif %}
+  {% if form.non_field_errors %}<ul class="errorlist nonfield" role="alert">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+  {% for field in form.visible_fields %}{{ field.as_field_group }}{% endfor %}
+  <button type="submit" class="button">{% translate "Save draft" %}</button>
+</form>
+</section>
+{% endblock %}

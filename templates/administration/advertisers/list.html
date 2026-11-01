@@ -1,0 +1,23 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Advertisers" %}{% endblock %}
+{% block console_content %}
+<h1 class="page-title">{% translate "Advertisers" %}</h1>
+<form class="toolbar" method="get">
+  <label class="visually-hidden" for="q">{% translate "Search" %}</label>
+  <input id="q" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search name' %}">
+  <label class="visually-hidden" for="f-status">{% translate "Verification" %}</label>
+  <select id="f-status" name="status"><option value="all"{% if status == "all" %} selected{% endif %}>{% translate "All" %}</option>{% for value, label in statuses %}<option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <button class="button button--secondary" type="submit">{% translate "Filter" %}</button>
+</form>
+{% if page.object_list %}
+<table class="table">
+  <thead><tr><th scope="col">{% translate "Advertiser" %}</th><th scope="col">{% translate "Country" %}</th><th scope="col">{% translate "Verification" %}</th><th scope="col">{% translate "Submitted" %}</th><th scope="col">{% translate "Campaigns" %}</th></tr></thead>
+  <tbody>{% for org in page.object_list %}
+    <tr><td><a href="{% url 'administration:advertiser_review' org.pk %}">{{ org.display_name }}</a></td><td>{{ org.country }}</td>
+      <td><span class="badge badge--{{ org.verification_status|lower }}">{{ org.get_verification_status_display }}</span></td>
+      <td>{{ org.submitted_at|date:"SHORT_DATE_FORMAT"|default:"—" }}</td><td>{{ org.campaign_count }}</td></tr>
+  {% endfor %}</tbody>
+</table>
+{% include "components/pagination.html" %}
+{% else %}<p class="empty-state">{% translate "No advertisers in this list." %}</p>{% endif %}
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Advertiser application" %}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{% translate "Advertiser application" %}</h1>
+<p class="lead">{% translate "Tell us about the business. ClipCash reviews every application before campaigns can be submitted. Do not upload or paste identity documents here." %}</p>
+<section class="panel">{% include "components/form.html" with button=_("Submit application") %}</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% load i18n %}
+<div class="stat-grid">
+  <div class="stat"><span class="stat__value">{{ report.total }}</span><span class="stat__label">{% translate "Campaigns" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ report.n_draft }}</span><span class="stat__label">{% translate "Drafts" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ report.n_submitted }}</span><span class="stat__label">{% translate "Awaiting review" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ report.n_scheduled }}</span><span class="stat__label">{% translate "Approved, scheduled" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ report.n_active }}</span><span class="stat__label">{% translate "Active" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ report.n_paused }}</span><span class="stat__label">{% translate "Paused" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ report.n_completed }}</span><span class="stat__label">{% translate "Completed" %}</span></div>
+  <div class="stat stat--demo"><span class="stat__value">TZS {{ report.demo_budget_running }}</span><span class="stat__label">{% translate "Demo budget in approved campaigns (not money)" %}</span></div>
+</div>
+<div class="stat-grid">
+  <div class="stat stat--unavailable"><span class="stat__value">—</span><span class="stat__label">{% translate "Verified views: not available yet" %}</span></div>
+  <div class="stat stat--unavailable"><span class="stat__value">—</span><span class="stat__label">{% translate "Unique viewers: not available yet" %}</span></div>
+  <div class="stat stat--unavailable"><span class="stat__value">—</span><span class="stat__label">{% translate "Spend: not available yet" %}</span></div>
+</div>

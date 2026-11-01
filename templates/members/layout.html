@@ -8,6 +8,7 @@
         <li><a class="app-nav__link{% if nav == 'dashboard' %} is-current{% endif %}"{% if nav == 'dashboard' %} aria-current="page"{% endif %} href="{% url 'dashboard' %}">{% translate "Dashboard" %}</a></li>
         {% if features.videos %}<li><a class="app-nav__link{% if nav == 'videos' %} is-current{% endif %}"{% if nav == 'videos' %} aria-current="page"{% endif %} href="{% url 'videos:library' %}">{% translate "Videos" %}</a></li>{% endif %}
         {% if features.memberships %}<li><a class="app-nav__link{% if nav == 'membership' %} is-current{% endif %}"{% if nav == 'membership' %} aria-current="page"{% endif %} href="{% url 'memberships:mine' %}">{% translate "Membership" %}</a></li>{% endif %}
+        {% if features.advertisers %}<li><a class="app-nav__link{% if nav == 'advertiser' %} is-current{% endif %}"{% if nav == 'advertiser' %} aria-current="page"{% endif %} href="{% url 'advertising:home' %}">{% translate "Advertise" %}</a></li>{% endif %}
         <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Advertisements" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
         <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Rewards" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
         <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Wallet" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>

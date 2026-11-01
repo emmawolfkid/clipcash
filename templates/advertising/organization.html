@@ -1,0 +1,16 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{{ organization.display_name }}{% endblock %}
+{% block member_content %}
+{% include "advertising/_header.html" %}
+<section class="section">
+  <div class="section__header"><h2>{% translate "Campaign summary" %}</h2>
+  <a class="button" href="{% url 'advertising:campaign_create' organization.pk %}">{% translate "New campaign" %}</a></div>
+  {% include "components/campaign_report.html" %}
+  {% include "components/demo_budget_notice.html" %}
+</section>
+<section class="section">
+  <h2>{% translate "Recent campaigns" %}</h2>
+  {% if recent %}{% include "advertising/_campaign_table.html" with campaigns=recent %}
+  {% else %}<p class="empty-state">{% translate "No campaigns yet. Create a draft to get started." %}</p>{% endif %}
+</section>
+{% endblock %}

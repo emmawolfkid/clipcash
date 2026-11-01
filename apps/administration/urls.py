@@ -13,4 +13,8 @@ urlpatterns = [
     path("videos/<uuid:pk>/<str:action>/", views.VideoActionView.as_view(), name="video_action"),
     path("categories/", views.CategoryListView.as_view(), name="categories"),
     path("categories/<uuid:pk>/", views.CategoryEditView.as_view(), name="category_edit"),
+    path("advertisers/", views.AdvertiserQueueView.as_view(), name="advertisers"),
+    path("advertisers/<uuid:pk>/", views.AdvertiserReviewView.as_view(), name="advertiser_review"),
+    path("campaigns/", views.CampaignQueueView.as_view(), name="campaigns"),
+    path("campaigns/<uuid:pk>/", views.CampaignReviewView.as_view(), name="campaign_review"),
 ]

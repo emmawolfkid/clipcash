@@ -61,9 +61,10 @@ requirements/    Pinned dependencies (base.txt, dev.txt)
 | Email | Durable outbox written in the business transaction; tokens generated at delivery and dated to the request; never stored |
 | Memberships | Plans with immutable price versions; subscription lifecycle enforced by the database; member pages; access-check service. **Paid activation waits for verified payments (not available yet)** |
 | Videos | Categories and catalogue with separate processing/publication status; Bunny Stream (direct TUS upload, status sync jobs, short-lived signed playback) or a labelled demo provider; administration console at `/manage/`; membership-gated library at `/videos/`; member dashboard at `/dashboard/`. **Watching is not verified viewing and earns nothing** |
-| Verified viewing, advertising, payments, rewards, withdrawals, reports, support | Not implemented |
+| Advertising | Advertiser organizations with reviewed verification, team invitations and tenant isolation; staff-authorized campaign videos; campaign lifecycle with revision-bound approval, scheduling job and server-side eligibility; advertiser pages at `/advertisers/`, review queues at `/manage/`. **Budgets are demonstration figures only: no funding, ledger entries or rewards** |
+| Verified viewing, payments, rewards, withdrawals, reports, support | Not implemented |
 
-Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md), [docs/architecture/audit.md](docs/architecture/audit.md), [docs/architecture/ledger.md](docs/architecture/ledger.md), [docs/architecture/background-processing.md](docs/architecture/background-processing.md), [docs/architecture/memberships.md](docs/architecture/memberships.md), [docs/architecture/videos.md](docs/architecture/videos.md).
+Details: [docs/architecture/authentication.md](docs/architecture/authentication.md), [docs/architecture/core.md](docs/architecture/core.md), [docs/architecture/audit.md](docs/architecture/audit.md), [docs/architecture/ledger.md](docs/architecture/ledger.md), [docs/architecture/background-processing.md](docs/architecture/background-processing.md), [docs/architecture/memberships.md](docs/architecture/memberships.md), [docs/architecture/videos.md](docs/architecture/videos.md), [docs/architecture/advertising.md](docs/architecture/advertising.md).
 
 ## Local setup (Windows 11)
 

@@ -285,3 +285,25 @@ a.app-nav__link:hover, .app-nav__button:hover { background: var(--info-bg); }
 }
 .confirm-form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .confirm-form label { font-size: 0.85rem; color: var(--muted); }
+
+/* Phase 05: advertisers and campaigns */
+.tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; border-bottom: 1px solid var(--border); margin: 0 0 1rem; }
+.tab { padding: 0.45rem 0.8rem; color: var(--text); text-decoration: none; border-bottom: 2px solid transparent; }
+.tab.is-current { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.list, .list-plain { list-style: none; margin: 0; padding: 0; }
+.list__item { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; justify-content: space-between;
+  padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+.list__item form { margin: 0; }
+.notice--warning { border-left-color: var(--danger); }
+.notice--demo { margin-top: 1rem; }
+.stat--demo .stat__value { color: var(--muted); font-size: 1.25rem; }
+.stat--unavailable .stat__value { color: var(--muted); }
+.form textarea, .form select, .form input[type="number"], .form input[type="url"], .form input[type="datetime-local"],
+.form input[type="tel"] { width: 100%; padding: 0.6rem 0.75rem; font: inherit; color: var(--text); background: var(--bg);
+  border: 1px solid var(--border); border-radius: calc(var(--radius) / 2); }
+.form ul[id] { list-style: none; padding: 0; margin: 0.25rem 0; display: grid; gap: 0.25rem; }
+.form ul[id] label { font-weight: 400; display: inline; }
+.badge--approved, .badge--scheduled { border-color: var(--accent); color: var(--accent); }
+.badge--submitted { border-color: var(--muted); color: var(--muted); }
+.badge--rejected, .badge--paused { border-color: var(--danger); color: var(--danger); }
+.badge--completed, .badge--cancelled { color: var(--muted); }
