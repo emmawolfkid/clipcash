@@ -251,6 +251,26 @@ VIDEO_UPLOAD_CONTENT_TYPES = ("video/mp4", "video/quicktime", "video/webm", "vid
 VIDEO_UPLOAD_STALE_HOURS = 24
 VIDEO_LIBRARY_PAGE_SIZE = 12
 
+# Verified viewing (apps.viewing). Integer units only; validated by system checks
+# (viewing.E001). Browser evidence is untrusted: these are conservative bounds.
+VIEWING_MIN_WATCH_PERCENT = env.int("DJANGO_VIEWING_MIN_WATCH_PERCENT", default=90)  # 50-100
+VIEWING_MIN_WATCH_SECONDS = env.int("DJANGO_VIEWING_MIN_WATCH_SECONDS", default=15)
+VIEWING_MIN_VIDEO_SECONDS = 5  # Shorter (or unknown-length) videos never verify.
+VIEWING_HEARTBEAT_SECONDS = env.int("DJANGO_VIEWING_HEARTBEAT_SECONDS", default=10)
+VIEWING_MAX_HEARTBEAT_GAP_SECONDS = env.int("DJANGO_VIEWING_MAX_HEARTBEAT_GAP_SECONDS", default=45)
+VIEWING_POSITION_TOLERANCE_MS = 2000  # Network delay and clock jitter per heartbeat.
+VIEWING_MAX_POSITION_JUMP_SECONDS = env.int("DJANGO_VIEWING_MAX_POSITION_JUMP_SECONDS", default=15)
+VIEWING_START_WINDOW_SECONDS = 300  # A created session must start playing within this.
+VIEWING_IDLE_SECONDS = env.int("DJANGO_VIEWING_IDLE_SECONDS", default=300)  # Then finalized as abandoned.
+VIEWING_SESSION_GRACE_SECONDS = 900  # Expiry = start + video length x 2 + grace (max 6 h).
+VIEWING_MAX_CONCURRENT_SESSIONS = env.int("DJANGO_VIEWING_MAX_CONCURRENT_SESSIONS", default=1)
+VIEWING_MAX_STARTS_PER_HOUR = env.int("DJANGO_VIEWING_MAX_STARTS_PER_HOUR", default=20)
+VIEWING_MAX_EVENTS_PER_MINUTE = env.int("DJANGO_VIEWING_MAX_EVENTS_PER_MINUTE", default=30)
+VIEWING_MIN_EVENT_INTERVAL_MS = 1000
+VIEWING_MAX_EVENTS_PER_SESSION = 2000
+VIEWING_REVIEW_AFTER_REJECTIONS = 3  # Recent rejected/suspicious sessions before review is forced.
+VIEWING_HISTORY_PAGE_SIZE = 20
+
 # Free memberships granted by a Super Administrator. Off unless a business
 # policy approves them.
 MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED = env.bool("DJANGO_MEMBERSHIPS_COMPLIMENTARY_GRANTS", default=False)

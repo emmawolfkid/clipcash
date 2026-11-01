@@ -307,3 +307,10 @@ a.app-nav__link:hover, .app-nav__button:hover { background: var(--info-bg); }
 .badge--submitted { border-color: var(--muted); color: var(--muted); }
 .badge--rejected, .badge--paused { border-color: var(--danger); color: var(--danger); }
 .badge--completed, .badge--cancelled { color: var(--muted); }
+
+/* Phase 06: viewing */
+#watch-panel progress { width: 100%; height: 0.9rem; margin: 0.25rem 0 0.5rem; }
+.toolbar__check { display: flex; align-items: center; gap: 0.35rem; font-size: 0.9rem; }
+.badge--verified_evidence { border-color: var(--accent); color: var(--accent); }
+.badge--suspicious_review, .badge--rejected { border-color: var(--danger); color: var(--danger); }
+.badge--insufficient_evidence, .badge--expired, .badge--pending { border-color: var(--muted); color: var(--muted); }

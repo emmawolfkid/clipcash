@@ -1,0 +1,17 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{{ campaign.name }}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{{ campaign.name }}</h1>
+<p class="lead">{% blocktranslate with name=campaign.organization.display_name %}Sponsored by {{ name }}{% endblocktranslate %}{% if campaign.video.duration_display %} · {{ campaign.video.duration_display }}{% endif %}</p>
+{% if campaign.description %}<p>{{ campaign.description|linebreaksbr }}</p>{% endif %}
+<section class="panel">
+  <h2 class="panel__title">{% translate "How viewing works" %}</h2>
+  <ul>
+    <li>{% translate "Watch the video from the start without skipping ahead." %}</li>
+    <li>{% translate "Only time the video is actually playing counts; pausing or switching away does not." %}</li>
+    <li>{% translate "When the video ends, ClipCash checks the session and shows the result." %}</li>
+  </ul>
+  <form method="post">{% csrf_token %}<button class="button" type="submit">{% translate "Start watching" %}</button></form>
+</section>
+{% include "components/not_a_reward_notice.html" %}
+{% endblock %}

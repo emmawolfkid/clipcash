@@ -29,6 +29,7 @@ class Category:
     MEMBERSHIP = "MEMBERSHIP"
     CONTENT = "CONTENT"
     ADVERTISING = "ADVERTISING"
+    VIEWING = "VIEWING"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -41,6 +42,7 @@ class Category:
         (MEMBERSHIP, "Membership"),
         (CONTENT, "Content"),
         (ADVERTISING, "Advertising"),
+        (VIEWING, "Viewing"),
     ]
 
 
@@ -155,6 +157,16 @@ EVENT_TYPES = {
           for name in ("submitted", "withdrawn", "approved", "rejected", "activated", "paused", "resumed",
                        "completed", "cancelled", "archived", "reopened")],
         _event("campaign.funding.refused", Category.ADVERTISING, SECURITY, ["requested_status", "reason"]),
+        # Verified viewing (evidence summaries only; never playback URLs or raw telemetry)
+        _event("viewing.session.started", Category.VIEWING, BUSINESS, ["campaign", "revision"]),
+        _event("viewing.session.denied", Category.VIEWING, SECURITY, ["campaign", "reason"]),
+        _event("viewing.session.expired", Category.VIEWING, BUSINESS, ["campaign"]),
+        _event("viewing.session.invalidated", Category.VIEWING, BUSINESS, ["campaign", "reason"]),
+        _event("viewing.session.finalized", Category.VIEWING, BUSINESS,
+               ["campaign", "outcome", "reasons", "credited_seconds", "required_seconds", "trigger"]),
+        _event("viewing.evidence.rejected", Category.VIEWING, SECURITY, ["campaign", "reason", "count"]),
+        _event("viewing.fraud.flagged", Category.VIEWING, SECURITY, ["campaign", "flags"]),
+        _event("viewing.review.decided", Category.VIEWING, BUSINESS, ["decision", "reason", "flags"]),
     )
 }
 

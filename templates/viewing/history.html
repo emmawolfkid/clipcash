@@ -1,0 +1,17 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Viewing history" %}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{% translate "Viewing history" %}</h1>
+{% include "components/not_a_reward_notice.html" %}
+{% if page.object_list %}
+<table class="table">
+  <thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Started" %}</th><th scope="col">{% translate "Watched" %}</th><th scope="col">{% translate "Result" %}</th></tr></thead>
+  <tbody>{% for s in page.object_list %}
+    <tr><td><a href="{% url 'viewing:session' s.pk %}">{{ s.campaign.name }}</a></td><td>{{ s.created_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+      <td>{% widthratio s.credited_ms 1000 1 %} / {% if s.required_ms %}{% widthratio s.required_ms 1000 1 %}{% else %}—{% endif %} s</td>
+      <td><span class="badge badge--{{ s.outcome|lower }}">{% if s.is_open %}{{ s.get_state_display }}{% else %}{{ s.get_outcome_display }}{% endif %}</span></td></tr>
+  {% endfor %}</tbody>
+</table>
+{% include "components/pagination.html" %}
+{% else %}<p class="empty-state">{% translate "You have not watched any sponsored videos yet." %}</p>{% endif %}
+{% endblock %}

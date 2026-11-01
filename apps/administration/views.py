@@ -23,6 +23,7 @@ from django.views import View
 from apps.advertising import services as advertising
 from apps.advertising.models import Campaign, Organization
 from apps.audit.admin import can_view_audit
+from apps.audit.models import AuditEvent
 from apps.core.models import Job
 from apps.core.services import can_change_site_configuration
 from apps.memberships.models import Subscription
@@ -31,6 +32,8 @@ from apps.notifications.models import OutboundEmail
 from apps.videos import services as videos
 from apps.videos.forms import CategoryForm, VideoForm
 from apps.videos.models import Video, VideoCategory
+from apps.viewing import services as viewing
+from apps.viewing.models import WatchSession
 
 console = method_decorator(staff_member_required(login_url="admin:login"), name="dispatch")
 
@@ -54,6 +57,7 @@ def console_links(user):
         "audit": can_view_audit(user),
         "advertisers": advertising.can_review_advertisers(user),
         "campaigns": advertising.can_review_campaigns(user),
+        "viewing": viewing.can_review_viewing(user),
     }
     return can
 
@@ -83,6 +87,8 @@ class OverviewView(View):
                 verification_status=Organization.Verification.APPROVED).count(),
             "campaigns_submitted": Campaign.objects.filter(status=Campaign.Status.SUBMITTED).count(),
             "campaigns_active": Campaign.objects.filter(status=Campaign.Status.ACTIVE).count(),
+            "viewing_review": WatchSession.objects.filter(review_status=WatchSession.Review.PENDING).count(),
+            "viewing_verified": WatchSession.objects.filter(outcome=WatchSession.Outcome.VERIFIED_EVIDENCE).count(),
         }
         return render(request, "administration/overview.html",
                       {"nav": "overview", "stats": stats, "can": console_links(request.user), "provider": settings.VIDEO_PROVIDER})
@@ -472,3 +478,68 @@ class CampaignReviewView(View):
         except (ValidationError, advertising.AdvertisingError) as error:
             messages.error(request, _error_text(error))
         return redirect("administration:campaign_review", pk=pk)
+
+
+# --- Viewing review (Phase 06) -------------------------------------------------------------
+
+
+@console
+class ViewingListView(View):
+    def get(self, request):
+        if not viewing.can_review_viewing(request.user):
+            raise PermissionDenied
+        qs = WatchSession.objects.select_related("member", "campaign").order_by("-created_at")
+        filters = {key: request.GET.get(key, "").strip()[:100] for key in ("member", "campaign", "outcome", "state",
+                                                                           "flag", "review")}
+        if filters["member"]:
+            qs = qs.filter(member__email__icontains=filters["member"])
+        if filters["campaign"]:
+            qs = qs.filter(campaign__name__icontains=filters["campaign"])
+        if filters["outcome"] in WatchSession.Outcome.values:
+            qs = qs.filter(outcome=filters["outcome"])
+        if filters["state"] in WatchSession.State.values:
+            qs = qs.filter(state=filters["state"])
+        if filters["flag"] in VIEWING_FLAGS:
+            qs = qs.filter(flags__contains=[filters["flag"]])
+        if filters["review"]:
+            qs = qs.filter(review_status=WatchSession.Review.PENDING)
+        page = Paginator(qs, 25).get_page(request.GET.get("page"))
+        params = request.GET.copy()
+        params.pop("page", None)
+        patterns = (WatchSession.objects.filter(finalized_at__gte=timezone.now() - timedelta(days=30),
+                                                outcome__in=[WatchSession.Outcome.REJECTED,
+                                                             WatchSession.Outcome.SUSPICIOUS_REVIEW])
+                    .values("member__email").annotate(n=Count("id")).filter(n__gte=2).order_by("-n")[:10])
+        return render(request, "administration/viewing/list.html", {
+            "page": page, "filters": filters, "page_query": params.urlencode(), "patterns": patterns,
+            "outcomes": WatchSession.Outcome.choices, "states": WatchSession.State.choices,
+            "flag_choices": VIEWING_FLAGS, "can": console_links(request.user), "nav": "viewing"})
+
+
+@console
+class ViewingReviewView(View):
+    def get(self, request, pk):
+        if not viewing.can_review_viewing(request.user):
+            raise PermissionDenied
+        session = get_object_or_404(WatchSession.objects.select_related("member", "campaign"), pk=pk)
+        history = AuditEvent.objects.filter(target_model="watchsession", target_id=str(session.pk)).order_by(
+            "occurred_at")[:100]
+        return render(request, "administration/viewing/detail.html", {
+            "session": session, "history": history, "can": console_links(request.user), "nav": "viewing"})
+
+    def post(self, request, pk):
+        session = get_object_or_404(WatchSession, pk=pk)
+        try:
+            viewing.review_session(request.user, session, request.POST.get("decision", ""),
+                                   expected_status=request.POST.get("expected_status", ""),
+                                   reason=request.POST.get("reason", "")[:300])
+            messages.success(request, _("Review decision saved."))
+        except viewing.Denied:
+            raise PermissionDenied from None
+        except (ValidationError, viewing.ViewingError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:viewing_review", pk=pk)
+
+
+VIEWING_FLAGS = ["excessive_events", "heartbeat_gaps", "impossible_speed", "invalid_evidence", "large_seeks",
+                 "rapid_attempts", "replayed_events"]

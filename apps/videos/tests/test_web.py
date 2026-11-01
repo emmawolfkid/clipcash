@@ -142,7 +142,8 @@ class DashboardTests(VideoTestCase):
         self.assertContains(response, "Latest clip")
         self.assertContains(response, "You do not have an active membership")
         self.assertContains(response, "Coming soon")
-        for label in ("Advertisements", "Rewards", "Wallet", "Withdrawals"):
+        # Advertisements became "Sponsored videos" in Phase 06 (shown when advertisers are enabled).
+        for label in ("Rewards", "Wallet", "Withdrawals"):
             self.assertContains(response, label)
         self.assertNotContains(response, "TZS 0")  # No invented balances.
         self.assertNotContains(response, reverse("administration:overview"))

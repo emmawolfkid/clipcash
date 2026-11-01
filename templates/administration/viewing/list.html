@@ -1,0 +1,34 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Viewing review" %}{% endblock %}
+{% block console_content %}
+<h1 class="page-title">{% translate "Viewing sessions" %}</h1>
+<form class="toolbar" method="get">
+  <label class="visually-hidden" for="f-member">{% translate "Member email" %}</label>
+  <input id="f-member" type="search" name="member" value="{{ filters.member }}" placeholder="{% translate 'Member email' %}">
+  <label class="visually-hidden" for="f-campaign">{% translate "Campaign" %}</label>
+  <input id="f-campaign" type="search" name="campaign" value="{{ filters.campaign }}" placeholder="{% translate 'Campaign name' %}">
+  <label class="visually-hidden" for="f-outcome">{% translate "Outcome" %}</label>
+  <select id="f-outcome" name="outcome"><option value="">{% translate "Any outcome" %}</option>{% for value, label in outcomes %}<option value="{{ value }}"{% if filters.outcome == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <label class="visually-hidden" for="f-state">{% translate "State" %}</label>
+  <select id="f-state" name="state"><option value="">{% translate "Any state" %}</option>{% for value, label in states %}<option value="{{ value }}"{% if filters.state == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <label class="visually-hidden" for="f-flag">{% translate "Flag" %}</label>
+  <select id="f-flag" name="flag"><option value="">{% translate "Any flag" %}</option>{% for flag in flag_choices %}<option value="{{ flag }}"{% if filters.flag == flag %} selected{% endif %}>{{ flag }}</option>{% endfor %}</select>
+  <label class="toolbar__check"><input type="checkbox" name="review" value="1"{% if filters.review %} checked{% endif %}> {% translate "Awaiting review" %}</label>
+  <button class="button button--secondary" type="submit">{% translate "Filter" %}</button>
+</form>
+{% if page.object_list %}
+<table class="table">
+  <thead><tr><th scope="col">{% translate "Session" %}</th><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Outcome" %}</th><th scope="col">{% translate "Flags" %}</th></tr></thead>
+  <tbody>{% for s in page.object_list %}
+    <tr><td><a href="{% url 'administration:viewing_review' s.pk %}">{{ s.created_at|date:"SHORT_DATETIME_FORMAT" }}</a></td><td>{{ s.member.email }}</td><td>{{ s.campaign.name }}</td>
+      <td><span class="badge badge--{{ s.outcome|lower }}">{{ s.get_outcome_display }}</span>{% if s.review_status == "PENDING" %} <span class="badge badge--pending">{% translate "Review" %}</span>{% endif %}</td>
+      <td>{{ s.flags|join:", "|default:"—" }}</td></tr>
+  {% endfor %}</tbody>
+</table>
+{% include "components/pagination.html" %}
+{% else %}<p class="empty-state">{% translate "No sessions match these filters." %}</p>{% endif %}
+<section class="section"><h2>{% translate "Repeated problems (last 30 days)" %}</h2>
+{% if patterns %}<table class="table"><thead><tr><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Rejected or suspicious sessions" %}</th></tr></thead>
+<tbody>{% for row in patterns %}<tr><td><a href="?member={{ row.member__email|urlencode }}">{{ row.member__email }}</a></td><td>{{ row.n }}</td></tr>{% endfor %}</tbody></table>
+{% else %}<p class="lead">{% translate "No repeated problems." %}</p>{% endif %}</section>
+{% endblock %}

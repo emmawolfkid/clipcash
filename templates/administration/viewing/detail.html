@@ -1,0 +1,41 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Viewing session" %}{% endblock %}
+{% block console_content %}
+<div class="section__header"><h1 class="page-title">{% translate "Viewing session" %}</h1><a href="{% url 'administration:viewing' %}">{% translate "All sessions" %}</a></div>
+<div class="card-grid">
+  <section class="panel"><h2 class="panel__title">{% translate "Summary" %}</h2>
+    <dl class="details">
+      <dt>{% translate "Member" %}</dt><dd>{{ session.member.email }}</dd>
+      <dt>{% translate "Campaign" %}</dt><dd><a href="{% url 'administration:campaign_review' session.campaign.pk %}">{{ session.campaign.name }}</a> ({% translate "revision" %} {{ session.campaign_revision }})</dd>
+      <dt>{% translate "State" %}</dt><dd>{{ session.get_state_display }}</dd>
+      <dt>{% translate "Outcome" %}</dt><dd><span class="badge badge--{{ session.outcome|lower }}">{{ session.get_outcome_display }}</span> {{ session.reasons|join:", " }}</dd>
+      <dt>{% translate "Review" %}</dt><dd>{{ session.get_review_status_display }}{% if session.review_reason %} · {{ session.review_reason }}{% endif %}</dd>
+      <dt>{% translate "Counted view" %}</dt><dd>{{ session.qualifying_slot|default:"—" }} / {{ session.campaign.max_views_per_member }}</dd>
+      <dt>{% translate "Started / closed" %}</dt><dd>{{ session.started_at|date:"DATETIME_FORMAT"|default:"—" }} / {{ session.finalized_at|date:"DATETIME_FORMAT"|default:"—" }}</dd>
+    </dl></section>
+  <section class="panel"><h2 class="panel__title">{% translate "Evidence (server-side summary)" %}</h2>
+    <dl class="details">
+      <dt>{% translate "Video length" %}</dt><dd>{% if session.video_duration_ms %}{% widthratio session.video_duration_ms 1000 1 %} s{% else %}{% translate "unknown" %}{% endif %}</dd>
+      <dt>{% translate "Required" %}</dt><dd>{% if session.required_ms %}{% widthratio session.required_ms 1000 1 %} s{% else %}—{% endif %}</dd>
+      <dt>{% translate "Credited playing time" %}</dt><dd>{% widthratio session.credited_ms 1000 1 %} s</dd>
+      <dt>{% translate "Continuous coverage" %}</dt><dd>{% widthratio session.coverage_ms 1000 1 %} s</dd>
+      <dt>{% translate "Heartbeats" %}</dt><dd>{{ session.event_count }} ({% translate "duplicates" %} {{ session.duplicate_event_count }}, {% translate "out of order" %} {{ session.out_of_order_count }}, {% translate "invalid" %} {{ session.rejected_event_count }}, {% translate "too fast" %} {{ session.rate_rejection_count }})</dd>
+      <dt>{% translate "Seeks" %}</dt><dd>{{ session.seek_count }} ({% widthratio session.seek_forward_ms 1000 1 %} s {% translate "forward" %})</dd>
+      <dt>{% translate "Speed anomalies / gaps" %}</dt><dd>{{ session.speed_anomaly_count }} / {{ session.gap_count }}</dd>
+      <dt>{% translate "Flags" %}</dt><dd>{{ session.flags|join:", "|default:"—" }}</dd>
+    </dl>
+    <p class="lead">{% translate "Browser evidence is untrusted. A verified result means ClipCash's rules passed, not proof of attention." %}</p></section>
+</div>
+{% if session.review_status == "PENDING" %}
+<section class="panel section"><h2 class="panel__title">{% translate "Review decision" %}</h2>
+  <form method="post" class="form">{% csrf_token %}<input type="hidden" name="expected_status" value="{{ session.review_status }}">
+    <label for="reason">{% translate "Reason (required)" %}</label><textarea id="reason" name="reason" rows="2" maxlength="300" required></textarea>
+    <div class="actions"><button class="button" name="decision" value="confirm" type="submit">{% translate "Confirm view (false positive)" %}</button>
+      <button class="button button--secondary" name="decision" value="reject" type="submit">{% translate "Reject view" %}</button></div>
+    <p class="lead">{% translate "Confirming keeps the server's evidence; it cannot add watch time. No decision creates a reward." %}</p>
+  </form></section>
+{% endif %}
+<section class="section"><h2>{% translate "Audit history" %}</h2>
+{% if history %}<ul class="list">{% for event in history %}<li class="list__item"><span>{{ event.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ event.action }} · {{ event.outcome }}</span><span>{{ event.actor_email|default:"system" }}</span></li>{% endfor %}</ul>
+{% else %}<p class="lead">—</p>{% endif %}</section>
+{% endblock %}
