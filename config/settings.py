@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 from pathlib import Path
 import environ
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
 
@@ -38,8 +39,18 @@ ALLOWED_HOSTS = env.list(
 
 CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
 
+# Render sets RENDER_EXTERNAL_HOSTNAME to the service's own onrender.com host
+# name (also the Host header of its health checks). Custom domains still go in
+# DJANGO_ALLOWED_HOSTS / DJANGO_CSRF_TRUSTED_ORIGINS.
+_render_hostname = env("RENDER_EXTERNAL_HOSTNAME", default="")
+if _render_hostname:
+    if _render_hostname not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_render_hostname)
+    if f"https://{_render_hostname}" not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(f"https://{_render_hostname}")
+
 # HTTPS hardening. Off by default for local HTTP development; enable in
-# production (see README "Security configuration").
+# production (see README "Security configuration" and docs/deployment/render.md).
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=False)
 SECURE_HSTS_SECONDS = env.int("DJANGO_SECURE_HSTS_SECONDS", default=0)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False)
@@ -80,7 +91,11 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # First: answers the platform health probe before host validation, the
+    # HTTPS redirect, sessions and maintenance mode.
+    'apps.core.middleware.HealthCheckMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -118,22 +133,35 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
+# Hosted deployments (Render) provide one DATABASE_URL; local development uses
+# the separate DB_* values. The URL is read here only and never kept as a setting.
+if env("DATABASE_URL", default=""):
+    _database = env.db_url("DATABASE_URL")
+    if _database["ENGINE"] != "django.db.backends.postgresql":
+        raise ImproperlyConfigured("DATABASE_URL must be a PostgreSQL URL (postgres:// or postgresql://).")
+else:
+    _database = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": env("DB_NAME"),
         "USER": env("DB_USER"),
         "PASSWORD": env("DB_PASSWORD"),
         "HOST": env("DB_HOST", default="127.0.0.1"),
         "PORT": env.int("DB_PORT", default=5432),
-        "CONN_MAX_AGE": 60,
-        "CONN_HEALTH_CHECKS": True,
-        # Disposable test database, provisioned by
-        # scripts/database/create_test_database.sql. The test runner refuses
-        # any non-PostgreSQL engine or a name that is not a distinct test_* database.
-        "TEST": {"NAME": env("DB_TEST_NAME", default="test_clipcash_db")},
     }
-}
+_database.update({
+    "CONN_MAX_AGE": 60,
+    "CONN_HEALTH_CHECKS": True,
+    # Disposable test database, provisioned by
+    # scripts/database/create_test_database.sql. The test runner refuses
+    # any non-PostgreSQL engine or a name that is not a distinct test_* database.
+    "TEST": {"NAME": env("DB_TEST_NAME", default="test_clipcash_db")},
+})
+# TLS to the database: require (encrypted) or verify-full (encrypted, server
+# certificate checked). Unset keeps libpq's default ("prefer"); check --deploy
+# warns (core.W002) when a remote database is used without it.
+if env("DJANGO_DB_SSLMODE", default=""):
+    _database.setdefault("OPTIONS", {})["sslmode"] = env("DJANGO_DB_SSLMODE")
+DATABASES = {"default": _database}
 
 TEST_RUNNER = "config.test_runner.PostgreSQLTestRunner"
 
@@ -190,6 +218,16 @@ EMAIL_BACKEND = env(
     default="django.core.mail.backends.console.EmailBackend",
 )
 DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="ClipCash <no-reply@localhost>")
+# SMTP (DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend).
+# Defaults are Django's own; the password comes only from the environment.
+EMAIL_HOST = env("DJANGO_EMAIL_HOST", default="localhost")
+EMAIL_PORT = env.int("DJANGO_EMAIL_PORT", default=25)
+EMAIL_HOST_USER = env("DJANGO_EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("DJANGO_EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("DJANGO_EMAIL_USE_TLS", default=False)
+EMAIL_USE_SSL = env.bool("DJANGO_EMAIL_USE_SSL", default=False)
+# Bounded, so a stalled SMTP server cannot hold a delivery job past its lease.
+EMAIL_TIMEOUT = env.int("DJANGO_EMAIL_TIMEOUT", default=20)
 
 
 # Cache. Rate limiting needs a cache shared by every worker in production, e.g.
@@ -315,18 +353,26 @@ AUDIT_MIN_RETENTION_DAYS = 365
 
 
 # Logging. Security events carry account ids and IPs, never emails, passwords
-# or tokens.
+# or tokens. Everything goes to the console (Render collects stdout/stderr);
+# account link tokens in logged request paths are redacted.
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        "redact_token_paths": {"()": "apps.core.log_filters.RedactTokenPaths"},
+    },
     "formatters": {
         "standard": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
     },
     "handlers": {
-        "console": {"class": "logging.StreamHandler", "formatter": "standard"},
+        "console": {"class": "logging.StreamHandler", "formatter": "standard",
+                    "filters": ["redact_token_paths"]},
     },
+    "root": {"handlers": ["console"], "level": "WARNING"},
     "loggers": {
+        # Server errors (5xx) with tracebacks; 4xx noise stays out of the logs.
+        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
         "clipcash.security": {
             "handlers": ["console"],
             "level": env("DJANGO_SECURITY_LOG_LEVEL", default="INFO"),
@@ -364,6 +410,20 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# WhiteNoise serves collected files from STATIC_ROOT (collectstatic runs in the
+# build). Outside DEBUG, file names carry a content hash so they can be cached
+# for a year; a template that names a missing file then fails loudly.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage" if DEBUG
+        else "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# Platform health probe (apps.core.middleware.HealthCheckMiddleware).
+HEALTH_CHECK_PATH = "/healthz"
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / "media"

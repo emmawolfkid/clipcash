@@ -20,6 +20,7 @@ advertiser campaign budgets.
 | Configuration  | django-environ, `.env` file                       |
 | Video provider | Bunny Stream (planned, not yet integrated)        |
 | Frontend       | Server-rendered Django templates, `static/css/clipcash.css` |
+| Production     | Gunicorn + WhiteNoise on Render (prepared, not deployed): [docs/deployment/render.md](docs/deployment/render.md) |
 
 ## Project layout
 
@@ -118,6 +119,7 @@ by Git and must never be committed. All options are listed in `.env.example`:
 | `DB_NAME`, `DB_USER`, `DB_PASSWORD` | required | Application database |
 | `DB_HOST`, `DB_PORT` | `127.0.0.1`, `5432` | Database server |
 | `DB_TEST_NAME` | `test_clipcash_db` | Disposable test database |
+| `DATABASE_URL`, `DJANGO_DB_SSLMODE` | unset | Hosted database connection string (replaces `DB_*`) and TLS mode |
 | `DJANGO_CACHE_URL` | `locmemcache://clipcash` | Cache; use a shared cache in production |
 | `DJANGO_THROTTLE_REQUIRE_SHARED_CACHE` | `not DEBUG` | Fail startup if the cache is per-process |
 | `DJANGO_TRUSTED_PROXY_COUNT` | `0` | Trusted reverse proxies for client IPs |
@@ -126,6 +128,7 @@ by Git and must never be committed. All options are listed in `.env.example`:
 | `DJANGO_CSRF_TRUSTED_ORIGINS` | empty | HTTPS origins allowed to POST |
 | `DJANGO_SECURE_SSL_REDIRECT`, `DJANGO_SECURE_HSTS_SECONDS`, `DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS`, `DJANGO_SECURE_PROXY_SSL_HEADER` | off | HTTPS hardening for production |
 | `DJANGO_EMAIL_BACKEND`, `DJANGO_DEFAULT_FROM_EMAIL` | console backend | Outgoing email |
+| `DJANGO_EMAIL_HOST`, `_PORT`, `_USE_TLS`, `_USE_SSL`, `_HOST_USER`, `_HOST_PASSWORD`, `_TIMEOUT` | Django defaults, timeout 20 s | SMTP delivery |
 | `DJANGO_SECURITY_LOG_LEVEL` | `INFO` | `clipcash.security` log level |
 | `DJANGO_AUDIT_RECORD_IP_ADDRESS`, `DJANGO_AUDIT_RECORD_USER_AGENT` | `True` | Store client IP / user agent on audit events |
 
@@ -182,6 +185,9 @@ python manage.py check --deploy
 ```
 
 It must report no `accounts.*` errors. Deployment hardening is completed in Phase 16.
+
+Render deployment (environment variables, build/start commands, migrations, background
+worker, backups, rollback) is documented in [docs/deployment/render.md](docs/deployment/render.md).
 
 ## Known limitations
 
