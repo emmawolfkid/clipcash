@@ -89,6 +89,15 @@ ACCOUNT_TYPES = {
         AccountType("REWARD_LIABILITY", "2300", "Rewards owed to members",
                     Classification.LIABILITY, FundingClass.REWARD_RESTRICTED, Scope.MEMBER, True,
                     "Rewards allocated from campaign funding; not withdrawable in this phase."),
+        # Member wallet buckets (Phase 09). Same funding class as REWARD_LIABILITY, so the
+        # database funding-separation rules apply unchanged. Postings to wallet-linked
+        # accounts are blocked by the database until a reviewed activation migration.
+        AccountType("MEMBER_REWARD_PENDING", "2310", "Member rewards pending clearance",
+                    Classification.LIABILITY, FundingClass.REWARD_RESTRICTED, Scope.MEMBER, True,
+                    "Rewards awaiting a clearance window; not spendable."),
+        AccountType("MEMBER_WITHDRAWAL_RESERVED", "2320", "Member withdrawal reservations",
+                    Classification.LIABILITY, FundingClass.REWARD_RESTRICTED, Scope.MEMBER, True,
+                    "Amounts reserved for a requested withdrawal; not spendable."),
         AccountType("WITHDRAWAL_CLEARING", "2400", "Withdrawals in progress",
                     Classification.LIABILITY, FundingClass.REWARD_RESTRICTED, Scope.PLATFORM, True,
                     "Approved withdrawals awaiting provider payout."),

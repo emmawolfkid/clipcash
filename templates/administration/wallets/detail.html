@@ -1,0 +1,29 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{{ wallet.number }}{% endblock %}
+{% block console_content %}
+<div class="section__header"><h1 class="page-title">{{ wallet.number }}</h1><a href="{% url 'administration:wallets' %}">{% translate "All wallets" %}</a></div>
+<p class="lead">{% translate "Inspection is recorded in the audit log. There are no balance controls: wallets hold no money in this phase." %}</p>
+<div class="card-grid">
+<section class="panel"><h2 class="panel__title">{% translate "Wallet" %}</h2><dl class="details">
+  <dt>{% translate "Member" %}</dt><dd>{{ wallet.member.email }}</dd>
+  <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ wallet.status|lower }}">{{ wallet.get_status_display }}</span></dd>
+  <dt>{% translate "Available / pending / reserved" %}</dt><dd>TZS {{ balances.available }} / {{ balances.pending }} / {{ balances.reserved }}</dd>
+  <dt>{% translate "Ledger accounts" %}</dt><dd>{{ wallet.available_account.code }}<br>{{ wallet.pending_account.code }}<br>{{ wallet.reserved_account.code }}</dd>
+</dl></section>
+<section class="panel"><h2 class="panel__title">{% translate "Restrictions" %}</h2>
+  {% for r in restrictions %}<div class="section"><p><strong>{{ r.get_kind_display }}</strong> · {{ r.get_status_display }} · {{ r.reason }} ({{ r.placed_by.email }}, {{ r.created_at|date:"SHORT_DATE_FORMAT" }}){% if r.lift_reason %}<br>{% translate "Lift requested" %}: {{ r.lift_reason }} ({{ r.lift_requested_by.email }}){% endif %}</p>
+    {% if can_manage and r.status == "ACTIVE" %}<form method="post" class="confirm-form">{% csrf_token %}<input type="hidden" name="action" value="request_lift"><input type="hidden" name="restriction" value="{{ r.pk }}">
+      <input name="reason" type="text" maxlength="300" required placeholder="{% translate 'Why lift?' %}" aria-label="{% translate 'Lift reason' %}"><button class="button--link" type="submit">{% translate "Request lift" %}</button></form>{% endif %}
+    {% if can_manage and r.status == "LIFT_REQUESTED" %}<form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="decide_lift"><input type="hidden" name="restriction" value="{{ r.pk }}">
+      <input name="note" type="text" maxlength="300" placeholder="{% translate 'Note' %}" aria-label="{% translate 'Note' %}">
+      <button class="button" name="approve" value="1" type="submit">{% translate "Approve lift (second person)" %}</button><button class="button button--secondary" name="approve" value="0" type="submit">{% translate "Decline" %}</button></form>{% endif %}</div>
+  {% empty %}<p class="lead">{% translate "No restrictions." %}</p>{% endfor %}
+  {% if can_manage %}<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="restrict">
+    <label for="r-kind">{% translate "Restriction" %}</label><select id="r-kind" name="kind">{% for v, l in kinds %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+    <label for="r-reason">{% translate "Reason (required)" %}</label><input id="r-reason" name="reason" type="text" maxlength="300" required>
+    <button class="button button--secondary" type="submit">{% translate "Place restriction" %}</button></form>{% endif %}
+</section></div>
+<section class="section"><h2>{% translate "Transactions" %}</h2><p class="lead">{% if transactions %}{{ transactions|length }}{% else %}{% translate "None. Wallet transactions are not active in this phase." %}{% endif %}</p></section>
+<section class="section"><h2>{% translate "Reconciliation findings" %}</h2>{% for d in discrepancies %}<p>{{ d.code }} · {{ d.get_status_display }} · {{ d.detail }}</p>{% empty %}<p class="lead">{% translate "No findings." %}</p>{% endfor %}</section>
+<section class="section"><h2>{% translate "Audit history" %}</h2><ul class="list">{% for e in history %}<li class="list__item"><span>{{ e.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ e.action }}</span><span>{{ e.actor_email|default:"system" }}</span></li>{% empty %}<li>—</li>{% endfor %}</ul></section>
+{% endblock %}

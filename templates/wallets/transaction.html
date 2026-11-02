@@ -1,0 +1,10 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Wallet transaction" %}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{% translate "Wallet transaction" %}</h1>
+<section class="panel"><dl class="details">
+  <dt>{% translate "Reference" %}</dt><dd>{{ txn.reference }}</dd>
+  <dt>{% translate "Type" %}</dt><dd>{{ txn.get_category_display }}</dd>
+  <dt>{% translate "Amount" %}</dt><dd>TZS {{ txn.amount }}</dd>
+</dl></section>
+{% endblock %}

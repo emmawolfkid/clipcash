@@ -1,0 +1,14 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Wallets" %}{% endblock %}
+{% block console_content %}
+<div class="section__header"><h1 class="page-title">{% translate "Member wallets" %}</h1>
+<a href="{% url 'administration:wallet_reconciliation' %}">{% blocktranslate count n=open_discrepancies %}{{ n }} open discrepancy{% plural %}{{ n }} open discrepancies{% endblocktranslate %}</a></div>
+{% include "components/wallet_notice.html" %}
+<form class="toolbar" method="get" role="search">
+  <label class="visually-hidden" for="q">{% translate "Wallet number or exact member email" %}</label>
+  <input id="q" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Wallet number or exact email' %}">
+  <button class="button button--secondary" type="submit">{% translate "Find" %}</button></form>
+{% if page.object_list %}<table class="table"><thead><tr><th scope="col">{% translate "Wallet" %}</th><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Opened" %}</th></tr></thead>
+<tbody>{% for w in page.object_list %}<tr><td><a href="{% url 'administration:wallet' w.pk %}">{{ w.number }}</a></td><td>{{ w.member.email }}</td><td><span class="badge badge--{{ w.status|lower }}">{{ w.get_status_display }}</span></td><td>{{ w.created_at|date:"SHORT_DATE_FORMAT" }}</td></tr>{% endfor %}</tbody></table>
+{% include "components/pagination.html" %}{% else %}<p class="empty-state">{% translate "No wallets found." %}</p>{% endif %}
+{% endblock %}

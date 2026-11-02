@@ -32,6 +32,7 @@ class Category:
     VIEWING = "VIEWING"
     REWARDS = "REWARDS"
     PAYMENTS = "PAYMENTS"
+    WALLETS = "WALLETS"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -47,6 +48,7 @@ class Category:
         (VIEWING, "Viewing"),
         (REWARDS, "Demo rewards"),
         (PAYMENTS, "Payments (sandbox)"),
+        (WALLETS, "Wallets"),
     ]
 
 
@@ -210,6 +212,17 @@ EVENT_TYPES = {
         _event("payments.membership.preview", Category.PAYMENTS, BUSINESS, ["reference", "decision"]),
         _event("payments.sandbox.simulated", Category.PAYMENTS, BUSINESS, ["reference", "action"]),
         _event("payments.action.denied", Category.PAYMENTS, SECURITY, ["action", "reason"]),
+        # Member wallets (no money in this phase)
+        _event("wallets.wallet.created", Category.WALLETS, BUSINESS, ["number"]),
+        _event("wallets.restriction.placed", Category.WALLETS, BUSINESS, ["kind", "reason"]),
+        _event("wallets.restriction.lift_requested", Category.WALLETS, BUSINESS, ["kind", "reason"]),
+        _event("wallets.restriction.lifted", Category.WALLETS, BUSINESS, ["kind", "note"]),
+        _event("wallets.restriction.lift_declined", Category.WALLETS, BUSINESS, ["kind", "note"]),
+        _event("wallets.wallet.inspected", Category.WALLETS, SECURITY, ["view"]),
+        _event("wallets.access.denied", Category.WALLETS, SECURITY, ["action", "reason"]),
+        _event("wallets.posting.refused", Category.WALLETS, SECURITY, ["category", "reason"]),
+        _event("wallets.reconciliation.discrepancy", Category.WALLETS, BUSINESS, ["code"]),
+        _event("wallets.discrepancy.resolved", Category.WALLETS, BUSINESS, ["code", "note"]),
     )
 }
 

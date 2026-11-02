@@ -17,6 +17,7 @@
         {% if can.payments %}<li><a class="app-nav__link{% if nav == 'payments' %} is-current{% endif %}"{% if nav == 'payments' %} aria-current="page"{% endif %} href="{% url 'administration:payments' %}">{% translate "Payments (sandbox)" %}</a></li>{% endif %}
         <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Withdrawals" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
         <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Reports" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        {% if can.wallets %}<li><a class="app-nav__link{% if nav == 'wallets' %} is-current{% endif %}"{% if nav == 'wallets' %} aria-current="page"{% endif %} href="{% url 'administration:wallets' %}">{% translate "Wallets" %}</a></li>{% endif %}
         {% if can.settings %}<li><a class="app-nav__link" href="{% url 'admin:core_siteconfiguration_changelist' %}">{% translate "System settings" %}</a></li>{% endif %}
         {% if can.audit %}<li><a class="app-nav__link" href="{% url 'admin:audit_auditevent_changelist' %}">{% translate "Audit logs" %}</a></li>{% endif %}
       </ul>

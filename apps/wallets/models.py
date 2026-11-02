@@ -8,10 +8,14 @@ apps.wallets.chart are checked for every entry. Only apps.wallets.services
 should write to these tables.
 """
 
+import secrets
+
+from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.fields import AmountField
 from apps.core.models import BaseModel, UUIDModel
 from apps.core.money import DEFAULT_CURRENCY, MAX_AMOUNT, SUPPORTED_CURRENCIES
 
@@ -229,3 +233,163 @@ class JournalLine(UUIDModel):
 
     def delete(self, *args, **kwargs):
         raise LedgerImmutableError("Posted journal lines cannot be deleted; post a reversal.")
+
+
+# --- Member wallets (Phase 09) ------------------------------------------------------
+#
+# A wallet is an identity plus three member-scoped ledger accounts. It never
+# stores money: balances are computed from JournalLine rows (apps.wallets.balances).
+# In this phase every wallet balance is zero: the database refuses journal lines
+# on wallet-linked accounts and any WalletTransaction (migration 0005). Lifting
+# that needs a reviewed migration, not a setting or feature flag.
+
+
+def new_wallet_number():
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    return "CW-" + "".join(secrets.choice(alphabet) for _ in range(10))
+
+
+class Wallet(BaseModel):
+    class Status(models.TextChoices):
+        ACTIVE = "ACTIVE", _("Active")
+        RESTRICTED = "RESTRICTED", _("Restricted")
+
+    number = models.CharField(_("wallet number"), max_length=16, unique=True, default=new_wallet_number,
+                              editable=False)
+    member = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="wallet")
+    currency = models.CharField(_("currency"), max_length=3, default=DEFAULT_CURRENCY)
+    status = models.CharField(_("status"), max_length=12, choices=Status.choices, default=Status.ACTIVE)
+    available_account = models.OneToOneField(LedgerAccount, on_delete=models.PROTECT,
+                                             related_name="wallet_available")
+    pending_account = models.OneToOneField(LedgerAccount, on_delete=models.PROTECT, related_name="wallet_pending")
+    reserved_account = models.OneToOneField(LedgerAccount, on_delete=models.PROTECT, related_name="wallet_reserved")
+
+    class Meta:
+        verbose_name = _("member wallet")
+        ordering = ["-created_at"]
+        permissions = [
+            ("view_wallets", "Can inspect member wallets"),
+            ("manage_wallet_restrictions", "Can place and lift wallet restrictions"),
+        ]
+        constraints = [
+            models.CheckConstraint(condition=Q(currency="TZS"), name="wallet_currency_supported"),
+            models.CheckConstraint(condition=Q(status__in=["ACTIVE", "RESTRICTED"]), name="wallet_status_valid"),
+        ]
+
+    def __str__(self):
+        return self.number
+
+
+class WalletRestriction(BaseModel):
+    class Kind(models.TextChoices):
+        SECURITY_HOLD = "SECURITY_HOLD", _("Security hold")
+        FRAUD_REVIEW = "FRAUD_REVIEW", _("Fraud review")
+        COMPLIANCE = "COMPLIANCE", _("Compliance review")
+
+    class Status(models.TextChoices):
+        ACTIVE = "ACTIVE", _("Active")
+        LIFT_REQUESTED = "LIFT_REQUESTED", _("Lift requested")
+        LIFTED = "LIFTED", _("Lifted")
+
+    wallet = models.ForeignKey(Wallet, on_delete=models.PROTECT, related_name="restrictions")
+    kind = models.CharField(_("kind"), max_length=16, choices=Kind.choices)
+    reason = models.CharField(_("reason"), max_length=300)
+    status = models.CharField(_("status"), max_length=16, choices=Status.choices, default=Status.ACTIVE)
+    placed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    lift_requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                                          on_delete=models.PROTECT, related_name="+")
+    lift_reason = models.CharField(_("lift reason"), max_length=300, blank=True)
+    lifted_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
+                                  related_name="+")
+    lifted_at = models.DateTimeField(_("lifted"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("wallet restriction")
+        ordering = ["-created_at"]
+        constraints = [
+            models.CheckConstraint(condition=~Q(reason=""), name="wallet_restriction_reason"),
+            # Two-person rule: whoever asks to lift a restriction cannot approve the lift.
+            models.CheckConstraint(condition=Q(lifted_by__isnull=True)
+                                   | ~Q(lifted_by=models.F("lift_requested_by")),
+                                   name="wallet_restriction_four_eyes"),
+            models.CheckConstraint(
+                condition=(Q(status="ACTIVE") & Q(lift_requested_by__isnull=True) & Q(lifted_by__isnull=True))
+                | (Q(status="LIFT_REQUESTED") & Q(lift_requested_by__isnull=False) & Q(lifted_by__isnull=True))
+                | (Q(status="LIFTED") & Q(lift_requested_by__isnull=False) & Q(lifted_by__isnull=False)
+                   & Q(lifted_at__isnull=False)),
+                name="wallet_restriction_state_consistent"),
+        ]
+
+
+class WalletTransaction(UUIDModel):
+    """Immutable projection of one journal entry onto one wallet bucket. FUTURE ONLY:
+    the database refuses inserts in Phase 09 (migration 0005)."""
+
+    class Category(models.TextChoices):
+        REWARD_CREDIT = "REWARD_CREDIT", _("Advertiser-funded reward")
+        WITHDRAWAL_RESERVATION = "WITHDRAWAL_RESERVATION", _("Withdrawal reserved")
+        WITHDRAWAL_SETTLEMENT = "WITHDRAWAL_SETTLEMENT", _("Withdrawal paid")
+        WITHDRAWAL_RELEASE = "WITHDRAWAL_RELEASE", _("Withdrawal released")
+        CORRECTION = "CORRECTION", _("Authorized correction")
+        REVERSAL = "REVERSAL", _("Reversal")
+
+    class Bucket(models.TextChoices):
+        AVAILABLE = "AVAILABLE", _("Available")
+        PENDING = "PENDING", _("Pending")
+        RESERVED = "RESERVED", _("Reserved")
+
+    class Direction(models.TextChoices):
+        IN = "IN", _("In")
+        OUT = "OUT", _("Out")
+
+    wallet = models.ForeignKey(Wallet, on_delete=models.PROTECT, related_name="transactions")
+    journal_entry = models.ForeignKey(JournalEntry, on_delete=models.PROTECT, related_name="wallet_transactions")
+    reference = models.CharField(_("reference"), max_length=32, unique=True)
+    idempotency_key = models.CharField(_("idempotency key"), max_length=128, unique=True)
+    category = models.CharField(_("category"), max_length=24, choices=Category.choices)
+    bucket = models.CharField(_("bucket"), max_length=10, choices=Bucket.choices)
+    direction = models.CharField(_("direction"), max_length=3, choices=Direction.choices)
+    amount = AmountField(_("amount (TZS)"), non_negative=True)
+    created_at = models.DateTimeField(_("created"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("wallet transaction")
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["wallet", "-created_at"], name="wallet_txn_wallet_idx")]
+        constraints = [
+            models.CheckConstraint(condition=Q(amount__gt=0), name="wallet_txn_amount_positive"),
+            models.UniqueConstraint(fields=["wallet", "journal_entry", "bucket"],
+                                    name="wallet_txn_entry_bucket_unique"),
+        ]
+
+
+class WalletDiscrepancy(BaseModel):
+    """A reconciliation finding. Reported, never auto-corrected."""
+
+    class Status(models.TextChoices):
+        OPEN = "OPEN", _("Open")
+        RESOLVED = "RESOLVED", _("Resolved")
+
+    wallet = models.ForeignKey(Wallet, null=True, blank=True, on_delete=models.PROTECT,
+                               related_name="discrepancies")
+    account = models.ForeignKey(LedgerAccount, null=True, blank=True, on_delete=models.PROTECT, related_name="+")
+    code = models.CharField(_("check"), max_length=40)
+    detail = models.CharField(_("detail"), max_length=300, blank=True)
+    status = models.CharField(_("status"), max_length=10, choices=Status.choices, default=Status.OPEN)
+    last_seen_at = models.DateTimeField(_("last seen"), auto_now=True)
+    resolved_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
+                                    related_name="+")
+    resolved_at = models.DateTimeField(_("resolved"), null=True, blank=True)
+    resolution_note = models.CharField(_("resolution note"), max_length=300, blank=True)
+
+    class Meta:
+        verbose_name = _("wallet discrepancy")
+        verbose_name_plural = _("wallet discrepancies")
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["wallet", "account", "code"], condition=Q(status="OPEN"),
+                                    name="wallet_discrepancy_open_unique", nulls_distinct=False),
+            models.CheckConstraint(condition=Q(status="OPEN") | (Q(resolved_by__isnull=False)
+                                                                 & Q(resolved_at__isnull=False)),
+                                   name="wallet_discrepancy_resolution_recorded"),
+        ]

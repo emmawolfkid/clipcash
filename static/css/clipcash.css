@@ -327,3 +327,6 @@ a.app-nav__link:hover, .app-nav__button:hover { background: var(--info-bg); }
 .badge--settled, .badge--reconciled { border-color: var(--accent); color: var(--accent); }
 .badge--provider_confirmed, .badge--created { border-color: var(--muted); color: var(--muted); }
 .badge--failed, .badge--disputed, .badge--refunded { border-color: var(--danger); color: var(--danger); }
+
+/* Phase 09: wallets */
+.badge--restricted { border-color: var(--danger); color: var(--danger); }

@@ -23,7 +23,8 @@
   </section>
   <section class="panel">
     <h2 class="panel__title">{% translate "Wallet" %}</h2>
-    <p class="lead">{% translate "Coming soon. There is no wallet balance yet." %}</p>
+    <p class="lead">{% translate "Wallet money is not active yet. Demo rewards are never wallet money." %}</p>
+    <a class="button button--secondary" href="{% url 'wallets:wallet' %}">{% translate "Open wallet" %}</a>
   </section>
 </div>
 {% if features.videos %}

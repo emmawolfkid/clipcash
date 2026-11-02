@@ -14,7 +14,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -24,6 +24,8 @@ from django.views import View
 from apps.advertising import services as advertising
 from apps.advertising.models import Campaign, Organization
 from apps.audit.admin import can_view_audit
+from apps.wallets import wallet_services
+from apps.wallets.models import Wallet, WalletDiscrepancy, WalletRestriction
 from apps.payments import services as payments
 from apps.payments import simulator as payment_simulator
 from apps.payments.models import (
@@ -75,6 +77,7 @@ def console_links(user):
         "viewing": viewing.can_review_viewing(user),
         "rewards": rewards.can_use_rewards_console(user),
         "payments": payments.can_view_payments(user) and payments_sandbox_active(),
+        "wallets": wallet_services.can_view_wallets(user),
     }
     return can
 
@@ -813,3 +816,99 @@ class PaymentFundingView(View):
                                                             .order_by("-created_at")[:100],
             "balances": balances, "balance_total": sum(row["balance"] for row in balances),
             "can": console_links(request.user), "nav": "payments"})
+
+
+# --- Member wallets (Phase 09) ----------------------------------------------------------------
+
+
+@console
+class WalletListView(View):
+    def get(self, request):
+        if not wallet_services.can_view_wallets(request.user):
+            raise PermissionDenied
+        query = request.GET.get("q", "").strip()[:100]
+        page = Paginator(wallet_services.directory(query), 25).get_page(request.GET.get("page"))
+        params = request.GET.copy()
+        params.pop("page", None)
+        return render(request, "administration/wallets/list.html", {
+            "page": page, "query": query, "page_query": params.urlencode(),
+            "open_discrepancies": WalletDiscrepancy.objects.filter(status="OPEN").count(),
+            "can": console_links(request.user), "nav": "wallets"})
+
+
+@console
+class WalletDetailView(View):
+    def get(self, request, pk):
+        try:
+            wallet = wallet_services.wallet_for_staff(request.user, pk)
+        except wallet_services.NotAuthorized:
+            raise PermissionDenied from None
+        except wallet_services.NotEligible:
+            raise Http404 from None
+        return render(request, "administration/wallets/detail.html", {
+            "wallet": wallet, "balances": wallet_services.balances(wallet),
+            "restrictions": wallet.restrictions.select_related("placed_by", "lift_requested_by"),
+            "transactions": list(wallet_services.history(wallet)[:50]),
+            "discrepancies": wallet.discrepancies.order_by("-created_at")[:20],
+            "history": AuditEvent.objects.filter(target_model="wallet", target_id=str(wallet.pk))
+                                         .exclude(action="wallets.wallet.inspected").order_by("occurred_at")[:100],
+            "kinds": WalletRestriction.Kind.choices,
+            "can_manage": wallet_services.can_manage_restrictions(request.user),
+            "can": console_links(request.user), "nav": "wallets"})
+
+    def post(self, request, pk):
+        if not wallet_services.can_view_wallets(request.user):
+            raise PermissionDenied
+        wallet = get_object_or_404(Wallet, pk=pk)
+        action = request.POST.get("action", "")
+        try:
+            if action == "restrict":
+                wallet_services.place_restriction(request.user, wallet, kind=request.POST.get("kind", ""),
+                                                  reason=request.POST.get("reason", ""))
+            elif action in ("request_lift", "decide_lift"):
+                restriction = get_object_or_404(WalletRestriction, pk=request.POST.get("restriction"), wallet=wallet)
+                if action == "request_lift":
+                    wallet_services.request_lift(request.user, restriction, reason=request.POST.get("reason", ""))
+                else:
+                    wallet_services.decide_lift(request.user, restriction, approve=request.POST.get("approve") == "1",
+                                                note=request.POST.get("note", ""))
+            else:
+                raise PermissionDenied
+            messages.success(request, _("Wallet updated."))
+        except wallet_services.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, wallet_services.WalletError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:wallet", pk=pk)
+
+
+@console
+class WalletReconciliationView(View):
+    def get(self, request):
+        if not wallet_services.can_view_wallets(request.user):
+            raise PermissionDenied
+        qs = WalletDiscrepancy.objects.select_related("wallet", "account").order_by("status", "-created_at")
+        return render(request, "administration/wallets/reconciliation.html", {
+            "page": Paginator(qs, 25).get_page(request.GET.get("page")),
+            "can_manage": wallet_services.can_manage_restrictions(request.user),
+            "can": console_links(request.user), "nav": "wallets"})
+
+    def post(self, request):
+        if not wallet_services.can_view_wallets(request.user):
+            raise PermissionDenied
+        try:
+            if request.POST.get("action") == "run":
+                summary = wallet_services.reconcile()
+                messages.success(request, _("Checked %(w)s wallets: %(f)s findings.")
+                                 % {"w": summary["wallets"], "f": summary["findings"]})
+            elif request.POST.get("action") == "resolve":
+                discrepancy = get_object_or_404(WalletDiscrepancy, pk=request.POST.get("discrepancy"))
+                wallet_services.resolve_discrepancy(request.user, discrepancy, note=request.POST.get("note", ""))
+                messages.success(request, _("Finding resolved."))
+            else:
+                raise PermissionDenied
+        except wallet_services.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, wallet_services.WalletError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:wallet_reconciliation")

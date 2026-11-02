@@ -11,7 +11,7 @@
         {% if features.advertisers %}<li><a class="app-nav__link{% if nav == 'advertiser' %} is-current{% endif %}"{% if nav == 'advertiser' %} aria-current="page"{% endif %} href="{% url 'advertising:home' %}">{% translate "Advertise" %}</a></li>{% endif %}
         {% if features.advertisers %}<li><a class="app-nav__link{% if nav == 'watch' %} is-current{% endif %}"{% if nav == 'watch' %} aria-current="page"{% endif %} href="{% url 'viewing:list' %}">{% translate "Sponsored videos" %}</a></li>{% endif %}
         {% if features.advertisers %}<li><a class="app-nav__link{% if nav == 'rewards' %} is-current{% endif %}"{% if nav == 'rewards' %} aria-current="page"{% endif %} href="{% url 'rewards:history' %}">{% translate "Demo rewards" %}</a></li>{% endif %}
-        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Wallet" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        <li><a class="app-nav__link{% if nav == 'wallet' %} is-current{% endif %}"{% if nav == 'wallet' %} aria-current="page"{% endif %} href="{% url 'wallets:wallet' %}">{% translate "Wallet" %}</a></li>
         <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Withdrawals" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
         {% if sandbox_payments %}<li><a class="app-nav__link{% if nav == 'payments' %} is-current{% endif %}"{% if nav == 'payments' %} aria-current="page"{% endif %} href="{% url 'payments:history' %}">{% translate "Payments (sandbox)" %}</a></li>{% endif %}
         <li><a class="app-nav__link" href="{% url 'accounts:profile' %}">{% translate "Profile" %}</a></li>
