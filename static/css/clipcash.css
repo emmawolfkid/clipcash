@@ -335,3 +335,36 @@ a.app-nav__link:hover, .app-nav__button:hover { background: var(--info-bg); }
 .checklist { list-style: none; margin: 0 0 0.75rem; padding: 0; display: grid; gap: 0.35rem; }
 .checklist__item { padding-left: 1.4rem; position: relative; }
 .checklist__item--no::before { content: "\2715"; position: absolute; left: 0; color: var(--danger); }
+
+/* Phase 11: member experience */
+.app-nav__group { margin: 0.75rem 0.6rem 0.25rem; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--muted); }
+.app-nav__group:first-child { margin-top: 0.25rem; }
+.app-nav__toggle { width: 100%; min-height: 2.75rem; font: inherit; font-weight: 600; color: var(--text);
+  background: var(--bg); border: 1px solid var(--border); border-radius: calc(var(--radius) / 2); cursor: pointer; }
+.app-nav.is-collapsed { display: none; }
+.app-nav__link { min-height: 2.5rem; display: flex; align-items: center; }
+.app-nav__link.is-current { box-shadow: inset 3px 0 0 var(--accent); }
+.breadcrumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0 0 0.75rem; padding: 0;
+  font-size: 0.85rem; color: var(--muted); }
+.breadcrumbs li + li::before { content: "/"; margin-right: 0.25rem; }
+.summary-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); margin: 1rem 0; }
+.summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem;
+  display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.summary-card--demo { border-style: dashed; }
+.summary-card__title { margin: 0; font-size: 0.95rem; color: var(--muted); display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
+.summary-card__value { margin: 0; font-size: 1.35rem; font-weight: 700; overflow-wrap: anywhere; }
+.summary-card__unit { font-size: 0.8rem; font-weight: 400; color: var(--muted); }
+.summary-card__status { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.summary-card__action { margin-top: auto; padding-top: 0.5rem; font-weight: 600; }
+.activity { list-style: none; margin: 0; padding: 0; }
+.activity__item { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr) auto; gap: 0.25rem 0.75rem; align-items: baseline;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--border); }
+.activity__kind { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+.activity__time { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+@media (max-width: 40rem) {
+  .table { display: block; overflow-x: auto; }  /* Scroll wide tables, never the page. */
+  .activity__item { grid-template-columns: minmax(0, 1fr); }
+  .summary-grid { grid-template-columns: minmax(0, 1fr); }
+  .button, .app-nav__button { min-height: 2.75rem; }
+}

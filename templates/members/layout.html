@@ -1,28 +1,42 @@
-{% extends "base.html" %}{% load i18n %}
+{% extends "base.html" %}{% load i18n static %}
 {% block main %}
 <div class="app-shell{% if not user.is_authenticated %} app-shell--plain{% endif %}">
   {% if user.is_authenticated %}
   <aside class="app-sidebar">
-    <nav aria-label="{% translate 'Member menu' %}">
-      <ul class="app-nav__list">
+    <button type="button" class="app-nav__toggle" aria-expanded="true" aria-controls="member-menu" hidden>{% translate "Menu" %}</button>
+    <nav id="member-menu" class="app-nav" aria-label="{% translate 'Member menu' %}">
+      <p class="app-nav__group" id="nav-home">{% translate "Home" %}</p>
+      <ul class="app-nav__list" aria-labelledby="nav-home">
         <li><a class="app-nav__link{% if nav == 'dashboard' %} is-current{% endif %}"{% if nav == 'dashboard' %} aria-current="page"{% endif %} href="{% url 'dashboard' %}">{% translate "Dashboard" %}</a></li>
+        <li><a class="app-nav__link{% if nav == 'activity' %} is-current{% endif %}"{% if nav == 'activity' %} aria-current="page"{% endif %} href="{% url 'activity' %}">{% translate "Activity" %}</a></li>
+      </ul>
+      <p class="app-nav__group" id="nav-watch">{% translate "Watch" %}</p>
+      <ul class="app-nav__list" aria-labelledby="nav-watch">
         {% if features.videos %}<li><a class="app-nav__link{% if nav == 'videos' %} is-current{% endif %}"{% if nav == 'videos' %} aria-current="page"{% endif %} href="{% url 'videos:library' %}">{% translate "Videos" %}</a></li>{% endif %}
-        {% if features.memberships %}<li><a class="app-nav__link{% if nav == 'membership' %} is-current{% endif %}"{% if nav == 'membership' %} aria-current="page"{% endif %} href="{% url 'memberships:mine' %}">{% translate "Membership" %}</a></li>{% endif %}
-        {% if features.advertisers %}<li><a class="app-nav__link{% if nav == 'advertiser' %} is-current{% endif %}"{% if nav == 'advertiser' %} aria-current="page"{% endif %} href="{% url 'advertising:home' %}">{% translate "Advertise" %}</a></li>{% endif %}
         {% if features.advertisers %}<li><a class="app-nav__link{% if nav == 'watch' %} is-current{% endif %}"{% if nav == 'watch' %} aria-current="page"{% endif %} href="{% url 'viewing:list' %}">{% translate "Sponsored videos" %}</a></li>{% endif %}
         {% if features.advertisers %}<li><a class="app-nav__link{% if nav == 'rewards' %} is-current{% endif %}"{% if nav == 'rewards' %} aria-current="page"{% endif %} href="{% url 'rewards:history' %}">{% translate "Demo rewards" %}</a></li>{% endif %}
+      </ul>
+      <p class="app-nav__group" id="nav-money">{% translate "Money" %}</p>
+      <ul class="app-nav__list" aria-labelledby="nav-money">
+        {% if features.memberships %}<li><a class="app-nav__link{% if nav == 'membership' %} is-current{% endif %}"{% if nav == 'membership' %} aria-current="page"{% endif %} href="{% url 'memberships:mine' %}">{% translate "Membership" %}</a></li>{% endif %}
+        {% if sandbox_payments %}<li><a class="app-nav__link{% if nav == 'payments' %} is-current{% endif %}"{% if nav == 'payments' %} aria-current="page"{% endif %} href="{% url 'payments:history' %}">{% translate "Payments (sandbox)" %}</a></li>{% endif %}
         <li><a class="app-nav__link{% if nav == 'wallet' %} is-current{% endif %}"{% if nav == 'wallet' %} aria-current="page"{% endif %} href="{% url 'wallets:wallet' %}">{% translate "Wallet" %}</a></li>
         <li><a class="app-nav__link{% if nav == 'withdrawals' %} is-current{% endif %}"{% if nav == 'withdrawals' %} aria-current="page"{% endif %} href="{% url 'withdrawals:overview' %}">{% translate "Withdrawals" %}</a></li>
-        {% if sandbox_payments %}<li><a class="app-nav__link{% if nav == 'payments' %} is-current{% endif %}"{% if nav == 'payments' %} aria-current="page"{% endif %} href="{% url 'payments:history' %}">{% translate "Payments (sandbox)" %}</a></li>{% endif %}
-        <li><a class="app-nav__link" href="{% url 'accounts:profile' %}">{% translate "Profile" %}</a></li>
+      </ul>
+      <p class="app-nav__group" id="nav-account">{% translate "Account" %}</p>
+      <ul class="app-nav__list" aria-labelledby="nav-account">
+        {% if features.advertisers %}<li><a class="app-nav__link{% if nav == 'advertiser' %} is-current{% endif %}"{% if nav == 'advertiser' %} aria-current="page"{% endif %} href="{% url 'advertising:home' %}">{% translate "Advertise" %}</a></li>{% endif %}
+        <li><a class="app-nav__link{% if nav == 'profile' %} is-current{% endif %}"{% if nav == 'profile' %} aria-current="page"{% endif %} href="{% url 'accounts:profile' %}">{% translate "Profile and security" %}</a></li>
         <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit" class="app-nav__link app-nav__button">{% translate "Sign out" %}</button></form></li>
       </ul>
     </nav>
   </aside>
   {% endif %}
   <main id="content" class="app-main">
+    {% if breadcrumbs %}<nav class="breadcrumbs" aria-label="{% translate 'Breadcrumb' %}"><ol>{% for label, url_name in breadcrumbs %}<li><a href="{% url url_name %}">{% translate label %}</a></li>{% endfor %}<li aria-current="page">{% block crumb %}{% endblock %}</li></ol></nav>{% endif %}
     {% include "components/messages.html" %}
     {% block member_content %}{% endblock %}
   </main>
 </div>
+{% if user.is_authenticated %}<script src="{% static 'js/member-nav.js' %}" defer></script>{% endif %}
 {% endblock %}

@@ -1,0 +1,8 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Activity" %}{% endblock %}
+{% block crumb %}{% translate "Activity" %}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{% translate "Activity" %}</h1>
+<p class="lead">{% translate "Your recent account, membership, viewing, demo reward, payment and wallet events. Items marked Simulated involve no real money." %}</p>
+{% include "members/_activity_list.html" %}
+{% endblock %}

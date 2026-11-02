@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
 
-from apps.core.views import MemberDashboardView
+from apps.core.views import MemberActivityView, MemberDashboardView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -16,5 +16,6 @@ urlpatterns = [
     path("withdrawals/", include("apps.withdrawals.urls")),
     path("manage/", include("apps.administration.urls")),
     path("dashboard/", MemberDashboardView.as_view(), name="dashboard"),
+    path("dashboard/activity/", MemberActivityView.as_view(), name="activity"),
     path("i18n/", include("django.conf.urls.i18n")),
 ]

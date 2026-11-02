@@ -287,3 +287,15 @@ class PasswordChangeDoneView(auth_views.PasswordChangeDoneView):
 
 class ProfileView(VerifiedAccountRequiredMixin, TemplateView):
     template_name = "accounts/profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        membership = None
+        from apps.core import features
+
+        if features.is_enabled("memberships"):
+            from apps.memberships.access import check_access
+
+            membership = check_access(self.request.user).subscription
+        context.update({"nav": "profile", "membership": membership, "breadcrumbs": [("Dashboard", "dashboard")]})
+        return context

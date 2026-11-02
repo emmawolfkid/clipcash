@@ -38,6 +38,7 @@
   <form method="post" action="{% url 'memberships:cancel_pending' pending.pk %}">{% csrf_token %}
     <button type="submit" class="button button--secondary">{% translate "Cancel this choice" %}</button>
   </form>
+  {% if sandbox_payments %}<p class="notice notice--sandbox">{% translate "Sandbox: you can try a simulated payment for this choice. It shows what would happen and never activates your membership." %} <a href="{% url 'payments:history' %}">{% translate "Sandbox payments" %}</a></p>{% endif %}
 {% endif %}
 
 <h2>{% translate "History" %}</h2>

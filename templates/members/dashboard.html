@@ -2,31 +2,90 @@
 {% block title %}{% translate "Dashboard" %}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{% blocktranslate with name=user.first_name|default:user.email %}Welcome, {{ name }}{% endblocktranslate %}</h1>
-<div class="card-grid">
-  <section class="panel">
-    <h2 class="panel__title">{% translate "Membership" %}</h2>
-    {% if membership %}
-      <p><span class="badge badge--{{ membership.status|lower }}">{{ membership.get_status_display }}</span> {{ membership.plan_name }}</p>
-      <p class="lead">{% blocktranslate with date=membership.expires_at|date:"DATE_FORMAT" %}Valid until {{ date }}{% endblocktranslate %}</p>
-    {% elif pending %}
-      <p><span class="badge badge--pending">{{ pending.get_status_display }}</span> {{ pending.plan_name }}</p>
-      <p class="lead">{% translate "Waiting for payment. Online payment is not available yet." %}</p>
-    {% else %}
-      <p class="lead">{% translate "You do not have an active membership." %}</p>
-    {% endif %}
-    {% if features.memberships %}<a class="button button--secondary" href="{% url 'memberships:mine' %}">{% translate "Manage membership" %}</a>{% endif %}
+<p class="lead">{% translate "Real rewards are not available yet. Demo rewards and sandbox payments are simulations; your real wallet holds only ledger-backed money." %}</p>
+
+<div class="summary-grid">
+  {% with m=summary.membership %}
+  <section class="summary-card" aria-labelledby="card-membership">
+    <h2 class="summary-card__title" id="card-membership">{% translate "Membership" %}</h2>
+    {% if not m.enabled %}<p class="summary-card__status">{% translate "Memberships are not available at the moment." %}</p>
+    {% elif m.subscription %}
+      <p class="summary-card__value">{{ m.subscription.plan_name }}</p>
+      <p class="summary-card__status"><span class="badge badge--{{ m.subscription.status|lower }}">{{ m.subscription.get_status_display }}</span>
+        {% blocktranslate with date=m.subscription.expires_at|date:"DATE_FORMAT" %}Valid until {{ date }}{% endblocktranslate %}</p>
+    {% elif m.pending %}
+      <p class="summary-card__value">{{ m.pending.plan_name }}</p>
+      <p class="summary-card__status"><span class="badge badge--pending">{{ m.pending.get_status_display }}</span> {% translate "Waiting for payment. Online payment is not available yet." %}</p>
+    {% else %}<p class="summary-card__status">{% translate "You do not have an active membership." %}</p>{% endif %}
+    {% if m.enabled %}<a class="summary-card__action" href="{% url 'memberships:mine' %}">{% if m.subscription %}{% translate "Manage membership" %}{% else %}{% translate "Choose a plan" %}{% endif %}</a>{% endif %}
   </section>
-  <section class="panel">
-    <h2 class="panel__title">{% translate "Rewards" %}</h2>
-    <p class="lead">{% translate "Real rewards are not available yet. Demo rewards are simulated records only, not money." %}</p>
-    {% if features.advertisers %}<a class="button button--secondary" href="{% url 'rewards:history' %}">{% translate "See demo rewards" %}</a>{% endif %}
+  {% endwith %}
+
+  {% with s=summary.sponsored %}{% if s.enabled %}
+  <section class="summary-card" aria-labelledby="card-sponsored">
+    <h2 class="summary-card__title" id="card-sponsored">{% translate "Sponsored videos" %}</h2>
+    <p class="summary-card__value">{% blocktranslate count n=s.available %}{{ n }} available{% plural %}{{ n }} available{% endblocktranslate %}</p>
+    <p class="summary-card__status">{% blocktranslate count n=s.verified %}{{ n }} verified view{% plural %}{{ n }} verified views{% endblocktranslate %}{% if s.review %} · {% blocktranslate count n=s.review %}{{ n }} under review{% plural %}{{ n }} under review{% endblocktranslate %}{% endif %}</p>
+    <a class="summary-card__action" href="{% url 'viewing:list' %}">{% if s.available %}{% translate "Watch now" %}{% else %}{% translate "See sponsored videos" %}{% endif %}</a>
   </section>
-  <section class="panel">
-    <h2 class="panel__title">{% translate "Wallet" %}</h2>
-    <p class="lead">{% translate "Wallet money is not active yet. Demo rewards are never wallet money." %}</p>
-    <a class="button button--secondary" href="{% url 'wallets:wallet' %}">{% translate "Open wallet" %}</a>
+  {% endif %}{% endwith %}
+
+  {% with r=summary.rewards %}
+  <section class="summary-card summary-card--demo" aria-labelledby="card-rewards">
+    <h2 class="summary-card__title" id="card-rewards">{% translate "Rewards" %} <span class="badge badge--sandbox">{% translate "Simulated" %}</span></h2>
+    {% if not r.enabled %}<p class="summary-card__status">{% translate "Demo rewards appear when sponsored videos are available. They are simulations, never money." %}</p>
+    {% elif r.qualified or r.reversed or r.rejected %}
+      <p class="summary-card__value">TZS {{ r.simulated_total }}</p>
+      <p class="summary-card__status">{% translate "SIMULATED REWARDS — NOT WITHDRAWABLE." %} {% blocktranslate count n=r.qualified %}{{ n }} recorded{% plural %}{{ n }} recorded{% endblocktranslate %}{% if r.reversed %}, {% blocktranslate count n=r.reversed %}{{ n }} reversed{% plural %}{{ n }} reversed{% endblocktranslate %}{% endif %}</p>
+    {% else %}<p class="summary-card__status">{% translate "No demo rewards yet. They appear after a sponsored view is verified." %}</p>{% endif %}
+    {% if r.enabled %}<a class="summary-card__action" href="{% url 'rewards:history' %}">{% translate "See demo rewards" %}</a>{% endif %}
   </section>
+  {% endwith %}
+
+  {% with w=summary.wallet %}
+  <section class="summary-card" aria-labelledby="card-wallet">
+    <h2 class="summary-card__title" id="card-wallet">{% translate "Wallet" %}</h2>
+    {% if w.wallet %}
+      <p class="summary-card__value">TZS {{ w.balances.available }} <span class="summary-card__unit">{% translate "available (real ledger)" %}</span></p>
+      <p class="summary-card__status">{% if w.balances.restricted %}<span class="badge badge--restricted">{% translate "Under review" %}</span> {% endif %}{% translate "Wallet money is not active yet. Demo rewards are never wallet money." %}</p>
+      <a class="summary-card__action" href="{% url 'wallets:wallet' %}">{% translate "Open wallet" %}</a>
+    {% elif w.eligible %}
+      <p class="summary-card__status">{% translate "Wallet money is not active yet. Demo rewards are never wallet money." %}</p>
+      <a class="summary-card__action" href="{% url 'wallets:wallet' %}">{% translate "Open wallet" %}</a>
+    {% else %}<p class="summary-card__status">{% translate "Wallets are for verified member accounts." %}</p>{% endif %}
+  </section>
+  {% endwith %}
+
+  {% with x=summary.withdrawals %}
+  <section class="summary-card" aria-labelledby="card-withdrawals">
+    <h2 class="summary-card__title" id="card-withdrawals">{% translate "Withdrawals" %}</h2>
+    <p class="summary-card__value">{% if x.available %}{% translate "Available" %}{% else %}{% translate "Not available" %}{% endif %}</p>
+    <p class="summary-card__status">{{ x.messages.0 }} {% blocktranslate count n=x.destinations %}{{ n }} payout destination saved.{% plural %}{{ n }} payout destinations saved.{% endblocktranslate %}</p>
+    <a class="summary-card__action" href="{% url 'withdrawals:overview' %}">{% translate "Why, and what is needed" %}</a>
+  </section>
+  {% endwith %}
+
+  {% with p=summary.payments %}{% if p.sandbox %}
+  <section class="summary-card summary-card--demo" aria-labelledby="card-payments">
+    <h2 class="summary-card__title" id="card-payments">{% translate "Payments" %} <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></h2>
+    <p class="summary-card__status">{% if p.total %}{% blocktranslate count n=p.total %}{{ n }} test payment{% plural %}{{ n }} test payments{% endblocktranslate %}{% else %}{% translate "No test payments." %}{% endif %} {% translate "No real money moves." %}</p>
+    <a class="summary-card__action" href="{% url 'payments:history' %}">{% translate "Payment history" %}</a>
+  </section>
+  {% endif %}{% endwith %}
 </div>
+
+{% if summary.sponsored.top %}
+<section class="section"><div class="section__header"><h2>{% translate "Sponsored videos for you" %}</h2><a href="{% url 'viewing:list' %}">{% translate "See all" %}</a></div>
+<ul class="list">{% for campaign, left, open_session in summary.sponsored.top %}
+  <li class="list__item"><span><strong>{{ campaign.name }}</strong> · {{ campaign.organization.display_name }}{% if campaign.video.duration_display %} · {{ campaign.video.duration_display }}{% endif %}</span>
+  <a href="{% if open_session %}{% url 'viewing:session' open_session.pk %}{% else %}{% url 'viewing:campaign' campaign.pk %}{% endif %}">{% if open_session %}{% translate "Continue" %}{% else %}{% blocktranslate count n=left %}Watch ({{ n }} left){% plural %}Watch ({{ n }} left){% endblocktranslate %}{% endif %}</a></li>{% endfor %}
+</ul></section>
+{% endif %}
+
+<section class="section"><div class="section__header"><h2>{% translate "Recent activity" %}</h2><a href="{% url 'activity' %}">{% translate "All activity" %}</a></div>
+{% include "members/_activity_list.html" with activity=summary.activity %}
+</section>
+
 {% if features.videos %}
 <section class="section">
   <div class="section__header"><h2>{% translate "Latest videos" %}</h2><a href="{% url 'videos:library' %}">{% translate "See all" %}</a></div>

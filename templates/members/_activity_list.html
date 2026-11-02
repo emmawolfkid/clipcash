@@ -1,0 +1,9 @@
+{% load i18n %}{% if activity %}
+<ol class="activity">{% for item in activity %}
+  <li class="activity__item activity__item--{{ item.kind }}">
+    <span class="activity__kind">{{ item.kind|capfirst }}</span>
+    <span class="activity__text">{% if item.url %}<a href="{{ item.url }}">{{ item.text }}</a>{% else %}{{ item.text }}{% endif %}{% if item.simulated %} <span class="badge badge--sandbox">{% translate "Simulated" %}</span>{% endif %}</span>
+    <time class="activity__time" datetime="{{ item.when|date:'c' }}">{{ item.when|date:"SHORT_DATETIME_FORMAT" }}</time>
+  </li>{% endfor %}
+</ol>
+{% else %}<p class="empty-state">{% translate "No activity yet." %}</p>{% endif %}
