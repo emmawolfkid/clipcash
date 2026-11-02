@@ -1,0 +1,22 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Payments (sandbox)" %}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{% translate "Payments" %} <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></h1>
+{% include "components/sandbox_notice.html" %}
+{% if payable %}
+<section class="panel section"><h2 class="panel__title">{% translate "Memberships awaiting payment" %}</h2>
+<ul class="list">{% for subscription in payable %}
+  <li class="list__item"><span>{{ subscription.plan_name }} · TZS {{ subscription.price_amount }}</span>
+    <form method="post" action="{% url 'payments:start_membership' subscription.pk %}">{% csrf_token %}
+      <input type="hidden" name="form_token" value="{{ form_token }}">
+      <button class="button" type="submit">{% translate "Start sandbox payment" %}</button></form></li>{% endfor %}
+</ul>
+<p class="lead">{% translate "A sandbox payment shows what would happen. It does not activate your membership." %}</p></section>
+{% endif %}
+<section class="section"><h2>{% translate "History" %}</h2>
+{% if intents %}<table class="table">
+  <thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Created" %}</th></tr></thead>
+  <tbody>{% for intent in intents %}<tr><td><a href="{% url 'payments:intent' intent.pk %}">{{ intent.reference }}</a></td><td>TZS {{ intent.amount }}</td>
+    <td><span class="badge badge--{{ intent.status|lower }}">{{ intent.get_status_display }}</span></td><td>{{ intent.created_at|date:"SHORT_DATETIME_FORMAT" }}</td></tr>{% endfor %}</tbody>
+</table>{% else %}<p class="empty-state">{% translate "No payments yet." %}</p>{% endif %}</section>
+{% endblock %}

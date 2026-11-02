@@ -13,6 +13,7 @@
         {% if features.advertisers %}<li><a class="app-nav__link{% if nav == 'rewards' %} is-current{% endif %}"{% if nav == 'rewards' %} aria-current="page"{% endif %} href="{% url 'rewards:history' %}">{% translate "Demo rewards" %}</a></li>{% endif %}
         <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Wallet" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
         <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Withdrawals" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
+        {% if sandbox_payments %}<li><a class="app-nav__link{% if nav == 'payments' %} is-current{% endif %}"{% if nav == 'payments' %} aria-current="page"{% endif %} href="{% url 'payments:history' %}">{% translate "Payments (sandbox)" %}</a></li>{% endif %}
         <li><a class="app-nav__link" href="{% url 'accounts:profile' %}">{% translate "Profile" %}</a></li>
         <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit" class="app-nav__link app-nav__button">{% translate "Sign out" %}</button></form></li>
       </ul>

@@ -6,6 +6,12 @@ from django.db import connections
 from django.test.runner import DiscoverRunner
 
 
+# Tests only: a fast hasher. Production keeps Django's default (PBKDF2, 1,000,000
+# iterations, ~0.9 s per hash), which made user-heavy test setup dominate the
+# suite's runtime. Hash strength is not under test; authentication behaviour is.
+TEST_PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
+
 class PostgreSQLTestRunner(DiscoverRunner):
     """
     Refuses to run unless every database is PostgreSQL and its test database is a
@@ -13,6 +19,10 @@ class PostgreSQLTestRunner(DiscoverRunner):
     really points at that test database, so ``--keepdb`` can never reuse the
     development database.
     """
+
+    def setup_test_environment(self, **kwargs):
+        super().setup_test_environment(**kwargs)
+        settings.PASSWORD_HASHERS = TEST_PASSWORD_HASHERS
 
     def setup_databases(self, **kwargs):
         expected = {}

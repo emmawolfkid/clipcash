@@ -320,3 +320,10 @@ a.app-nav__link:hover, .app-nav__button:hover { background: var(--info-bg); }
 .badge--demo_reversed, .badge--retired { color: var(--muted); }
 .badge--demo_rejected { border-color: var(--muted); color: var(--muted); }
 .confirm-form input[type="text"] { padding: 0.3rem 0.5rem; font: inherit; border: 1px solid var(--border); border-radius: calc(var(--radius) / 2); }
+
+/* Phase 08: sandbox payments */
+.badge--sandbox { border-color: #b26a00; color: #b26a00; font-weight: 700; }
+.notice--sandbox { border-left-color: #b26a00; }
+.badge--settled, .badge--reconciled { border-color: var(--accent); color: var(--accent); }
+.badge--provider_confirmed, .badge--created { border-color: var(--muted); color: var(--muted); }
+.badge--failed, .badge--disputed, .badge--refunded { border-color: var(--danger); color: var(--danger); }

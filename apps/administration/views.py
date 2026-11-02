@@ -24,6 +24,18 @@ from django.views import View
 from apps.advertising import services as advertising
 from apps.advertising.models import Campaign, Organization
 from apps.audit.admin import can_view_audit
+from apps.payments import services as payments
+from apps.payments import simulator as payment_simulator
+from apps.payments.models import (
+    MembershipActivationPreview,
+    PaymentDispute,
+    PaymentIntent,
+    ReconciliationException,
+    RefundRequest,
+    SandboxAdvertiserFunds,
+    SandboxCampaignAllocation,
+)
+from apps.payments.providers import sandbox_active as payments_sandbox_active
 from apps.rewards import services as rewards
 from apps.rewards.models import DemoReward, RewardPolicy
 from apps.audit.models import AuditEvent
@@ -62,6 +74,7 @@ def console_links(user):
         "campaigns": advertising.can_review_campaigns(user),
         "viewing": viewing.can_review_viewing(user),
         "rewards": rewards.can_use_rewards_console(user),
+        "payments": payments.can_view_payments(user) and payments_sandbox_active(),
     }
     return can
 
@@ -681,3 +694,122 @@ class DemoRewardListView(View):
         except (ValidationError, rewards.RewardsError) as error:
             messages.error(request, _error_text(error))
         return redirect("administration:demo_rewards")
+
+
+# --- Payments, SANDBOX (Phase 08) ---------------------------------------------------------
+
+
+SIMULATOR_ACTIONS = [("pay", _("Pay (correct amount)")), ("pay_wrong_amount", _("Pay wrong amount")),
+                     ("fail", _("Fail")), ("settle", _("Settle")), ("chargeback", _("Chargeback")),
+                     ("replay", _("Replay last notice")), ("orphan", _("Unknown-reference notice")),
+                     ("forged", _("Forged notice"))]
+
+
+def _require_payments_console(user):
+    if not payments.can_view_payments(user) or not payments_sandbox_active():
+        raise PermissionDenied
+
+
+@console
+class PaymentListView(View):
+    def get(self, request):
+        _require_payments_console(request.user)
+        qs = PaymentIntent.objects.select_related("payer", "organization").order_by("-created_at")
+        filters = {key: request.GET.get(key, "").strip()[:40] for key in ("q", "status", "purpose")}
+        if filters["q"]:
+            qs = qs.filter(Q(reference__icontains=filters["q"]) | Q(provider_reference__icontains=filters["q"]))
+        if filters["status"] in PaymentIntent.Status.values:
+            qs = qs.filter(status=filters["status"])
+        if filters["purpose"] in PaymentIntent.Purpose.values:
+            qs = qs.filter(purpose=filters["purpose"])
+        page = Paginator(qs, 25).get_page(request.GET.get("page"))
+        params = request.GET.copy()
+        params.pop("page", None)
+        return render(request, "administration/payments/list.html", {
+            "page": page, "filters": filters, "page_query": params.urlencode(),
+            "statuses": PaymentIntent.Status.choices, "purposes": PaymentIntent.Purpose.choices,
+            "open_exceptions": ReconciliationException.objects.filter(status="OPEN").count(),
+            "can": console_links(request.user), "nav": "payments"})
+
+
+@console
+class PaymentDetailView(View):
+    def get(self, request, pk):
+        _require_payments_console(request.user)
+        intent = get_object_or_404(PaymentIntent.objects.select_related("payer", "organization"), pk=pk)
+        return render(request, "administration/payments/detail.html", {
+            "intent": intent, "preview": MembershipActivationPreview.objects.filter(intent=intent).first(),
+            "events": intent.provider_events.order_by("received_at"), "postings": intent.sandbox_postings.all(),
+            "exceptions": intent.exceptions.all(), "refunds": intent.refunds.select_related("requested_by"),
+            "disputes": intent.disputes.all(),
+            "history": AuditEvent.objects.filter(target_model="paymentintent", target_id=str(intent.pk))
+                                         .order_by("occurred_at")[:100],
+            "can_simulate": payments.can_operate_sandbox(request.user),
+            "can_refund": payments.can_approve_refunds(request.user), "simulator_actions": SIMULATOR_ACTIONS,
+            "can": console_links(request.user), "nav": "payments"})
+
+    def post(self, request, pk):
+        _require_payments_console(request.user)
+        intent = get_object_or_404(PaymentIntent, pk=pk)
+        action = request.POST.get("action", "")
+        try:
+            if action == "simulate":
+                status, outcome = payment_simulator.simulate(request.user, intent, request.POST.get("simulate", ""))
+                messages.info(request, _("Simulated provider notice: HTTP %(s)s, %(o)s.") % {"s": status, "o": outcome})
+            elif action == "request_refund":
+                payments.request_refund(request.user, intent, reason=request.POST.get("reason", ""))
+                messages.success(request, _("Refund requested. A second person must approve it."))
+            elif action == "decide_refund":
+                refund = get_object_or_404(RefundRequest, pk=request.POST.get("refund"), intent=intent)
+                payments.decide_refund(request.user, refund, approve=request.POST.get("approve") == "1",
+                                       note=request.POST.get("note", ""))
+                messages.success(request, _("Refund decision saved."))
+            elif action == "resolve_dispute":
+                dispute = get_object_or_404(PaymentDispute, pk=request.POST.get("dispute"), intent=intent)
+                payments.resolve_dispute(request.user, dispute, won=request.POST.get("won") == "1",
+                                         note=request.POST.get("note", ""))
+                messages.success(request, _("Dispute resolved."))
+            else:
+                raise PermissionDenied
+        except payments.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, payments.PaymentError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:payment", pk=pk)
+
+
+@console
+class PaymentExceptionsView(View):
+    def get(self, request):
+        _require_payments_console(request.user)
+        qs = ReconciliationException.objects.select_related("intent", "organization").order_by("status", "-created_at")
+        page = Paginator(qs, 25).get_page(request.GET.get("page"))
+        return render(request, "administration/payments/exceptions.html", {
+            "page": page, "can_review": payments.can_review_reconciliation(request.user),
+            "can": console_links(request.user), "nav": "payments"})
+
+    def post(self, request):
+        _require_payments_console(request.user)
+        exception = get_object_or_404(ReconciliationException, pk=request.POST.get("exception"))
+        try:
+            payments.resolve_exception(request.user, exception, action=request.POST.get("action", ""),
+                                       note=request.POST.get("note", ""))
+            messages.success(request, _("Exception updated."))
+        except payments.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, payments.PaymentError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:payment_exceptions")
+
+
+@console
+class PaymentFundingView(View):
+    def get(self, request):
+        _require_payments_console(request.user)
+        balances = [{"account": a, "scope": s, "balance": b} for (a, s), b in payments.sandbox_balances().items()]
+        return render(request, "administration/payments/funding.html", {
+            "funds": SandboxAdvertiserFunds.objects.select_related("organization").order_by("organization__display_name"),
+            "allocations": SandboxCampaignAllocation.objects.select_related("campaign", "organization")
+                                                            .order_by("-created_at")[:100],
+            "balances": balances, "balance_total": sum(row["balance"] for row in balances),
+            "can": console_links(request.user), "nav": "payments"})

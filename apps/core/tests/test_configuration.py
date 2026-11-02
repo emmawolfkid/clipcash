@@ -6,7 +6,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import DatabaseError, IntegrityError, connection, connections, transaction
-from django.test import TestCase, TransactionTestCase
+from django.test import SimpleTestCase, TestCase, TransactionTestCase
 
 from apps.core import services
 from apps.core.models import SITE_CONFIGURATION_ID, SiteConfiguration
@@ -215,3 +215,15 @@ class ConcurrentUpdateTests(TransactionTestCase):
         config = SiteConfiguration.objects.get()
         self.assertEqual(config.version, 2)
         self.assertIn(config.platform_name, ("Alpha", "Beta"))
+
+
+class PasswordHasherConfigurationTests(SimpleTestCase):
+    def test_production_settings_keep_the_strong_default_hasher(self):
+        """The fast test hasher lives only in config/test_runner.py."""
+        from pathlib import Path
+
+        from django.conf import global_settings
+
+        source = (Path(__file__).resolve().parents[3] / "config" / "settings.py").read_text(encoding="utf-8")
+        self.assertNotIn("PASSWORD_HASHERS", source)
+        self.assertTrue(global_settings.PASSWORD_HASHERS[0].endswith("PBKDF2PasswordHasher"))

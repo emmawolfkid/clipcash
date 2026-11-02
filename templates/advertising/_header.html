@@ -7,6 +7,7 @@
   <a class="tab{% if tab == 'overview' %} is-current{% endif %}"{% if tab == 'overview' %} aria-current="page"{% endif %} href="{% url 'advertising:organization' organization.pk %}">{% translate "Overview" %}</a>
   <a class="tab{% if tab == 'campaigns' %} is-current{% endif %}"{% if tab == 'campaigns' %} aria-current="page"{% endif %} href="{% url 'advertising:campaigns' organization.pk %}">{% translate "Campaigns" %}</a>
   <a class="tab{% if tab == 'team' %} is-current{% endif %}"{% if tab == 'team' %} aria-current="page"{% endif %} href="{% url 'advertising:team' organization.pk %}">{% translate "Team" %}</a>
+  {% if sandbox_payments %}<a class="tab{% if tab == 'funding' %} is-current{% endif %}"{% if tab == 'funding' %} aria-current="page"{% endif %} href="{% url 'payments:funding' organization.pk %}">{% translate "Funding (sandbox)" %}</a>{% endif %}
   <a class="tab{% if tab == 'profile' %} is-current{% endif %}"{% if tab == 'profile' %} aria-current="page"{% endif %} href="{% url 'advertising:profile' organization.pk %}">{% translate "Profile" %}</a>
 </nav>
 {% if organization.verification_status == "PENDING" %}<p class="notice">{% translate "Your advertiser application is awaiting review by ClipCash. You can prepare draft campaigns meanwhile; they can be submitted once you are approved." %}</p>

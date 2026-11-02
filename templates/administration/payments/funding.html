@@ -1,0 +1,15 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Sandbox funding" %}{% endblock %}
+{% block console_content %}
+<div class="section__header"><h1 class="page-title">{% translate "Advertiser funding" %} <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></h1><a href="{% url 'administration:payments' %}">{% translate "Payments" %}</a></div>
+{% include "components/sandbox_notice.html" %}
+{% if funds %}<table class="table"><thead><tr><th scope="col">{% translate "Advertiser" %}</th><th scope="col">{% translate "Received" %}</th><th scope="col">{% translate "Allocated" %}</th><th scope="col">{% translate "Frozen" %}</th><th scope="col">{% translate "Refunded" %}</th><th scope="col">{% translate "Unallocated" %}</th></tr></thead>
+<tbody>{% for f in funds %}<tr><td>{{ f.organization.display_name }}</td><td>TZS {{ f.received }}</td><td>TZS {{ f.allocated }}</td><td>TZS {{ f.frozen }}</td><td>TZS {{ f.refunded }}</td><td>TZS {{ f.available }}</td></tr>{% endfor %}</tbody></table>
+{% else %}<p class="empty-state">{% translate "No settled sandbox deposits yet." %}</p>{% endif %}
+<section class="section"><h2>{% translate "Campaign allocations" %}</h2>{% if allocations %}<table class="table"><thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Advertiser" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
+<tbody>{% for a in allocations %}<tr><td>{{ a.campaign.name }}</td><td>{{ a.organization.display_name }}</td><td>TZS {{ a.amount }}</td><td>{{ a.get_status_display }}{% if a.flagged %} <span class="badge badge--paused">{{ a.flag_reason }}</span>{% endif %}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="lead">—</p>{% endif %}
+<p class="lead">{% translate "Real campaign funding status stays 'Not funded': sandbox allocations are reports only." %}</p></section>
+<section class="section"><h2>{% translate "Sandbox journal balances (debit minus credit)" %}</h2>{% if balances %}<table class="table"><thead><tr><th scope="col">{% translate "Account" %}</th><th scope="col">{% translate "Scope" %}</th><th scope="col">{% translate "Balance" %}</th></tr></thead>
+<tbody>{% for row in balances %}<tr><td>{{ row.account }}</td><td>{{ row.scope|default:"platform" }}</td><td>{{ row.balance }}</td></tr>{% endfor %}</tbody></table>
+<p class="lead">{% blocktranslate with total=balance_total %}Sum of all balances: {{ total }} (always 0: every posting is balanced).{% endblocktranslate %}</p>{% else %}<p class="lead">—</p>{% endif %}</section>
+{% endblock %}

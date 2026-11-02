@@ -271,6 +271,20 @@ VIEWING_MAX_EVENTS_PER_SESSION = 2000
 VIEWING_REVIEW_AFTER_REJECTIONS = 3  # Recent rejected/suspicious sessions before review is forced.
 VIEWING_HISTORY_PAGE_SIZE = 20
 
+# Payments (apps.payments). SANDBOX FIRST: "sandbox" simulates a provider and
+# posts only to the isolated sandbox journal; "disabled" turns payments off.
+# There is no "live" mode: real providers need a separate reviewed phase.
+# Sandbox outside DEBUG needs DJANGO_PAYMENTS_SANDBOX_ALLOWED=True (isolated
+# demo/staging only); check --deploy reports payments.E002 otherwise.
+PAYMENTS_MODE = env("DJANGO_PAYMENTS_MODE", default="sandbox" if DEBUG else "disabled")
+PAYMENTS_SANDBOX_ALLOWED = env.bool("DJANGO_PAYMENTS_SANDBOX_ALLOWED", default=False)
+PAYMENTS_INTENT_MINUTES = 30
+PAYMENTS_POLL_AFTER_SECONDS = 120
+PAYMENTS_DEPOSIT_MIN = 1_000
+PAYMENTS_DEPOSIT_MAX = 100_000_000
+PAYMENTS_CALLBACK_MAX_BYTES = 4096
+PAYMENTS_CALLBACKS_PER_MINUTE = 120
+
 # Free memberships granted by a Super Administrator. Off unless a business
 # policy approves them.
 MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED = env.bool("DJANGO_MEMBERSHIPS_COMPLIMENTARY_GRANTS", default=False)

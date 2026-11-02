@@ -1,0 +1,21 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{{ intent.reference }}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{{ intent.reference }} <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></h1>
+{% include "components/sandbox_notice.html" %}
+<section class="panel"><dl class="details">
+  <dt>{% translate "Purpose" %}</dt><dd>{{ intent.get_purpose_display }}{% if intent.organization %} · {{ intent.organization.display_name }}{% endif %}</dd>
+  <dt>{% translate "Amount" %}</dt><dd>TZS {{ intent.amount }}</dd>
+  <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ intent.status|lower }}">{{ intent.get_status_display }}</span></dd>
+  <dt>{% translate "Expires" %}</dt><dd>{{ intent.expires_at|date:"DATETIME_FORMAT" }}</dd>
+  {% if intent.settled_at %}<dt>{% translate "Settled (simulated)" %}</dt><dd>{{ intent.settled_at|date:"DATETIME_FORMAT" }}</dd>{% endif %}
+</dl>
+{% if intent.status == "PENDING" or intent.status == "CREATED" %}<p class="lead">{% translate "In sandbox mode a ClipCash staff member simulates the provider. Nothing is charged." %}</p>
+<form method="post">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Cancel payment" %}</button></form>{% endif %}
+</section>
+{% if preview %}<section class="panel section"><h2 class="panel__title">{% translate "Membership (preview only)" %}</h2>
+  <p>{{ preview.get_decision_display }}{% if preview.would_start %}: {{ preview.would_start|date:"DATE_FORMAT" }} – {{ preview.would_end|date:"DATE_FORMAT" }}{% endif %}</p>
+  <p class="lead">{% translate "Sandbox payments never activate or extend a membership." %}</p></section>{% endif %}
+{% if events %}<section class="section"><h2>{% translate "Provider updates" %}</h2><ul class="list">{% for e in events %}
+  <li class="list__item"><span>{{ e.received_at|date:"SHORT_DATETIME_FORMAT" }} · {{ e.get_kind_display }}</span><span>{{ e.get_outcome_display }}</span></li>{% endfor %}</ul></section>{% endif %}
+{% endblock %}

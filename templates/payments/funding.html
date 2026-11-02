@@ -1,0 +1,36 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Funding (sandbox)" %}{% endblock %}
+{% block member_content %}
+{% include "advertising/_header.html" %}
+{% include "components/sandbox_notice.html" %}
+<div class="stat-grid">
+  <div class="stat stat--demo"><span class="stat__value">TZS {{ funds.received }}</span><span class="stat__label">{% translate "Settled deposits (sandbox)" %}</span></div>
+  <div class="stat stat--demo"><span class="stat__value">TZS {{ funds.allocated }}</span><span class="stat__label">{% translate "Allocated to campaigns" %}</span></div>
+  <div class="stat stat--demo"><span class="stat__value">TZS {{ funds.available }}</span><span class="stat__label">{% translate "Unallocated (sandbox)" %}</span></div>
+  <div class="stat stat--demo"><span class="stat__value">TZS {{ funds.frozen }}</span><span class="stat__label">{% translate "Frozen (refund/dispute)" %}</span></div>
+  <div class="stat stat--demo"><span class="stat__value">TZS {{ funds.refunded }}</span><span class="stat__label">{% translate "Refunded" %}</span></div>
+</div>
+<p class="lead">{% translate "Campaign funding status stays 'Not funded' until real funding is approved in a later phase." %}</p>
+{% if is_owner %}
+<div class="card-grid section">
+  <section class="panel"><h2 class="panel__title">{% translate "New sandbox deposit" %}</h2>
+    <form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="deposit"><input type="hidden" name="form_token" value="{{ form_token }}">
+      <label for="d-amount">{% translate "Amount (whole TZS)" %}</label><input id="d-amount" name="amount" type="number" min="1000" step="1" required>
+      <button class="button" type="submit">{% translate "Create deposit request" %}</button></form></section>
+  <section class="panel"><h2 class="panel__title">{% translate "Allocate to a campaign" %}</h2>
+    {% if campaigns %}<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="allocate">
+      <label for="a-campaign">{% translate "Campaign" %}</label><select id="a-campaign" name="campaign">{% for c in campaigns %}<option value="{{ c.pk }}">{{ c.name }}</option>{% endfor %}</select>
+      <label for="a-amount">{% translate "Amount (whole TZS)" %}</label><input id="a-amount" name="amount" type="number" min="1" step="1" required>
+      <button class="button button--secondary" type="submit">{% translate "Allocate sandbox funds" %}</button></form>
+    {% else %}<p class="lead">{% translate "No approved campaigns to allocate to." %}</p>{% endif %}</section>
+</div>{% endif %}
+<section class="section"><h2>{% translate "Deposits" %}</h2>
+{% if deposits %}<table class="table"><thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Created" %}</th></tr></thead>
+<tbody>{% for d in deposits %}<tr><td><a href="{% url 'payments:intent' d.pk %}">{{ d.reference }}</a></td><td>TZS {{ d.amount }}</td><td><span class="badge badge--{{ d.status|lower }}">{{ d.get_status_display }}</span></td><td>{{ d.created_at|date:"SHORT_DATETIME_FORMAT" }}</td></tr>{% endfor %}</tbody></table>
+{% else %}<p class="empty-state">{% translate "No deposits yet." %}</p>{% endif %}</section>
+<section class="section"><h2>{% translate "Campaign allocations" %}</h2>
+{% if allocations %}<table class="table"><thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
+<tbody>{% for a in allocations %}<tr><td>{{ a.campaign.name }}</td><td>TZS {{ a.amount }}</td><td>{{ a.get_status_display }}{% if a.flagged %} <span class="badge badge--paused">{% translate "Affected by dispute" %}</span>{% endif %}</td>
+<td>{% if is_owner and a.status == "ACTIVE" %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="release"><input type="hidden" name="allocation" value="{{ a.pk }}"><button class="button--link" type="submit">{% translate "Release" %}</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table>
+{% else %}<p class="empty-state">{% translate "No allocations yet." %}</p>{% endif %}</section>
+{% endblock %}

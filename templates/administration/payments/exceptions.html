@@ -1,0 +1,17 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Reconciliation exceptions" %}{% endblock %}
+{% block console_content %}
+<div class="section__header"><h1 class="page-title">{% translate "Reconciliation exceptions" %}</h1><a href="{% url 'administration:payments' %}">{% translate "Payments" %}</a></div>
+{% include "components/sandbox_notice.html" %}
+<p class="lead">{% translate "Exceptions are never accepted as money. Retry re-checks the provider's own record; Reject closes the payment (any money is returned outside ClipCash); Dismiss records a note." %}</p>
+{% if page.object_list %}<table class="table">
+  <thead><tr><th scope="col">{% translate "Opened" %}</th><th scope="col">{% translate "Reason" %}</th><th scope="col">{% translate "Payment" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
+  <tbody>{% for x in page.object_list %}<tr><td>{{ x.created_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ x.get_reason_display }}<br><span class="lead">{{ x.detail }}</span></td>
+    <td>{% if x.intent %}<a href="{% url 'administration:payment' x.intent.pk %}">{{ x.intent.reference }}</a>{% else %}{{ x.provider_reference|default:x.organization.display_name }}{% endif %}</td><td>{% if x.amount is not None %}TZS {{ x.amount }}{% endif %}</td><td>{{ x.get_status_display }}{% if x.resolution_note %} · {{ x.resolution_note }}{% endif %}</td>
+    <td>{% if can_review and x.status == "OPEN" %}<form method="post" class="confirm-form">{% csrf_token %}<input type="hidden" name="exception" value="{{ x.pk }}">
+      <input name="note" type="text" maxlength="300" required placeholder="{% translate 'Note' %}" aria-label="{% translate 'Note' %}">
+      <button class="button--link" name="action" value="retry" type="submit">{% translate "Retry" %}</button>
+      <button class="button--link" name="action" value="reject_payment" type="submit">{% translate "Reject" %}</button>
+      <button class="button--link" name="action" value="dismiss" type="submit">{% translate "Dismiss" %}</button></form>{% endif %}</td></tr>{% endfor %}</tbody>
+</table>{% include "components/pagination.html" %}{% else %}<p class="empty-state">{% translate "No exceptions." %}</p>{% endif %}
+{% endblock %}

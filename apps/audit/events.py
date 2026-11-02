@@ -31,6 +31,7 @@ class Category:
     ADVERTISING = "ADVERTISING"
     VIEWING = "VIEWING"
     REWARDS = "REWARDS"
+    PAYMENTS = "PAYMENTS"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -45,6 +46,7 @@ class Category:
         (ADVERTISING, "Advertising"),
         (VIEWING, "Viewing"),
         (REWARDS, "Demo rewards"),
+        (PAYMENTS, "Payments (sandbox)"),
     ]
 
 
@@ -183,6 +185,31 @@ EVENT_TYPES = {
         _event("rewards.reward.reversed", Category.REWARDS, BUSINESS, ["campaign", "amount", "source", "reason"]),
         _event("rewards.duplicate.refused", Category.REWARDS, SECURITY, ["campaign"]),
         _event("rewards.action.denied", Category.REWARDS, SECURITY, ["action", "reason"]),
+        # Payments, SANDBOX (references and whole-TZS amounts only; never payloads or keys)
+        _event("payments.intent.created", Category.PAYMENTS, BUSINESS, ["purpose", "amount", "environment"]),
+        _event("payments.intent.cancelled", Category.PAYMENTS, BUSINESS, ["reference"]),
+        _event("payments.intent.expired", Category.PAYMENTS, BUSINESS, ["reference"]),
+        _event("payments.intent.failed", Category.PAYMENTS, BUSINESS, ["reference", "reason"]),
+        _event("payments.callback.accepted", Category.PAYMENTS, BUSINESS, ["provider", "kind", "status"]),
+        _event("payments.callback.refused", Category.PAYMENTS, SECURITY, ["provider", "reason"]),
+        _event("payments.callback.duplicate", Category.PAYMENTS, SECURITY, ["provider", "kind"]),
+        _event("payments.reconciliation.completed", Category.PAYMENTS, BUSINESS, ["reference", "amount"]),
+        _event("payments.reconciliation.refused", Category.PAYMENTS, BUSINESS, ["reference", "reason"]),
+        _event("payments.settlement.completed", Category.PAYMENTS, BUSINESS, ["reference", "amount", "purpose"]),
+        _event("payments.sandbox.posted", Category.PAYMENTS, BUSINESS, ["posting_type", "amount", "funds_domain"]),
+        _event("payments.exception.opened", Category.PAYMENTS, BUSINESS, ["reason", "amount"]),
+        _event("payments.exception.resolved", Category.PAYMENTS, BUSINESS, ["reason", "action"]),
+        _event("payments.allocation.created", Category.PAYMENTS, BUSINESS, ["campaign", "amount"]),
+        _event("payments.allocation.released", Category.PAYMENTS, BUSINESS, ["campaign", "amount"]),
+        _event("payments.allocation.refused", Category.PAYMENTS, SECURITY, ["campaign", "reason"]),
+        _event("payments.refund.requested", Category.PAYMENTS, BUSINESS, ["reference", "amount"]),
+        _event("payments.refund.completed", Category.PAYMENTS, BUSINESS, ["reference", "amount"]),
+        _event("payments.refund.rejected", Category.PAYMENTS, BUSINESS, ["reference"]),
+        _event("payments.dispute.opened", Category.PAYMENTS, BUSINESS, ["reference", "frozen", "shortfall"]),
+        _event("payments.dispute.resolved", Category.PAYMENTS, BUSINESS, ["reference", "outcome"]),
+        _event("payments.membership.preview", Category.PAYMENTS, BUSINESS, ["reference", "decision"]),
+        _event("payments.sandbox.simulated", Category.PAYMENTS, BUSINESS, ["reference", "action"]),
+        _event("payments.action.denied", Category.PAYMENTS, SECURITY, ["action", "reason"]),
     )
 }
 

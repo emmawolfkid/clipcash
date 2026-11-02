@@ -22,4 +22,8 @@ urlpatterns = [
     path("rewards/", views.DemoRewardListView.as_view(), name="demo_rewards"),
     path("rewards/policies/", views.RewardPolicyListView.as_view(), name="reward_policies"),
     path("rewards/policies/<uuid:pk>/", views.RewardPolicyView.as_view(), name="reward_policy"),
+    path("payments/", views.PaymentListView.as_view(), name="payments"),
+    path("payments/exceptions/", views.PaymentExceptionsView.as_view(), name="payment_exceptions"),
+    path("payments/funding/", views.PaymentFundingView.as_view(), name="payment_funding"),
+    path("payments/<uuid:pk>/", views.PaymentDetailView.as_view(), name="payment"),
 ]
