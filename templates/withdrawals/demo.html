@@ -1,0 +1,12 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{{ demo.reference }}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{{ demo.reference }} <span class="badge badge--sandbox">{% translate "Demo" %}</span></h1>
+{% include "components/demo_withdrawal_notice.html" %}
+<section class="panel"><dl class="details">
+  <dt>{% translate "Simulated amount" %}</dt><dd>TZS {{ demo.simulated_amount }}</dd>
+  <dt>{% translate "Destination" %}</dt><dd>{{ demo.destination_provider }} •••• {{ demo.destination_last4 }}</dd>
+  <dt>{% translate "Status" %}</dt><dd>{{ demo.get_status_display }}</dd>
+</dl></section>
+<section class="section"><h2>{% translate "History" %}</h2><ul class="list">{% for d in decisions %}<li class="list__item"><span>{{ d.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ d.action }}</span><span>{{ d.to_status }}</span></li>{% endfor %}</ul></section>
+{% endblock %}

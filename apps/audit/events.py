@@ -33,6 +33,7 @@ class Category:
     REWARDS = "REWARDS"
     PAYMENTS = "PAYMENTS"
     WALLETS = "WALLETS"
+    WITHDRAWALS = "WITHDRAWALS"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -49,6 +50,7 @@ class Category:
         (REWARDS, "Demo rewards"),
         (PAYMENTS, "Payments (sandbox)"),
         (WALLETS, "Wallets"),
+        (WITHDRAWALS, "Withdrawals"),
     ]
 
 
@@ -223,6 +225,31 @@ EVENT_TYPES = {
         _event("wallets.posting.refused", Category.WALLETS, SECURITY, ["category", "reason"]),
         _event("wallets.reconciliation.discrepancy", Category.WALLETS, BUSINESS, ["code"]),
         _event("wallets.discrepancy.resolved", Category.WALLETS, BUSINESS, ["code", "note"]),
+        # Withdrawals: real ones locked; DEMO scenarios simulated (never account numbers)
+        _event("withdrawals.beneficiary.created", Category.WITHDRAWALS, BUSINESS, ['kind', 'provider']),
+        _event("withdrawals.beneficiary.deactivated", Category.WITHDRAWALS, BUSINESS, ['kind']),
+        _event("withdrawals.beneficiary.demo_verified", Category.WITHDRAWALS, BUSINESS, ['kind']),
+        _event("withdrawals.request.denied", Category.WITHDRAWALS, SECURITY, ['reasons']),
+        _event("withdrawals.demo.created", Category.WITHDRAWALS, BUSINESS, ['reference', 'amount', 'high_risk', 'flags']),
+        _event("withdrawals.demo.duplicate_refused", Category.WITHDRAWALS, SECURITY, ['reason']),
+        _event("withdrawals.demo.review_started", Category.WITHDRAWALS, BUSINESS, ['reference']),
+        _event("withdrawals.demo.approval_recorded", Category.WITHDRAWALS, BUSINESS, ['reference', 'approvals']),
+        _event("withdrawals.demo.approved", Category.WITHDRAWALS, BUSINESS, ['reference']),
+        _event("withdrawals.demo.rejected", Category.WITHDRAWALS, BUSINESS, ['reference', 'reason_code']),
+        _event("withdrawals.demo.cancelled", Category.WITHDRAWALS, BUSINESS, ['reference', 'reason_code']),
+        _event("withdrawals.demo.expired", Category.WITHDRAWALS, BUSINESS, ['reference']),
+        _event("withdrawals.payout.initiated", Category.WITHDRAWALS, BUSINESS, ['reference']),
+        _event("withdrawals.payout.completed", Category.WITHDRAWALS, BUSINESS, ['reference']),
+        _event("withdrawals.payout.failed", Category.WITHDRAWALS, BUSINESS, ['reference']),
+        _event("withdrawals.payout.uncertain", Category.WITHDRAWALS, BUSINESS, ['reference']),
+        _event("withdrawals.payout.returned", Category.WITHDRAWALS, BUSINESS, ['reference']),
+        _event("withdrawals.callback.refused", Category.WITHDRAWALS, SECURITY, ['reason']),
+        _event("withdrawals.callback.duplicate", Category.WITHDRAWALS, SECURITY, ['kind']),
+        _event("withdrawals.risk.flagged", Category.WITHDRAWALS, SECURITY, ['flags']),
+        _event("withdrawals.exception.opened", Category.WITHDRAWALS, BUSINESS, ['code']),
+        _event("withdrawals.exception.resolved", Category.WITHDRAWALS, BUSINESS, ['code']),
+        _event("withdrawals.sandbox.simulated", Category.WITHDRAWALS, BUSINESS, ['reference', 'action']),
+        _event("withdrawals.action.denied", Category.WITHDRAWALS, SECURITY, ['action', 'reason']),
     )
 }
 

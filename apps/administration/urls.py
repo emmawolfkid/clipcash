@@ -29,4 +29,8 @@ urlpatterns = [
     path("wallets/", views.WalletListView.as_view(), name="wallets"),
     path("wallets/reconciliation/", views.WalletReconciliationView.as_view(), name="wallet_reconciliation"),
     path("wallets/<uuid:pk>/", views.WalletDetailView.as_view(), name="wallet"),
+    path("withdrawals/", views.WithdrawalListView.as_view(), name="withdrawals"),
+    path("withdrawals/exceptions/", views.WithdrawalExceptionsView.as_view(), name="withdrawal_exceptions"),
+    path("withdrawals/beneficiaries/", views.BeneficiaryListView.as_view(), name="beneficiaries"),
+    path("withdrawals/<uuid:pk>/", views.WithdrawalDetailView.as_view(), name="withdrawal"),
 ]

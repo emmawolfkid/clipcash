@@ -24,6 +24,8 @@ from django.views import View
 from apps.advertising import services as advertising
 from apps.advertising.models import Campaign, Organization
 from apps.audit.admin import can_view_audit
+from apps.withdrawals import services as withdrawals
+from apps.withdrawals.models import DemoWithdrawal, PayoutBeneficiary, PayoutEvent, WithdrawalException
 from apps.wallets import wallet_services
 from apps.wallets.models import Wallet, WalletDiscrepancy, WalletRestriction
 from apps.payments import services as payments
@@ -37,6 +39,7 @@ from apps.payments.models import (
     SandboxAdvertiserFunds,
     SandboxCampaignAllocation,
 )
+from apps.payments.providers import PaymentsDisabled
 from apps.payments.providers import sandbox_active as payments_sandbox_active
 from apps.rewards import services as rewards
 from apps.rewards.models import DemoReward, RewardPolicy
@@ -78,6 +81,7 @@ def console_links(user):
         "rewards": rewards.can_use_rewards_console(user),
         "payments": payments.can_view_payments(user) and payments_sandbox_active(),
         "wallets": wallet_services.can_view_wallets(user),
+        "withdrawals": withdrawals.can_view(user),
     }
     return can
 
@@ -912,3 +916,146 @@ class WalletReconciliationView(View):
         except (ValidationError, wallet_services.WalletError) as error:
             messages.error(request, _error_text(error))
         return redirect("administration:wallet_reconciliation")
+
+
+# --- Withdrawals, DEMO (Phase 10) --------------------------------------------------------------
+
+WITHDRAWAL_SIMULATOR = [("succeed", _("Provider: success")), ("fail", _("Provider: failure")),
+                        ("timeout", _("Provider: timeout")), ("restore", _("Provider: reachable again")),
+                        ("return", _("Provider: payout returned")), ("replay", _("Replay last notice")),
+                        ("forged", _("Forged notice"))]
+
+
+@console
+class WithdrawalListView(View):
+    def get(self, request):
+        if not withdrawals.can_view(request.user):
+            raise PermissionDenied
+        query = request.GET.get("q", "").strip()[:100]
+        status = request.GET.get("status", "")
+        flagged = request.GET.get("flagged") == "1"
+        page = Paginator(withdrawals.staff_queue(status=status, query=query, flagged=flagged), 25).get_page(
+            request.GET.get("page"))
+        params = request.GET.copy()
+        params.pop("page", None)
+        member_email = request.GET.get("member", "").strip()[:254]
+        member_lookup, member_beneficiaries = None, []
+        if member_email and withdrawals.can_review(request.user):
+            member_lookup = get_user_model().objects.filter(email__iexact=member_email, is_staff=False).first()
+            if member_lookup:
+                member_beneficiaries = PayoutBeneficiary.objects.filter(member=member_lookup, status="ACTIVE")
+        return render(request, "administration/withdrawals/list.html", {
+            "page": page, "query": query, "status": status, "flagged": flagged, "page_query": params.urlencode(),
+            "statuses": DemoWithdrawal.Status.choices, "member_email": member_email, "member_lookup": member_lookup,
+            "member_beneficiaries": member_beneficiaries, "form_token": uuid.uuid4().hex,
+            "open_exceptions": WithdrawalException.objects.filter(status="OPEN").count(),
+            "can_review": withdrawals.can_review(request.user),
+            "can_beneficiaries": withdrawals.can_view_beneficiaries(request.user),
+            "can": console_links(request.user), "nav": "withdrawals"})
+
+    def post(self, request):
+        if not withdrawals.can_view(request.user):
+            raise PermissionDenied
+        member = get_object_or_404(get_user_model(), pk=request.POST.get("member"))
+        beneficiary = get_object_or_404(PayoutBeneficiary, pk=request.POST.get("beneficiary"), member=member)
+        try:
+            demo = withdrawals.create_demo_withdrawal(request.user, member, beneficiary,
+                                                      amount=_whole_number(request, "amount"),
+                                                      idempotency_key=request.POST.get("form_token", ""))
+            messages.success(request, _("Demo request created."))
+            return redirect("administration:withdrawal", pk=demo.pk)
+        except withdrawals.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, withdrawals.WithdrawalError, PaymentsDisabled) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:withdrawals")
+
+
+@console
+class WithdrawalDetailView(View):
+    def get(self, request, pk):
+        if not withdrawals.can_view(request.user):
+            raise PermissionDenied
+        demo = get_object_or_404(DemoWithdrawal.objects.select_related(
+            "member", "created_by", "approved_by", "second_approved_by", "payout_initiated_by"), pk=pk)
+        return render(request, "administration/withdrawals/detail.html", {
+            "demo": demo, "decisions": demo.decisions.select_related("actor"),
+            "events": PayoutEvent.objects.filter(payout_reference=demo.payout_reference).order_by("received_at")
+                      if demo.payout_reference else [],
+            "history": AuditEvent.objects.filter(target_model="demowithdrawal", target_id=str(demo.pk))
+                                         .order_by("occurred_at")[:100],
+            "reasons": withdrawals.REJECTION_REASONS, "simulator_actions": WITHDRAWAL_SIMULATOR,
+            "can_review": withdrawals.can_review(request.user),
+            "can_operate": withdrawals.can_operate_payouts(request.user),
+            "can": console_links(request.user), "nav": "withdrawals"})
+
+    def post(self, request, pk):
+        if not withdrawals.can_view(request.user):
+            raise PermissionDenied
+        demo = get_object_or_404(DemoWithdrawal, pk=pk)
+        action = request.POST.get("action", "")
+        expected = request.POST.get("expected_status", "")
+        note = request.POST.get("note", "")[:300]
+        try:
+            if action == "start_review":
+                withdrawals.start_review(request.user, demo, expected_status=expected)
+            elif action == "approve":
+                withdrawals.approve(request.user, demo, expected_status=expected, note=note)
+            elif action == "reject":
+                withdrawals.reject(request.user, demo, expected_status=expected,
+                                   reason_code=request.POST.get("reason_code", ""), note=note)
+            elif action == "cancel":
+                withdrawals.cancel(request.user, demo, reason_code=request.POST.get("reason_code", ""), note=note)
+            elif action == "initiate":
+                withdrawals.initiate_payout(request.user, demo, expected_status=expected)
+            elif action == "simulate":
+                status, outcome = withdrawals.simulate(request.user, demo, request.POST.get("simulate", ""))
+                messages.info(request, _("Simulated notice: HTTP %(s)s, %(o)s.") % {"s": status, "o": outcome})
+            else:
+                raise PermissionDenied
+            if action != "simulate":
+                messages.success(request, _("Demo withdrawal updated."))
+        except withdrawals.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, withdrawals.WithdrawalError, PaymentsDisabled) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:withdrawal", pk=pk)
+
+
+@console
+class WithdrawalExceptionsView(View):
+    def get(self, request):
+        if not withdrawals.can_view(request.user):
+            raise PermissionDenied
+        qs = WithdrawalException.objects.select_related("withdrawal").order_by("status", "-created_at")
+        return render(request, "administration/withdrawals/exceptions.html", {
+            "page": Paginator(qs, 25).get_page(request.GET.get("page")),
+            "can_review": withdrawals.can_review(request.user), "can": console_links(request.user),
+            "nav": "withdrawals"})
+
+    def post(self, request):
+        if not withdrawals.can_view(request.user):
+            raise PermissionDenied
+        exception = get_object_or_404(WithdrawalException, pk=request.POST.get("exception"))
+        try:
+            withdrawals.resolve_exception(request.user, exception, note=request.POST.get("note", ""))
+            messages.success(request, _("Exception resolved."))
+        except withdrawals.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, withdrawals.WithdrawalError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:withdrawal_exceptions")
+
+
+@console
+class BeneficiaryListView(View):
+    def get(self, request):
+        if not withdrawals.can_view_beneficiaries(request.user):
+            raise PermissionDenied
+        query = request.GET.get("q", "").strip()[:254]
+        qs = PayoutBeneficiary.objects.select_related("member").order_by("-created_at")
+        if query:
+            qs = qs.filter(member__email__iexact=query)
+        return render(request, "administration/withdrawals/beneficiaries.html", {
+            "page": Paginator(qs, 25).get_page(request.GET.get("page")), "query": query,
+            "can": console_links(request.user), "nav": "withdrawals"})

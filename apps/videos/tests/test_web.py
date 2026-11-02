@@ -141,7 +141,8 @@ class DashboardTests(VideoTestCase):
         response = self.client.get(reverse("dashboard"))
         self.assertContains(response, "Latest clip")
         self.assertContains(response, "You do not have an active membership")
-        self.assertContains(response, "Coming soon")
+        # Phases 06-10 replaced every Coming-soon item; real money is still described as unavailable.
+        self.assertContains(response, "Real rewards are not available yet")
         # Advertisements became "Sponsored videos" in Phase 06 (shown when advertisers are enabled).
         for label in ("Rewards", "Wallet", "Withdrawals"):
             self.assertContains(response, label)

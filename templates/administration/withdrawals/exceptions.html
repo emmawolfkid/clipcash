@@ -1,0 +1,10 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Withdrawal exceptions" %}{% endblock %}
+{% block console_content %}
+<div class="section__header"><h1 class="page-title">{% translate "Withdrawal exceptions" %}</h1><a href="{% url 'administration:withdrawals' %}">{% translate "Withdrawals" %}</a></div>
+<p class="lead">{% translate "Uncertain payouts are reconciled with the same reference. They are never re-sent with a new one." %}</p>
+{% if page.object_list %}<table class="table"><thead><tr><th scope="col">{% translate "Opened" %}</th><th scope="col">{% translate "Check" %}</th><th scope="col">{% translate "Withdrawal" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
+<tbody>{% for x in page.object_list %}<tr><td>{{ x.created_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ x.code }}<br><span class="lead">{{ x.detail }}</span></td><td>{% if x.withdrawal %}<a href="{% url 'administration:withdrawal' x.withdrawal.pk %}">{{ x.withdrawal.reference }}</a>{% endif %}</td><td>{{ x.get_status_display }}</td>
+<td>{% if can_review and x.status == "OPEN" %}<form method="post" class="confirm-form">{% csrf_token %}<input type="hidden" name="exception" value="{{ x.pk }}"><input name="note" type="text" maxlength="300" required placeholder="{% translate 'Resolution note' %}" aria-label="{% translate 'Resolution note' %}"><button class="button--link" type="submit">{% translate "Resolve" %}</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table>
+{% include "components/pagination.html" %}{% else %}<p class="empty-state">{% translate "No exceptions." %}</p>{% endif %}
+{% endblock %}
