@@ -18,7 +18,8 @@
   </section>
   <section class="panel">
     <h2 class="panel__title">{% translate "Rewards" %}</h2>
-    <p class="lead">{% translate "Coming soon. Rewards are not available yet." %}</p>
+    <p class="lead">{% translate "Real rewards are not available yet. Demo rewards are simulated records only, not money." %}</p>
+    {% if features.advertisers %}<a class="button button--secondary" href="{% url 'rewards:history' %}">{% translate "See demo rewards" %}</a>{% endif %}
   </section>
   <section class="panel">
     <h2 class="panel__title">{% translate "Wallet" %}</h2>

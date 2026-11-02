@@ -35,6 +35,13 @@
     <p class="lead">{% translate "Confirming keeps the server's evidence; it cannot add watch time. No decision creates a reward." %}</p>
   </form></section>
 {% endif %}
+{% if session.outcome == "VERIFIED_EVIDENCE" %}
+<section class="panel section"><h2 class="panel__title">{% translate "Revoke verified view" %}</h2>
+  <form method="post" class="form">{% csrf_token %}<input type="hidden" name="decision" value="revoke">
+    <label for="revoke-reason">{% translate "Reason (required)" %}</label><textarea id="revoke-reason" name="reason" rows="2" maxlength="300" required></textarea>
+    <label><input type="checkbox" required> {% translate "Revoking is permanent and reverses any demo reward for this view" %}</label>
+    <button class="button button--secondary" type="submit">{% translate "Revoke view" %}</button></form></section>
+{% endif %}
 <section class="section"><h2>{% translate "Audit history" %}</h2>
 {% if history %}<ul class="list">{% for event in history %}<li class="list__item"><span>{{ event.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ event.action }} · {{ event.outcome }}</span><span>{{ event.actor_email|default:"system" }}</span></li>{% endfor %}</ul>
 {% else %}<p class="lead">—</p>{% endif %}</section>

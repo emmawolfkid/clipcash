@@ -30,6 +30,7 @@ class Category:
     CONTENT = "CONTENT"
     ADVERTISING = "ADVERTISING"
     VIEWING = "VIEWING"
+    REWARDS = "REWARDS"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -43,6 +44,7 @@ class Category:
         (CONTENT, "Content"),
         (ADVERTISING, "Advertising"),
         (VIEWING, "Viewing"),
+        (REWARDS, "Demo rewards"),
     ]
 
 
@@ -167,6 +169,20 @@ EVENT_TYPES = {
         _event("viewing.evidence.rejected", Category.VIEWING, SECURITY, ["campaign", "reason", "count"]),
         _event("viewing.fraud.flagged", Category.VIEWING, SECURITY, ["campaign", "flags"]),
         _event("viewing.review.decided", Category.VIEWING, BUSINESS, ["decision", "reason", "flags"]),
+        _event("viewing.session.revoked", Category.VIEWING, BUSINESS, ["campaign", "reason"]),
+        # Demo rewards (simulated, never money)
+        _event("rewards.policy.created", Category.REWARDS, BUSINESS, ["campaign", "version", "amount"]),
+        _event("rewards.policy.approved", Category.REWARDS, BUSINESS, ["campaign", "version", "amount", "replaces"]),
+        _event("rewards.policy.rejected", Category.REWARDS, BUSINESS, ["campaign", "version", "reason"]),
+        _event("rewards.policy.retired", Category.REWARDS, BUSINESS, ["campaign", "version", "reason"]),
+        _event("rewards.decision.qualified", Category.REWARDS, BUSINESS,
+               ["campaign", "policy_version", "amount", "demo_consumed"]),
+        _event("rewards.decision.rejected", Category.REWARDS, BUSINESS, ["campaign", "reasons"]),
+        _event("rewards.budget.exhausted", Category.REWARDS, BUSINESS, ["campaign", "demo_allocated",
+                                                                        "demo_consumed", "amount"]),
+        _event("rewards.reward.reversed", Category.REWARDS, BUSINESS, ["campaign", "amount", "source", "reason"]),
+        _event("rewards.duplicate.refused", Category.REWARDS, SECURITY, ["campaign"]),
+        _event("rewards.action.denied", Category.REWARDS, SECURITY, ["action", "reason"]),
     )
 }
 

@@ -1,0 +1,28 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Demo reward policy" %}{% endblock %}
+{% block console_content %}
+<div class="section__header"><h1 class="page-title">{{ policy.campaign.name }} · v{{ policy.version }}</h1><a href="{% url 'administration:reward_policies' %}">{% translate "All policies" %}</a></div>
+<section class="panel"><dl class="details">
+  <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ policy.status|lower }}">{{ policy.get_status_display }}</span></dd>
+  <dt>{% translate "Demo amount" %}</dt><dd>TZS {{ policy.reward_amount }} <span class="badge badge--pending">{% translate "Demo" %}</span></dd>
+  <dt>{% translate "Campaign revision" %}</dt><dd>{{ policy.campaign_revision }} ({% translate "current approved" %}: {{ policy.campaign.approved_revision|default:"—" }})</dd>
+  <dt>{% translate "Created by" %}</dt><dd>{{ policy.created_by.email }} · {{ policy.created_at|date:"SHORT_DATETIME_FORMAT" }}</dd>
+  {% if policy.decided_by %}<dt>{% translate "Decided by" %}</dt><dd>{{ policy.decided_by.email }} · {{ policy.decided_at|date:"SHORT_DATETIME_FORMAT" }}</dd>{% endif %}
+  {% if policy.decision_reason %}<dt>{% translate "Reason" %}</dt><dd>{{ policy.decision_reason }}</dd>{% endif %}
+  <dt>{% translate "Effective" %}</dt><dd>{{ policy.effective_from|date:"DATETIME_FORMAT"|default:"—" }}{% if policy.effective_until %} – {{ policy.effective_until|date:"DATETIME_FORMAT" }}{% endif %}</dd>
+  <dt>{% translate "Demo rewards under this policy" %}</dt><dd>{{ reward_count }}</dd>
+</dl></section>
+{% if can_approve and policy.status != "REJECTED" and policy.status != "RETIRED" %}
+<section class="panel section"><h2 class="panel__title">{% translate "Decision" %}</h2>
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="expected_status" value="{{ policy.status }}">
+  <label for="reason">{% translate "Reason (required to reject or retire)" %}</label><textarea id="reason" name="reason" rows="2" maxlength="300"></textarea>
+  <div class="actions">
+    {% if policy.status == "DRAFT" %}<button class="button" name="action" value="approve" type="submit">{% translate "Approve" %}</button>
+    <button class="button button--secondary" name="action" value="reject" type="submit">{% translate "Reject" %}</button>{% endif %}
+    {% if policy.status == "APPROVED" %}<button class="button button--secondary" name="action" value="retire" type="submit">{% translate "Retire" %}</button>{% endif %}
+  </div>
+  <p class="lead">{% translate "Approved policies cannot be edited. Past demo rewards keep the policy they were recorded under." %}</p>
+</form></section>{% endif %}
+<section class="section"><h2>{% translate "Version history" %}</h2><ul class="list">{% for p in history %}
+  <li class="list__item"><a href="{% url 'administration:reward_policy' p.pk %}">v{{ p.version }}</a><span>TZS {{ p.reward_amount }} · {{ p.get_status_display }}</span></li>{% endfor %}</ul></section>
+{% endblock %}

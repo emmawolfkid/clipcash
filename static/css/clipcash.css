@@ -314,3 +314,9 @@ a.app-nav__link:hover, .app-nav__button:hover { background: var(--info-bg); }
 .badge--verified_evidence { border-color: var(--accent); color: var(--accent); }
 .badge--suspicious_review, .badge--rejected { border-color: var(--danger); color: var(--danger); }
 .badge--insufficient_evidence, .badge--expired, .badge--pending { border-color: var(--muted); color: var(--muted); }
+
+/* Phase 07: demo rewards */
+.badge--demo_qualified { border-color: var(--accent); color: var(--accent); }
+.badge--demo_reversed, .badge--retired { color: var(--muted); }
+.badge--demo_rejected { border-color: var(--muted); color: var(--muted); }
+.confirm-form input[type="text"] { padding: 0.3rem 0.5rem; font: inherit; border: 1px solid var(--border); border-radius: calc(var(--radius) / 2); }

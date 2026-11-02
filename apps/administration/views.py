@@ -4,6 +4,7 @@ permission server-side, and every change goes through the owning service.
 """
 
 import json
+import uuid
 from datetime import timedelta
 
 from django.conf import settings
@@ -23,6 +24,8 @@ from django.views import View
 from apps.advertising import services as advertising
 from apps.advertising.models import Campaign, Organization
 from apps.audit.admin import can_view_audit
+from apps.rewards import services as rewards
+from apps.rewards.models import DemoReward, RewardPolicy
 from apps.audit.models import AuditEvent
 from apps.core.models import Job
 from apps.core.services import can_change_site_configuration
@@ -58,6 +61,7 @@ def console_links(user):
         "advertisers": advertising.can_review_advertisers(user),
         "campaigns": advertising.can_review_campaigns(user),
         "viewing": viewing.can_review_viewing(user),
+        "rewards": rewards.can_use_rewards_console(user),
     }
     return can
 
@@ -89,6 +93,7 @@ class OverviewView(View):
             "campaigns_active": Campaign.objects.filter(status=Campaign.Status.ACTIVE).count(),
             "viewing_review": WatchSession.objects.filter(review_status=WatchSession.Review.PENDING).count(),
             "viewing_verified": WatchSession.objects.filter(outcome=WatchSession.Outcome.VERIFIED_EVIDENCE).count(),
+            "demo_rewards": DemoReward.objects.filter(status=DemoReward.Status.QUALIFIED).count(),
         }
         return render(request, "administration/overview.html",
                       {"nav": "overview", "stats": stats, "can": console_links(request.user), "provider": settings.VIDEO_PROVIDER})
@@ -530,6 +535,10 @@ class ViewingReviewView(View):
     def post(self, request, pk):
         session = get_object_or_404(WatchSession, pk=pk)
         try:
+            if request.POST.get("decision") == "revoke":
+                viewing.revoke_verified_session(request.user, session, reason=request.POST.get("reason", "")[:300])
+                messages.success(request, _("Verified view revoked; its demo reward (if any) was reversed."))
+                return redirect("administration:viewing_review", pk=pk)
             viewing.review_session(request.user, session, request.POST.get("decision", ""),
                                    expected_status=request.POST.get("expected_status", ""),
                                    reason=request.POST.get("reason", "")[:300])
@@ -543,3 +552,132 @@ class ViewingReviewView(View):
 
 VIEWING_FLAGS = ["excessive_events", "heartbeat_gaps", "impossible_speed", "invalid_evidence", "large_seeks",
                  "rapid_attempts", "replayed_events"]
+
+
+# --- Demo rewards (Phase 07) ----------------------------------------------------------------
+
+
+@console
+class RewardPolicyListView(View):
+    def get(self, request):
+        return self._render(request)
+
+    def _render(self, request):
+        if not rewards.can_use_rewards_console(request.user):
+            raise PermissionDenied
+        page = Paginator(RewardPolicy.objects.select_related("campaign").order_by("campaign__name", "-version"),
+                         25).get_page(request.GET.get("page"))
+        campaigns = (Campaign.objects.select_related("organization")
+                     .filter(status__in=rewards.POLICY_CAMPAIGN_STATES).order_by("name"))
+        return render(request, "administration/rewards/policies.html", {
+            "policies": page.object_list, "policies_page": page, "page": page, "campaigns": campaigns,
+            "can_manage": rewards.can_manage_policies(request.user), "can": console_links(request.user),
+            "nav": "rewards"})
+
+    def post(self, request):
+        campaign = get_object_or_404(Campaign, pk=request.POST.get("campaign"))
+        try:
+            policy = rewards.create_policy(request.user, campaign, reward_amount=_whole_number(request, "reward_amount"),
+                                           notes=request.POST.get("notes", ""))
+            messages.success(request, _("Policy draft saved. Another administrator must approve it."))
+            return redirect("administration:reward_policy", pk=policy.pk)
+        except rewards.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, rewards.RewardsError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:reward_policies")
+
+
+def _whole_number(request, name):
+    raw = request.POST.get(name, "").strip()
+    if not raw.isdigit():
+        raise ValidationError({name: "Enter a whole number of shillings."})
+    return int(raw)
+
+
+@console
+class RewardPolicyView(View):
+    def get(self, request, pk):
+        if not rewards.can_use_rewards_console(request.user):
+            raise PermissionDenied
+        policy = get_object_or_404(RewardPolicy.objects.select_related("campaign", "created_by", "decided_by"), pk=pk)
+        return render(request, "administration/rewards/policy.html", {
+            "policy": policy, "history": RewardPolicy.objects.filter(campaign=policy.campaign).order_by("-version"),
+            "reward_count": policy.demo_rewards.count(), "can_approve": rewards.can_approve_policies(request.user),
+            "can": console_links(request.user), "nav": "rewards"})
+
+    def post(self, request, pk):
+        policy = get_object_or_404(RewardPolicy, pk=pk)
+        action = request.POST.get("action", "")
+        expected = request.POST.get("expected_status", "")
+        reason = request.POST.get("reason", "")[:300]
+        try:
+            if action == "approve":
+                rewards.approve_policy(request.user, policy, expected_status=expected)
+            elif action == "reject":
+                rewards.reject_policy(request.user, policy, reason=reason, expected_status=expected)
+            elif action == "retire":
+                rewards.retire_policy(request.user, policy, reason=reason)
+            else:
+                raise PermissionDenied
+            messages.success(request, _("Policy updated."))
+        except rewards.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, rewards.RewardsError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:reward_policy", pk=pk)
+
+
+@console
+class DemoRewardListView(View):
+    def get(self, request):
+        if not rewards.can_use_rewards_console(request.user):
+            raise PermissionDenied
+        qs = DemoReward.objects.select_related("member", "campaign").order_by("-decided_at")
+        filters = {key: request.GET.get(key, "").strip()[:100] for key in ("member", "status", "campaign")}
+        if filters["member"]:
+            qs = qs.filter(member__email__icontains=filters["member"])
+        if filters["status"] in DemoReward.Status.values:
+            qs = qs.filter(status=filters["status"])
+        campaign_filter = None
+        if filters["campaign"]:
+            try:
+                campaign_filter = uuid.UUID(filters["campaign"])
+                qs = qs.filter(campaign_id=campaign_filter)
+            except ValueError:
+                filters["campaign"] = ""
+        page = Paginator(qs, 25).get_page(request.GET.get("page"))
+        params = request.GET.copy()
+        params.pop("page", None)
+        reason_counts = {}
+        for codes in DemoReward.objects.filter(status=DemoReward.Status.REJECTED).values_list("reasons", flat=True)[:2000]:
+            for code in codes:
+                reason_counts[code] = reason_counts.get(code, 0) + 1
+        return render(request, "administration/rewards/rewards.html", {
+            "page": page, "filters": filters, "page_query": params.urlencode(),
+            "statuses": DemoReward.Status.choices, "totals": rewards.campaign_totals(),
+            "reasons": [{"code": k, "n": v} for k, v in sorted(reason_counts.items())],
+            "pending_count": rewards.pending_sessions(10_000).count(),
+            "can_manage": rewards.can_manage_rewards(request.user), "can": console_links(request.user),
+            "nav": "rewards"})
+
+    def post(self, request):
+        action = request.POST.get("action", "")
+        try:
+            if action == "evaluate":
+                if not rewards.can_manage_rewards(request.user):
+                    raise PermissionDenied
+                counts = rewards.evaluate_pending()
+                messages.success(request, _("Evaluated: %(q)s recorded, %(r)s not eligible, %(w)s waiting.")
+                                 % {"q": counts["qualified"], "r": counts["rejected"], "w": counts["waiting"]})
+            elif action == "reverse":
+                reward = get_object_or_404(DemoReward, pk=request.POST.get("reward"))
+                rewards.reverse_reward(request.user, reward, reason=request.POST.get("reason", "")[:300])
+                messages.success(request, _("Demo reward reversed."))
+            else:
+                raise PermissionDenied
+        except rewards.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, rewards.RewardsError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:demo_rewards")

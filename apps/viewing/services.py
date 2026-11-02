@@ -23,6 +23,7 @@ import hashlib
 from dataclasses import dataclass
 from datetime import timedelta
 
+import django.dispatch
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -49,6 +50,10 @@ MAX_SEQUENCE = 1_000_000
 EVENT_STATES = ("playing", "paused", "ended")
 EVENT_KEYS = {"seq", "position_ms", "state", "client_ts"}
 MIN_REVIEW_REASON = 5
+
+# Sent INSIDE the transaction that rejects or revokes a session, so dependent
+# records (Phase 07 demo rewards) are reversed atomically with it.
+session_reversed = django.dispatch.Signal()
 
 
 class ViewingError(Exception):
@@ -565,6 +570,42 @@ def review_session(actor, session, decision, *, expected_status, reason):
         session.save()
         record_business_event("viewing.review.decided", actor=actor, target=session,
                               metadata={"decision": decision, "reason": reason[:100], "flags": session.flags})
+        if decision == "reject":
+            session_reversed.send(sender=WatchSession, session=session, actor=actor, reason=reason[:300])
+    return session
+
+
+def revoke_verified_session(actor, session, *, reason):
+    """Staff revocation of an already VERIFIED view (e.g. fraud found later). The evidence
+    stays frozen; outcome and review become REJECTED and the counted view is released.
+    Dependent demo rewards are reversed in the same transaction. Idempotent."""
+    if not can_review_viewing(actor):
+        record_security_event("viewing.session.denied", outcome=DENIED,
+                              actor=actor if getattr(actor, "is_authenticated", False) else None,
+                              target=session, metadata={"campaign": str(session.campaign_id),
+                                                        "reason": "review_permission_missing"})
+        raise Denied("You are not allowed to review viewing sessions.")
+    if session.member_id == actor.pk:
+        raise Denied("You cannot review your own viewing.", code="self_review")
+    reason = (reason or "").strip()
+    if len(reason) < MIN_REVIEW_REASON:
+        raise ValidationError({"reason": "Please give a reason (at least 5 characters)."})
+    with transaction.atomic():
+        session = WatchSession.objects.select_for_update().get(pk=session.pk)
+        if session.outcome == Out.REJECTED and session.review_status == Rev.REJECTED:
+            return session  # Already revoked or rejected.
+        if session.outcome != Out.VERIFIED_EVIDENCE:
+            raise InvalidState("Only verified views can be revoked.")
+        session.outcome = Out.REJECTED
+        session.review_status = Rev.REJECTED
+        session.reviewed_by = actor
+        session.reviewed_at = timezone.now()
+        session.review_reason = reason[:300]
+        session.qualifying_slot = None
+        session.save()
+        record_business_event("viewing.session.revoked", actor=actor, target=session,
+                              metadata={"campaign": str(session.campaign_id), "reason": reason[:100]})
+        session_reversed.send(sender=WatchSession, session=session, actor=actor, reason=reason[:300])
     return session
 
 
