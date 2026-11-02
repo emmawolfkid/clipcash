@@ -1,31 +1,55 @@
-{% extends "base.html" %}{% load i18n %}
+{% extends "base.html" %}{% load i18n static %}
 {% block main %}
 <div class="app-shell app-shell--console">
   <aside class="app-sidebar">
     <p class="app-sidebar__title">{% translate "Administration" %}</p>
-    <nav aria-label="{% translate 'Administration menu' %}">
-      <ul class="app-nav__list">
-        <li><a class="app-nav__link{% if nav == 'overview' %} is-current{% endif %}"{% if nav == 'overview' %} aria-current="page"{% endif %} href="{% url 'administration:overview' %}">{% translate "Overview" %}</a></li>
-        {% if can.members %}<li><a class="app-nav__link" href="{% url 'admin:accounts_user_changelist' %}">{% translate "Members" %}</a></li>{% endif %}
+    <button type="button" class="app-nav__toggle" aria-expanded="true" aria-controls="console-menu" hidden>{% translate "Menu" %}</button>
+    <nav id="console-menu" class="app-nav" aria-label="{% translate 'Administration menu' %}">
+      {% if True %}<p class="app-nav__group" id="console-overview">{% translate "Overview" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-overview">
+        {% if True %}<li><a class="app-nav__link{% if nav == 'overview' %} is-current{% endif %}"{% if nav == 'overview' %} aria-current="page"{% endif %} href="{% url 'administration:overview' %}">{% translate "Overview" %}</a></li>{% endif %}
+        {% if True %}<li><a class="app-nav__link{% if nav == 'health' %} is-current{% endif %}"{% if nav == 'health' %} aria-current="page"{% endif %} href="{% url 'administration:health' %}">{% translate "Operational health" %}</a></li>{% endif %}
+      </ul>{% endif %}
+      {% if can.members or can.plans %}<p class="app-nav__group" id="console-members">{% translate "Members" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-members">
+        {% if can.members %}<li><a class="app-nav__link{% if nav == 'members' %} is-current{% endif %}"{% if nav == 'members' %} aria-current="page"{% endif %} href="{% url 'administration:members' %}">{% translate "Member directory" %}</a></li>{% endif %}
+        {% if can.members %}<li><a class="app-nav__link" href="{% url 'admin:accounts_user_changelist' %}">{% translate "User accounts (admin)" %}</a></li>{% endif %}
         {% if can.plans %}<li><a class="app-nav__link" href="{% url 'admin:memberships_membershipplan_changelist' %}">{% translate "Membership plans" %}</a></li>{% endif %}
+      </ul>{% endif %}
+      {% if can.advertisers or can.campaigns %}<p class="app-nav__group" id="console-advertising">{% translate "Advertising" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-advertising">
+        {% if can.advertisers %}<li><a class="app-nav__link{% if nav == 'advertisers' %} is-current{% endif %}"{% if nav == 'advertisers' %} aria-current="page"{% endif %} href="{% url 'administration:advertisers' %}">{% translate "Advertisers" %}</a></li>{% endif %}
+        {% if can.campaigns %}<li><a class="app-nav__link{% if nav == 'campaigns' %} is-current{% endif %}"{% if nav == 'campaigns' %} aria-current="page"{% endif %} href="{% url 'administration:campaigns' %}">{% translate "Campaigns" %}</a></li>{% endif %}
+      </ul>{% endif %}
+      {% if can.videos or can.categories or can.viewing %}<p class="app-nav__group" id="console-content">{% translate "Videos and viewing" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-content">
         {% if can.videos %}<li><a class="app-nav__link{% if nav == 'videos' %} is-current{% endif %}"{% if nav == 'videos' %} aria-current="page"{% endif %} href="{% url 'administration:videos' %}">{% translate "Video management" %}</a></li>{% endif %}
         {% if can.categories %}<li><a class="app-nav__link{% if nav == 'categories' %} is-current{% endif %}"{% if nav == 'categories' %} aria-current="page"{% endif %} href="{% url 'administration:categories' %}">{% translate "Categories" %}</a></li>{% endif %}
-        {% if can.advertisers %}<li><a class="app-nav__link{% if nav == 'advertisers' %} is-current{% endif %}"{% if nav == 'advertisers' %} aria-current="page"{% endif %} href="{% url 'administration:advertisers' %}">{% translate "Advertisers" %}</a></li>{% endif %}
         {% if can.viewing %}<li><a class="app-nav__link{% if nav == 'viewing' %} is-current{% endif %}"{% if nav == 'viewing' %} aria-current="page"{% endif %} href="{% url 'administration:viewing' %}">{% translate "Viewing review" %}</a></li>{% endif %}
-        {% if can.campaigns %}<li><a class="app-nav__link{% if nav == 'campaigns' %} is-current{% endif %}"{% if nav == 'campaigns' %} aria-current="page"{% endif %} href="{% url 'administration:campaigns' %}">{% translate "Campaigns" %}</a></li>{% endif %}
+      </ul>{% endif %}
+      {% if can.rewards or can.payments or can.wallets or can.withdrawals %}<p class="app-nav__group" id="console-finance">{% translate "Financial simulation" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-finance">
         {% if can.rewards %}<li><a class="app-nav__link{% if nav == 'rewards' %} is-current{% endif %}"{% if nav == 'rewards' %} aria-current="page"{% endif %} href="{% url 'administration:demo_rewards' %}">{% translate "Demo rewards" %}</a></li>{% endif %}
         {% if can.payments %}<li><a class="app-nav__link{% if nav == 'payments' %} is-current{% endif %}"{% if nav == 'payments' %} aria-current="page"{% endif %} href="{% url 'administration:payments' %}">{% translate "Payments (sandbox)" %}</a></li>{% endif %}
-        {% if can.withdrawals %}<li><a class="app-nav__link{% if nav == 'withdrawals' %} is-current{% endif %}"{% if nav == 'withdrawals' %} aria-current="page"{% endif %} href="{% url 'administration:withdrawals' %}">{% translate "Withdrawals (demo)" %}</a></li>{% endif %}
-        <li><span class="app-nav__link is-disabled" aria-disabled="true">{% translate "Reports" %} <span class="soon">{% translate "Coming soon" %}</span></span></li>
         {% if can.wallets %}<li><a class="app-nav__link{% if nav == 'wallets' %} is-current{% endif %}"{% if nav == 'wallets' %} aria-current="page"{% endif %} href="{% url 'administration:wallets' %}">{% translate "Wallets" %}</a></li>{% endif %}
+        {% if can.withdrawals %}<li><a class="app-nav__link{% if nav == 'withdrawals' %} is-current{% endif %}"{% if nav == 'withdrawals' %} aria-current="page"{% endif %} href="{% url 'administration:withdrawals' %}">{% translate "Withdrawals (demo)" %}</a></li>{% endif %}
+      </ul>{% endif %}
+      {% if can.settings %}<p class="app-nav__group" id="console-operations">{% translate "Operations" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-operations">
         {% if can.settings %}<li><a class="app-nav__link" href="{% url 'admin:core_siteconfiguration_changelist' %}">{% translate "System settings" %}</a></li>{% endif %}
+      </ul>{% endif %}
+      {% if can.audit %}<p class="app-nav__group" id="console-security">{% translate "Security and audit" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-security">
+        {% if can.audit %}<li><a class="app-nav__link{% if nav == 'security' %} is-current{% endif %}"{% if nav == 'security' %} aria-current="page"{% endif %} href="{% url 'administration:security' %}">{% translate "Security summary" %}</a></li>{% endif %}
         {% if can.audit %}<li><a class="app-nav__link" href="{% url 'admin:audit_auditevent_changelist' %}">{% translate "Audit logs" %}</a></li>{% endif %}
-      </ul>
+      </ul>{% endif %}
     </nav>
   </aside>
   <main id="content" class="app-main">
+    {% if breadcrumbs %}<nav class="breadcrumbs" aria-label="{% translate 'Breadcrumb' %}"><ol>{% for label, url_name in breadcrumbs %}<li><a href="{% url url_name %}">{% translate label %}</a></li>{% endfor %}<li aria-current="page">{% block crumb %}{% endblock %}</li></ol></nav>{% endif %}
     {% include "components/messages.html" %}
     {% block console_content %}{% endblock %}
   </main>
 </div>
+<script src="{% static 'js/member-nav.js' %}" defer></script>
 {% endblock %}

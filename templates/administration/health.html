@@ -1,0 +1,12 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Operational health" %}{% endblock %}
+{% block crumb %}{% translate "Operational health" %}{% endblock %}
+{% block console_content %}
+<h1 class="page-title">{% translate "Operational health" %}</h1>
+<p class="lead">{% translate "Based on stored data only. External services are never contacted from this page, so a configured service shows Not checked rather than Healthy." %}</p>
+{% if checks %}<table class="table">
+  <thead><tr><th scope="col">{% translate "Area" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Detail" %}</th></tr></thead>
+  <tbody>{% for c in checks %}<tr><td>{% if c.url_name %}<a href="{% url c.url_name %}">{{ c.title }}</a>{% else %}{{ c.title }}{% endif %}</td>
+    <td><span class="badge badge--health-{{ c.status }}">{{ c.label }}</span></td><td>{{ c.detail }}</td></tr>{% endfor %}</tbody>
+</table>{% else %}<p class="empty-state">{% translate "No health checks are available for your role." %}</p>{% endif %}
+{% endblock %}

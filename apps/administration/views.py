@@ -21,6 +21,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 
+from apps.administration import summary as admin_summary
 from apps.advertising import services as advertising
 from apps.advertising.models import Campaign, Organization
 from apps.audit.admin import can_view_audit
@@ -88,35 +89,68 @@ def console_links(user):
 
 @console
 class OverviewView(View):
+    """Executive overview: only sections the staff member may see (read-only)."""
+
     def get(self, request):
-        now = timezone.now()
+        can, sections = admin_summary.overview(request.user)
+        return render(request, "administration/overview.html", {
+            "nav": "overview", "sections": sections, "can": can, "provider": settings.VIDEO_PROVIDER})
+
+
+@console
+class HealthView(View):
+    def get(self, request):
+        checks = admin_summary.health(request.user)
+        return render(request, "administration/health.html", {
+            "nav": "health", "checks": checks, "can": console_links(request.user),
+            "breadcrumbs": [("Overview", "administration:overview")]})
+
+
+@console
+class MemberDirectoryView(View):
+    def get(self, request):
+        can = console_links(request.user)
+        if not can["members"]:
+            raise PermissionDenied
+        query = request.GET.get("q", "").strip()[:254]
+        page = Paginator(admin_summary.member_directory(query), 25).get_page(request.GET.get("page"))
+        params = request.GET.copy()
+        params.pop("page", None)
+        return render(request, "administration/members/list.html", {
+            "page": page, "query": query, "page_query": params.urlencode(), "can": can, "nav": "members",
+            "breadcrumbs": [("Overview", "administration:overview")]})
+
+
+@console
+class MemberDetailView(View):
+    def get(self, request, pk):
+        can = console_links(request.user)
+        if not can["members"]:
+            raise PermissionDenied
         User = get_user_model()
-        video_counts = dict(Video.objects.values_list("publication_status").annotate(n=Count("id")))
-        stats = {
-            "members": User.objects.filter(role=User.Role.MEMBER).count(),
-            "active_members": User.objects.filter(role=User.Role.MEMBER, status=User.Status.ACTIVE).count(),
-            "active_memberships": Subscription.objects.filter(status=Subscription.Status.ACTIVE, starts_at__lte=now,
-                                                              expires_at__gt=now).count(),
-            "pending_memberships": Subscription.objects.filter(status=Subscription.Status.PENDING).count(),
-            "published_videos": video_counts.get(Video.Publication.PUBLISHED, 0),
-            "draft_videos": video_counts.get(Video.Publication.DRAFT, 0),
-            "processing_videos": Video.objects.filter(processing_status__in=[Video.Processing.UPLOADING,
-                                                                             Video.Processing.PROCESSING]).count(),
-            "failed_jobs": Job.objects.filter(status=Job.Status.FAILED,
-                                              finished_at__gte=now - timedelta(days=1)).count(),
-            "pending_emails": OutboundEmail.objects.filter(status=OutboundEmail.Status.PENDING).count(),
-            "advertisers_pending": Organization.objects.filter(
-                verification_status=Organization.Verification.PENDING).count(),
-            "advertisers_approved": Organization.objects.filter(
-                verification_status=Organization.Verification.APPROVED).count(),
-            "campaigns_submitted": Campaign.objects.filter(status=Campaign.Status.SUBMITTED).count(),
-            "campaigns_active": Campaign.objects.filter(status=Campaign.Status.ACTIVE).count(),
-            "viewing_review": WatchSession.objects.filter(review_status=WatchSession.Review.PENDING).count(),
-            "viewing_verified": WatchSession.objects.filter(outcome=WatchSession.Outcome.VERIFIED_EVIDENCE).count(),
-            "demo_rewards": DemoReward.objects.filter(status=DemoReward.Status.QUALIFIED).count(),
-        }
-        return render(request, "administration/overview.html",
-                      {"nav": "overview", "stats": stats, "can": console_links(request.user), "provider": settings.VIDEO_PROVIDER})
+        member = get_object_or_404(User, pk=pk, role=User.Role.MEMBER)
+        from apps.core.dashboard import member_activity
+        from apps.memberships.access import check_access
+        from apps.wallets.models import Wallet
+
+        return render(request, "administration/members/detail.html", {
+            "member": member, "membership": check_access(member).subscription,
+            "subscriptions": member.subscriptions.order_by("-created_at")[:5],
+            "wallet": Wallet.objects.filter(member=member).first() if can["wallets"] else None,
+            "activity": member_activity(member, limit=15),
+            "can_change": request.user.has_perm("accounts.change_user"), "can": can, "nav": "members",
+            "breadcrumbs": [("Overview", "administration:overview"), ("Members", "administration:members")]})
+
+
+@console
+class SecurityView(View):
+    def get(self, request):
+        can = console_links(request.user)
+        if not can["audit"]:
+            raise PermissionDenied
+        return render(request, "administration/security.html", {
+            "summary": admin_summary.security_summary(), "can": can, "nav": "security",
+            "breadcrumbs": [("Overview", "administration:overview")]})
 
 
 # --- Videos -----------------------------------------------------------------------

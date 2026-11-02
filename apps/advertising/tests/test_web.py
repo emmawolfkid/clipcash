@@ -219,5 +219,5 @@ class ConsoleTests(AdvertisingTestCase):
     def test_overview_counts(self):
         services.submit_campaign(self.owner, self.make_campaign())
         self.client.force_login(self.root)
-        stats = self.client.get(reverse("administration:overview")).context["stats"]
-        self.assertEqual((stats["advertisers_approved"], stats["campaigns_submitted"]), (1, 1))
+        advertising = self.client.get(reverse("administration:overview")).context["sections"]["advertising"]
+        self.assertEqual((advertising["organizations"]["APPROVED"], advertising["campaigns"]["SUBMITTED"]), (1, 1))

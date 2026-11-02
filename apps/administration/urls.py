@@ -6,6 +6,10 @@ app_name = "administration"
 
 urlpatterns = [
     path("", views.OverviewView.as_view(), name="overview"),
+    path("health/", views.HealthView.as_view(), name="health"),
+    path("members/", views.MemberDirectoryView.as_view(), name="members"),
+    path("members/<uuid:pk>/", views.MemberDetailView.as_view(), name="member"),
+    path("security/", views.SecurityView.as_view(), name="security"),
     path("videos/", views.VideoListView.as_view(), name="videos"),
     path("videos/new/", views.VideoCreateView.as_view(), name="video_create"),
     path("videos/<uuid:pk>/", views.VideoDetailView.as_view(), name="video_detail"),

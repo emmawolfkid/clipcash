@@ -175,9 +175,14 @@ class ConsoleTests(VideoTestCase):
         self.published_video()
         self.make_video("Draft")
         self.client.force_login(self.manager)
-        stats = self.client.get(reverse("administration:overview")).context["stats"]
-        self.assertEqual((stats["published_videos"], stats["draft_videos"]), (1, 1))
-        self.assertEqual(stats["members"], User.objects.filter(role=User.Role.MEMBER).count())
+        sections = self.client.get(reverse("administration:overview")).context["sections"]
+        self.assertEqual((sections["videos"]["publication"]["PUBLISHED"], sections["videos"]["publication"]["DRAFT"]),
+                         (1, 1))
+        # Phase 12: a Content Manager sees video figures only, never member counts.
+        self.assertNotIn("members", sections)
+        self.client.force_login(self.root)
+        sections = self.client.get(reverse("administration:overview")).context["sections"]
+        self.assertEqual(sections["members"]["total"], User.objects.filter(role=User.Role.MEMBER).count())
 
     def test_create_edit_publish_flow(self):
         self.client.force_login(self.manager)

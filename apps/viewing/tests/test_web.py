@@ -109,8 +109,8 @@ class ConsoleTests(ViewingTestCase):
         self.assertEqual(response.status_code, 200)
         session.refresh_from_db()
         self.assertEqual(session.outcome, "VERIFIED_EVIDENCE")  # Only sessions awaiting review can change.
-        stats = self.client.get(reverse("administration:overview")).context["stats"]
-        self.assertEqual(stats["viewing_verified"], 1)
+        viewing = self.client.get(reverse("administration:overview")).context["sections"]["viewing"]
+        self.assertEqual(viewing["outcomes"]["VERIFIED_EVIDENCE"], 1)
 
     def test_list_has_no_n_plus_one(self):
         from django.db import connection
