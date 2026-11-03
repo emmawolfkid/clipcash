@@ -44,6 +44,7 @@ django.setup()
 from django.conf import settings as s
 from apps.core.features import FINANCIAL_FEATURES, is_enabled
 from apps.payments.providers import sandbox_active
+from django.urls import resolve
 db = s.DATABASES["default"]
 print(json.dumps({
     "DEBUG": s.DEBUG,
@@ -62,6 +63,10 @@ print(json.dumps({
     "sandbox_active": sandbox_active(),
     "financial_enabled": sorted(k for k in FINANCIAL_FEATURES if is_enabled(k)),
     "VIDEO_PROVIDER": s.VIDEO_PROVIDER,
+    "RESTRICTED_DEMO_MODE": s.RESTRICTED_DEMO_MODE,
+    # Decided before any configuration lookup, so no database is needed here.
+    "registration_enabled": is_enabled("registration") if s.RESTRICTED_DEMO_MODE else None,
+    "home_view": resolve("/").view_name,
     "settings_mention_url": any("example-password" in repr(getattr(s, n)) for n in dir(s)
                                 if n.isupper() and n != "DATABASES"),
 }))
@@ -110,6 +115,15 @@ class ProductionSettingsTests(SimpleTestCase):
         self.assertFalse(values["sandbox_active"])
         self.assertEqual(values["financial_enabled"], [])
         self.assertEqual(values["VIDEO_PROVIDER"], "bunny")
+
+    def test_restricted_demo_by_default(self):
+        values = production_settings()
+        self.assertTrue(values["RESTRICTED_DEMO_MODE"])
+        self.assertFalse(values["registration_enabled"])
+        self.assertEqual(values["home_view"], "home")
+
+    def test_restricted_demo_can_be_turned_off_explicitly(self):
+        self.assertFalse(production_settings(DJANGO_RESTRICTED_DEMO="False")["RESTRICTED_DEMO_MODE"])
 
     def test_sslmode_in_url_is_kept(self):
         values = production_settings(

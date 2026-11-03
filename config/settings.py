@@ -200,6 +200,11 @@ ACCOUNTS_PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
 ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT = 60 * 60 * 24  # 24 hours
 PASSWORD_RESET_TIMEOUT = max(ACCOUNTS_PASSWORD_RESET_TIMEOUT, ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT)
 
+# Restricted demonstration: public registration is closed whatever the site
+# configuration says (apps.core.features), and the homepage says so. On by
+# default outside DEBUG; only a reviewed public launch sets it to False.
+RESTRICTED_DEMO_MODE = env.bool("DJANGO_RESTRICTED_DEMO", default=not DEBUG)
+
 
 # Sessions and cookies
 

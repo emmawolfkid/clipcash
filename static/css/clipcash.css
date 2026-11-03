@@ -376,3 +376,23 @@ a.app-nav__link:hover, .app-nav__button:hover { background: var(--info-bg); }
 .badge--health-healthy { border-color: var(--accent); color: var(--accent); }
 .badge--health-attention { border-color: var(--danger); color: var(--danger); font-weight: 700; }
 .badge--health-not_configured, .badge--health-not_checked { border-color: var(--muted); color: var(--muted); }
+
+/* Public homepage */
+.site-main--home { max-width: 64rem; }
+.hero { padding: 2.5rem 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  border-top: 4px solid var(--accent); }
+.hero__eyebrow { margin: 0 0 0.5rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); }
+.hero__title { margin: 0; font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; overflow-wrap: anywhere; }
+.hero__lead { margin: 0.75rem 0 0; max-width: 40rem; font-size: 1.1rem; color: var(--muted); }
+.hero__note { margin: 1rem 0 0; max-width: 40rem; color: var(--muted); font-size: 0.95rem; }
+.home-notice { margin: 1.5rem 0 0; }
+.feature-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+.feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+.feature-card__title { margin: 0 0 0.5rem; font-size: 1.05rem; }
+.feature-card p { margin: 0; color: var(--muted); }
+@media (max-width: 40rem) {
+  .hero { padding: 1.75rem 1rem; }
+  .hero .actions .button { flex: 1 1 100%; text-align: center; }
+}

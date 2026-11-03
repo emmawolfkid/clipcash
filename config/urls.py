@@ -1,9 +1,10 @@
 from django.contrib import admin
 from django.urls import include, path
 
-from apps.core.views import MemberActivityView, MemberDashboardView
+from apps.core.views import HomeView, MemberActivityView, MemberDashboardView
 
 urlpatterns = [
+    path("", HomeView.as_view(), name="home"),
     path("admin/", admin.site.urls),
     path("accounts/", include("apps.accounts.urls")),
     path("memberships/", include("apps.memberships.urls")),

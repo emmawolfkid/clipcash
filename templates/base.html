@@ -11,7 +11,7 @@
   <a class="skip-link" href="#content">{% translate "Skip to content" %}</a>
   <header class="site-header">
     <div class="site-header__inner">
-      <a class="brand" href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'accounts:login' %}{% endif %}">{{ site_config.platform_name|default:"ClipCash" }}</a>
+      <a class="brand" href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}">{{ site_config.platform_name|default:"ClipCash" }}</a>
       {% if request %}{# Error pages rendered without a request get no forms. #}
       <nav class="site-nav" aria-label="{% translate 'Account' %}">
         {% if user.is_authenticated %}

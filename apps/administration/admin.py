@@ -8,6 +8,7 @@ locks the row and rejects stale versions.
 """
 
 from django import forms
+from django.conf import settings
 from django.contrib import admin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.shortcuts import redirect
@@ -47,6 +48,10 @@ class SiteConfigurationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if not self.is_bound:
             self.initial["expected_version"] = self.instance.version
+        if settings.RESTRICTED_DEMO_MODE and "registration_enabled" in self.fields:
+            self.fields["registration_enabled"].help_text = _(
+                "No effect while restricted demo mode (DJANGO_RESTRICTED_DEMO) is on: public registration stays closed."
+            )
 
     def clean(self):
         cleaned_data = super().clean()

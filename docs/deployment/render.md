@@ -79,6 +79,7 @@ or copy real values in the dashboard and never commit them.
 | `DJANGO_SECURE_SSL_REDIRECT` | `True` | Redirects HTTP to HTTPS (the health check is exempt) |
 | `DJANGO_SECURE_HSTS_SECONDS` | `0` | Keep 0 until HTTPS is verified (§12) |
 | `DJANGO_PAYMENTS_MODE` | `disabled` | Already the default outside `DEBUG`; set explicitly for clarity |
+| `DJANGO_RESTRICTED_DEMO` | `True` | Already the default outside `DEBUG`. Closes public registration (the register page answers 403) whatever the site configuration says; existing accounts still sign in. Set `False` only for a reviewed public launch |
 | `DJANGO_DEFAULT_FROM_EMAIL` | `ClipCash <no-reply@your-domain.example>` | A sender your email provider has verified |
 
 `RENDER_EXTERNAL_HOSTNAME` is set by Render automatically; the settings add it
@@ -279,6 +280,7 @@ unavailable. On a paid instance run it from the shell; wiring it to an alert
 ## 9. Email
 
 Registration depends on email: accounts are activated from an emailed link.
+Public registration stays closed while `DJANGO_RESTRICTED_DEMO` is on (§4).
 
 * Choose a transactional email provider (any that offers SMTP on port 587 or
   465), verify the sending domain, and set the `DJANGO_EMAIL_*` variables (§4)
