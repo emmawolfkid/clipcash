@@ -129,7 +129,10 @@ class AdvertiserFlowTests(AdvertisingTestCase):
         report = page.context["report"]
         self.assertEqual((report["total"], report["n_active"], report["n_draft"]), (1, 1, 0))
         self.assertEqual(report["demo_budget_running"], 100_000)
-        self.assertContains(page, "Verified views: not available yet")
+        # Phase 14-C: real verified-view figures (none yet), and no invented spend.
+        self.assertEqual(report["viewing"]["verified"]["value"], 0)
+        self.assertNotContains(page, "not available yet")
+        self.assertContains(page, "Spend: not applicable")
         self.assertNotContains(page, "Rival draft")
 
     def test_list_search_filter_and_pagination(self):

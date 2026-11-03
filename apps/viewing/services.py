@@ -655,8 +655,33 @@ def member_history(member):
             .filter(member=member).order_by("-created_at"))
 
 
+VERIFIED = Q(outcome=Out.VERIFIED_EVIDENCE, state=St.FINALIZED, qualifying_slot__isnull=False)
+
+
 def verified_views(campaign):
     """Phase 07 boundary (read-only): sessions whose server evidence passed, one per counted slot.
     Not a reward and not payable: reward eligibility needs funded campaigns (Phase 08)."""
-    return WatchSession.objects.filter(campaign=campaign, outcome=Out.VERIFIED_EVIDENCE,
-                                       state=St.FINALIZED, qualifying_slot__isnull=False)
+    return WatchSession.objects.filter(VERIFIED, campaign=campaign)
+
+
+PERFORMANCE_FIGURES = {
+    "sessions": Count("id"),
+    "verified": Count("id", filter=VERIFIED),
+    "viewers": Count("member_id", filter=VERIFIED, distinct=True),
+    "in_review": Count("id", filter=Q(outcome=Out.SUSPICIOUS_REVIEW, review_status=WatchSession.Review.PENDING)),
+    "not_verified": Count("id", filter=Q(outcome__in=[Out.INSUFFICIENT_EVIDENCE, Out.REJECTED, Out.EXPIRED])),
+}
+
+
+def campaign_performance(campaigns):
+    """Viewing results for a set of campaigns, from server-decided session outcomes only.
+
+    Returns (totals, by_campaign_id). "viewers" counts distinct members with at least one
+    verified view (in the totals: across all the given campaigns). Revoked views no
+    longer count (revocation clears the outcome and the counted slot). Counts only: no
+    member is identified. Two aggregate queries."""
+    sessions = WatchSession.objects.filter(campaign__in=campaigns)
+    totals = sessions.aggregate(**PERFORMANCE_FIGURES)
+    by_campaign = {row.pop("campaign_id"): row
+                   for row in sessions.values("campaign_id").annotate(**PERFORMANCE_FIGURES).order_by()}
+    return totals, by_campaign

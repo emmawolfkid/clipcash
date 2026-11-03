@@ -112,7 +112,10 @@ member is eligible for.
 ## Reporting
 
 - `services.organization_report(org)` / `campaign_summary(qs)` produce counts per status and demo-budget totals, all in a single aggregate query.
-- Views, unique viewers and spend are shown as **"not available yet"**. No metric is invented.
+- Phase 14-C: verified-viewing results come from `viewing.services.campaign_performance(campaigns)` (two aggregate queries): sessions started, verified views, unique verified viewers, awaiting review, not verified. "Verified" uses the same definition as the reward engine (`VERIFIED_EVIDENCE`, finalised, counted slot), so revoked views drop out. Only the organization's own campaigns are counted; no member is identified.
+- `services.campaign_report(campaign)` adds the campaign's **simulated** demo-reward figures (recorded, reversed, demo budget used of allocated), always labelled as simulated and never added to any other figure.
+- Spend is shown as **"not applicable"**: no money is charged. No metric is invented.
+- Owner decision D12 (pending): `DJANGO_ADVERTISING_REPORT_MIN_COUNT` shows non-zero counts below N as "fewer than N" to advertisers (default 0 = exact). Staff pages always show exact counts.
 
 ## Console and interfaces
 

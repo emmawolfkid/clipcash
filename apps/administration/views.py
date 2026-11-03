@@ -500,7 +500,7 @@ class AdvertiserReviewView(View):
             # Contact and identity details only for advertiser reviewers.
             "members": organization.memberships.select_related("user").filter(is_active=True) if can_review else [],
             "campaigns": organization.campaigns.order_by("-created_at")[:20],
-            "report": advertising.organization_report(organization),
+            "report": advertising.organization_report(organization, for_advertiser=False),  # Staff: exact counts.
             "grants": grants,
             "grantable": (Video.objects.exclude(publication_status=Video.Publication.ARCHIVED)
                           .exclude(pk__in=grants.values("video_id")).order_by("title")[:200]),
@@ -569,6 +569,7 @@ class CampaignReviewView(View):
             "video_authorized": advertising.video_authorized(campaign.organization, campaign.video),
             "video_available": advertising.video_available(campaign.video),
             "preview": preview, "preview_reason": preview_reason,
+            "performance": advertising.campaign_report(campaign, for_advertiser=False),
             "can": console_links(request.user), "nav": "campaigns"})
 
     def post(self, request, pk):

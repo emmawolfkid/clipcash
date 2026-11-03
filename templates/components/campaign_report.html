@@ -10,7 +10,8 @@
   <div class="stat stat--demo"><span class="stat__value">TZS {{ report.demo_budget_running }}</span><span class="stat__label">{% translate "Demo budget in approved campaigns (not money)" %}</span></div>
 </div>
 <div class="stat-grid">
-  <div class="stat stat--unavailable"><span class="stat__value">—</span><span class="stat__label">{% translate "Verified views: not available yet" %}</span></div>
-  <div class="stat stat--unavailable"><span class="stat__value">—</span><span class="stat__label">{% translate "Unique viewers: not available yet" %}</span></div>
-  <div class="stat stat--unavailable"><span class="stat__value">—</span><span class="stat__label">{% translate "Spend: not available yet" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ report.viewing.verified.display }}</span><span class="stat__label">{% translate "Verified views" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ report.viewing.viewers.display }}</span><span class="stat__label">{% translate "Unique viewers (verified)" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ report.viewing.sessions.display }}</span><span class="stat__label">{% translate "Viewing sessions started" %}</span></div>
+  <div class="stat stat--unavailable"><span class="stat__value">—</span><span class="stat__label">{% translate "Spend: not applicable (no real money is charged)" %}</span></div>
 </div>

@@ -26,6 +26,7 @@
     {% if campaign.status == "SCHEDULED" or campaign.status == "ACTIVE" %}<p class="lead">{% if eligibility %}{% translate "Shown to eligible members." %}{% else %}{% translate "Not shown to members right now:" %} {{ eligibility_message }}{% endif %}</p>{% endif %}
   </section>
 </div>
+{% include "components/campaign_performance.html" %}
 {% include "components/demo_budget_notice.html" %}
 <section class="panel section">
   <h3 class="panel__title">{% translate "Actions" %}</h3>

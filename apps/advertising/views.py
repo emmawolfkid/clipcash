@@ -256,7 +256,8 @@ class CampaignDetailView(AdvertiserBaseView):
         return render(request, "advertising/campaign_detail.html", self.context(
             tab="campaigns", campaign=campaign, plans=campaign.target_plans.order_by("name"),
             preview=preview, preview_reason=preview_reason, eligibility=eligibility,
-            eligibility_message=services.eligibility_message(eligibility.reason)))
+            eligibility_message=services.eligibility_message(eligibility.reason),
+            performance=services.campaign_report(campaign)))
 
 
 @advertisers_feature

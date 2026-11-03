@@ -1,0 +1,19 @@
+{% load i18n %}{# Usage: {% include "components/campaign_performance.html" with performance=performance %} #}
+<section class="panel section" aria-labelledby="performance-title">
+  <h3 class="panel__title" id="performance-title">{% translate "Performance" %}</h3>
+  <div class="stat-grid">
+    <div class="stat"><span class="stat__value">{{ performance.viewing.verified.display }}</span><span class="stat__label">{% translate "Verified views" %}</span></div>
+    <div class="stat"><span class="stat__value">{{ performance.viewing.viewers.display }}</span><span class="stat__label">{% translate "Unique viewers (verified)" %}</span></div>
+    <div class="stat"><span class="stat__value">{{ performance.viewing.sessions.display }}</span><span class="stat__label">{% translate "Sessions started" %}</span></div>
+    <div class="stat"><span class="stat__value">{{ performance.viewing.in_review.display }}</span><span class="stat__label">{% translate "Awaiting staff review" %}</span></div>
+    <div class="stat"><span class="stat__value">{{ performance.viewing.not_verified.display }}</span><span class="stat__label">{% translate "Not verified" %}</span></div>
+  </div>
+  <p class="lead">{% translate "A verified view means ClipCash's server-side checks passed for the required watch time. It is evidence of playback, not proof of attention. Revoked views are not counted." %}</p>
+  <h4>{% translate "Demo rewards (simulated, not money)" %}</h4>
+  <div class="stat-grid">
+    <div class="stat stat--demo"><span class="stat__value">{{ performance.demo_rewards.qualified.display }}</span><span class="stat__label">{% translate "Simulated rewards recorded" %}</span></div>
+    <div class="stat stat--demo"><span class="stat__value">{{ performance.demo_rewards.reversed.display }}</span><span class="stat__label">{% translate "Simulated rewards reversed" %}</span></div>
+    <div class="stat stat--demo"><span class="stat__value">TZS {{ performance.demo_rewards.demo_consumed }} / {{ performance.demo_rewards.demo_allocated }}</span><span class="stat__label">{% translate "Demo budget used (simulated figure, never charged)" %}</span></div>
+  </div>
+  <p class="lead">{% translate "Spend: not applicable. No money is charged to advertisers or paid to members in this demonstration." %}</p>
+</section>

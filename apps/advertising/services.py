@@ -907,5 +907,46 @@ def campaign_summary(queryset):
     return totals
 
 
-def organization_report(organization):
-    return campaign_summary(Campaign.objects.filter(organization=organization))
+def report_figure(value, *, for_advertiser):
+    """A count as shown in a report. Advertisers see "fewer than N" for small non-zero
+    counts when ADVERTISING_REPORT_MIN_COUNT is set (owner decision D12; 0 = exact).
+    Staff always see the exact count."""
+    minimum = settings.ADVERTISING_REPORT_MIN_COUNT if for_advertiser else 0
+    if minimum and 0 < value < minimum:
+        return {"value": None, "display": f"fewer than {minimum}"}
+    return {"value": value, "display": str(value)}
+
+
+def _viewing_figures(figures, *, for_advertiser):
+    return {key: report_figure(figures.get(key) or 0, for_advertiser=for_advertiser)
+            for key in ("sessions", "verified", "viewers", "in_review", "not_verified")}
+
+
+def organization_report(organization, *, for_advertiser=True):
+    """Campaign counts, demo budgets (not money) and verified-viewing results for one
+    organization. Viewing figures come only from that organization's campaigns."""
+    from apps.viewing.services import campaign_performance
+
+    campaigns = Campaign.objects.filter(organization=organization)
+    report = campaign_summary(campaigns)
+    totals, _ = campaign_performance(campaigns)
+    report["viewing"] = _viewing_figures(totals, for_advertiser=for_advertiser)
+    return report
+
+
+def campaign_report(campaign, *, for_advertiser=True):
+    """One campaign's verified-viewing results and its SIMULATED demo-reward use. The
+    demo figures are labelled as such by the templates and never added to anything."""
+    from apps.rewards import services as rewards
+    from apps.viewing.services import campaign_performance
+
+    _, by_campaign = campaign_performance(Campaign.objects.filter(pk=campaign.pk))
+    totals = next(iter(rewards.campaign_totals([campaign])), {})
+    return {
+        "viewing": _viewing_figures(by_campaign.get(campaign.pk, {}), for_advertiser=for_advertiser),
+        "demo_rewards": {
+            "qualified": report_figure(totals.get("qualified", 0), for_advertiser=for_advertiser),
+            "reversed": report_figure(totals.get("reversed", 0), for_advertiser=for_advertiser),
+            **rewards.budget_summary(campaign),
+        },
+    }
