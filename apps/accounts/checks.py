@@ -47,4 +47,29 @@ def check_production_security(app_configs, **kwargs):
                 id="accounts.E003",
             )
         )
+    errors += _check_client_ip_configuration()
     return errors
+
+
+def _check_client_ip_configuration():
+    """Behind a reverse proxy, REMOTE_ADDR is the proxy's address. Without a trusted
+    proxy count every visitor would share one address, so per-IP rate limits would
+    become site-wide and audit records would show the proxy (audit CC-004)."""
+    behind_proxy = bool(getattr(settings, "SECURE_PROXY_SSL_HEADER", None)) or settings.DEPLOYED_ON_RENDER
+    proxies = settings.ACCOUNTS_TRUSTED_PROXY_COUNT
+    if behind_proxy and proxies <= 0:
+        return [Error(
+            "The site runs behind a reverse proxy but DJANGO_TRUSTED_PROXY_COUNT is 0.",
+            hint="Set it to the number of proxies that append to X-Forwarded-For (on Render, Cloudflare and "
+                 "Render's load balancer: 2) and verify it on the Operational health page. See "
+                 "docs/deployment/render.md (client IP).",
+            id="accounts.E004",
+        )]
+    if settings.DEPLOYED_ON_RENDER and proxies == 1:
+        return [Warning(
+            "DJANGO_TRUSTED_PROXY_COUNT is 1 on Render, where requests pass Cloudflare and Render's load balancer.",
+            hint="With 1, every visitor resolves to a Cloudflare edge address. Use 2 unless the Operational "
+                 "health page shows the forwarded entries differ.",
+            id="accounts.W002",
+        )]
+    return []

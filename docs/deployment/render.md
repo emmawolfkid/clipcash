@@ -99,7 +99,7 @@ yourself.
 | `VIDEO_PROVIDER` | `bunny` | Default outside `DEBUG` |
 | `BUNNY_STREAM_LIBRARY_ID`, `BUNNY_STREAM_CDN_HOSTNAME` | `123456`, `vz-xxxxxxxx.b-cdn.net` | Until set, `check --deploy` warns `videos.W001` and uploads/playback fail |
 | `BUNNY_STREAM_API_KEY`, `BUNNY_STREAM_TOKEN_SECURITY_KEY` | *(from Bunny; two different secrets)* | Secret |
-| `DJANGO_TRUSTED_PROXY_COUNT` | `1` (to be verified) | See §13, deployment blocker B3 |
+| `DJANGO_TRUSTED_PROXY_COUNT` | `2` (to be verified) | Cloudflare and Render's load balancer each append to `X-Forwarded-For`. `check --deploy` **fails** with 0 behind a proxy (`accounts.E004`) and warns with 1 on Render (`accounts.W002`). Verify on `/manage/health/` (§13, B3) |
 
 ### Optional
 
@@ -129,13 +129,36 @@ business policy approves free memberships), `DJANGO_DEBUG=True`.
   plus one for the worker loop. Two web workers + one job worker use about 3
   connections, well within any Render plan.
 
-**Audit integrity on a managed database.** Render gives one database user that
-owns every table, and the append-only audit trigger can be bypassed by the
-table owner. The role separation in `scripts/database/production_roles.example.sql`
-(owner role for migrations, restricted role for the app) should be reviewed
-with Render's user management before real data is stored. Until then, treat
-audit immutability as protected against the application, not against someone
-holding the database credentials.
+**Database role separation (audit CC-005).** Render gives one database user that
+owns every table. The owner can disable the ledger, wallet, withdrawal and audit
+triggers, so while the application connects as that user, the database
+protections hold against application mistakes but **not** against anyone (or any
+injected SQL) using the application's credential. `/manage/health/` shows
+"Database privilege separation: Attention required" in that state.
+
+Reviewed scripts in `scripts/database/roles/` separate three identities:
+`clipcash_owner` (owns everything, no login), `clipcash_migrator` (login; runs
+migrations, `createcachetable`, `audit_purge` and `provision_staff_permissions`
+as the owner) and `clipcash_app` (runtime web and worker login; data privileges
+only, owns nothing). Procedure, **on a staging copy first**:
+
+1. Back up (§10). Stop the web service and worker.
+2. As an administrator with CREATEROLE: `01_create_roles.sql` (`-v app_db=<name>`); set
+   both passwords with `\password`. *Whether Render's database user may create
+   roles must be confirmed; otherwise ask Render support or use a plan that allows it.*
+3. `02_transfer_ownership.sql`, then `03_grant_runtime.sql` (as the migrator).
+4. Connected as `clipcash_app`: `04_verify_runtime_role.sql` must end with
+   "Runtime role verification passed". It never changes anything.
+5. Set the web service's and worker's `DATABASE_URL` to the `clipcash_app` URL and
+   add `MIGRATION_DATABASE_URL` (the `clipcash_migrator` URL) for `predeploy.sh`.
+   Run `audit_purge` and `provision_staff_permissions --apply` only with the
+   migration URL.
+6. After any deploy whose migrations add tables, re-run `03_grant_runtime.sql`.
+   `/manage/health/` reports a regression.
+
+Status: scripts written and the verification script validated against the
+isolated test database (it changes nothing); **not yet executed with real roles**
+because no local administrator role was available (Phase 14-B report).
 
 ## 6. Web Service configuration
 
@@ -283,6 +306,13 @@ unavailable. On a paid instance run it from the shell; wiring it to an alert
 Registration depends on email: accounts are activated from an emailed link.
 Public registration stays closed while `DJANGO_RESTRICTED_DEMO` is on (§4).
 
+Verify delivery from the worker's shell (or locally with the same variables):
+`python manage.py email_diagnostics` (configuration, no secrets),
+`--connect` (opens and closes an SMTP connection, sends nothing), then
+`--send-to <your address>` (queues one test email through the outbox; the worker
+delivers it). `check --deploy` warns (`notifications.W001`) while the backend
+cannot deliver email.
+
 * Choose a transactional email provider (any that offers SMTP on port 587 or
   465), verify the sending domain, and set the `DJANGO_EMAIL_*` variables (§4)
   on **both** the web service and the worker (the worker sends the email).
@@ -300,9 +330,16 @@ Public registration stays closed while `DJANGO_RESTRICTED_DEMO` is on (§4).
 * Paid databases include Render-managed recovery (point-in-time recovery and
   exports, depending on plan); confirm what the chosen plan provides.
 * Independent of Render, take a logical backup before each migration deploy:
-  `pg_dump --format=custom --no-owner "<External URL>" > clipcash-YYYYMMDD.dump`,
-  stored encrypted and **outside the repository** (`*.dump` files must never
-  be committed; they contain member data).
+  `BACKUP_DATABASE_URL="<External URL>" bash scripts/database/backup.sh <directory outside the repository>`.
+  It writes `clipcash-<UTC time>.dump` plus a `.sha256`, refuses directories inside
+  the repository, and validates the archive. Store dumps encrypted, off the
+  database host (`*.dump` files must never be committed; they contain member data).
+* **Restore drill** (do this once before relying on backups, then periodically):
+  create an empty database named `clipcash_restore_<date>`, then
+  `RESTORE_DATABASE_URL="<its URL>" bash scripts/database/restore_check.sh <file.dump>`.
+  It refuses any other database name or a non-empty database, restores, and
+  confirms the 13 lock triggers and 2 lock constraints came back. Record the date
+  and counts. *Not yet performed against a real backup (Phase 14-B).*
 
 ## 11. Automatic deploys from GitHub
 
@@ -333,10 +370,10 @@ Until then, `check --deploy` reports `security.W004`; that is expected.
 | --- | --- | --- | --- |
 | B1 | Background worker is paid-only | Without it no email is delivered, so nobody can activate an account; scheduled features stall (§8) | Approve a paid Background Worker |
 | B2 | Email provider not chosen; free instances block SMTP | No activation, confirmation or reset emails | Choose a provider; set `DJANGO_EMAIL_*` |
-| B3 | Client IP behind Render's proxy is unverified | With `DJANGO_TRUSTED_PROXY_COUNT=0`, every visitor shares Render's proxy address: per-IP rate limits (e.g. 10 registrations/hour, 50 failed logins/15 min) apply **site-wide**, and audit events record the proxy IP. Render does not document its `X-Forwarded-For` format; some reports say client-supplied values are passed through | After the first deploy, sign in from a known IP with count `1`, check the IP on the audit event in `/admin/` → Audit, and confirm a spoofed `X-Forwarded-For` header does not change it. If Render's format does not fit the existing "N trusted proxies" rule, reading `CF-Connecting-IP` would need a reviewed code change |
+| B3 | Client IP behind Render's proxy is unverified | Community evidence (not official Render documentation): requests pass Cloudflare then Render's load balancer; `X-Forwarded-For` arrives as `<client>, <Cloudflare edge>` and Render keeps client-supplied entries. Phase 14-B: `check --deploy` refuses a count of 0 behind a proxy; unresolvable addresses no longer collapse every visitor into one rate limit; Super Administrators see the resolution on `/manage/health/` | Deploy with `DJANGO_TRUSTED_PROXY_COUNT=2`. On `/manage/health/`, the resolved address must equal your public IP; repeat with a made-up `X-Forwarded-For` header (e.g. `curl -H 'X-Forwarded-For: 6.6.6.6'`) and confirm it does not change. If it shows a Cloudflare address, the count is wrong |
 | B4 | `clipcash-db` plan unknown | Free: expires in 30 days, no backups | Confirm plan; upgrade before storing real member data |
 | B5 | Bunny Stream credentials not configured | Video upload/playback fail (`videos.W001`); the videos feature flag is off by default | Configure when the video feature is to be enabled |
-| B6 | Single database owner | Audit append-only trigger bypassable by the credential holder (§5) | Review role separation |
+| B6 | Single database owner | The application's credential can disable financial and audit triggers (§5) | Apply `scripts/database/roles/` on staging, verify with `04_verify_runtime_role.sql`, then production; `/manage/health/` shows the state |
 | B7 | Legal / provider approval for money | Real payments, rewards and payouts stay locked | Separate reviewed phase; not part of deployment |
 
 ## 14. First deployment checklist

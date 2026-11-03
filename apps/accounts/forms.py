@@ -12,7 +12,7 @@ from .throttling import (
     LOGIN_FAILURES_PER_ACCOUNT,
     LOGIN_FAILURES_PER_ACCOUNT_IP,
     LOGIN_FAILURES_PER_IP,
-    client_ip,
+    client_ip_for_limits,
 )
 
 User = get_user_model()
@@ -45,14 +45,17 @@ class ThrottledLoginMixin:
 
     def clean(self):
         account = User.objects.normalize_email(self.cleaned_data.get("username"))
-        ip = client_ip(self.request)
+        # None when the client cannot be told apart from other visitors (proxy
+        # misconfiguration): per-IP limits are then skipped instead of becoming one
+        # shared, site-wide limit; the per-account ceiling still applies.
+        ip = client_ip_for_limits(self.request)
         # Never store what was typed: people sometimes type a password here.
         identifier = {"interface": self.interface, "identifier_hash": hash_identifier(account)}
 
         if (
-            LOGIN_FAILURES_PER_ACCOUNT_IP.is_limited(account, ip)
+            (ip and LOGIN_FAILURES_PER_ACCOUNT_IP.is_limited(account, ip))
             or LOGIN_FAILURES_PER_ACCOUNT.is_limited(account)
-            or LOGIN_FAILURES_PER_IP.is_limited(ip)
+            or (ip and LOGIN_FAILURES_PER_IP.is_limited(ip))
         ):
             record_security_event("auth.login.throttled", outcome=DENIED, metadata=identifier)
             raise ValidationError(self.throttled_message, code="throttled")
@@ -61,9 +64,11 @@ class ThrottledLoginMixin:
             cleaned_data = super().clean()
         except ValidationError:
             if account:
-                LOGIN_FAILURES_PER_ACCOUNT_IP.hit(account, ip)
+                if ip:
+                    LOGIN_FAILURES_PER_ACCOUNT_IP.hit(account, ip)
                 LOGIN_FAILURES_PER_ACCOUNT.hit(account)
-            LOGIN_FAILURES_PER_IP.hit(ip)
+            if ip:
+                LOGIN_FAILURES_PER_IP.hit(ip)
             target = User.objects.filter(email=account).first() if account else None
             record_security_event(
                 "auth.login.failed",
@@ -75,7 +80,8 @@ class ThrottledLoginMixin:
 
         user = self.get_user()
         if user is not None:
-            LOGIN_FAILURES_PER_ACCOUNT_IP.reset(account, ip)
+            if ip:
+                LOGIN_FAILURES_PER_ACCOUNT_IP.reset(account, ip)
             record_security_event(
                 "auth.login.succeeded",
                 outcome=SUCCESS,

@@ -43,6 +43,9 @@ CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
 # name (also the Host header of its health checks). Custom domains still go in
 # DJANGO_ALLOWED_HOSTS / DJANGO_CSRF_TRUSTED_ORIGINS.
 _render_hostname = env("RENDER_EXTERNAL_HOSTNAME", default="")
+# Render sets RENDER=true in every service; either variable means traffic arrives
+# through Render's proxies (see apps.accounts.checks, client IP).
+DEPLOYED_ON_RENDER = bool(_render_hostname) or env.bool("RENDER", default=False)
 if _render_hostname:
     if _render_hostname not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(_render_hostname)
@@ -257,7 +260,9 @@ ACCOUNTS_THROTTLE_BACKEND = env("DJANGO_THROTTLE_BACKEND", default="cache" if DE
 ACCOUNTS_THROTTLE_REQUIRE_SHARED_CACHE = env.bool(
     "DJANGO_THROTTLE_REQUIRE_SHARED_CACHE", default=not DEBUG
 )
-# Number of trusted reverse proxies in front of Django. 0 = ignore X-Forwarded-For.
+# Number of trusted reverse proxies that append to X-Forwarded-For in front of Django.
+# 0 = direct connections (X-Forwarded-For ignored). Required behind a proxy: check
+# --deploy refuses 0 there (accounts.E004). Verify on /manage/health/.
 ACCOUNTS_TRUSTED_PROXY_COUNT = env.int("DJANGO_TRUSTED_PROXY_COUNT", default=0)
 
 

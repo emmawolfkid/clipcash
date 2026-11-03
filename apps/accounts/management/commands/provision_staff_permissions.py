@@ -13,7 +13,8 @@ provisioned, from ROLE_PERMISSIONS. The command:
 * fails closed: --apply changes nothing while any role group holds a permission
   outside its approved list (ROLE_PERMISSIONS) or a role permission is missing,
   because adding an account to such a group would grant it unapproved access.
-  The check is repeated inside the apply transaction with the role groups locked;
+  The check is repeated inside the apply transaction while the group-permission
+  table is locked against changes, so it still holds when the transaction commits;
 * reports who holds the permissions that separation-of-duties workflows depend on.
 
     python manage.py provision_staff_permissions            # preview
@@ -23,7 +24,7 @@ provisioned, from ROLE_PERMISSIONS. The command:
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import Q
 
 from apps.audit.context import audit_scope
@@ -64,11 +65,17 @@ class Command(BaseCommand):
             self.stdout.write("\nPreview only. Run with --apply to make the additions above.")
             return
         with audit_scope(source="CLI"), transaction.atomic():
-            # Lock the role groups, then decide again on what is now committed: a group
-            # changed after the preview cannot slip through between check and write.
             for name in ROLE_GROUP_NAMES.values():
                 Group.objects.get_or_create(name=name)
-            list(Group.objects.select_for_update().filter(name__in=ROLE_GROUP_NAMES.values()))
+            # Group permissions live in the group-permission link table, which Django admin
+            # writes without touching the group rows, so locking group rows alone would not
+            # stop a concurrent change. SHARE ROW EXCLUSIVE blocks every insert, update and
+            # delete there (and other provisioning runs) until this transaction ends, while
+            # reads continue. The allowlist is then checked on what is committed now, and
+            # it stays true until commit.
+            with connection.cursor() as cursor:
+                cursor.execute(f"LOCK TABLE {connection.ops.quote_name(Group.permissions.through._meta.db_table)} "
+                               "IN SHARE ROW EXCLUSIVE MODE")
             group_additions, missing, extras, user_additions, stale = self._plan()
             if extras or missing:
                 raise CommandError(

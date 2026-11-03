@@ -29,7 +29,7 @@ from .throttling import (
     EMAIL_REQUESTS_PER_ACCOUNT,
     EMAIL_REQUESTS_PER_IP,
     REGISTRATIONS_PER_IP,
-    client_ip,
+    client_ip_for_limits,
 )
 from .tokens import password_reset_token_generator, verification_token_generator
 
@@ -42,13 +42,14 @@ INVALID_LINK_TEMPLATE = "accounts/link_invalid.html"
 
 
 def _email_request_allowed(request, email):
-    """Throttle outgoing account emails per IP and per address."""
-    ip = client_ip(request)
+    """Throttle outgoing account emails per IP (when the client IP is known) and per address."""
+    ip = client_ip_for_limits(request)
     email = User.objects.normalize_email(email)
-    if EMAIL_REQUESTS_PER_IP.is_limited(ip) or EMAIL_REQUESTS_PER_ACCOUNT.is_limited(email):
-        security_log.warning("email_request_throttled ip=%s", ip)
+    if (ip and EMAIL_REQUESTS_PER_IP.is_limited(ip)) or EMAIL_REQUESTS_PER_ACCOUNT.is_limited(email):
+        security_log.warning("email_request_throttled ip=%s", ip or "-")
         return False
-    EMAIL_REQUESTS_PER_IP.hit(ip)
+    if ip:
+        EMAIL_REQUESTS_PER_IP.hit(ip)
     EMAIL_REQUESTS_PER_ACCOUNT.hit(email)
     return True
 
@@ -75,12 +76,13 @@ class RegisterView(AnonymousOnlyMixin, FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        ip = client_ip(self.request)
-        if REGISTRATIONS_PER_IP.is_limited(ip):
+        ip = client_ip_for_limits(self.request)  # None: unknown client; the per-address limit still applies.
+        if ip and REGISTRATIONS_PER_IP.is_limited(ip):
             security_log.warning("registration_throttled ip=%s", ip)
             form.add_error(None, TOO_MANY_REQUESTS)
             return self.form_invalid(form)
-        REGISTRATIONS_PER_IP.hit(ip)
+        if ip:
+            REGISTRATIONS_PER_IP.hit(ip)
         email = form.cleaned_data["email"]
         # Same response whether or not mail is sent, so the per-address limit
         # cannot reveal registered addresses either.

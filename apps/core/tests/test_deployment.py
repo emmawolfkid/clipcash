@@ -35,6 +35,7 @@ PRODUCTION_ENV = {
     "DJANGO_CACHE_URL": "dbcache://clipcash_cache",
     "DJANGO_SECURE_SSL_REDIRECT": "True",
     "DJANGO_SECURE_PROXY_SSL_HEADER": "True",
+    "DJANGO_TRUSTED_PROXY_COUNT": "2",  # Cloudflare + Render load balancer (verify on the health page).
 }
 ENV_PREFIXES = ("DJANGO_", "DB_", "DATABASE_URL", "RENDER", "VIDEO_", "BUNNY_")
 

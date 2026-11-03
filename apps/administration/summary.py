@@ -21,6 +21,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db import connection
 from django.db.models import Count, OuterRef, Q, Subquery, Sum
 from django.utils import timezone
 
@@ -263,7 +264,56 @@ def health(user):
         drafts = sections["rewards"]["draft_policies"]
         checks.append(HealthCheck("reward_policies", "Demo reward policies", ATTENTION if drafts else HEALTHY,
                                   f"{drafts} drafts awaiting a second approver.", "administration:reward_policies"))
+    if can["operations"]:
+        findings = database_role_findings()
+        checks.append(HealthCheck(
+            "database_roles", "Database privilege separation", ATTENTION if findings else HEALTHY,
+            ("; ".join(findings) + ". The application's own login could switch off the database protections; "
+             "apply scripts/database/roles (audit CC-005).") if findings else
+            "The application's login owns no protected table and cannot change audit or ledger history."))
     return checks
+
+
+# Tables whose triggers and constraints carry the financial and audit guarantees.
+PROTECTED_TABLES = ("audit_auditevent", "wallets_journalentry", "wallets_journalline", "wallets_ledgeraccount",
+                    "wallets_wallet", "wallets_wallettransaction", "withdrawals_withdrawalrequest",
+                    "advertising_campaign", "memberships_subscription")
+
+
+def database_role_findings():
+    """Why the runtime database login is not separated from the owner ([] = separated).
+    Read-only catalog queries about the current login."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT rolsuper FROM pg_roles WHERE rolname = current_user")
+        (superuser,) = cursor.fetchone()
+        cursor.execute("SELECT count(*) FROM pg_tables WHERE schemaname = 'public' AND tablename = ANY(%s) "
+                       "AND pg_has_role(current_user, tableowner, 'USAGE')", [list(PROTECTED_TABLES)])
+        (owned,) = cursor.fetchone()
+        cursor.execute("SELECT has_table_privilege('public.audit_auditevent', 'UPDATE,DELETE,TRUNCATE'), "
+                       "has_table_privilege('public.wallets_journalline', 'UPDATE,DELETE,TRUNCATE')")
+        audit_writable, ledger_writable = cursor.fetchone()
+    findings = []
+    if superuser:
+        findings.append("it connects as a database superuser")
+    if owned:
+        findings.append(f"it owns (or acts as the owner of) {owned} of {len(PROTECTED_TABLES)} protected tables")
+    if audit_writable:
+        findings.append("it may update, delete or truncate audit events")
+    if ledger_writable:
+        findings.append("it may update, delete or truncate ledger lines")
+    return findings
+
+
+def client_ip_diagnostics(request):
+    """How this request's client address was resolved, for verifying
+    DJANGO_TRUSTED_PROXY_COUNT on the real host (Super Administrators only: it shows
+    the viewer's own addresses and the proxies' addresses)."""
+    from apps.accounts.throttling import resolve_client_ip
+
+    forwarded = [p.strip() for p in request.META.get("HTTP_X_FORWARDED_FOR", "").split(",") if p.strip()]
+    address, resolved = resolve_client_ip(request)
+    return {"remote_addr": request.META.get("REMOTE_ADDR", ""), "forwarded": forwarded,
+            "trusted_proxies": settings.ACCOUNTS_TRUSTED_PROXY_COUNT, "address": address, "resolved": resolved}
 
 
 def _email_check():

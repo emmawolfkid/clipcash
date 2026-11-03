@@ -1,3 +1,7 @@
+-- SUPERSEDED (Phase 14-B): use scripts/database/roles/01-04 instead. They add a
+-- separate migration identity, derive DELETE revocations from the database's own
+-- triggers, and include a non-destructive verification script. Kept for history.
+--
 -- ClipCash: PRODUCTION database role separation (TEMPLATE - REVIEW BEFORE USE).
 --
 -- Not run anywhere by the project. Adapt names, apply as a PostgreSQL

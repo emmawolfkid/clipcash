@@ -6,7 +6,7 @@ from unittest import mock
 from django.contrib.auth.models import Group, Permission
 from django.core.management import CommandError, call_command
 from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
 from apps.accounts.roles import ROLE_GROUP_NAMES
@@ -172,3 +172,66 @@ class ProvisioningTests(TestCase):
         self.assertIn("rewards.approve_reward_policies: 1", output)  # Only the super administrator.
         self.cm.user_permissions.add(perm("rewards.approve_reward_policies"))
         self.assertIn("rewards.approve_reward_policies: 2", run())
+
+
+class ProvisioningConcurrencyTests(TransactionTestCase):
+    """Phase 14-B (B3): while --apply decides and writes, nobody can change a group's
+    permissions; the allowlist check therefore still holds at commit (PostgreSQL)."""
+
+    def test_group_permission_changes_wait_for_apply(self):
+        import threading
+
+        from django.db import OperationalError, connections, transaction
+
+        from apps.accounts.management.commands import provision_staff_permissions as command
+
+        cm = make_user("cm@example.com", role=User.Role.CONTENT_MANAGER)
+        cm.groups.clear()  # Gives --apply something to write.
+        extra = perm("wallets.view_wallets")
+        in_critical_section, release = threading.Event(), threading.Event()
+        real_plan = command.Command._plan
+        calls, outcome = [], {}
+
+        def plan(self_):
+            result = real_plan(self_)
+            calls.append(1)
+            if len(calls) == 2:  # The locked re-check inside the apply transaction.
+                in_critical_section.set()
+                release.wait(10)
+            return result
+
+        def apply():
+            try:
+                call_command("provision_staff_permissions", "--apply", stdout=StringIO())
+                outcome["apply"] = "applied"
+            except Exception as error:  # noqa: BLE001
+                outcome["apply"] = error
+            finally:
+                connections.close_all()
+
+        def mutate():
+            in_critical_section.wait(10)
+            try:
+                with transaction.atomic():
+                    with connection.cursor() as cursor:
+                        cursor.execute("SET LOCAL lock_timeout = '300ms'")
+                    Group.objects.get(name=MEMBER_GROUP).permissions.add(extra)
+                outcome["mutate"] = "inserted"
+            except OperationalError:
+                outcome["mutate"] = "blocked"
+            finally:
+                release.set()
+                connections.close_all()
+
+        with mock.patch.object(command.Command, "_plan", plan):
+            threads = [threading.Thread(target=apply), threading.Thread(target=mutate)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(30)
+        self.assertEqual(outcome, {"apply": "applied", "mutate": "blocked"})
+        self.assertFalse(Group.objects.get(name=MEMBER_GROUP).permissions.exists())
+        self.assertTrue(User.objects.get(pk=cm.pk).groups.filter(name=CM_GROUP).exists())
+        Group.objects.get(name=MEMBER_GROUP).permissions.add(extra)  # Lock released at commit.
+        with self.assertRaises(CommandError):  # And the next run refuses the now-unapproved permission.
+            run("--apply")

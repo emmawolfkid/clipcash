@@ -105,6 +105,7 @@ class HealthView(View):
         checks = admin_summary.health(request.user)
         return render(request, "administration/health.html", {
             "nav": "health", "checks": checks, "can": console_links(request.user),
+            "client_ip": admin_summary.client_ip_diagnostics(request) if is_super_admin(request.user) else None,
             "breadcrumbs": [("Overview", "administration:overview")]})
 
 

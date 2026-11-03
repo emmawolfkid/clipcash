@@ -61,6 +61,21 @@ def register_email_kind(name, *, builder, ttl_seconds, context_keys=("base_url",
     EMAIL_KINDS[name] = EmailKind(name, builder, ttl_seconds, frozenset(context_keys))
 
 
+# Operator delivery test (manage.py email_diagnostics --send-to): proves the outbox,
+# worker and email provider work end to end. Carries no link, token or account data.
+TEST_EMAIL = "notifications.delivery_test"
+
+
+def _build_test_email(email):
+    return ("ClipCash email delivery test",
+            "This message confirms that ClipCash can deliver email through its outbox and background worker.\n"
+            f"Queued at {email.created_at:%Y-%m-%d %H:%M} UTC. No action is needed.\n")
+
+
+register_email_kind(TEST_EMAIL, builder=_build_test_email,
+                    ttl_seconds=lambda: settings.NOTIFICATIONS_DEFAULT_EMAIL_TTL, context_keys=())
+
+
 def _clean_context(kind, context):
     context = dict(context or {})
     if set(context) != set(kind.context_keys):

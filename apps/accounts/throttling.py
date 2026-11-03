@@ -110,24 +110,52 @@ EMAIL_REQUESTS_PER_IP = Throttle("email-request-ip", limit=20, window_seconds=60
 EMAIL_REQUESTS_PER_ACCOUNT = Throttle("email-request-account", limit=3, window_seconds=60 * 60)
 
 
-def client_ip(request):
+def resolve_client_ip(request):
     """
-    Client address. X-Forwarded-For is used only when ACCOUNTS_TRUSTED_PROXY_COUNT
-    reverse proxies are configured, taking the address the outermost trusted
-    proxy saw; any client-supplied prefix is ignored.
+    (address, resolved). X-Forwarded-For is used only when ACCOUNTS_TRUSTED_PROXY_COUNT
+    reverse proxies are configured. Each trusted proxy appends the address it received
+    the request from, so the entry ``proxies`` from the right is the address the
+    outermost trusted proxy saw; anything a client put further left is ignored (Render,
+    for example, keeps client-supplied entries and appends to them).
+
+    ``resolved`` is False when the configuration does not match the request (fewer
+    forwarded entries than trusted proxies, or an invalid entry): the address returned
+    is then REMOTE_ADDR, which behind a proxy is the proxy's own and shared by every
+    visitor, so callers must not use it to limit or block individual clients.
     """
     if request is None:
-        return ""
+        return "", False
+    cached = getattr(request, "_clipcash_client_ip", None)
+    if cached is not None:
+        return cached
     remote_addr = request.META.get("REMOTE_ADDR", "")
     proxies = settings.ACCOUNTS_TRUSTED_PROXY_COUNT
-    if proxies <= 0:
-        return remote_addr
-    forwarded = [part.strip() for part in request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")]
-    forwarded = [part for part in forwarded if part]
-    if len(forwarded) < proxies:
-        return remote_addr
-    candidate = forwarded[-proxies]
+    result = (remote_addr, True)
+    if proxies > 0:
+        forwarded = [part.strip() for part in request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")]
+        forwarded = [part for part in forwarded if part]
+        result = (remote_addr, False)
+        if len(forwarded) >= proxies:
+            try:
+                result = (str(ipaddress.ip_address(forwarded[-proxies])), True)
+            except ValueError:
+                pass
+        if not result[1]:
+            security_log.warning("client_ip_unresolved forwarded_entries=%s trusted_proxies=%s",
+                                 len(forwarded), proxies)
     try:
-        return str(ipaddress.ip_address(candidate))
-    except ValueError:
-        return remote_addr
+        request._clipcash_client_ip = result
+    except AttributeError:
+        pass
+    return result
+
+
+def client_ip(request):
+    """Best-known client address (for audit records); see resolve_client_ip."""
+    return resolve_client_ip(request)[0]
+
+
+def client_ip_for_limits(request):
+    """The client address when it identifies one client, else None (skip per-IP limits)."""
+    address, resolved = resolve_client_ip(request)
+    return address if resolved and address else None

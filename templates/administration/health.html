@@ -9,4 +9,12 @@
   <tbody>{% for c in checks %}<tr><td>{% if c.url_name %}<a href="{% url c.url_name %}">{{ c.title }}</a>{% else %}{{ c.title }}{% endif %}</td>
     <td><span class="badge badge--health-{{ c.status }}">{{ c.label }}</span></td><td>{{ c.detail }}</td></tr>{% endfor %}</tbody>
 </table>{% else %}<p class="empty-state">{% translate "No health checks are available for your role." %}</p>{% endif %}
+{% if client_ip %}<section class="section"><h2>{% translate "Client address resolution (your request)" %}</h2>
+<dl class="details">
+  <dt>{% translate "Connection from" %}</dt><dd>{{ client_ip.remote_addr|default:"—" }}</dd>
+  <dt>{% translate "X-Forwarded-For entries" %}</dt><dd>{% for entry in client_ip.forwarded %}{{ entry }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "none" %}{% endfor %}</dd>
+  <dt>{% translate "Trusted proxies configured" %}</dt><dd>{{ client_ip.trusted_proxies }}</dd>
+  <dt>{% translate "Resolved client address" %}</dt><dd>{{ client_ip.address|default:"—" }} {% if client_ip.resolved %}<span class="badge badge--health-healthy">{% translate "Resolved" %}</span>{% else %}<span class="badge badge--health-attention">{% translate "Not resolved: per-IP limits skipped" %}</span>{% endif %}</dd>
+</dl>
+<p class="lead">{% translate "The resolved address must be your own public address (check it with a what-is-my-IP service). Then send a request with a made-up X-Forwarded-For header: the resolved address must not change." %}</p></section>{% endif %}
 {% endblock %}

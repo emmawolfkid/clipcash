@@ -6,4 +6,4 @@ class NotificationsConfig(AppConfig):
     name = 'apps.notifications'
 
     def ready(self):
-        from . import services  # noqa: F401  (registers the email delivery job types)
+        from . import checks, services  # noqa: F401  (system checks, email delivery job types)
