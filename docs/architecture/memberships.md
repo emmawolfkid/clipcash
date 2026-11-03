@@ -80,12 +80,19 @@ ledger in the same flow.
 
 ## Complimentary grants
 
-A separate, explicit policy, not a payment workaround: a Super Administrator
-grants a membership with source `COMPLIMENTARY` and amount paid 0 (the list
-price is kept for the record), audited. **Disabled** unless
-`DJANGO_MEMBERSHIPS_COMPLIMENTARY_GRANTS=True`. Available through
-`python manage.py grant_complimentary_membership`. A short test period
-(`--dev-period-minutes`) is accepted only when `DEBUG=True`.
+A separate, explicit policy, not a payment workaround (Phase 14-A, owner
+decision D1: time-limited complimentary demo memberships). A Super
+Administrator grants a membership with source `COMPLIMENTARY`, amount paid 0
+and no payment reference (the list price is kept as the plan snapshot), for
+exactly [grant time, chosen expiry), with a mandatory reason stored in `note`
+and in the `membership.complimentary.granted` audit event. **Available only
+when** `DJANGO_MEMBERSHIPS_COMPLIMENTARY_GRANTS=True` **and** restricted demo mode
+is on. The member must be eligible (active, verified email; the demo waiver does
+not apply) and have no current, scheduled or suspended membership; the expiry
+must be in the future and within the plan's own length. Console:
+`/manage/members/<id>/complimentary/` (review, then confirm); CLI:
+`python manage.py grant_complimentary_membership ... --expires-at <ISO 8601 with
+offset> --reason "..."`. Details: `docs/implementation/phase_14a_complimentary_membership.md`.
 
 ## Renewal and plan changes
 
@@ -140,7 +147,8 @@ Checks are server-side in the services and admin, not only in templates.
 
 Business events (same transaction as the change): `membership.plan.created`,
 `.updated`, `.status_changed`; `membership.subscription.created`, `.activated`,
-`.suspended`, `.reinstated`, `.cancelled`, `.expired`. Security events:
+`.suspended`, `.reinstated`, `.cancelled`, `.expired`; `membership.complimentary.granted`
+(member, plan, start, expiry, reason, operation id). Security events:
 `membership.action.denied` (any refused operation) and
 `membership.activation.rejected`. No payment credentials are recorded.
 

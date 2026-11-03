@@ -6,6 +6,7 @@
 {% if current %}
   <div class="status-panel">
     <p><span class="badge badge--{{ current.status|lower }}">{{ current.get_status_display }}</span> {{ current.plan_name }}</p>
+    {% if current.activation_source == "COMPLIMENTARY" %}<p class="notice">{% translate "Complimentary demonstration access: no payment was made, and access ends on the date below." %}</p>{% endif %}
     <dl class="details">
       <dt>{% translate "Started" %}</dt><dd>{{ current.starts_at|date:"DATETIME_FORMAT" }}</dd>
       <dt>{% translate "Ends" %}</dt><dd>{{ current.expires_at|date:"DATETIME_FORMAT" }}</dd>

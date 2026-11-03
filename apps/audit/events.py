@@ -94,6 +94,8 @@ EVENT_TYPES = {
                ["requested_role", "requested_status", "reasons"]),
         # Generic authorization denials (e.g. admin 403 on a write request).
         _event("authorization.denied", Category.AUTHORIZATION, SECURITY, ["method", "view"]),
+        _event("authorization.roles.provisioned", Category.AUTHORIZATION, BUSINESS,
+               ["permissions_added", "group_members_added", "group_members_removed"]),
         # Configuration
         _event("config.updated", Category.CONFIGURATION, BUSINESS,
                ["version", "fields", "changes", "feature_flags", "maintenance_mode"]),
@@ -125,6 +127,8 @@ EVENT_TYPES = {
         *[_event(f"membership.subscription.{name}", Category.MEMBERSHIP, BUSINESS,
                  ["from_status", "to_status", "reason", "plan_code", "source", "queued"])
           for name in ("activated", "cancelled", "suspended", "reinstated", "expired")],
+        _event("membership.complimentary.granted", Category.MEMBERSHIP, BUSINESS,
+               ["member", "plan_code", "starts_at", "expires_at", "reason", "operation"]),
         _event("membership.action.denied", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
         _event("membership.activation.rejected", Category.MEMBERSHIP, SECURITY, ["reason", "subscription"]),
         # Video content (routine playback is not audited)

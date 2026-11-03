@@ -19,6 +19,7 @@ from apps.core.models import Job
 from apps.notifications.models import OutboundEmail
 
 S = OutboundEmail.Status
+SMTP_SECRET_MARKER = "SMTP_SERVER_TEXT_Qz7Kx"
 
 
 def request():
@@ -133,7 +134,10 @@ class DeliveryFailureTests(AccountsTestCase):
 
     def test_transient_smtp_failure_retries_then_fails_terminally(self):
         email, job = self.queue()
-        error = smtplib.SMTPServerDisconnected("connection to smtp.example.com lost; token=abc")
+        # The server's text must never be stored. The marker contains characters (upper case,
+        # "_", letters after "f") that cannot occur in the hex ids, UUIDs or timestamps that
+        # are legitimately stored, so finding it can only mean the message leaked.
+        error = smtplib.SMTPServerDisconnected(f"connection to smtp.example.com lost; token={SMTP_SECRET_MARKER}")
         with mock.patch("apps.notifications.services.send_mail", side_effect=error):
             run_worker()
             job.refresh_from_db()
@@ -151,7 +155,9 @@ class DeliveryFailureTests(AccountsTestCase):
         self.assertEqual(event.metadata, {"kind": "accounts.activation", "error_class": "TRANSIENT",
                                           "attempts": job.max_attempts})
         self.assertTrue(AuditEvent.objects.filter(action="jobs.job.failed").exists())
-        self.assertNotIn("abc", everything_stored())
+        stored = everything_stored()
+        self.assertNotIn(SMTP_SECRET_MARKER, stored)
+        self.assertNotIn("smtp.example.com", stored)
         # Account state is untouched by delivery failures.
         self.assertEqual(User.objects.get().status, User.Status.PENDING)
 

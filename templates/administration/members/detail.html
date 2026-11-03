@@ -8,13 +8,14 @@
   <dt>{% translate "Status" %}</dt><dd>{{ member.get_status_display }}</dd>
   <dt>{% translate "Email confirmed" %}</dt><dd>{{ member.email_verified|yesno:_("Yes,No") }}</dd>
   <dt>{% translate "Joined" %}</dt><dd>{{ member.date_joined|date:"DATE_FORMAT" }}</dd>
-  <dt>{% translate "Membership" %}</dt><dd>{% if membership %}{{ membership.plan_name }} · {{ membership.get_status_display }} · {% blocktranslate with d=membership.expires_at|date:"DATE_FORMAT" %}until {{ d }}{% endblocktranslate %}{% else %}{% translate "None current" %}{% endif %}</dd>
+  <dt>{% translate "Membership" %}</dt><dd>{% if membership %}{{ membership.plan_name }} · {{ membership.get_status_display }}{% if membership.activation_source == "COMPLIMENTARY" %} · {% translate "Complimentary (no payment)" %}{% endif %} · {% blocktranslate with d=membership.expires_at|date:"DATETIME_FORMAT" %}until {{ d }}{% endblocktranslate %}{% else %}{% translate "None current" %}{% endif %}</dd>
   {% if can.wallets %}<dt>{% translate "Wallet" %}</dt><dd>{% if wallet %}<a href="{% url 'administration:wallet' wallet.pk %}">{{ wallet.number }}</a> · {{ wallet.get_status_display }}{% else %}{% translate "Not opened" %}{% endif %}</dd>{% endif %}
 </dl>
 {% if can_change %}<p><a class="button button--secondary" href="{% url 'admin:accounts_user_change' member.pk %}">{% translate "Manage account (admin)" %}</a></p>{% endif %}
+{% if can_grant %}<p><a class="button button--secondary" href="{% url 'administration:member_complimentary' member.pk %}">{% translate "Grant complimentary demo membership" %}</a></p>{% endif %}
 <p class="lead">{% translate "Account status and membership changes use the existing reviewed workflows; this page changes nothing." %}</p></section>
 <section class="panel"><h2 class="panel__title">{% translate "Recent memberships" %}</h2>
-  {% if subscriptions %}<ul class="list-plain">{% for s in subscriptions %}<li>{{ s.plan_name }} · {{ s.get_status_display }} · {{ s.created_at|date:"SHORT_DATE_FORMAT" }}</li>{% endfor %}</ul>{% else %}<p class="lead">{% translate "None." %}</p>{% endif %}</section>
+  {% if subscriptions %}<ul class="list-plain">{% for s in subscriptions %}<li>{{ s.plan_name }} · {{ s.get_status_display }}{% if s.activation_source == "COMPLIMENTARY" %} · {% translate "Complimentary" %}{% endif %} · {{ s.created_at|date:"SHORT_DATE_FORMAT" }}</li>{% endfor %}</ul>{% else %}<p class="lead">{% translate "None." %}</p>{% endif %}</section>
 </div>
 <section class="section"><h2>{% translate "Recent activity (safe summaries)" %}</h2>{% include "members/_activity_list.html" %}</section>
 {% endblock %}

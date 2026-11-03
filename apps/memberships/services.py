@@ -14,20 +14,21 @@ Policies (see docs/architecture/memberships.md):
   verifier that independently confirms the payment, an exact amount match and
   a unique reference. Nothing else can mark a subscription paid.
 * Complimentary grants are a separate, explicitly labelled policy: Super
-  Administrator only, a reason, amount paid 0, and disabled unless
-  MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED.
+  Administrator only, a reason, a fixed expiry, amount paid 0, and only when
+  MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED is set in a restricted demonstration.
 * Cancellation is immediate and ends access. Members may cancel only their own
   pending choices; administrators cancel active memberships. No automatic
   renewal and no automatic refunds.
 """
 
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
 from django.db.models import Max
 from django.utils import timezone
 
@@ -343,7 +344,7 @@ def _transition(subscription, new_status, *, actor, now, reason="", audit_actor=
     return subscription
 
 
-def _activate(subscription, *, source, payment_reference, amount_paid, actor, now, period=None):
+def _activate(subscription, *, source, payment_reference, amount_paid, actor, now, period=None, note=None):
     """PENDING -> ACTIVE. Caller holds the member and subscription locks."""
     if subscription.status != S.PENDING:
         raise InvalidTransition("Only pending subscriptions can be activated.", code="not_pending")
@@ -365,11 +366,14 @@ def _activate(subscription, *, source, payment_reference, amount_paid, actor, no
     subscription.amount_paid = amount_paid
     subscription.activated_at = now
     subscription.activated_by_id = getattr(actor, "pk", None)
+    extra_fields = ["starts_at", "expires_at", "activation_source", "payment_reference", "amount_paid",
+                    "activated_at", "activated_by_id"]
+    if note is not None:
+        subscription.note = note
+        extra_fields.append("note")
     # Activation data and the status change must be one UPDATE (database rule).
     return _transition(subscription, S.ACTIVE, actor=actor, now=now,
-                       metadata={"source": source, "queued": start > now},
-                       extra_fields=["starts_at", "expires_at", "activation_source", "payment_reference",
-                                     "amount_paid", "activated_at", "activated_by_id"])
+                       metadata={"source": source, "queued": start > now}, extra_fields=extra_fields)
 
 
 # --- Payment integration boundary ----------------------------------------------------
@@ -447,36 +451,174 @@ def _record_activation_rejection(subscription_id, error):
 # --- Complimentary grants (explicit, separately authorized policy) ---------------------
 
 
-def grant_complimentary(actor, member, plan, *, period=None):
-    """Super Administrator grants a free membership (amount paid 0, audited).
+GRANT_REASON_MIN = 5
+GRANT_REASON_MAX = 200  # Stored in Subscription.note.
+GRANT_OPERATION_RE = re.compile(r"^[A-Za-z0-9-]{8,64}$")
+GRANT_IDEMPOTENCY_PREFIX = "membership.complimentary:"
 
-    Disabled unless MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED. ``period`` (a
-    shorter test period) is accepted only when DEBUG is on.
+
+def complimentary_grants_available():
+    """Time-limited complimentary demo memberships (owner decision D1) exist only when
+    MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED is set inside a restricted demonstration."""
+    return bool(settings.MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED and settings.RESTRICTED_DEMO_MODE)
+
+
+def can_grant_complimentary(user):
+    return complimentary_grants_available() and is_super_admin(user)
+
+
+def _grant_reason(reason):
+    reason = " ".join(str(reason or "").split())
+    if len(reason) < GRANT_REASON_MIN:
+        raise ValidationError({"reason": f"Give a reason of at least {GRANT_REASON_MIN} characters."})
+    if len(reason) > GRANT_REASON_MAX:
+        raise ValidationError({"reason": f"Keep the reason to {GRANT_REASON_MAX} characters or fewer."})
+    return reason
+
+
+def _aware_expiry(expires_at):
+    if not isinstance(expires_at, datetime) or timezone.is_naive(expires_at):
+        raise ValidationError({"expires_at": "Enter a complete date and time."})
+    return expires_at
+
+
+def _grant_expiry(expires_at, plan, now):
+    if expires_at <= now:
+        raise ValidationError({"expires_at": "The expiry must be in the future."})
+    if expires_at > now + timedelta(days=plan.duration_days):
+        raise ValidationError({"expires_at": f"The expiry cannot be later than the plan's own length "
+                                             f"({plan.duration_days} days from now)."})
+    return expires_at
+
+
+GRANT_ACTION = "membership.complimentary.granted"
+OPERATION_CONFLICT = "This form was already used for a different grant. Reload the page and start again."
+
+
+def _lock_operation(key):
+    """Serialize every grant that carries this retry key, whichever member or plan it
+    names. A PostgreSQL transaction-level advisory lock: held until commit or rollback,
+    shared by all processes and servers. Taken before any member lock (fixed order)."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", [key])
+
+
+def _replayed_grant(key, *, actor, member, plan, expires_at, reason, now):
+    """The grant a repeated operation already made, or None if the key is unused.
+
+    The key belongs to exactly one request: same administrator, member, plan, expiry
+    and reason. Anything else is a conflict, reported without describing the original.
+    A replay never changes or re-creates the original grant, and it is returned only
+    while that grant still gives access."""
+    from apps.audit.models import AuditEvent
+
+    event = AuditEvent.objects.filter(idempotency_key=key).first()
+    if event is None:
+        return None
+    original = event.metadata
+    same_request = (
+        event.action == GRANT_ACTION and event.actor_id == actor.pk
+        and original.get("member") == str(member.pk) and original.get("plan_code") == plan.code
+        and original.get("reason") == reason
+        and datetime.fromisoformat(original.get("expires_at", "")) == expires_at
+    )
+    if not same_request:
+        raise InvalidTransition(OPERATION_CONFLICT, code="operation_conflict")
+    subscription = Subscription.objects.select_for_update().get(pk=event.target_id)
+    if not subscription.is_in_force(now):
+        state = S(subscription.status).label.lower() if subscription.expires_at > now else "ended"
+        raise InvalidTransition(f"This grant was already made with this form and is no longer active ({state}). "
+                                f"Start a new grant to give access again.", code="grant_not_active")
+    return subscription
+
+
+def grant_complimentary(actor, member, plan, *, expires_at, reason, operation_id=""):
+    """A Super Administrator grants a time-limited complimentary demo membership.
+
+    No payment exists or is simulated: the subscription is activated with source
+    COMPLIMENTARY, amount paid 0 and no payment reference (database-enforced), for
+    exactly [now, expires_at). The member must be eligible under the normal rules
+    and have no current, queued or suspended membership; a pending choice of the
+    same plan is used, any other pending choice is left alone and the grant refused.
+    ``operation_id`` (the form token) identifies one request: repeating it with the
+    same inputs returns the original grant while it is active; anything else is refused.
     """
     try:
-        if not settings.MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED:
+        if not complimentary_grants_available():
             raise NotAuthorized("Complimentary grants are disabled.", code="grants_disabled")
         if not is_super_admin(actor):
             raise NotAuthorized("Only Super Administrators can grant complimentary memberships.")
-        if period is not None and not settings.DEBUG:
-            raise NotAuthorized("Custom periods are a development-only option.", code="debug_only")
-        now = timezone.now()
+        if not _feature_enabled("memberships"):
+            raise PlanUnavailable("Memberships are not available.", code="feature_disabled")
+        if member is None or plan is None:
+            raise ValidationError("Choose a member and a plan.")
+        reason = _grant_reason(reason)
+        expires_at = _aware_expiry(expires_at)
+        operation_id = str(operation_id or "")
+        if operation_id and not GRANT_OPERATION_RE.match(operation_id):
+            raise ValidationError("Invalid operation id. Reload the page and try again.")
+        key = GRANT_IDEMPOTENCY_PREFIX + operation_id if operation_id else None
+        User = get_user_model()
         with transaction.atomic():
-            member = _lock_member(member)
+            if key:
+                _lock_operation(key)  # Before the member lock: one order for every grant.
+            member = _lock_member(member)  # Serializes every membership change for this member.
+            now = timezone.now()
             plan = MembershipPlan.objects.get(pk=plan.pk)
+            if key:
+                replayed = _replayed_grant(key, actor=actor, member=member, plan=plan, expires_at=expires_at,
+                                           reason=reason, now=now)
+                if replayed is not None:
+                    return replayed
+            if member.role != User.Role.MEMBER:
+                raise NotEligible("Complimentary memberships are for member accounts only.", code="not_a_member")
+            eligible, why = member_eligibility(member)  # No demo waiver: activation needs a verified email.
+            if not eligible:
+                raise NotEligible("The member's account is not eligible.", code=why)
             if plan.status != MembershipPlan.Status.ACTIVE:
                 raise PlanUnavailable("The plan is not active.")
-            subscription, created = _prepare_pending(member, plan, now, enforce_window=False)
-            if created:
+            expires_at = _grant_expiry(expires_at, plan, now)
+            current, queued = _current_and_queued(member, now)
+            if current is not None or queued is not None:
+                raise NotEligible("This member already has a current or scheduled membership. It is left "
+                                  "unchanged.", code="membership_exists")
+            pending = Subscription.objects.select_for_update().filter(member=member, status=S.PENDING).first()
+            if pending is not None and pending.pending_until <= now:
+                # Already due for cancellation by process_expiry; apply the same outcome now.
+                _transition(pending, S.CANCELLED, actor=None, now=now, reason=R.UNPAID_TIMEOUT)
+                pending = None
+            if pending is not None and pending.plan_version_id != plan.versions.get(version=plan.version).pk:
+                raise InvalidTransition(f"The member has a pending choice of another plan "
+                                        f"({pending.plan_name}). It is left unchanged.",
+                                        code="pending_choice_conflict")
+            if pending is None:
+                pending = _new_pending(member, plan, now, renewal_of=None)
                 record_business_event(
-                    "membership.subscription.created", actor=actor, target=subscription,
-                    metadata={"plan_code": plan.code, "price_amount": subscription.price_amount,
-                              "renewal": subscription.renewal_of_id is not None},
+                    "membership.subscription.created", actor=actor, target=pending,
+                    metadata={"plan_code": plan.code, "price_amount": pending.price_amount, "renewal": False},
                 )
-            return _activate(subscription, source=Subscription.Source.COMPLIMENTARY, payment_reference="",
-                             amount_paid=0, actor=actor, now=now, period=period)
+            subscription = _activate(pending, source=Subscription.Source.COMPLIMENTARY, payment_reference="",
+                                     amount_paid=0, actor=actor, now=now, period=expires_at - now, note=reason)
+            event = record_business_event(
+                GRANT_ACTION, actor=actor, target=subscription, idempotency_key=key,
+                metadata={"member": str(member.pk), "plan_code": plan.code,
+                          "starts_at": subscription.starts_at.isoformat(),
+                          "expires_at": subscription.expires_at.isoformat(), "reason": reason,
+                          "operation": operation_id},
+            )
+            # The audit layer treats a duplicate idempotency key as a replay and returns the
+            # stored event. The operation lock makes that impossible here; if it ever happens,
+            # this grant has no audit record of its own, so the whole transaction is undone.
+            if event is None or event.target_id != str(subscription.pk):
+                raise InvalidTransition(OPERATION_CONFLICT, code="operation_conflict")
+            return subscription
+    except IntegrityError as error:
+        conflict = InvalidTransition("The grant conflicted with another membership change. Nothing was changed.",
+                                     code="conflict")
+        _deny("subscription.grant", conflict, actor, member)
+        raise conflict from error
     except MembershipError as error:
-        _deny("subscription.grant", error, actor)
+        _deny("subscription.grant", error, actor, member)
         raise
 
 

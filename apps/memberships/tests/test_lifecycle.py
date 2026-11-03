@@ -1,7 +1,6 @@
 from datetime import timedelta
 from unittest import mock
 
-from django.test import override_settings
 from django.utils import timezone
 
 from apps.audit.context import audit_scope
@@ -143,32 +142,7 @@ class RenewalTests(MembershipTestCase):
             services.choose_plan(self.member, self.plan)
 
 
-class ComplimentaryTests(MembershipTestCase):
-    def test_disabled_by_default(self):
-        with audit_scope(), self.assertRaises(services.NotAuthorized) as ctx:
-            services.grant_complimentary(self.root, self.member, self.plan)
-        self.assertEqual(ctx.exception.code, "grants_disabled")
-        self.assertFalse(Subscription.objects.exists())
-
-    @override_settings(MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED=True)
-    def test_super_admin_grant_is_explicitly_labelled_and_free(self):
-        granted = services.grant_complimentary(self.root, self.member, self.plan)
-        self.assertEqual((granted.status, granted.activation_source, granted.amount_paid, granted.payment_reference),
-                         (S.ACTIVE, "COMPLIMENTARY", 0, ""))
-        self.assertEqual(granted.activated_by_id, self.root.pk)
-        self.assertEqual(granted.price_amount, 5_000)  # List price kept for the record.
-
-    @override_settings(MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED=True)
-    def test_only_super_admins_and_dev_periods_only_in_debug(self):
-        cm = make_user("cm@example.com", role=User.Role.CONTENT_MANAGER)
-        with self.assertRaises(services.NotAuthorized):
-            services.grant_complimentary(cm, self.member, self.plan)
-        with self.assertRaises(services.NotAuthorized) as ctx:
-            services.grant_complimentary(self.root, self.member, self.plan, period=timedelta(minutes=5))
-        self.assertEqual(ctx.exception.code, "debug_only")
-        with override_settings(DEBUG=True):
-            short = services.grant_complimentary(self.root, self.member, self.plan, period=timedelta(minutes=5))
-        self.assertAlmostEqual((short.expires_at - short.starts_at).total_seconds(), 300, delta=1)
+# Complimentary grants: see test_complimentary.py (Phase 14-A).
 
 
 class AdministrativeLifecycleTests(MembershipTestCase):

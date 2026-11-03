@@ -13,7 +13,7 @@
     {% elif m.subscription %}
       <p class="summary-card__value">{{ m.subscription.plan_name }}</p>
       <p class="summary-card__status"><span class="badge badge--{{ m.subscription.status|lower }}">{{ m.subscription.get_status_display }}</span>
-        {% blocktranslate with date=m.subscription.expires_at|date:"DATE_FORMAT" %}Valid until {{ date }}{% endblocktranslate %}</p>
+        {% blocktranslate with date=m.subscription.expires_at|date:"DATE_FORMAT" %}Valid until {{ date }}{% endblocktranslate %}{% if m.subscription.activation_source == "COMPLIMENTARY" %} · {% translate "Complimentary (no payment)" %}{% endif %}</p>
     {% elif m.pending %}
       <p class="summary-card__value">{{ m.pending.plan_name }}</p>
       <p class="summary-card__status"><span class="badge badge--pending">{{ m.pending.get_status_display }}</span> {% translate "Waiting for payment. Online payment is not available yet." %}</p>

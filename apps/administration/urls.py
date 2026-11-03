@@ -9,6 +9,7 @@ urlpatterns = [
     path("health/", views.HealthView.as_view(), name="health"),
     path("members/", views.MemberDirectoryView.as_view(), name="members"),
     path("members/<uuid:pk>/", views.MemberDetailView.as_view(), name="member"),
+    path("members/<uuid:pk>/complimentary/", views.ComplimentaryGrantView.as_view(), name="member_complimentary"),
     path("security/", views.SecurityView.as_view(), name="security"),
     path("videos/", views.VideoListView.as_view(), name="videos"),
     path("videos/new/", views.VideoCreateView.as_view(), name="video_create"),

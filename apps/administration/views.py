@@ -47,6 +47,8 @@ from apps.rewards.models import DemoReward, RewardPolicy
 from apps.audit.models import AuditEvent
 from apps.core.models import Job
 from apps.core.services import can_change_site_configuration
+from apps.memberships import services as memberships
+from apps.memberships.forms import ComplimentaryConfirmForm, ComplimentaryGrantForm
 from apps.memberships.models import Subscription
 from apps.memberships.services import is_super_admin
 from apps.notifications.models import OutboundEmail
@@ -139,7 +141,70 @@ class MemberDetailView(View):
             "wallet": Wallet.objects.filter(member=member).first() if can["wallets"] else None,
             "activity": member_activity(member, limit=15),
             "can_change": request.user.has_perm("accounts.change_user"), "can": can, "nav": "members",
+            "can_grant": memberships.can_grant_complimentary(request.user),
             "breadcrumbs": [("Overview", "administration:overview"), ("Members", "administration:members")]})
+
+
+@console
+class ComplimentaryGrantView(View):
+    """Time-limited complimentary demo membership (owner decision D1): Super
+    Administrators only, review then confirm. memberships.grant_complimentary
+    re-checks everything; this view adds no rule of its own."""
+
+    template_name = "administration/members/complimentary.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not memberships.can_grant_complimentary(request.user):
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def _member(self, pk):
+        User = get_user_model()
+        return get_object_or_404(User, pk=pk, role=User.Role.MEMBER)
+
+    def _render(self, request, member, form, *, review=None, status=200):
+        from apps.memberships.access import current_subscription
+        from apps.memberships.models import Subscription
+
+        eligible, reason = memberships.member_eligibility(member)
+        return render(request, self.template_name, {
+            "member": member, "form": form, "review": review, "eligible": eligible, "eligibility_reason": reason,
+            "current": current_subscription(member),
+            "pending": Subscription.objects.filter(member=member, status=Subscription.Status.PENDING).first(),
+            "time_zone": timezone.get_current_timezone_name(), "can": console_links(request.user),
+            "nav": "members",
+            "breadcrumbs": [("Overview", "administration:overview"), ("Members", "administration:members")],
+        }, status=status)
+
+    def get(self, request, pk):
+        member = self._member(pk)
+        return self._render(request, member, ComplimentaryGrantForm(initial={"operation": uuid.uuid4().hex}))
+
+    def post(self, request, pk):
+        member = self._member(pk)
+        confirming = request.POST.get("step") == "confirm"
+        form = (ComplimentaryConfirmForm if confirming else ComplimentaryGrantForm)(request.POST)
+        if not form.is_valid():
+            if confirming and set(form.errors) == {"confirm"}:
+                return self._render(request, member, form, review=form.cleaned_data, status=400)
+            return self._render(request, member, form, status=400)
+        if not confirming:  # Review only: nothing is changed until the confirmed second POST.
+            return self._render(request, member, form, review=form.cleaned_data)
+        data = form.cleaned_data
+        try:
+            subscription = memberships.grant_complimentary(
+                request.user, member, data["plan"], expires_at=data["expires_at"], reason=data["reason"],
+                operation_id=data["operation"])
+        except memberships.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, memberships.MembershipError) as error:
+            _form_errors(form, error)
+            return self._render(request, member, form, status=400)
+        messages.success(request, _("Complimentary %(plan)s membership granted until %(end)s. No payment was "
+                                    "recorded.") % {"plan": subscription.plan_name,
+                                                    "end": timezone.localtime(subscription.expires_at)
+                                                    .strftime("%Y-%m-%d %H:%M %Z")})
+        return redirect("administration:member", pk=member.pk)
 
 
 @console

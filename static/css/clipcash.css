@@ -266,7 +266,8 @@ a.app-nav__link:hover, .app-nav__button:hover { background: var(--info-bg); }
 .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; display: grid; gap: 0.25rem; }
 .stat__value { font-size: 1.75rem; font-weight: 700; color: var(--accent); line-height: 1.1; }
 .stat__label { color: var(--muted); font-size: 0.85rem; }
-.panel .form input[type="number"], .panel .form input[type="url"], .panel .form select, .panel .form textarea {
+.panel .form input[type="number"], .panel .form input[type="url"], .panel .form input[type="datetime-local"],
+.panel .form select, .panel .form textarea {
   width: 100%; padding: 0.6rem 0.75rem; font: inherit; color: var(--text); background: var(--bg);
   border: 1px solid var(--border); border-radius: calc(var(--radius) / 2); }
 .panel .form .button--block { width: auto; }

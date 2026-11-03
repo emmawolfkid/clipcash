@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .entitlements import ENTITLEMENTS
 from .models import MAX_BENEFIT_LENGTH, MAX_BENEFITS, MembershipPlan, Subscription
-from .services import ADMIN_REASONS
+from .services import ADMIN_REASONS, GRANT_REASON_MAX, GRANT_REASON_MIN
 
 
 class MembershipPlanForm(forms.ModelForm):
@@ -46,6 +46,37 @@ class MembershipPlanForm(forms.ModelForm):
         values["benefits"] = self.cleaned_data["benefits_text"]
         values["entitlements"] = self.cleaned_data["entitlement_codes"]
         return values
+
+
+class ComplimentaryGrantForm(forms.Form):
+    """Console form for a time-limited complimentary demo membership. Validation of
+    the expiry, reason and eligibility is repeated by services.grant_complimentary."""
+
+    DATETIME_FORMAT = "%Y-%m-%dT%H:%M"
+
+    plan = forms.ModelChoiceField(
+        label=_("Membership plan"), queryset=MembershipPlan.objects.none(), empty_label=_("Choose a plan"),
+    )
+    expires_at = forms.DateTimeField(
+        label=_("Access ends at"), input_formats=[DATETIME_FORMAT],
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}, format=DATETIME_FORMAT),
+        help_text=_("In the site time zone. Must be in the future and within the plan's own length."),
+    )
+    reason = forms.CharField(
+        label=_("Reason for the complimentary grant"), min_length=GRANT_REASON_MIN, max_length=GRANT_REASON_MAX,
+        widget=forms.Textarea(attrs={"rows": 3}), help_text=_("Recorded in the audit trail."),
+    )
+    operation = forms.CharField(widget=forms.HiddenInput, max_length=64)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["plan"].queryset = MembershipPlan.objects.filter(status=MembershipPlan.Status.ACTIVE)
+
+
+class ComplimentaryConfirmForm(ComplimentaryGrantForm):
+    confirm = forms.BooleanField(
+        label=_("I confirm this is a complimentary demo membership: no payment was received or simulated."),
+    )
 
 
 class ReasonForm(forms.Form):
