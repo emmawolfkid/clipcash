@@ -80,6 +80,7 @@ or copy real values in the dashboard and never commit them.
 | `DJANGO_SECURE_HSTS_SECONDS` | `0` | Keep 0 until HTTPS is verified (§12) |
 | `DJANGO_PAYMENTS_MODE` | `disabled` | Already the default outside `DEBUG`; set explicitly for clarity |
 | `DJANGO_RESTRICTED_DEMO` | `True` | Already the default outside `DEBUG`. Closes public registration (the register page answers 403) whatever the site configuration says; existing accounts still sign in. Set `False` only for a reviewed public launch |
+| `DJANGO_DEMO_EMAIL_VERIFICATION_OPTIONAL`, `DJANGO_DEMO_ACCOUNTS` | `True`, `client@example.com,admin@example.com` | Optional, restricted demo only. Listed ACTIVE accounts may use member pages without a verified email (the email stays unverified; roles still apply). No effect unless `DJANGO_RESTRICTED_DEMO` is on and payments are disabled; `check --deploy` warns (`accounts.W001`) if set without restricted demo. Remove both before any public launch |
 | `DJANGO_DEFAULT_FROM_EMAIL` | `ClipCash <no-reply@your-domain.example>` | A sender your email provider has verified |
 
 `RENDER_EXTERNAL_HOSTNAME` is set by Render automatically; the settings add it

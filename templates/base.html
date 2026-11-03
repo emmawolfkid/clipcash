@@ -43,6 +43,9 @@
       {% endif %}
     </div>
   </header>
+  {% if demo_verification_optional %}
+  <p class="demo-banner" role="note"><strong>{% translate "Restricted demonstration" %}</strong> — {% translate "Email verification is optional for authorized demo accounts. Real payments and payouts are disabled." %}</p>
+  {% endif %}
 
   {% block main %}
   <main id="content" class="site-main{% block main_class %}{% endblock %}">

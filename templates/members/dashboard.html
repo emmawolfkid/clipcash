@@ -3,6 +3,7 @@
 {% block member_content %}
 <h1 class="page-title">{% blocktranslate with name=user.first_name|default:user.email %}Welcome, {{ name }}{% endblocktranslate %}</h1>
 <p class="lead">{% translate "Real rewards are not available yet. Demo rewards and sandbox payments are simulations; your real wallet holds only ledger-backed money." %}</p>
+{% if demo_unconfirmed_account %}{% include "components/demo_unconfirmed_notice.html" %}{% endif %}
 
 <div class="summary-grid">
   {% with m=summary.membership %}

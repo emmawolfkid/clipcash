@@ -3,6 +3,7 @@
 {% block member_content %}
 <h1 class="page-title">{% translate "Withdrawals" %}</h1>
 <p class="notice"><strong>{% translate "Withdrawals are not available yet." %}</strong> {% translate "Real rewards and payouts are not active, and your wallet balance is TZS 0. Demo rewards can never be withdrawn." %}</p>
+{% if demo_unconfirmed_account %}{% include "components/demo_unconfirmed_notice.html" %}{% endif %}
 {% if balances and balances.restricted %}<p class="notice notice--warning">{% translate "Your wallet is under review, so withdrawals would be paused." %}</p>{% endif %}
 <div class="card-grid">
   <section class="panel"><h2 class="panel__title">{% translate "What a withdrawal will need" %}</h2>

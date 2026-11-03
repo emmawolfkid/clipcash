@@ -14,7 +14,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 
-from apps.accounts.access import _deny_or_redirect
+from apps.accounts.access import DEMO_UNCONFIRMED_BLOCKED, _deny_or_redirect, demo_unconfirmed
 from apps.core.features import feature_required
 
 from . import services
@@ -83,6 +83,9 @@ class OnboardView(AdvertiserBaseView):
     template_name = "advertising/onboard.html"
 
     def get(self, request):
+        if demo_unconfirmed(request.user):  # Applications need a confirmed email; explained on the home page.
+            messages.error(request, DEMO_UNCONFIRMED_BLOCKED)
+            return redirect("advertising:home")
         return render(request, self.template_name, self.context(form=OrganizationForm()))
 
     def post(self, request):
@@ -94,6 +97,11 @@ class OnboardView(AdvertiserBaseView):
                 return redirect("advertising:organization", organization_id=organization.pk)
             except (ValidationError, services.InvalidState) as error:
                 form_errors(form, error)
+            except services.NotAuthorized:  # Already audited by the service.
+                if not demo_unconfirmed(request.user):
+                    raise
+                messages.error(request, DEMO_UNCONFIRMED_BLOCKED)
+                return redirect("advertising:home")
         return render(request, self.template_name, self.context(form=form))
 
 

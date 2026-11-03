@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
-from apps.accounts.access import VerifiedAccountRequiredMixin
+from apps.accounts.access import DEMO_UNCONFIRMED_BLOCKED, VerifiedAccountRequiredMixin
 from apps.core import features
 from apps.core.features import feature_required
 
@@ -24,6 +24,7 @@ MESSAGES = {
     "already_renewed": _("You already have a renewal scheduled."),
     "membership_suspended": _("Your membership is suspended. Please contact support."),
     "plan_unavailable": _("This plan is no longer available."),
+    "email_unverified": DEMO_UNCONFIRMED_BLOCKED,  # Only approved demo accounts get this far unverified.
 }
 
 

@@ -45,7 +45,9 @@ def check_access(member, entitlement=None, now=None):
     """
     if not features.is_enabled("memberships"):
         return AccessDecision(False, "feature_disabled")
-    eligible, reason = member_eligibility(member)
+    # Read-only decision: an approved demo account still needs an active
+    # membership, which it cannot obtain without a verified email.
+    eligible, reason = member_eligibility(member, demo_waiver=True)
     if not eligible:
         return AccessDecision(False, reason)
     subscription = current_subscription(member, now)

@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
-from apps.accounts.access import VerifiedAccountRequiredMixin
+from apps.accounts.access import DEMO_UNCONFIRMED_BLOCKED, VerifiedAccountRequiredMixin, demo_unconfirmed
 from apps.payments.providers import PaymentsDisabled, sandbox_active
 from apps.wallets import wallet_services
 
@@ -73,7 +73,9 @@ class DestinationsView(VerifiedAccountRequiredMixin, View):
         except services.NotFound:
             raise Http404 from None
         except services.NotAuthorized:
-            raise PermissionDenied from None
+            if not demo_unconfirmed(request.user):
+                raise PermissionDenied from None
+            messages.error(request, DEMO_UNCONFIRMED_BLOCKED)
         except PaymentsDisabled:
             messages.error(request, _("Demo checks are not available here."))
         except (ValidationError, services.WithdrawalError) as error:

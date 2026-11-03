@@ -11,7 +11,9 @@
 {% if not payments_available %}
 <p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
 {% endif %}
-{% if user.is_authenticated %}
+{% if demo_unconfirmed_account %}
+{% include "components/demo_unconfirmed_notice.html" %}
+{% elif user.is_authenticated %}
 <form method="post" action="{% url 'memberships:choose' plan.code %}">{% csrf_token %}
   <button type="submit" class="button">{% translate "Choose this plan" %}</button>
 </form>

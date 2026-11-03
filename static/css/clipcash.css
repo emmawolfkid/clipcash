@@ -396,3 +396,7 @@ a.app-nav__link:hover, .app-nav__button:hover { background: var(--info-bg); }
   .hero { padding: 1.75rem 1rem; }
   .hero .actions .button { flex: 1 1 100%; text-align: center; }
 }
+
+/* Restricted demo: optional email verification */
+.demo-banner { margin: 0; padding: 0.6rem 1rem; text-align: center; font-size: 0.9rem; background: var(--info-bg);
+  border-bottom: 1px solid var(--border); }

@@ -104,14 +104,22 @@ def _deny(action, error, actor, target=None):
     )
 
 
-def member_eligibility(member):
-    """(eligible, reason). Only ACTIVE accounts with a verified email qualify."""
+def member_eligibility(member, *, demo_waiver=False):
+    """(eligible, reason). Only ACTIVE accounts with a verified email qualify.
+
+    ``demo_waiver=True`` also accepts an approved restricted-demo account
+    (apps.accounts.access.email_verification_waived). Only read-only access
+    decisions pass it; choosing or activating a membership, wallets, payments,
+    payouts and advertiser actions never do, so they keep requiring a verified email.
+    """
+    from apps.accounts.access import email_verification_waived
+
     User = get_user_model()
     if member is None or not getattr(member, "is_authenticated", False):
         return False, "not_authenticated"
     if member.status != User.Status.ACTIVE or not member.is_active:
         return False, "account_inactive"
-    if not member.email_verified:
+    if not member.email_verified and not (demo_waiver and email_verification_waived(member)):
         return False, "email_unverified"
     return True, "ok"
 

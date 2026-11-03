@@ -5,6 +5,8 @@
 {% include "components/wallet_notice.html" %}
 {% if eligibility == "staff_account" %}
   <p class="empty-state">{% translate "Staff accounts do not have member wallets." %}</p>
+{% elif demo_unconfirmed_account %}
+  {% include "components/demo_unconfirmed_notice.html" %}
 {% elif not wallet %}
   <section class="panel"><p class="lead">{% translate "Open your wallet to see where future, advertiser-funded rewards will appear. Opening a wallet does not create any money." %}</p>
     <form method="post">{% csrf_token %}<button class="button" type="submit">{% translate "Open my wallet" %}</button></form></section>

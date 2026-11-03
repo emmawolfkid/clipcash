@@ -204,6 +204,12 @@ PASSWORD_RESET_TIMEOUT = max(ACCOUNTS_PASSWORD_RESET_TIMEOUT, ACCOUNTS_EMAIL_VER
 # configuration says (apps.core.features), and the homepage says so. On by
 # default outside DEBUG; only a reviewed public launch sets it to False.
 RESTRICTED_DEMO_MODE = env.bool("DJANGO_RESTRICTED_DEMO", default=not DEBUG)
+# Restricted demonstration only: the accounts listed in DJANGO_DEMO_ACCOUNTS
+# (comma-separated emails) may use pages that otherwise require a verified
+# email. Ignored unless RESTRICTED_DEMO_MODE is on and no payments (live or
+# sandbox) are possible; see apps.accounts.access. The email stays unverified.
+DEMO_EMAIL_VERIFICATION_OPTIONAL = env.bool("DJANGO_DEMO_EMAIL_VERIFICATION_OPTIONAL", default=False)
+DEMO_ACCOUNTS = env.list("DJANGO_DEMO_ACCOUNTS", default=[])
 
 
 # Sessions and cookies

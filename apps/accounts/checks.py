@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.checks import Error, Tags, register
+from django.core.checks import Error, Tags, Warning, register
 
 from .throttling import cache_is_shared
 
@@ -32,6 +32,14 @@ def check_production_security(app_configs, **kwargs):
             errors.append(
                 Error(f"{name} must be True when DEBUG is False.", id="accounts.E002")
             )
+    if settings.DEMO_EMAIL_VERIFICATION_OPTIONAL and not settings.RESTRICTED_DEMO_MODE:
+        errors.append(
+            Warning(
+                "DJANGO_DEMO_EMAIL_VERIFICATION_OPTIONAL is set without restricted demo mode; it has no effect.",
+                hint="Unset it: email verification is required outside the restricted demonstration.",
+                id="accounts.W001",
+            )
+        )
     if list(settings.AUTHENTICATION_BACKENDS) != [ACCOUNT_STATUS_BACKEND]:
         errors.append(
             Error(

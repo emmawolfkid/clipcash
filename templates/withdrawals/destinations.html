@@ -8,6 +8,9 @@
 <td>{% if b.status == "ACTIVE" %}<span class="actions">{% if sandbox and b.verification == "UNVERIFIED" %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="demo_verify"><input type="hidden" name="beneficiary" value="{{ b.pk }}"><button class="button--link" type="submit">{% translate "Run demo check" %}</button></form>{% endif %}
 <form method="post">{% csrf_token %}<input type="hidden" name="action" value="remove"><input type="hidden" name="beneficiary" value="{{ b.pk }}"><button class="button--link" type="submit">{% translate "Remove" %}</button></form></span>{% endif %}</td></tr>{% endfor %}</tbody></table>
 {% else %}<p class="empty-state">{% translate "No payout destinations yet." %}</p>{% endif %}
+{% if demo_unconfirmed_account %}
+{% include "components/demo_unconfirmed_notice.html" %}
+{% else %}
 <div class="card-grid section">
 <section class="panel"><h2 class="panel__title">{% translate "Add mobile money" %}</h2>
   <form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="add"><input type="hidden" name="kind" value="MOBILE_MONEY">
@@ -22,4 +25,5 @@
     <label for="b-holder">{% translate "Account holder name" %}</label><input id="b-holder" name="holder_name" type="text" maxlength="100" required>
     <button class="button" type="submit">{% translate "Save destination" %}</button></form></section>
 </div>
+{% endif %}
 {% endblock %}

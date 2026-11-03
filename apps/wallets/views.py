@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 
-from apps.accounts.access import VerifiedAccountRequiredMixin
+from apps.accounts.access import DEMO_UNCONFIRMED_BLOCKED, VerifiedAccountRequiredMixin, demo_unconfirmed
 
 from . import wallet_services
 from .models import WalletTransaction
@@ -27,7 +27,8 @@ class WalletView(VerifiedAccountRequiredMixin, View):
             wallet_services.ensure_wallet(request.user)
             messages.success(request, _("Your wallet is open. It holds no money yet."))
         except wallet_services.NotEligible:
-            messages.error(request, _("This account cannot have a member wallet."))
+            messages.error(request, DEMO_UNCONFIRMED_BLOCKED if demo_unconfirmed(request.user)
+                           else _("This account cannot have a member wallet."))
         return redirect("wallets:wallet")
 
 

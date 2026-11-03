@@ -4,6 +4,8 @@
 <h1 class="page-title">{% translate "Advertise on ClipCash" %}</h1>
 {% if account_reason == "staff_account" %}
   <p class="notice">{% translate "Staff accounts cannot act for an advertiser. Use the administration console to review advertisers." %}</p>
+{% elif demo_unconfirmed_account %}
+  {% include "components/demo_unconfirmed_notice.html" %}
 {% else %}
   {% if invitations %}
   <section class="panel section">

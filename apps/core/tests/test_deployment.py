@@ -64,6 +64,8 @@ print(json.dumps({
     "financial_enabled": sorted(k for k in FINANCIAL_FEATURES if is_enabled(k)),
     "VIDEO_PROVIDER": s.VIDEO_PROVIDER,
     "RESTRICTED_DEMO_MODE": s.RESTRICTED_DEMO_MODE,
+    "DEMO_EMAIL_VERIFICATION_OPTIONAL": s.DEMO_EMAIL_VERIFICATION_OPTIONAL,
+    "DEMO_ACCOUNTS": s.DEMO_ACCOUNTS,
     # Decided before any configuration lookup, so no database is needed here.
     "registration_enabled": is_enabled("registration") if s.RESTRICTED_DEMO_MODE else None,
     "home_view": resolve("/").view_name,
@@ -121,6 +123,8 @@ class ProductionSettingsTests(SimpleTestCase):
         self.assertTrue(values["RESTRICTED_DEMO_MODE"])
         self.assertFalse(values["registration_enabled"])
         self.assertEqual(values["home_view"], "home")
+        self.assertFalse(values["DEMO_EMAIL_VERIFICATION_OPTIONAL"])  # Verification required by default.
+        self.assertEqual(values["DEMO_ACCOUNTS"], [])
 
     def test_restricted_demo_can_be_turned_off_explicitly(self):
         self.assertFalse(production_settings(DJANGO_RESTRICTED_DEMO="False")["RESTRICTED_DEMO_MODE"])
