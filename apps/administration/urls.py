@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.reports import views as reports
 from apps.support import console as support
 
 from . import views
@@ -13,6 +14,9 @@ urlpatterns = [
     path("members/<uuid:pk>/", views.MemberDetailView.as_view(), name="member"),
     path("members/<uuid:pk>/complimentary/", views.ComplimentaryGrantView.as_view(), name="member_complimentary"),
     path("security/", views.SecurityView.as_view(), name="security"),
+    path("reports/", reports.ReportListView.as_view(), name="reports"),
+    path("reports/<slug:slug>/", reports.ReportView.as_view(), name="report"),
+    path("reports/<slug:slug>/export/", reports.ReportExportView.as_view(), name="report_export"),
     path("support/", support.QueueView.as_view(), name="support"),
     path("support/<str:reference>/", support.TicketView.as_view(), name="support_ticket"),
     path("videos/", views.VideoListView.as_view(), name="videos"),

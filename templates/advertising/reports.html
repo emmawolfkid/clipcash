@@ -1,0 +1,28 @@
+{% extends "advertising/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Reports" %}{% endblock %}
+{% block member_content %}
+{% include "advertising/_header.html" %}
+<div class="section__header"><h2>{% translate "Campaign reports" %}</h2></div>
+<form class="toolbar" method="get" aria-label="{% translate 'Report period' %}">
+  <label for="from">{% translate "From" %}</label><input id="from" type="date" name="from" value="{{ period.first|date:'Y-m-d' }}">
+  <label for="to">{% translate "To" %}</label><input id="to" type="date" name="to" value="{{ period.last|date:'Y-m-d' }}">
+  <button type="submit" class="button button--secondary">{% translate "Show" %}</button>
+</form>
+<p class="lead">{% translate "Results come from verified viewing sessions started in this period. Small counts are shown as a range to protect viewers' privacy. Demo rewards are simulated, never money." %}</p>
+<div class="stat-grid">
+  <div class="stat"><span class="stat__value">{{ report.totals.verified }}</span><span class="stat__label">{% translate "Verified views" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ report.totals.viewers }}</span><span class="stat__label">{% translate "Unique viewers (verified)" %}</span></div>
+  <div class="stat"><span class="stat__value">{{ report.totals.sessions }}</span><span class="stat__label">{% translate "Sessions started" %}</span></div>
+</div>
+{% if report.rows %}
+<table class="table">
+  <thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Sessions" %}</th><th scope="col">{% translate "Verified views" %}</th><th scope="col">{% translate "Unique viewers" %}</th><th scope="col">{% translate "In review" %}</th><th scope="col">{% translate "Not verified" %}</th><th scope="col">{% translate "Demo rewards (simulated)" %}</th></tr></thead>
+  <tbody>{% for row in report.rows %}<tr>
+    <td><a href="{% url 'advertising:campaign' organization.pk row.campaign.pk %}">{{ row.campaign.name }}</a></td>
+    <td>{{ row.campaign.get_status_display }}</td>
+    <td>{{ row.sessions }}</td><td>{{ row.verified }}</td><td>{{ row.viewers }}</td><td>{{ row.in_review }}</td><td>{{ row.not_verified }}</td><td>{{ row.qualified }}</td>
+  </tr>{% endfor %}</tbody>
+</table>
+{% include "components/pagination.html" %}
+{% else %}<p class="empty-state">{% translate "No campaigns yet." %}</p>{% endif %}
+{% endblock %}

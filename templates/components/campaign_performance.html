@@ -13,7 +13,7 @@
   <div class="stat-grid">
     <div class="stat stat--demo"><span class="stat__value">{{ performance.demo_rewards.qualified.display }}</span><span class="stat__label">{% translate "Simulated rewards recorded" %}</span></div>
     <div class="stat stat--demo"><span class="stat__value">{{ performance.demo_rewards.reversed.display }}</span><span class="stat__label">{% translate "Simulated rewards reversed" %}</span></div>
-    <div class="stat stat--demo"><span class="stat__value">TZS {{ performance.demo_rewards.demo_consumed }} / {{ performance.demo_rewards.demo_allocated }}</span><span class="stat__label">{% translate "Demo budget used (simulated figure, never charged)" %}</span></div>
+    <div class="stat stat--demo"><span class="stat__value">{% if performance.demo_rewards.demo_consumed is None %}{% translate "Hidden for privacy" %} / TZS {{ performance.demo_rewards.demo_allocated }}{% else %}TZS {{ performance.demo_rewards.demo_consumed }} / {{ performance.demo_rewards.demo_allocated }}{% endif %}</span><span class="stat__label">{% translate "Demo budget used (simulated figure, never charged)" %}</span></div>
   </div>
   <p class="lead">{% translate "Spend: not applicable. No money is charged to advertisers or paid to members in this demonstration." %}</p>
 </section>

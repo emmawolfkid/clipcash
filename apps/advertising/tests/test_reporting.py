@@ -12,6 +12,7 @@ from apps.viewing import services as viewing
 from apps.viewing.services import campaign_performance
 
 
+@override_settings(ADVERTISING_REPORT_MIN_COUNT=0)  # Calculation tests; D12 masking is tested on its own.
 class CampaignReportTests(RewardsTestCase):
     def figures(self, report):
         return {key: figure["value"] for key, figure in report["viewing"].items()}
@@ -71,6 +72,7 @@ class CampaignReportTests(RewardsTestCase):
         self.assertEqual(advertiser["viewing"]["in_review"]["display"], "0")  # Zero is not identifying.
 
 
+@override_settings(ADVERTISING_REPORT_MIN_COUNT=0)  # Calculation tests; D12 masking is tested on its own.
 class ReportPageTests(RewardsTestCase):
     def test_advertiser_pages_show_results_and_separate_demo_figures(self):
         self.approved_policy()

@@ -43,6 +43,10 @@
         {% if can.wallets %}<li><a class="app-nav__link{% if nav == 'wallets' %} is-current{% endif %}"{% if nav == 'wallets' %} aria-current="page"{% endif %} href="{% url 'administration:wallets' %}">{% translate "Wallets" %}</a></li>{% endif %}
         {% if can.withdrawals %}<li><a class="app-nav__link{% if nav == 'withdrawals' %} is-current{% endif %}"{% if nav == 'withdrawals' %} aria-current="page"{% endif %} href="{% url 'administration:withdrawals' %}">{% translate "Withdrawals (demo)" %}</a></li>{% endif %}
       </ul>{% endif %}
+      {% if can.reports %}<p class="app-nav__group" id="console-reports">{% translate "Reports" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-reports">
+        <li><a class="app-nav__link{% if nav == 'reports' %} is-current{% endif %}"{% if nav == 'reports' %} aria-current="page"{% endif %} href="{% url 'administration:reports' %}">{% translate "Reports" %}</a></li>
+      </ul>{% endif %}
       {% if can.settings %}<p class="app-nav__group" id="console-operations">{% translate "Operations" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-operations">
         {% if can.settings %}<li><a class="app-nav__link" href="{% url 'admin:core_siteconfiguration_changelist' %}">{% translate "System settings" %}</a></li>{% endif %}

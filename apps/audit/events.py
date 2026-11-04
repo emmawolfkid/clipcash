@@ -35,6 +35,7 @@ class Category:
     WALLETS = "WALLETS"
     WITHDRAWALS = "WITHDRAWALS"
     SUPPORT = "SUPPORT"
+    REPORTS = "REPORTS"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -53,6 +54,7 @@ class Category:
         (WALLETS, "Wallets"),
         (WITHDRAWALS, "Withdrawals"),
         (SUPPORT, "Customer support"),
+        (REPORTS, "Reports"),
     ]
 
 
@@ -266,6 +268,9 @@ EVENT_TYPES = {
         _event("support.ticket.priority_changed", Category.SUPPORT, BUSINESS,
                ["reference", "from_priority", "to_priority"]),
         _event("support.action.denied", Category.SUPPORT, SECURITY, ["action", "reason"]),
+        # Reports (aggregates only; the export event names the report and period, never its rows)
+        _event("reports.exported", Category.REPORTS, SECURITY, ["report", "start", "end", "rows"]),
+        _event("reports.action.denied", Category.REPORTS, SECURITY, ["action", "report", "reason"]),
     )
 }
 

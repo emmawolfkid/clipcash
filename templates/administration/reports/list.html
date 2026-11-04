@@ -1,0 +1,10 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Reports" %}{% endblock %}
+{% block crumb %}{% translate "Reports" %}{% endblock %}
+{% block console_content %}
+<h1 class="page-title">{% translate "Reports" %}</h1>
+<p class="lead">{% translate "Figures come from the platform's own records. Real money stays locked; sandbox, simulated and demo figures are reported separately and are never money." %}</p>
+<ul class="list">
+  {% for report in reports %}<li class="list__item"><span><a href="{% url 'administration:report' report.slug %}">{{ report.title }}</a><br><small>{{ report.summary }}</small></span></li>{% endfor %}
+</ul>
+{% endblock %}

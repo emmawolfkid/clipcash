@@ -38,6 +38,7 @@ class DemoJourneyTests(RewardsTestCase):
                                 json.dumps({"seq": seq, "position_ms": position * 1000, "state": state}),
                                 content_type="application/json")
 
+    @override_settings(ADVERTISING_REPORT_MIN_COUNT=0)  # Asserts exact figures on one view.
     def test_member_journey_from_grant_to_simulated_reward_without_money(self):
         wallet = wallet_services.ensure_wallet(self.visitor)  # Opens three ledger accounts at zero.
         before = financial_snapshot()

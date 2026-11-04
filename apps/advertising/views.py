@@ -134,6 +134,26 @@ class OrganizationView(AdvertiserBaseView):
 
 
 @advertisers_feature
+class ReportsView(AdvertiserBaseView):
+    """This organization's campaign results in a period. Small counts are always masked (D12)."""
+
+    def get(self, request, organization_id):
+        from apps.reports import services as reports
+
+        try:
+            period = reports.period_from(request.GET.get("from", "")[:10], request.GET.get("to", "")[:10])
+        except reports.PeriodError as error:
+            messages.error(request, str(error))
+            period = reports.period_from()
+        page = Paginator(self.organization.campaigns.order_by("-created_at"), 25).get_page(request.GET.get("page"))
+        params = request.GET.copy()
+        params.pop("page", None)
+        return render(request, "advertising/reports.html", self.context(
+            tab="reports", period=period, page=page, page_query=params.urlencode(),
+            report=reports.advertiser_report(self.organization, period, list(page.object_list))))
+
+
+@advertisers_feature
 class ProfileView(AdvertiserBaseView):
     template_name = "advertising/profile.html"
 

@@ -999,7 +999,7 @@ def campaign_summary(queryset):
 
 def report_figure(value, *, for_advertiser):
     """A count as shown in a report. Advertisers see "fewer than N" for small non-zero
-    counts when ADVERTISING_REPORT_MIN_COUNT is set (owner decision D12; 0 = exact).
+    counts below ADVERTISING_REPORT_MIN_COUNT (owner decision D12: 5; 0 = exact).
     Staff always see the exact count."""
     minimum = settings.ADVERTISING_REPORT_MIN_COUNT if for_advertiser else 0
     if minimum and 0 < value < minimum:
@@ -1032,11 +1032,15 @@ def campaign_report(campaign, *, for_advertiser=True):
 
     _, by_campaign = campaign_performance(Campaign.objects.filter(pk=campaign.pk))
     totals = next(iter(rewards.campaign_totals([campaign])), {})
+    qualified = report_figure(totals.get("qualified", 0), for_advertiser=for_advertiser)
+    budget = rewards.budget_summary(campaign)
+    if qualified["value"] is None:  # The amounts are qualified x reward: hide them with the count.
+        budget = {**budget, "demo_consumed": None, "demo_remaining": None}
     return {
         "viewing": _viewing_figures(by_campaign.get(campaign.pk, {}), for_advertiser=for_advertiser),
         "demo_rewards": {
-            "qualified": report_figure(totals.get("qualified", 0), for_advertiser=for_advertiser),
+            "qualified": qualified,
             "reversed": report_figure(totals.get("reversed", 0), for_advertiser=for_advertiser),
-            **rewards.budget_summary(campaign),
+            **budget,
         },
     }

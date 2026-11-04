@@ -367,8 +367,9 @@ WITHDRAWALS_PAYOUT_STUCK_MINUTES = 60
 MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED = env.bool("DJANGO_MEMBERSHIPS_COMPLIMENTARY_GRANTS", default=False)
 
 # Advertiser reports: non-zero counts below this are shown as "fewer than N" to
-# advertisers (owner decision D12, pending; 0 = exact counts). Staff see exact counts.
-ADVERTISING_REPORT_MIN_COUNT = env.int("DJANGO_ADVERTISING_REPORT_MIN_COUNT", default=0)
+# advertisers (owner decision D12: 5; also hides figures a count could be derived
+# from). Staff see exact counts on screen; per-campaign CSV exports apply it too.
+ADVERTISING_REPORT_MIN_COUNT = env.int("DJANGO_ADVERTISING_REPORT_MIN_COUNT", default=5)
 
 
 # Audit (apps.audit). IP addresses and user agents are recorded for security
