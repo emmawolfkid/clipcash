@@ -1,0 +1,23 @@
+/* UI-02: components / notification-bell. */
+.notification-bell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.notification-bell__icon {
+  flex: none;
+}
+
+.notification-bell__badge {
+  min-width: 1.4rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4rem;
+  text-align: center;
+  background: var(--brand-yellow);
+  color: var(--brand-navy);
+}
+

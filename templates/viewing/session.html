@@ -1,9 +1,11 @@
 {% extends "members/layout.html" %}{% load i18n static %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/viewing/session.css' %}">{% endblock %}
 {% block title %}{{ session.campaign.name }}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{{ session.campaign.name }}</h1>
+<p><a href="{% url 'viewing:history' %}">{% translate "Viewing history" %}</a> · <a href="{% url 'viewing:list' %}">{% translate "Sponsored videos" %}</a></p>
 {% if session.is_open and playback %}
-  <div class="player">
+  <div class="player" data-playback-error="{% translate 'Playback is unavailable. Use the player controls to retry, or reload this session to check its current status. Unconfirmed time may not count.' %}">
     {% if playback.kind == "iframe" %}
       <iframe id="watch-frame" class="player__frame" src="{{ playback.url }}" title="{{ session.video.title }}"
               allow="accelerometer; gyroscope; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
@@ -13,17 +15,27 @@
       <div class="player__message"><p><strong>{% translate "Demo sample" %}</strong></p><p>{% translate "No video file is configured for demo playback, so this session cannot be verified." %}</p></div>
     {% endif %}
   </div>
-  <section class="panel" id="watch-panel" data-events-url="{% url 'viewing:events' session.pk %}" data-heartbeat="{{ heartbeat_seconds }}">
+  <p class="media-feedback" role="status" hidden></p>
+  <script src="{% static 'js/media-feedback.js' %}" defer></script>
+  <section class="panel" id="watch-panel" data-events-url="{% url 'viewing:events' session.pk %}" data-heartbeat="{{ heartbeat_seconds }}"
+    data-ended="{% translate 'This viewing session has ended. Loading the result…' %}"
+    data-limited="{% translate 'Updates are temporarily limited. Verification has not been confirmed; wait before trying again.' %}"
+    data-unconfirmed="{% translate 'This update was not confirmed. Check your connection or reload the session to see its current status.' %}"
+    data-counted="{% translate 'Seconds counted by ClipCash:' %}"
+    data-enough="{% translate 'The required watch time has been counted. Finish playback so ClipCash can check the session outcome.' %}">
     {% csrf_token %}
-    <label for="watch-progress">{% translate "Viewing progress" %}</label>
+    <h2 class="panel__title">{% translate "Session verification" %}</h2>
+    <label for="watch-progress">{% translate "Server-counted viewing progress" %}</label>
     <progress id="watch-progress" max="100" value="{{ session.progress_percent }}"></progress>
     <p id="watch-status" class="lead" role="status" aria-live="polite">{% if session.required_ms %}{% translate "Press play to begin. Progress is checked by ClipCash, not your browser." %}{% else %}{% translate "This video has no confirmed length yet, so the session cannot be verified." %}{% endif %}</p>
+    <p>{% translate "The player's timeline shows playback position. This progress bar shows only time counted by the server; it does not confirm a verified view or a reward." %}</p>
+    <details><summary>{% translate "Having playback trouble?" %}</summary><p>{% translate "Use the player's controls to retry playback. If it remains unavailable, reload this session to check access and status. Unconfirmed time may not count. You can finish the session to see the server's decision." %}</p></details>
     <form method="post" action="{% url 'viewing:finish' session.pk %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Finish session" %}</button></form>
   </section>
   <script src="{% static 'js/video-watch.js' %}" defer></script>
 {% else %}
   <section class="panel">
-    <h2 class="panel__title">{{ session.get_outcome_display }}</h2>
+    <h2 class="panel__title">{% if session.is_open %}{% translate "Playback unavailable" %}{% else %}{{ session.get_outcome_display }}{% endif %}</h2>
     {% if message %}<p>{{ message }}</p>{% endif %}
     {% if session.outcome == "VERIFIED_EVIDENCE" %}<p>{% translate "This view was verified by ClipCash's checks." %}</p>
     {% elif session.outcome == "SUSPICIOUS_REVIEW" %}<p>{% translate "This view is being reviewed by ClipCash staff." %}</p>

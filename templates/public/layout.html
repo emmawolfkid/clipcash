@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% load i18n static %}
+{% block layout_styles %}
+<link rel="stylesheet" href="{% static 'css/layouts/marketing.css' %}">
+{% endblock %}
+{% block navigation_label %}{% translate "Main navigation" %}{% endblock %}
+{% block site_navigation %}{% include "public/_navigation.html" %}{% endblock %}
+{% block footer_content %}{% include "public/_footer.html" %}{% endblock %}

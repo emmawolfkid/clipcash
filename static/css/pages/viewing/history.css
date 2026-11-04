@@ -1,0 +1,9 @@
+.viewing-history caption {
+  text-align: start;
+  font-weight: 700;
+  padding-block: var(--space-4);
+  color: var(--text);
+}
+.viewing-history td:first-child { min-width: 12rem; }
+.viewing-history td:nth-child(2) { white-space: nowrap; }
+.viewing-history td:nth-child(3) { font-variant-numeric: tabular-nums; white-space: nowrap; }

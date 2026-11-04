@@ -34,6 +34,7 @@ class Category:
     PAYMENTS = "PAYMENTS"
     WALLETS = "WALLETS"
     WITHDRAWALS = "WITHDRAWALS"
+    SUPPORT = "SUPPORT"
 
     choices = [
         (AUTHENTICATION, "Authentication"),
@@ -51,6 +52,7 @@ class Category:
         (PAYMENTS, "Payments (sandbox)"),
         (WALLETS, "Wallets"),
         (WITHDRAWALS, "Withdrawals"),
+        (SUPPORT, "Customer support"),
     ]
 
 
@@ -254,6 +256,16 @@ EVENT_TYPES = {
         _event("withdrawals.exception.resolved", Category.WITHDRAWALS, BUSINESS, ['code']),
         _event("withdrawals.sandbox.simulated", Category.WITHDRAWALS, BUSINESS, ['reference', 'action']),
         _event("withdrawals.action.denied", Category.WITHDRAWALS, SECURITY, ['action', 'reason']),
+        # Customer support (references and states only; never message text or notes)
+        _event("support.ticket.created", Category.SUPPORT, BUSINESS, ["reference", "category", "organization"]),
+        _event("support.ticket.customer_replied", Category.SUPPORT, BUSINESS, ["reference", "reopened"]),
+        _event("support.ticket.staff_replied", Category.SUPPORT, BUSINESS, ["reference", "status"]),
+        _event("support.ticket.note_added", Category.SUPPORT, BUSINESS, ["reference", "status"]),
+        _event("support.ticket.assigned", Category.SUPPORT, BUSINESS, ["reference", "assignee"]),
+        _event("support.ticket.status_changed", Category.SUPPORT, BUSINESS, ["reference", "from_status", "to_status"]),
+        _event("support.ticket.priority_changed", Category.SUPPORT, BUSINESS,
+               ["reference", "from_priority", "to_priority"]),
+        _event("support.action.denied", Category.SUPPORT, SECURITY, ["action", "reason"]),
     )
 }
 

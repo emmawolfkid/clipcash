@@ -285,6 +285,8 @@ NOTIFICATIONS_RETENTION_DAYS = 365
 # Members are reminded this many days before a membership ends (no renewal is
 # initiated; nothing is charged). 0 disables the reminder.
 MEMBERSHIPS_EXPIRY_REMINDER_DAYS = env.int("DJANGO_MEMBERSHIPS_EXPIRY_REMINDER_DAYS", default=7)
+# Customer support (Phase 15-B): a customer reply reopens a resolved ticket within this window.
+SUPPORT_REOPEN_DAYS = 14
 
 # Memberships (apps.memberships). Payments stay locked off; see
 # docs/architecture/memberships.md.

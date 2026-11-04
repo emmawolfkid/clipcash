@@ -1,10 +1,14 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load i18n static %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/viewing/history.css' %}">{% endblock %}
 {% block title %}{% translate "Viewing history" %}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{% translate "Viewing history" %}</h1>
+<p class="lead">{% translate "Session outcomes and counted watch time come from ClipCash's checks. A verified view is separate from a reward decision." %}</p>
+<p><a class="button" href="{% url 'viewing:list' %}">{% translate "Find sponsored videos" %}</a></p>
 {% include "components/not_a_reward_notice.html" %}
 {% if page.object_list %}
-<table class="table">
+<table class="table viewing-history">
+  <caption>{% translate "Your sponsored viewing sessions" %}</caption>
   <thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Started" %}</th><th scope="col">{% translate "Watched" %}</th><th scope="col">{% translate "Result" %}</th></tr></thead>
   <tbody>{% for s in page.object_list %}
     <tr><td><a href="{% url 'viewing:session' s.pk %}">{{ s.campaign.name }}</a></td><td>{{ s.created_at|date:"SHORT_DATETIME_FORMAT" }}</td>

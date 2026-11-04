@@ -1,0 +1,26 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Support" %}{% endblock %}
+{% block member_content %}
+<div class="section__header"><h1 class="page-title">{% translate "Support tickets" %}</h1><a class="button" href="{% url 'support:create' %}">{% translate "Ask for help" %}</a></div>
+<form class="toolbar" method="get" role="search">
+  <label class="visually-hidden" for="q">{% translate "Search by reference or subject" %}</label>
+  <input id="q" type="search" name="q" value="{{ query }}" maxlength="100" placeholder="{% translate 'Search by reference or subject' %}">
+  <label class="visually-hidden" for="f-status">{% translate "Status" %}</label>
+  <select id="f-status" name="status"><option value="">{% translate "Any status" %}</option><option value="active"{% if status == "active" %} selected{% endif %}>{% translate "Not yet resolved" %}</option>{% for value, label in statuses %}<option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <button type="submit" class="button button--secondary">{% translate "Filter" %}</button>
+</form>
+{% if page.object_list %}
+<table class="table">
+  <thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Subject" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Last update" %}</th></tr></thead>
+  <tbody>{% for ticket in page.object_list %}<tr>
+    <td><a href="{% url 'support:ticket' ticket.reference %}">{{ ticket.reference }}</a></td>
+    <td>{{ ticket.subject }}{% if ticket.organization %}<br><small>{{ ticket.organization.display_name }}</small>{% endif %}</td>
+    <td>{% include "support/_status_badge.html" %}</td>
+    <td><time datetime="{{ ticket.last_activity_at|date:'c' }}">{{ ticket.last_activity_at|date:"SHORT_DATETIME_FORMAT" }}</time></td>
+  </tr>{% endfor %}</tbody>
+</table>
+{% include "components/pagination.html" %}
+{% else %}
+<p class="empty-state">{% if query or status %}{% translate "No tickets match these filters." %}{% else %}{% translate "You have not asked for help yet. Open a ticket and ClipCash support will reply here." %}{% endif %}</p>
+{% endif %}
+{% endblock %}

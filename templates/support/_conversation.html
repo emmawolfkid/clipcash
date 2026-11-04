@@ -1,0 +1,26 @@
+{% load i18n %}{# Usage: include with items=… staff=True|False. Customers never receive internal notes. #}
+<ol class="list support-thread" aria-label="{% translate 'Conversation and history' %}">
+{% for moment, kind, item in items %}
+  {% if kind == "message" %}
+  <li class="list__item panel">
+    <div>
+      <p class="notification__meta">
+        <strong>{% if item.from_staff %}{% if staff %}{{ item.author.email }}{% else %}{% translate "ClipCash support" %}{% endif %}{% elif staff %}{{ item.author.email }} ({% translate "customer" %}){% else %}{% if item.author_id == user.pk %}{% translate "You" %}{% else %}{{ item.author.email }}{% endif %}{% endif %}</strong>
+        <time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:"SHORT_DATETIME_FORMAT" }}</time>
+        {% if item.internal %}<span class="badge badge--sandbox">{% translate "Internal note" %}</span>{% endif %}
+      </p>
+      <p>{{ item.body|linebreaksbr }}</p>
+    </div>
+  </li>
+  {% else %}
+  <li class="list__item">
+    <p class="notification__meta"><time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:"SHORT_DATETIME_FORMAT" }}</time>
+      {% if item.action == "CREATED" %}{% translate "Ticket opened" %}
+      {% elif item.action == "REOPENED" %}{% translate "Ticket reopened" %}
+      {% elif item.action == "ASSIGNED" %}{% if item.to_value %}{% blocktranslate with who=item.to_value %}Assigned to {{ who }}{% endblocktranslate %}{% else %}{% translate "Unassigned" %}{% endif %}
+      {% else %}{{ item.get_action_display }}: {{ item.from_label }} → {{ item.to_label }}{% endif %}
+      {% if staff and item.actor %}· {{ item.actor.email }}{% endif %}</p>
+  </li>
+  {% endif %}
+{% endfor %}
+</ol>

@@ -6,11 +6,12 @@
 (function () {
   "use strict";
   var narrow = window.matchMedia("(max-width: 52rem)");
-  Array.prototype.forEach.call(document.querySelectorAll(".app-nav__toggle"), function (toggle) {
+  Array.prototype.forEach.call(document.querySelectorAll(".app-nav__toggle, .site-menu-toggle"), function (toggle) {
     var menu = document.getElementById(toggle.getAttribute("aria-controls"));
     if (!menu) { return; }
     function apply() {
       if (narrow.matches) {
+        if (menu.contains(document.activeElement)) { toggle.setAttribute("aria-expanded", "true"); }
         toggle.hidden = false;
         menu.classList.toggle("is-collapsed", toggle.getAttribute("aria-expanded") !== "true");
       } else {
@@ -31,6 +32,7 @@
       }
     });
     if (narrow.addEventListener) { narrow.addEventListener("change", apply); }
+    else if (narrow.addListener) { narrow.addListener(apply); }
     apply();
   });
 }());

@@ -1,17 +1,19 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load i18n static %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/videos/library.css' %}">{% endblock %}
 {% block title %}{% if category %}{{ category.name }}{% else %}{% translate "Videos" %}{% endif %}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{% if category %}{{ category.name }}{% else %}{% translate "Video library" %}{% endif %}</h1>
 {% if category.description %}<p class="lead">{{ category.description }}</p>{% endif %}
-<form class="toolbar" method="get" role="search">
+<p class="lead">{% translate "Explore published videos. Playback access depends on your membership; library playback is separate from sponsored viewing verification." %}</p>
+<form class="toolbar library-search" method="get" role="search">
   <label class="visually-hidden" for="video-search">{% translate "Search videos" %}</label>
   <input id="video-search" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search videos' %}">
   <button type="submit" class="button">{% translate "Search" %}</button>
 </form>
 {% if categories %}
 <nav class="chips" aria-label="{% translate 'Categories' %}">
-  <a class="chip{% if not category %} is-current{% endif %}" href="{% url 'videos:library' %}">{% translate "All" %}</a>
-  {% for item in categories %}<a class="chip{% if category and item.pk == category.pk %} is-current{% endif %}" href="{% url 'videos:category' item.slug %}">{{ item.name }}</a>{% endfor %}
+  <a class="chip{% if not category %} is-current{% endif %}" {% if not category %}aria-current="page"{% endif %} href="{% url 'videos:library' %}">{% translate "All" %}</a>
+  {% for item in categories %}<a class="chip{% if category and item.pk == category.pk %} is-current{% endif %}" {% if category and item.pk == category.pk %}aria-current="page"{% endif %} href="{% url 'videos:category' item.slug %}">{{ item.name }}</a>{% endfor %}
 </nav>
 {% endif %}
 {% if videos %}
@@ -25,5 +27,6 @@
   {% endif %}
 {% else %}
   <p class="empty-state">{% if query %}{% translate "No videos match your search." %}{% else %}{% translate "No videos are available here yet." %}{% endif %}</p>
+  {% if query %}<a href="{{ request.path }}">{% translate "Clear search" %}</a>{% endif %}
 {% endif %}
 {% endblock %}

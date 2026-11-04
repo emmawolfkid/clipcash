@@ -1,0 +1,226 @@
+/* UI-02: components / forms. */
+.form input[type="email"],
+.form input[type="password"],
+.form input[type="text"] {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) / 2);
+}
+
+.form .helptext {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.form .helptext ul {
+  color: var(--muted);
+  font-size: 0.875rem;
+  padding-left: 1.1rem;
+  margin: 0.25rem 0 0;
+}
+
+.errorlist {
+  color: var(--danger);
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.errorlist.nonfield {
+  border-left: 4px solid var(--danger);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.toolbar input[type="search"] {
+  flex: 1 1 12rem;
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) / 2);
+}
+
+.form ul[id] {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.form ul[id] label {
+  font-weight: 400;
+  display: inline;
+}
+
+.toolbar__check {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+input {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
+
+input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]) {
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--touch-target);
+  padding: 0.6rem 0.75rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+}
+
+select {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--touch-target);
+  padding: 0.6rem 0.75rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+}
+
+.form input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+.form select,
+.form textarea {
+  width: 100%;
+  border-color: var(--control-border);
+  background: var(--surface);
+}
+
+textarea {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--touch-target);
+  padding: 0.6rem 0.75rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--brand-navy);
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.form [aria-invalid="true"] {
+  border: 2px solid var(--danger);
+}
+
+.form > div {
+  margin-bottom: var(--space-5);
+}
+
+.form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.error-summary {
+  border: 2px solid var(--danger);
+  background: var(--danger-bg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+  border-radius: var(--radius-sm);
+}
+
+.error-summary h2 {
+  font-size: var(--text-lg);
+  margin-top: 0;
+}
+
+.error-summary a {
+  color: var(--danger);
+}
+
+.error-summary ul {
+  margin-bottom: 0;
+  padding-left: var(--space-5);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0 1rem;
+  gap: var(--space-3);
+}
+
+.confirm-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.toolbar input {
+  flex: 1 1 12rem;
+  border-color: var(--control-border);
+}
+
+.toolbar select {
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) / 2);
+  flex: 1 1 12rem;
+  border-color: var(--control-border);
+}
+
+.confirm-form input[type="text"] {
+  padding: 0.3rem 0.5rem;
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) / 2);
+  border-color: var(--control-border);
+}
+
+.toolbar label:not(.visually-hidden) {
+  min-height: var(--touch-target);
+  align-content: center;
+}
+
+.confirm-form label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  min-height: var(--touch-target);
+  align-content: center;
+}
+

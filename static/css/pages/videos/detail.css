@@ -1,0 +1,12 @@
+/* UI-02: pages / videos / detail. */
+.video-detail__meta {
+  color: var(--muted);
+  margin-top: -0.25rem;
+}
+.video-detail__notice {
+  padding: var(--space-4);
+  background: var(--surface-soft);
+  border-inline-start: 3px solid var(--brand-yellow);
+  border-radius: var(--radius-sm);
+}
+

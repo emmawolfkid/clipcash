@@ -1,0 +1,1 @@
+{% load i18n %}<span class="badge {% if ticket.status == 'WAITING_FOR_CUSTOMER' %}badge--pending{% elif ticket.status == 'RESOLVED' or ticket.status == 'CLOSED' %}badge--completed{% else %}badge--active{% endif %}">{% if staff %}{{ ticket.staff_status_label }}{% else %}{{ ticket.get_status_display }}{% endif %}</span>

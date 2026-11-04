@@ -46,7 +46,10 @@ class HomepageTests(HomeTestCase):
 
     def test_branding_and_explanation(self):
         response = self.client.get(HOME)
-        self.assertContains(response, '<h1 id="home-title" class="hero__title">ClipCash</h1>', html=True)
+        self.assertContains(response, 'id="home-title"')
+        self.assertContains(response, "Watch clips.")
+        self.assertContains(response, "Know what counts.")
+        self.assertContains(response, "ClipCash")
         self.assertContains(response, "How it works")
         self.assertContains(response, "Verified viewing")
 
@@ -97,12 +100,12 @@ class HomepageTests(HomeTestCase):
 
     def test_external_css_only(self):
         response = self.client.get(HOME)
-        self.assertContains(response, '<link rel="stylesheet" href="/static/css/clipcash.css">', html=True)
+        self.assertContains(response, '<link rel="stylesheet" href="/static/css/core/tokens.css">', html=True)
         content = response.content.decode()
         self.assertNotIn("<style", content)
         self.assertNotIn(" style=", content)
         self.assertIn("style-src 'self'", response["Content-Security-Policy"])
-        self.assertIsNotNone(finders.find("css/clipcash.css"))
+        self.assertIsNotNone(finders.find("css/core/tokens.css"))
 
     def test_brand_links_home_for_visitors(self):
         self.assertContains(self.client.get(LOGIN), f'<a class="brand" href="{HOME}">', count=1)

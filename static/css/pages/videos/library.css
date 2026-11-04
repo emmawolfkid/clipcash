@@ -1,0 +1,12 @@
+/* Search remains within the current library/category route. */
+.library-search {
+  padding: var(--space-4);
+  background: var(--surface-soft);
+  border-radius: var(--radius);
+  margin-block: var(--space-5);
+}
+.library-search input { flex: 1 1 14rem; min-width: 0; }
+.library-search button { flex: 0 0 auto; }
+@media (max-width: 30rem) {
+  .library-search button { width: 100%; }
+}

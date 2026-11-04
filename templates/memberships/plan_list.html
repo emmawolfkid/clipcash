@@ -1,7 +1,8 @@
-{% extends "base.html" %}{% load i18n money %}
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/memberships/plans.css' %}">{% endblock %}
 {% block title %}{% translate "Membership plans" %}{% endblock %}
-{% block main_class %} site-main--wide{% endblock %}
-{% block content %}
+
+{% block member_content %}
 <h1>{% translate "Membership plans" %}</h1>
 {% if not payments_available %}
 <p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>

@@ -1,0 +1,130 @@
+/* UI-02: components / media. */
+.video-card__link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  height: 100%;
+}
+
+.video-card__link:hover .video-card__title {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.video-card__thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--info-bg);
+  display: grid;
+  place-items: center;
+}
+
+.video-card__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.video-card__placeholder {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.video-card__duration {
+  position: absolute;
+  right: 0.4rem;
+  bottom: 0.4rem;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.25rem;
+}
+
+.video-card__body {
+  padding: var(--space-4);
+  overflow-wrap: anywhere;
+}
+
+.video-card__title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.video-card__meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.player {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--brand-navy);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.player__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.player__message p {
+  margin: 0;
+  position: relative;
+}
+
+.player__message .button {
+  position: relative;
+}
+
+.player__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+}
+
+.video-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.video-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+}
+
+.player__message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  overflow-y: auto;
+}
+

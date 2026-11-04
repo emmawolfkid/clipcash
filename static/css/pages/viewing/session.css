@@ -1,0 +1,7 @@
+/* UI-02: pages / viewing / session. */
+#watch-panel progress {
+  width: 100%;
+  height: 0.9rem;
+  margin: 0.25rem 0 0.5rem;
+}
+

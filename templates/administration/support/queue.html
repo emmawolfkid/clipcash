@@ -1,0 +1,37 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Support queue" %}{% endblock %}
+{% block crumb %}{% translate "Support" %}{% endblock %}
+{% block console_content %}
+<h1 class="page-title">{% translate "Support queue" %}</h1>
+<form class="toolbar" method="get" role="search" aria-label="{% translate 'Filter tickets' %}">
+  <label class="visually-hidden" for="q">{% translate "Search by reference or subject" %}</label>
+  <input id="q" type="search" name="q" value="{{ filters.q }}" maxlength="64" placeholder="{% translate 'Reference (CS-…) or subject' %}">
+  <label class="visually-hidden" for="f-status">{% translate "Status" %}</label>
+  <select id="f-status" name="status"><option value=""{% if not filters.status %} selected{% endif %}>{% translate "Any status" %}</option><option value="active"{% if filters.status == "active" %} selected{% endif %}>{% translate "Not yet resolved" %}</option>{% for value, label in statuses %}<option value="{{ value }}"{% if filters.status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <label class="visually-hidden" for="f-category">{% translate "Category" %}</label>
+  <select id="f-category" name="category"><option value="">{% translate "Any category" %}</option>{% for value, label in categories %}<option value="{{ value }}"{% if filters.category == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <label class="visually-hidden" for="f-priority">{% translate "Priority" %}</label>
+  <select id="f-priority" name="priority"><option value="">{% translate "Any priority" %}</option>{% for value, label in priorities %}<option value="{{ value }}"{% if filters.priority == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <label class="visually-hidden" for="f-assignee">{% translate "Assignee" %}</label>
+  <select id="f-assignee" name="assignee"><option value="">{% translate "Anyone" %}</option><option value="me"{% if filters.assignee == "me" %} selected{% endif %}>{% translate "Assigned to me" %}</option><option value="none"{% if filters.assignee == "none" %} selected{% endif %}>{% translate "Unassigned" %}</option>{% for agent in agents %}<option value="{{ agent.pk }}"{% if filters.assignee == agent.pk|stringformat:"s" %} selected{% endif %}>{{ agent.email }}</option>{% endfor %}</select>
+  <button type="submit" class="button button--secondary">{% translate "Filter" %}</button>
+</form>
+{% if page.object_list %}
+<table class="table">
+  <thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Subject" %}</th><th scope="col">{% translate "Customer" %}</th><th scope="col">{% translate "Category" %}</th><th scope="col">{% translate "Priority" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Assignee" %}</th><th scope="col">{% translate "Last activity" %}</th></tr></thead>
+  <tbody>{% for ticket in page.object_list %}<tr>
+    <td><a href="{% url 'administration:support_ticket' ticket.reference %}">{{ ticket.reference }}</a></td>
+    <td>{{ ticket.subject }}</td>
+    <td>{{ ticket.requester.email }}{% if ticket.organization %}<br><small>{{ ticket.organization.display_name }}</small>{% endif %}</td>
+    <td>{{ ticket.get_category_display }}</td>
+    <td>{{ ticket.get_priority_display }}</td>
+    <td>{% include "support/_status_badge.html" with staff=True %}</td>
+    <td>{{ ticket.assignee.email|default:"—" }}</td>
+    <td><time datetime="{{ ticket.last_activity_at|date:'c' }}">{{ ticket.last_activity_at|date:"SHORT_DATETIME_FORMAT" }}</time></td>
+  </tr>{% endfor %}</tbody>
+</table>
+{% include "components/pagination.html" %}
+{% else %}
+<p class="empty-state">{% translate "No tickets match these filters." %}</p>
+{% endif %}
+{% endblock %}

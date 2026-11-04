@@ -1,6 +1,6 @@
-{% extends "base.html" %}{% load i18n %}
+{% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Sign in" %}{% endblock %}
-{% block content %}
+{% block auth_content %}
 <h1>{% translate "Sign in" %}</h1>
 {% include "components/form.html" with button=_("Sign in") %}
 <ul class="links">

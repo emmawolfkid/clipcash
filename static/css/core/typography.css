@@ -1,0 +1,29 @@
+/* UI-02: core / typography. */
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.lead {
+  color: var(--muted);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+a {
+  color: var(--accent);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.page-title {
+  margin: 0 0 0.75rem;
+  line-height: 1.25;
+  font-size: var(--title-size);
+  letter-spacing: -0.025em;
+}
+

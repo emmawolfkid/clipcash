@@ -1,0 +1,89 @@
+/* UI-02: components / buttons. */
+.button--block {
+  width: 100%;
+}
+
+
+@media (max-width: 40rem) {
+  .button {
+    min-height: 2.75rem;
+  }
+
+}
+
+.button {
+  font: inherit;
+  font-weight: 600;
+  border: 2px solid var(--accent);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  max-width: 100%;
+  padding: var(--space-2) var(--space-5);
+  color: var(--action-text);
+  background: var(--action-bg);
+  border-color: var(--brand-navy);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.button:hover {
+  background: var(--brand-navy);
+  color: var(--surface);
+}
+
+.button--secondary {
+  color: var(--brand-navy);
+  background: var(--surface);
+}
+
+.button--secondary:hover {
+  color: var(--brand-navy);
+  background: var(--surface-soft);
+}
+
+.button--danger {
+  color: var(--surface);
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.button--link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-weight: 400;
+  text-decoration: underline;
+  min-height: var(--touch-target);
+  font: inherit;
+  cursor: pointer;
+  text-underline-offset: 0.2em;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.button:disabled {
+  background: var(--surface-soft);
+  color: var(--muted);
+  border-color: var(--control-border);
+}
+
+.button[aria-busy="true"] {
+  cursor: progress;
+}
+
+
+@media (forced-colors: active) {
+  .button {
+    border: 1px solid ButtonText;
+  }
+
+}

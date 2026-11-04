@@ -1,78 +1,65 @@
-{% extends "base.html" %}{% load i18n %}
-{% block title %}{% translate "Welcome" %}{% endblock %}
+{% extends "public/layout.html" %}{% load static i18n %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/public/home.css' %}">{% endblock %}
+{% block title %}{% translate "Discover. Watch. Understand." %}{% endblock %}
 {% block main %}
-<main id="content" class="site-main site-main--home">
-  {% include "components/messages.html" %}
-
-  <section class="hero" aria-labelledby="home-title">
-    <p class="hero__eyebrow">{% if restricted_demo %}{% translate "Restricted demonstration" %}{% else %}{% translate "Sponsored video platform" %}{% endif %}</p>
-    <h1 id="home-title" class="hero__title">{{ site_config.platform_name|default:"ClipCash" }}</h1>
-    <p class="hero__lead">
-      {% if site_config.platform_description %}{{ site_config.platform_description }}{% else %}{% blocktranslate trimmed %}
-        A platform that connects advertisers with an audience: brands publish reviewed video campaigns,
-        members watch them, and every view is checked on the server before it counts.
-      {% endblocktranslate %}{% endif %}
-    </p>
+<main id="content" class="site-main site-main--home landing" tabindex="-1">
+{% include "components/messages.html" %}
+<section class="hero" aria-labelledby="home-title">
+  <div class="hero__copy">
+    <p class="hero__eyebrow">{{ site_config.platform_name|default:"ClipCash" }} · {% if restricted_demo %}{% translate "Restricted demonstration" %}{% else %}{% translate "Reviewed video. Clear records." %}{% endif %}</p>
+    <h1 id="home-title" class="hero__title">{% translate "Watch clips." %}<br><span>{% translate "Know what counts." %}</span></h1>
+    <p class="hero__lead">{% if site_config.platform_description %}{{ site_config.platform_description }}{% else %}{% translate "Discover reviewed video campaigns, explore eligible content and follow your viewing journey with clarity." %}{% endif %}</p>
+    <p class="hero__tagline" lang="sw">Tazama Video · Kusanya Zawadi</p>
     <div class="actions">
-      {% if user.is_authenticated %}
-        <a class="button" href="{% url 'dashboard' %}">{% translate "Go to your dashboard" %}</a>
-        {% if user.is_staff %}<a class="button button--secondary" href="{% url 'administration:overview' %}">{% translate "Operations console" %}</a>{% endif %}
-      {% else %}
-        <a class="button" href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a>
-        {% if features.registration %}<a class="button button--secondary" href="{% url 'accounts:register' %}">{% translate "Create an account" %}</a>{% endif %}
-      {% endif %}
+      {% if user.is_authenticated %}<a class="button" href="{% url 'dashboard' %}">{% translate "Go to your dashboard" %}</a>{% elif features.registration %}<a class="button" href="{% url 'accounts:register' %}">{% translate "Create an account" %}</a>{% else %}<a class="button" href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a>{% endif %}
+      <a class="button button--secondary" href="#how-it-works">{% translate "How it works" %} <span aria-hidden="true">↗</span></a>
     </div>
-    {% if not user.is_authenticated and not features.registration %}
-      <p class="hero__note">{% translate "New accounts are not open to the public at the moment. If the ClipCash team has given you access, sign in with your account." %}</p>
-    {% endif %}
-  </section>
-
-  {% if financial_locked %}
-  <p class="notice notice--warning home-notice" role="note">
-    <strong>{% translate "No money is paid out on this site." %}</strong>
-    {% blocktranslate trimmed %}
-      Payments, real-money rewards and withdrawals are switched off. Any rewards, balances or payouts you
-      see here are demonstration records with no cash value, and nothing on this site should be read as
-      a promise of earnings.
-    {% endblocktranslate %}
-  </p>
-  {% endif %}
-
-  <section class="section" aria-labelledby="how-title">
-    <div class="section__header"><h2 id="how-title">{% translate "How it works" %}</h2></div>
-    <ol class="feature-grid">
-      <li class="feature-card">
-        <h3 class="feature-card__title">{% translate "Reviewed campaigns" %}</h3>
-        <p>{% translate "Advertiser organizations are verified, and every campaign video is approved by ClipCash staff before members can see it." %}</p>
-      </li>
-      <li class="feature-card">
-        <h3 class="feature-card__title">{% translate "Verified viewing" %}</h3>
-        <p>{% translate "Watch sessions are tracked server-side. A view only counts when it meets the minimum watch time and passes integrity checks." %}</p>
-      </li>
-      <li class="feature-card">
-        <h3 class="feature-card__title">{% translate "Transparent records" %}</h3>
-        <p>{% translate "Members can review their own viewing history and activity. Important actions are written to an append-only audit trail." %}</p>
-      </li>
-    </ol>
-  </section>
-
-  <section class="section panel" aria-labelledby="access-title">
-    <h2 id="access-title" class="panel__title">{% translate "Account access" %}</h2>
-    {% if user.is_authenticated %}
-      <p>{% blocktranslate trimmed with email=user.email %}You are signed in as <strong>{{ email }}</strong>.{% endblocktranslate %}</p>
-      <ul class="links">
-        <li><a href="{% url 'dashboard' %}">{% translate "Dashboard" %}</a></li>
-        <li><a href="{% url 'accounts:profile' %}">{% translate "My account" %}</a></li>
-        {% if user.is_staff %}<li><a href="{% url 'administration:overview' %}">{% translate "Operations console" %}</a></li>{% endif %}
-      </ul>
-    {% else %}
-      <ul class="links">
-        <li><a href="{% url 'accounts:login' %}">{% translate "Sign in to your account" %}</a></li>
-        <li><a href="{% url 'accounts:password_reset' %}">{% translate "Forgot your password?" %}</a></li>
-        <li><a href="{% url 'accounts:resend_verification' %}">{% translate "Need a new verification link?" %}</a></li>
-        {% if features.registration %}<li><a href="{% url 'accounts:register' %}">{% translate "Create an account" %}</a></li>{% endif %}
-      </ul>
-    {% endif %}
-  </section>
+    {% if not user.is_authenticated and not features.registration %}<p class="hero__note">{% translate "New accounts are not open to the public at the moment. If the ClipCash team has given you access, sign in with your account." %}</p>{% endif %}
+  </div>
+  <aside class="hero-story" aria-labelledby="story-title">
+    <p class="hero-story__label">{% translate "A more transparent viewing journey" %}</p>
+    <div class="hero-story__screen" aria-hidden="true"><svg viewBox="0 0 120 120" width="120" height="120" focusable="false"><circle cx="60" cy="60" r="43" fill="none" stroke="currentColor" stroke-width="2"/><path d="M50 39 80 60 50 81Z" fill="currentColor"/></svg></div>
+    <h2 id="story-title">{% translate "Discover. Watch. Understand." %}</h2><p>{% translate "Reviewed campaigns. Server-checked viewing. Records you can follow." %}</p>
+    <p class="hero-story__caption">{% translate "An introduction to the experience, not a playable video." %}</p>
+  </aside>
+</section>
+{% if financial_locked %}<aside class="notice notice--warning home-notice" role="note"><strong>{% translate "No money is paid out on this site." %}</strong>
+{% blocktranslate trimmed %}Payments, real-money rewards and withdrawals are switched off. Any rewards, balances or payouts you see here are demonstration records with no cash value, and nothing on this site should be read as a promise of earnings.{% endblocktranslate %}</aside>{% endif %}
+<section id="how-it-works" class="landing-section" aria-labelledby="how-title">
+  <header class="landing-heading"><p class="landing-eyebrow">{% translate "From first visit to verified viewing" %}</p><h2 id="how-title">{% translate "How it works" %}</h2><p>{% translate "Each step has a purpose. Access, viewing evidence and demonstration rewards are separate parts of the journey." %}</p></header>
+  <ol class="journey-grid">
+    <li><h3>{% translate "Your account" %}</h3><p>{% translate "Create an account when registration is available, or sign in with access provided by the ClipCash team." %}</p></li>
+    <li><h3>{% translate "Email verification" %}</h3><p>{% translate "Follow your verification link and complete the account steps. Restricted demo access may have specific exceptions." %}</p></li>
+    <li><h3>{% translate "Eligible membership" %}</h3><p>{% translate "Review membership requirements. Selecting a plan saves a pending choice; sandbox payments do not activate access." %}</p></li>
+    <li><h3>{% translate "Video discovery" %}</h3><p>{% translate "Explore available videos and eligible sponsored campaigns. Availability depends on your account and membership." %}</p></li>
+    <li><h3>{% translate "Verified viewing" %}</h3><p>{% translate "ClipCash checks watch time and viewing evidence on the server. Playback alone does not guarantee an accepted view." %}</p></li>
+    <li><h3>{% translate "Demonstration records" %}</h3><p>{% translate "Where applicable, review simulated rewards after policy and eligibility checks. They are not wallet money and cannot be withdrawn." %}</p></li>
+  </ol>
+</section>
+<section class="landing-section member-benefits" aria-labelledby="benefits-title">
+  <header class="landing-heading"><p class="landing-eyebrow">{% translate "Made for a clearer experience" %}</p><h2 id="benefits-title">{% translate "Everything in its place." %}</h2><p>{% translate "Less guesswork, more context. Your account keeps the information that matters within reach." %}</p></header>
+  <dl class="benefit-list">
+    <div><dt>{% translate "Discover with direction" %}</dt><dd>{% translate "Browse an organized video library when enabled, with clear membership and playback requirements." %}</dd></div>
+    <div><dt>{% translate "Follow your viewing history" %}</dt><dd>{% translate "Review sponsored sessions and their outcomes, including views awaiting review or not accepted." %}</dd></div>
+    <div><dt>{% translate "Manage your access" %}</dt><dd>{% translate "Find account security and membership information together, including pending choices and expiry dates." %}</dd></div>
+    <div><dt>{% translate "Understand your records" %}</dt><dd>{% translate "Demonstration rewards are clearly labelled and kept separate from real ledger balances." %}</dd></div>
+  </dl>
+</section>
+<section class="landing-section advertiser-intro" aria-labelledby="advertiser-title">
+  <div><p class="landing-eyebrow">{% translate "For organizations" %}</p><h2 id="advertiser-title">{% translate "Bring your story to a reviewed campaign." %}</h2><p>{% translate "Apply as an advertiser organization, prepare campaign details and work through ClipCash approval. The team uploads and authorizes sponsored media before it can be selected for a campaign." %}</p>
+    {% if features.advertisers %}<a class="button" href="{% url 'advertising:home' %}">{% translate "Explore advertiser access" %}</a>{% endif %}
+  </div><aside><h3>{% translate "Approval before publication" %}</h3><p>{% translate "Organization checks, authorized media and campaign review help keep the workflow accountable." %}</p><p class="notice">{% translate "Live advertising payments are not enabled. Any funding or budget figures in the demonstration are clearly marked as simulated or sandbox." %}</p></aside>
+</section>
+<section id="questions" class="landing-section faq" aria-labelledby="questions-title">
+  <header class="landing-heading"><p class="landing-eyebrow">{% translate "Before you begin" %}</p><h2 id="questions-title">{% translate "Questions and answers" %}</h2></header>
+  <div>
+    <details><summary>{% translate "Does every video create a reward?" %}</summary><p>{% translate "No. Library playback and sponsored viewing are different experiences. A sponsored view must pass server checks, and demonstration rewards also depend on an applicable policy, eligibility and available demo budget." %}</p></details>
+    <details><summary>{% translate "Can demonstration rewards be withdrawn?" %}</summary><p>{% translate "No. Demonstration rewards have no cash value, do not credit your wallet and cannot be withdrawn. Live payments and real payouts remain disabled." %}</p></details>
+    <details><summary>{% translate "Does choosing a membership plan activate it?" %}</summary><p>{% translate "No. A choice stays pending until an authorized activation takes place. Sandbox payment only previews an outcome. Complimentary demonstration access is granted separately by authorized staff and has an expiry date." %}</p></details>
+    <details><summary>{% translate "Why can I not register or play a video?" %}</summary><p>{% translate "Public registration may be closed. Video access can depend on email verification, membership entitlements, feature availability and content readiness. The relevant account or video page explains the next step." %}</p></details>
+    <details><summary>{% translate "How do I recover my account?" %}</summary><p><a href="{% url 'accounts:password_reset' %}">{% translate "Request a password reset" %}</a> · <a href="{% url 'accounts:resend_verification' %}">{% translate "Send a new verification link" %}</a></p></details>
+  </div>
+</section>
+{% if user.is_authenticated %}<p class="landing-account">{% blocktranslate with email=user.email %}You are signed in as <strong>{{ email }}</strong>.{% endblocktranslate %} <a href="{% url 'accounts:profile' %}">{% translate "My account" %}</a></p>{% endif %}
 </main>
 {% endblock %}

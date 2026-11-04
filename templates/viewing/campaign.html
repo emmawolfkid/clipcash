@@ -2,10 +2,12 @@
 {% block title %}{{ campaign.name }}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{{ campaign.name }}</h1>
+<p><a href="{% url 'viewing:list' %}">{% translate "Back to sponsored videos" %}</a></p>
 <p class="lead">{% blocktranslate with name=campaign.organization.display_name %}Sponsored by {{ name }}{% endblocktranslate %}{% if campaign.video.duration_display %} · {{ campaign.video.duration_display }}{% endif %}</p>
 {% if campaign.description %}<p>{{ campaign.description|linebreaksbr }}</p>{% endif %}
 <section class="panel">
   <h2 class="panel__title">{% translate "How viewing works" %}</h2>
+  <p>{% translate "Eligibility is checked again when you start. Starting a session does not guarantee verification or a reward." %}</p>
   <ul>
     <li>{% translate "Watch the video from the start without skipping ahead." %}</li>
     <li>{% translate "Only time the video is actually playing counts; pausing or switching away does not." %}</li>

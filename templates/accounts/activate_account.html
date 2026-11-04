@@ -1,6 +1,6 @@
-{% extends "base.html" %}{% load i18n %}
+{% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Choose your password" %}{% endblock %}
-{% block content %}
+{% block auth_content %}
 <h1>{% translate "Choose your password" %}</h1>
 {% if validlink %}
 <p class="lead">{% translate "Your email address is confirmed. Choose a password to activate your account." %}</p>

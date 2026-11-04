@@ -1,0 +1,45 @@
+/* UI-02: components / alerts. */
+.notice--demo {
+  margin-top: 1rem;
+}
+
+.notice--sandbox {
+  border-left-color: var(--warning);
+  background: var(--warning-bg);
+}
+
+.messages {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.messages li,
+.notice {
+  background: var(--info-bg);
+  border-left: 4px solid var(--accent);
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+}
+
+.messages .messages__item--success {
+  color: var(--success);
+  background: var(--success-bg);
+  border-left-color: var(--success);
+}
+
+.messages .messages__item--error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-left-color: var(--danger);
+}
+
+.messages .messages__item--warning,
+.notice--warning {
+  color: var(--warning);
+  background: var(--warning-bg);
+  border-left-color: var(--warning);
+}
+

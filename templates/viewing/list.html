@@ -1,15 +1,17 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load i18n static %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/viewing/list.css' %}">{% endblock %}
 {% block title %}{% translate "Sponsored videos" %}{% endblock %}
 {% block member_content %}
 <div class="section__header"><h1 class="page-title">{% translate "Sponsored videos" %}</h1>
 <a href="{% url 'viewing:history' %}">{% translate "My viewing history" %}</a></div>
+<p class="lead">{% translate "Discover advertiser campaigns available to your account. Start or continue a session to have viewing checked by ClipCash." %}</p>
 {% include "components/not_a_reward_notice.html" %}
 {% if rows %}
 <ul class="video-grid">{% for campaign, left, open_session in rows %}
   <li class="video-card"><a class="video-card__link" href="{% if open_session %}{% url 'viewing:session' open_session.pk %}{% else %}{% url 'viewing:campaign' campaign.pk %}{% endif %}">
     <div class="video-card__thumb"><span class="video-card__placeholder" aria-hidden="true">{{ campaign.name|slice:":1" }}</span>
       {% if campaign.video.duration_display %}<span class="video-card__duration">{{ campaign.video.duration_display }}</span>{% endif %}</div>
-    <div class="video-card__body"><h2 class="video-card__title">{{ campaign.name }}</h2>
+    <div class="video-card__body"><span class="sponsored-label">{% translate "Sponsored" %}</span><h2 class="video-card__title">{{ campaign.name }}</h2>
       <p class="video-card__meta">{{ campaign.organization.display_name }} · {% if open_session %}{% translate "In progress" %}{% else %}{% blocktranslate count n=left %}{{ n }} view left{% plural %}{{ n }} views left{% endblocktranslate %}{% endif %}</p></div>
   </a></li>{% endfor %}
 </ul>

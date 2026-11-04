@@ -1,4 +1,8 @@
 {% extends "base.html" %}{% load i18n static %}
+{% block layout_styles %}
+<link rel="stylesheet" href="{% static 'css/layouts/member.css' %}">
+<link rel="stylesheet" href="{% static 'css/layouts/admin.css' %}">
+{% endblock %}
 {% block main %}
 <div class="app-shell app-shell--console">
   <aside class="app-sidebar">
@@ -16,6 +20,10 @@
         {% if can.members %}<li><a class="app-nav__link{% if nav == 'members' %} is-current{% endif %}"{% if nav == 'members' %} aria-current="page"{% endif %} href="{% url 'administration:members' %}">{% translate "Member directory" %}</a></li>{% endif %}
         {% if can.members %}<li><a class="app-nav__link" href="{% url 'admin:accounts_user_changelist' %}">{% translate "User accounts (admin)" %}</a></li>{% endif %}
         {% if can.plans %}<li><a class="app-nav__link" href="{% url 'admin:memberships_membershipplan_changelist' %}">{% translate "Membership plans" %}</a></li>{% endif %}
+      </ul>{% endif %}
+      {% if can.support %}<p class="app-nav__group" id="console-support">{% translate "Customer support" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-support">
+        <li><a class="app-nav__link{% if nav == 'support' %} is-current{% endif %}"{% if nav == 'support' %} aria-current="page"{% endif %} href="{% url 'administration:support' %}">{% translate "Support queue" %}</a></li>
       </ul>{% endif %}
       {% if can.advertisers or can.campaigns %}<p class="app-nav__group" id="console-advertising">{% translate "Advertising" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-advertising">
@@ -46,11 +54,10 @@
       </ul>{% endif %}
     </nav>
   </aside>
-  <main id="content" class="app-main">
+  <main id="content" class="app-main" tabindex="-1">
     {% if breadcrumbs %}<nav class="breadcrumbs" aria-label="{% translate 'Breadcrumb' %}"><ol>{% for label, url_name in breadcrumbs %}<li><a href="{% url url_name %}">{% translate label %}</a></li>{% endfor %}<li aria-current="page">{% block crumb %}{% endblock %}</li></ol></nav>{% endif %}
     {% include "components/messages.html" %}
     {% block console_content %}{% endblock %}
   </main>
 </div>
-<script src="{% static 'js/member-nav.js' %}" defer></script>
 {% endblock %}

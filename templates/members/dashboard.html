@@ -1,7 +1,17 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load i18n static %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/members/dashboard.css' %}">{% endblock %}
 {% block title %}{% translate "Dashboard" %}{% endblock %}
 {% block member_content %}
+<header class="dashboard-welcome">
+<p class="dashboard-welcome__eyebrow">{% translate "Your ClipCash" %}</p>
 <h1 class="page-title">{% blocktranslate with name=user.first_name|default:user.email %}Welcome, {{ name }}{% endblocktranslate %}</h1>
+<p>{% translate "Discover something new. Keep track of what ClipCash has verified." %}</p>
+<nav class="actions" aria-label="{% translate 'Dashboard shortcuts' %}">
+{% if features.videos %}<a class="button" href="{% url 'videos:library' %}">{% translate "Explore videos" %}</a>{% endif %}
+{% if summary.sponsored.enabled %}<a class="button button--secondary" href="{% url 'viewing:list' %}">{% translate "Sponsored videos" %}</a>{% endif %}
+<a href="{% url 'notifications:inbox' %}">{% translate "Notifications" %}{% if unread_notifications %} ({{ unread_notifications }}){% endif %}</a>
+</nav>
+</header>
 <p class="lead">{% translate "Real rewards are not available yet. Demo rewards and sandbox payments are simulations; your real wallet holds only ledger-backed money." %}</p>
 {% if demo_unconfirmed_account %}{% include "components/demo_unconfirmed_notice.html" %}{% endif %}
 
@@ -9,6 +19,7 @@
   {% with m=summary.membership %}
   <section class="summary-card" aria-labelledby="card-membership">
     <h2 class="summary-card__title" id="card-membership">{% translate "Membership" %}</h2>
+    {% if m.enabled %}<p class="summary-card__status">{% translate "Your plan controls which videos you can play. Sponsored sessions are checked separately." %}</p>{% endif %}
     {% if not m.enabled %}<p class="summary-card__status">{% translate "Memberships are not available at the moment." %}</p>
     {% elif m.subscription %}
       <p class="summary-card__value">{{ m.subscription.plan_name }}</p>

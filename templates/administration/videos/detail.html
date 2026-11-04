@@ -1,4 +1,5 @@
 {% extends "administration/layout.html" %}{% load i18n static %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/administration/videos/detail.css' %}">{% endblock %}
 {% block title %}{{ video.title }}{% endblock %}
 {% block console_content %}
 <div class="section__header"><h1 class="page-title">{{ video.title }}</h1><a href="{% url 'administration:videos' %}">{% translate "All videos" %}</a></div>

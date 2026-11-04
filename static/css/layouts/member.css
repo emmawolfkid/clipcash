@@ -1,0 +1,182 @@
+/* UI-02: layouts / member. */
+.app-nav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.app-nav__list form {
+  margin: 0;
+}
+
+.app-nav__button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.soon {
+  font-size: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 0.4rem;
+  margin-left: 0.25rem;
+  white-space: nowrap;
+}
+
+.app-main {
+  min-width: 0;
+}
+
+.app-nav__group:first-child {
+  margin-top: 0.25rem;
+}
+
+.app-nav.is-collapsed {
+  display: none;
+}
+
+
+@media (max-width: 40rem) {
+  .app-nav__button {
+    min-height: 2.75rem;
+  }
+
+}
+
+.app-sidebar :focus-visible {
+  outline-color: var(--brand-yellow);
+  box-shadow: 0 0 0 2px var(--brand-navy);
+}
+
+.app-shell {
+  flex: 1;
+  width: 100%;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+  display: grid;
+  align-items: start;
+  max-width: var(--layout-max);
+  padding-inline: var(--gutter);
+  gap: var(--space-5);
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+}
+
+.app-shell--plain {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app-sidebar {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  position: sticky;
+  top: 1rem;
+  color: var(--nav-text);
+  background: var(--brand-navy);
+  border-color: var(--brand-navy);
+  padding: var(--space-3);
+}
+
+.app-sidebar__title {
+  margin: 0.25rem 0.5rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--nav-muted);
+  margin-bottom: var(--space-4);
+}
+
+.app-nav__group {
+  margin: 0.75rem 0.6rem 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--nav-muted);
+  margin-top: var(--space-5);
+}
+
+.app-nav__link {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  text-decoration: none;
+  font: inherit;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  color: var(--nav-text);
+  min-height: var(--touch-target);
+  border-radius: var(--radius-sm);
+  gap: var(--space-2);
+}
+
+a.app-nav__link:hover,
+.app-nav__button:hover {
+  background: var(--nav-hover);
+}
+
+.app-nav__link.is-current {
+  font-weight: 600;
+  color: var(--brand-navy);
+  background: var(--brand-yellow);
+  box-shadow: none;
+}
+
+.app-nav__link.is-disabled {
+  cursor: default;
+  color: var(--nav-muted);
+}
+
+.app-nav__toggle {
+  width: 100%;
+  min-height: 2.75rem;
+  font: inherit;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) / 2);
+  cursor: pointer;
+  background: var(--nav-hover);
+  color: var(--nav-text);
+  border-color: var(--nav-muted);
+}
+
+.app-sidebar .badge {
+  color: var(--brand-navy);
+  background: var(--brand-yellow);
+  border-color: var(--brand-yellow);
+}
+
+
+@media (max-width: 52rem) {
+  .app-shell {
+    margin-top: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .app-sidebar {
+    position: static;
+  }
+
+  .app-nav__list {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  }
+
+  .app-nav__link {
+    width: 100%;
+  }
+
+}
+
+@media (forced-colors: active) {
+  .app-nav__link.is-current {
+    border: 1px solid ButtonText;
+  }
+
+}

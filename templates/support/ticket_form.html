@@ -1,0 +1,7 @@
+{% extends "members/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Ask for help" %}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{% translate "Ask for help" %}</h1>
+<p><a href="{% url 'support:tickets' %}">{% translate "Back to my tickets" %}</a></p>
+{% translate "Send request" as button %}{% include "components/form.html" with form=form button=button %}
+{% endblock %}

@@ -1,6 +1,6 @@
-{% extends "base.html" %}{% load i18n %}
+{% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Link not valid" %}{% endblock %}
-{% block content %}
+{% block auth_content %}
 <h1>{% translate "Link not valid" %}</h1>
 <p>{% translate "This link is invalid, has expired or has already been used." %}</p>
 <ul class="links">

@@ -1,0 +1,55 @@
+/* UI-03 public landing page. Shared controls remain in components/. */
+.landing { margin-top: var(--space-4); }
+.hero { display: grid; gap: var(--space-6); padding: clamp(1.5rem, 5vw, 4rem); background: var(--brand-navy); color: var(--nav-text); border-radius: var(--radius-lg); }
+.hero__copy { min-width: 0; align-self: center; }
+.hero__eyebrow { margin: 0 0 var(--space-5); color: var(--nav-muted); font-size: var(--text-sm); }
+.hero__title { margin: 0; font-size: clamp(2.4rem, 5.5vw, 4.8rem); line-height: 1.06; letter-spacing: -0.045em; }
+.hero__title span { color: var(--brand-yellow); }
+.hero__lead { margin: var(--space-5) 0 0; max-width: 38rem; color: var(--nav-text); font-size: var(--text-lg); }
+.hero__tagline { color: var(--nav-muted); }
+.hero__note { color: var(--nav-muted); font-size: var(--text-sm); margin-bottom: 0; }
+.hero .button--secondary { border-color: var(--nav-muted); background: transparent; color: var(--nav-text); }
+.hero .button--secondary:hover { background: var(--nav-hover); }
+.hero :focus-visible { outline-color: var(--brand-yellow); box-shadow: 0 0 0 2px var(--brand-navy); }
+.hero-story { padding: var(--space-5); border: 1px solid var(--nav-muted); border-radius: var(--radius); background: var(--nav-hover); min-width: 0; }
+.hero-story__label { margin: 0; color: var(--nav-muted); font-size: var(--text-sm); }
+.hero-story__screen { min-height: 11rem; display: grid; place-items: center; color: var(--brand-yellow); }
+.hero-story h2 { font-size: 1.4rem; margin: 0; }
+.hero-story p { color: var(--nav-muted); }
+.hero-story__caption { margin-bottom: 0; font-size: 0.75rem; }
+.home-notice { margin: var(--space-5) 0 0; }
+.home-notice strong { display: block; margin-bottom: var(--space-1); }
+.landing-section { padding-block: clamp(2.5rem, 6vw, 5rem); scroll-margin-top: var(--space-5); }
+.landing-heading { max-width: 42rem; margin-bottom: var(--space-6); }
+.landing-heading h2, .advertiser-intro h2 { font-size: clamp(1.8rem, 3vw, 2.8rem); letter-spacing: -0.035em; margin: 0 0 var(--space-4); }
+.landing-heading > p:last-child { color: var(--muted); }
+.landing-eyebrow { margin: 0 0 var(--space-3); font-size: var(--text-sm); font-weight: 650; }
+.journey-grid { list-style: none; counter-reset: journey; display: grid; gap: var(--space-5); padding: 0; margin: 0; }
+.journey-grid li { counter-increment: journey; border-top: 1px solid var(--control-border); padding-top: var(--space-4); }
+.journey-grid li::before { content: "0" counter(journey); color: var(--muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.journey-grid h3 { font-size: var(--text-lg); margin: var(--space-3) 0; }
+.journey-grid p { margin: 0; color: var(--muted); }
+.member-benefits { border-top: 1px solid var(--border); display: grid; gap: var(--space-5); }
+.benefit-list { display: grid; gap: var(--space-5); margin: 0; }
+.benefit-list dt { font-size: var(--text-lg); font-weight: 650; }
+.benefit-list dd { margin: var(--space-2) 0 0; color: var(--muted); }
+.advertiser-intro { display: grid; gap: var(--space-6); padding: clamp(1.5rem, 4vw, 3rem); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.advertiser-intro aside { padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.advertiser-intro h3 { margin-top: 0; }
+.faq { display: grid; gap: var(--space-5); }
+.faq details { padding-block: var(--space-4); border-bottom: 1px solid var(--control-border); }
+.faq summary { min-height: var(--touch-target); cursor: pointer; font-weight: 650; padding-block: var(--space-2); }
+.faq details p { color: var(--muted); margin-bottom: 0; }
+.landing-account { padding-block: var(--space-4); border-top: 1px solid var(--border); }
+@media (min-width: 40rem) {
+  .journey-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 64rem) {
+  .hero { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+  .journey-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .member-benefits, .advertiser-intro, .faq { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .advertiser-intro aside { padding: 0 0 0 var(--space-6); border-top: 0; border-left: 1px solid var(--border); }
+}
+@media (max-width: 30rem) {
+  .hero .actions .button { width: 100%; }
+}

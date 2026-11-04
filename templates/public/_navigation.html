@@ -1,0 +1,14 @@
+{% load i18n %}
+<a href="{% url 'home' %}"{% if request.resolver_match.view_name == 'home' %} aria-current="page"{% endif %}>{% translate "Home" %}</a>
+<a href="{% url 'home' %}#how-it-works">{% translate "How it works" %}</a>
+{% if features.videos %}<a href="{% url 'videos:library' %}">{% translate "Explore videos" %}</a>{% endif %}
+{% if features.memberships %}<a href="{% url 'memberships:plans' %}">{% translate "Membership plans" %}</a>{% endif %}
+{% if features.advertisers %}<a href="{% url 'advertising:home' %}">{% translate "Advertise" %}</a>{% endif %}
+{% if user.is_authenticated %}
+<a href="{% url 'dashboard' %}">{% translate "Dashboard" %}</a>
+{% if user.is_staff %}<a href="{% url 'administration:overview' %}">{% translate "Operations console" %}</a>{% endif %}
+{% else %}
+<a href="{% url 'accounts:login' %}"{% if request.resolver_match.view_name == 'accounts:login' %} aria-current="page"{% endif %}>{% translate "Sign in" %}</a>
+{% if features.registration %}<a class="public-register" href="{% url 'accounts:register' %}"{% if request.resolver_match.view_name == 'accounts:register' %} aria-current="page"{% endif %}>{% translate "Register" %}</a>{% endif %}
+{% endif %}
+{% include "components/language_form.html" %}

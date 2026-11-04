@@ -1,0 +1,22 @@
+{% extends "public/layout.html" %}{% load i18n static %}
+{% block layout_styles %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/layouts/auth.css' %}">{% endblock %}
+{% block page_styles %}{% endblock %}
+{% block main %}
+<main id="content" class="auth-shell" tabindex="-1">
+  <aside class="auth-introduction" aria-labelledby="auth-intro-title">
+    <p class="auth-eyebrow">{{ site_config.platform_name|default:"ClipCash" }}</p>
+    <h2 id="auth-intro-title">{% translate "A clear path to your next clip." %}</h2>
+    <p>{% translate "Your account brings video discovery, membership access and viewing records together." %}</p>
+    <ol><li>{% translate "Confirm your email address." %}</li><li>{% translate "Check your membership eligibility." %}</li><li>{% translate "Explore videos and understand what counts." %}</li></ol>
+    <p class="auth-introduction__note">{% translate "Keep your password private. ClipCash staff will never ask for your mobile-money PIN or one-time codes." %}</p>
+  </aside>
+  <div class="auth-content">
+    {% include "components/messages.html" %}
+    <section class="card auth-card">{% with password_controls=True %}{% block auth_content %}{% endblock %}{% endwith %}
+      <p id="auth-submit-status" role="status" hidden>{% translate "Submitting your request…" %}</p>
+    </section>
+    <p class="auth-footnote"><a href="{% url 'home' %}">{% translate "Back to ClipCash" %}</a> · {% translate "Demo rewards have no cash value." %}</p>
+  </div>
+</main>
+<script src="{% static 'js/auth.js' %}" defer></script>
+{% endblock %}

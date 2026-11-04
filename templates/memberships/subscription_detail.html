@@ -1,6 +1,6 @@
-{% extends "base.html" %}{% load i18n money %}
+{% extends "members/layout.html" %}{% load i18n money %}
 {% block title %}{{ subscription.plan_name }}{% endblock %}
-{% block content %}
+{% block member_content %}
 <h1>{{ subscription.plan_name }}</h1>
 <p><span class="badge badge--{{ subscription.status|lower }}">{{ subscription.get_status_display }}</span></p>
 <dl class="details">

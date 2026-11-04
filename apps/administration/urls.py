@@ -1,5 +1,7 @@
 from django.urls import path
 
+from apps.support import console as support
+
 from . import views
 
 app_name = "administration"
@@ -11,6 +13,8 @@ urlpatterns = [
     path("members/<uuid:pk>/", views.MemberDetailView.as_view(), name="member"),
     path("members/<uuid:pk>/complimentary/", views.ComplimentaryGrantView.as_view(), name="member_complimentary"),
     path("security/", views.SecurityView.as_view(), name="security"),
+    path("support/", support.QueueView.as_view(), name="support"),
+    path("support/<str:reference>/", support.TicketView.as_view(), name="support_ticket"),
     path("videos/", views.VideoListView.as_view(), name="videos"),
     path("videos/new/", views.VideoCreateView.as_view(), name="video_create"),
     path("videos/<uuid:pk>/", views.VideoDetailView.as_view(), name="video_detail"),

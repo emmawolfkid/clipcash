@@ -1,0 +1,63 @@
+/* UI-02: components / tables. */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  font-size: var(--text-sm);
+}
+
+.table td {
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  padding: var(--space-3);
+  overflow-wrap: anywhere;
+}
+
+.table th {
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  padding: var(--space-3);
+  overflow-wrap: anywhere;
+  color: var(--text);
+  background: var(--surface-soft);
+  font-weight: 650;
+}
+
+.table tbody tr:hover {
+  background: var(--bg);
+}
+
+.table caption {
+  text-align: left;
+  font-weight: 600;
+  padding-block: var(--space-3);
+}
+
+.table-scroll {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.table-scroll .table {
+  display: table;
+  overflow: visible;
+  margin: 0;
+}
+
+.table-scroll:focus-visible {
+  outline-offset: -3px;
+}
+
+.table-scroll th,
+.table-scroll td {
+  min-width: 7rem;
+}
+

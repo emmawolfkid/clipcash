@@ -1,6 +1,7 @@
-{% extends "base.html" %}{% load i18n money %}
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/memberships/plans.css' %}">{% endblock %}
 {% block title %}{{ plan.name }}{% endblock %}
-{% block content %}
+{% block member_content %}
 <h1>{{ plan.name }}</h1>
 <p class="plan-card__price">{{ plan.price_amount|tzs }}</p>
 <p class="lead">{% blocktranslate count days=plan.duration_days %}Membership for {{ days }} day.{% plural %}Membership for {{ days }} days.{% endblocktranslate %}</p>

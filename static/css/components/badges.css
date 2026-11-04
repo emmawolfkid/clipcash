@@ -1,0 +1,96 @@
+/* UI-02: components / badges. */
+.badge--draft,
+.badge--uploading,
+.badge--processing,
+.badge--submitted,
+.badge--insufficient_evidence,
+.badge--pending {
+  border-color: var(--muted);
+  color: var(--muted);
+}
+
+.badge--sandbox {
+  border-color: var(--warning);
+  color: var(--warning);
+  background: var(--warning-bg);
+  font-weight: 700;
+}
+
+.badge--provider_confirmed,
+.badge--created,
+.badge--health-not_configured,
+.badge--health-not_checked {
+  border-color: var(--muted);
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  line-height: 1.5;
+}
+
+.badge--active,
+.badge--approved,
+.badge--ready,
+.badge--published,
+.badge--scheduled,
+.badge--verified_evidence,
+.badge--demo_qualified,
+.badge--settled,
+.badge--reconciled,
+.badge--health-healthy {
+  color: var(--success);
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+.badge--failed,
+.badge--rejected,
+.badge--suspended,
+.badge--restricted,
+.badge--disputed,
+.badge--refunded {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.badge--health-attention {
+  font-weight: 700;
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.badge--paused,
+.badge--suspicious_review {
+  color: var(--warning);
+  border-color: var(--warning);
+  background: var(--warning-bg);
+}
+
+.badge--cancelled,
+.badge--completed,
+.badge--expired,
+.badge--archived,
+.badge--retired,
+.badge--demo_reversed,
+.badge--demo_rejected {
+  color: var(--muted);
+  border-color: var(--muted);
+  background: var(--surface);
+}
+
+
+@media (forced-colors: active) {
+  .badge {
+    border: 1px solid ButtonText;
+  }
+
+}

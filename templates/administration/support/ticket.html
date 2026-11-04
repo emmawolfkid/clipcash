@@ -1,0 +1,55 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{{ ticket.reference }}{% endblock %}
+{% block crumb %}{{ ticket.reference }}{% endblock %}
+{% block console_content %}
+<div class="section__header"><h1 class="page-title">{{ ticket.reference }} · {{ ticket.subject }}</h1>{% include "support/_status_badge.html" with staff=True %}</div>
+<div class="card-grid">
+  <section class="panel">
+    <h2 class="panel__title">{% translate "Ticket" %}</h2>
+    <dl class="details">
+      <dt>{% translate "Customer" %}</dt><dd>{{ ticket.requester.email }}</dd>
+      {% if ticket.organization %}<dt>{% translate "Advertiser" %}</dt><dd>{{ ticket.organization.display_name }}</dd>{% endif %}
+      <dt>{% translate "Category" %}</dt><dd>{{ ticket.get_category_display }}</dd>
+      <dt>{% translate "Priority" %}</dt><dd>{{ ticket.get_priority_display }}</dd>
+      <dt>{% translate "Assignee" %}</dt><dd>{% if ticket.assignee %}{{ ticket.assignee.email }}{% else %}{% translate "Unassigned" %}{% endif %}</dd>
+      <dt>{% translate "Opened" %}</dt><dd>{{ ticket.created_at|date:"DATETIME_FORMAT" }}</dd>
+      <dt>{% translate "Last activity" %}</dt><dd>{{ ticket.last_activity_at|date:"DATETIME_FORMAT" }}</dd>
+      {% if ticket.resolved_at %}<dt>{% translate "Resolved" %}</dt><dd>{{ ticket.resolved_at|date:"DATETIME_FORMAT" }}</dd>{% endif %}
+      {% if ticket.closed_at %}<dt>{% translate "Closed" %}</dt><dd>{{ ticket.closed_at|date:"DATETIME_FORMAT" }}</dd>{% endif %}
+    </dl>
+  </section>
+  {% if can_manage and not ticket.is_closed %}
+  <section class="panel">
+    <h2 class="panel__title">{% translate "Manage" %}</h2>
+    <form method="post" class="toolbar">{% csrf_token %}<input type="hidden" name="action" value="assign"><input type="hidden" name="expected_status" value="{{ ticket.status }}">
+      <label for="assignee">{% translate "Assignee" %}</label>
+      <select id="assignee" name="assignee"><option value="">{% translate "Unassigned" %}</option>{% for agent in agents %}<option value="{{ agent.pk }}"{% if agent.pk == ticket.assignee_id %} selected{% endif %}>{{ agent.email }}{% if agent.pk == user.pk %} ({% translate "me" %}){% endif %}</option>{% endfor %}</select>
+      <button class="button button--secondary" type="submit">{% translate "Assign" %}</button></form>
+    <form method="post" class="toolbar">{% csrf_token %}<input type="hidden" name="action" value="priority">
+      <label for="priority">{% translate "Priority" %}</label>
+      <select id="priority" name="priority">{% for value, label in priorities %}<option value="{{ value }}"{% if value == ticket.priority %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <button class="button button--secondary" type="submit">{% translate "Set priority" %}</button></form>
+    {% if next_statuses %}<form method="post" class="toolbar">{% csrf_token %}<input type="hidden" name="action" value="status"><input type="hidden" name="expected_status" value="{{ ticket.status }}">
+      <label for="status">{% translate "Status" %}</label>
+      <select id="status" name="status">{% for value, label in next_statuses %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+      <button class="button button--secondary" type="submit">{% translate "Change status" %}</button></form>{% endif %}
+  </section>
+  {% endif %}
+</div>
+<section class="section">
+  <h2>{% translate "Conversation and history" %}</h2>
+  {% include "support/_conversation.html" with items=items staff=True %}
+</section>
+{% if can_manage and not ticket.is_closed %}
+<section class="panel section">
+  <h2 class="panel__title">{% translate "Reply or add an internal note" %}</h2>
+  <form class="form" method="post" novalidate>{% csrf_token %}<input type="hidden" name="action" value="reply">
+    {% if reply_form.errors %}<div class="error-summary" role="alert"><ul>{% for field in reply_form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}{% for error in reply_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+    {% for field in reply_form.visible_fields %}{{ field.as_field_group }}{% endfor %}
+    {% for field in reply_form.hidden_fields %}{{ field }}{% endfor %}
+    <p class="helptext">{% translate "Replies are emailed to the customer. Internal notes are never shown or sent to the customer." %}</p>
+    <button type="submit" class="button">{% translate "Save" %}</button>
+  </form>
+</section>
+{% elif ticket.is_closed %}<p class="empty-state">{% translate "This ticket is closed and can no longer change." %}</p>{% endif %}
+{% endblock %}

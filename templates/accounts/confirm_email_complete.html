@@ -1,6 +1,6 @@
-{% extends "base.html" %}{% load i18n %}
+{% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Email confirmed" %}{% endblock %}
-{% block content %}
+{% block auth_content %}
 <h1>{% translate "Email confirmed" %}</h1>
 <p>{% translate "Your email address is confirmed." %}</p>
 <ul class="links">

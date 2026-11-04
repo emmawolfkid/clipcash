@@ -1,8 +1,10 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load static i18n %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/videos/detail.css' %}">{% endblock %}
 {% block title %}{{ video.title }}{% endblock %}
 {% block member_content %}
 <article class="video-detail">
-  <div class="player">
+  <p><a href="{% url 'videos:library' %}">{% translate "Back to videos" %}</a></p>
+  <div class="player" data-playback-error="{% translate 'Playback is unavailable. Use the player controls to retry, or reload this page to check access again.' %}">
     {% if playback and playback.kind == "iframe" %}
       <iframe class="player__frame" src="{{ playback.url }}" title="{{ video.title }}" loading="lazy"
               allow="accelerometer; gyroscope; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
@@ -20,6 +22,7 @@
       </div>
     {% endif %}
   </div>
+  <p class="media-feedback" role="status" hidden></p>
   <h1 class="page-title">{{ video.title }}</h1>
   <p class="video-detail__meta">
     {% if video.category %}<a href="{% url 'videos:category' video.category.slug %}">{{ video.category.name }}</a>{% endif %}
@@ -28,6 +31,8 @@
   </p>
   {% if video.description %}<p>{{ video.description|linebreaksbr }}</p>{% endif %}
   <p class="lead">{% translate "Watching requires an active membership that includes this video." %}</p>
+  <p class="video-detail__notice">{% translate "Library playback does not verify a sponsored view or award a reward. Sponsored sessions have their own eligibility and verification checks." %}</p>
   <ul class="links"><li><a href="{% url 'videos:library' %}">{% translate "Back to videos" %}</a></li></ul>
 </article>
+<script src="{% static 'js/media-feedback.js' %}" defer></script>
 {% endblock %}

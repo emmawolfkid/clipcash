@@ -43,6 +43,7 @@ from apps.payments.models import (
 from apps.payments.providers import PaymentsDisabled
 from apps.payments.providers import sandbox_active as payments_sandbox_active
 from apps.rewards import services as rewards
+from apps.support import services as support
 from apps.rewards.models import DemoReward, RewardPolicy
 from apps.audit.models import AuditEvent
 from apps.core.models import Job
@@ -85,6 +86,7 @@ def console_links(user):
         "payments": payments.can_view_payments(user) and payments_sandbox_active(),
         "wallets": wallet_services.can_view_wallets(user),
         "withdrawals": withdrawals.can_view(user),
+        "support": support.can_view_queue(user),
     }
     return can
 

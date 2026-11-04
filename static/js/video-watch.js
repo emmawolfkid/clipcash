@@ -39,16 +39,18 @@
         if (typeof data.progress === "number" && bar) { bar.value = data.progress; }
         if (response.status === 409 || data.open === false) {
           stopped = true;
-          say("This viewing session has ended. Loading the result…");
+          say(panel.dataset.ended);
           window.setTimeout(function () { window.location.reload(); }, 1500);
         } else if (response.status === 429) {
-          say("Slow connection or too many updates; progress continues.");
+          say(panel.dataset.limited);
         } else if (data.accepted) {
-          say(data.progress >= 100 ? "Enough watched. Finish the video to complete the session." :
-            "Watching: " + data.credited_seconds + " of " + data.required_seconds + " seconds counted.");
+          say(data.progress >= 100 ? panel.dataset.enough :
+            panel.dataset.counted + " " + data.credited_seconds + " / " + data.required_seconds);
+        } else {
+          say(panel.dataset.unconfirmed);
         }
       });
-    }).catch(function () { say("Connection problem. Progress is paused until the connection returns."); });
+    }).catch(function () { say(panel.dataset.unconfirmed); });
   }
 
   // Demo / self-hosted sample: native <video> element.

@@ -1,0 +1,115 @@
+/* UI-02: components / lists. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.links {
+  list-style: none;
+  padding: 0;
+  margin: 1.25rem 0 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.details dt {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+
+@media (max-width: 30rem) {
+  .details dd {
+    margin-bottom: 0.5rem;
+  }
+
+}
+
+.actions form {
+  margin: 0;
+}
+
+.list,
+.list-plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.list__item form {
+  margin: 0;
+}
+
+.activity {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.activity__item {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.activity__kind {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.activity__time {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.activity__text { min-width: 0; overflow-wrap: anywhere; }
+
+
+@media (max-width: 40rem) {
+  .activity__item {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+}
+
+.list__item > * {
+  min-width: 0;
+}
+
+.details {
+  display: grid;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+}
+
+
+@media (max-width: 30rem) {
+  .details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+}

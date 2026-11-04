@@ -1,6 +1,6 @@
-{% extends "base.html" %}{% load i18n %}
+{% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Confirm your email" %}{% endblock %}
-{% block content %}
+{% block auth_content %}
 <h1>{% translate "Confirm your email" %}</h1>
 <p>{% blocktranslate with email=user.email %}Confirm {{ email }} before using your account. Follow the link we sent to that address.{% endblocktranslate %}</p>
 <form method="post" action="{% url 'accounts:resend_verification' %}">{% csrf_token %}

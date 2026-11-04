@@ -4,5 +4,6 @@
 {% block member_content %}
 <h1 class="page-title">{% translate "Activity" %}</h1>
 <p class="lead">{% translate "Your recent account, membership, viewing, demo reward, payment and wallet events. Items marked Simulated involve no real money." %}</p>
+<nav class="actions" aria-label="{% translate 'Activity navigation' %}"><a href="{% url 'dashboard' %}">{% translate "Back to dashboard" %}</a>{% if features.advertisers %}<a href="{% url 'viewing:history' %}">{% translate "Viewing history" %}</a>{% endif %}</nav>
 {% include "members/_activity_list.html" %}
 {% endblock %}

@@ -1,0 +1,19 @@
+/* Member overview: real account data, clearly separated from simulations. */
+.dashboard-welcome {
+  padding: clamp(1rem, 3vw, 2rem);
+  background: var(--brand-navy);
+  color: var(--nav-text);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-5);
+  overflow-wrap: anywhere;
+}
+.dashboard-welcome__eyebrow {
+  color: var(--brand-yellow);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  margin: 0 0 var(--space-3);
+}
+.dashboard-welcome .page-title { color: inherit; }
+.dashboard-welcome .actions > a:not(.button) { color: var(--nav-text); }
+.dashboard-welcome .button--secondary { background: var(--surface); color: var(--brand-navy); }
+.dashboard-welcome a:focus-visible { outline-color: var(--brand-yellow); }

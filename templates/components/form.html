@@ -1,12 +1,22 @@
 {% load i18n %}{# Usage: {% include "components/form.html" with form=form button=_("Sign in") %} #}
 <form class="form" method="post" novalidate>{% csrf_token %}
-  {% if form.non_field_errors %}
-    <ul class="errorlist nonfield" role="alert">
-      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-    </ul>
+  {% if form.errors %}
+    <div class="error-summary" tabindex="-1" role="alert" aria-labelledby="form-errors-title">
+      <h2 id="form-errors-title">{% translate "Please correct the errors below." %}</h2>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% for field in form.visible_fields %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}
+        {% for field in form.hidden_fields %}{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}{% endfor %}
+      </ul>
+    </div>
   {% endif %}
   {% for field in form.visible_fields %}
-    {{ field.as_field_group }}
+    <div class="form-field">{{ field.as_field_group }}
+      {% if password_controls and field.field.widget.input_type == 'password' %}
+      <button type="button" class="button--link auth-password-toggle" hidden aria-pressed="false" aria-controls="{{ field.id_for_label }}"
+              data-password-target="{{ field.id_for_label }}" data-field-label="{{ field.label }}" data-show="{% translate 'Show password' %}" data-hide="{% translate 'Hide password' %}">{% translate "Show password" %}: {{ field.label }}</button>
+      {% endif %}
+    </div>
   {% endfor %}
   {% for field in form.hidden_fields %}{{ field }}{% endfor %}
   {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}

@@ -86,6 +86,7 @@ class Notification(BaseModel):
         REWARD = "REWARD", _("Demo rewards")
         WITHDRAWAL = "WITHDRAWAL", _("Demo withdrawals")
         OPERATIONS = "OPERATIONS", _("Operations")
+        SUPPORT = "SUPPORT", _("Support")
 
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
     category = models.CharField(_("category"), max_length=12, choices=Category.choices)
@@ -108,7 +109,7 @@ class Notification(BaseModel):
             models.UniqueConstraint(fields=["recipient", "dedupe_key"], name="notification_once_per_event"),
             models.CheckConstraint(
                 condition=Q(category__in=["ACCOUNT", "MEMBERSHIP", "ADVERTISING", "VIDEO", "VIEWING", "REWARD",
-                                          "WITHDRAWAL", "OPERATIONS"]),
+                                          "WITHDRAWAL", "OPERATIONS", "SUPPORT"]),
                 name="notification_category_valid"),
             # Internal paths only: "" or "/..." but never "//host" (protocol-relative) or a URL.
             models.CheckConstraint(condition=Q(link="") | (Q(link__startswith="/") & ~Q(link__startswith="//")
