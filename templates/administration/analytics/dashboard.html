@@ -1,0 +1,47 @@
+{% extends "administration/layout.html" %}{% load i18n static %}
+{% block title %}{% translate "Analytics" %}{% endblock %}
+{% block crumb %}{% translate "Analytics" %}{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/administration/analytics.css' %}">{% endblock %}
+{% block console_content %}
+<h1 class="page-title">{% translate "Analytics" %}</h1>
+<p class="lead">{% translate "Trends from the platform's own records. You see only the areas you are permitted to report on. Figures contain no personal details." %}</p>
+{% if period_error %}<p class="notice notice--warning" role="alert">{{ period_error }} {% translate "Showing the default period." %}</p>{% endif %}
+<form class="toolbar" method="get" aria-label="{% translate 'Analytics period' %}">
+  <label for="from">{% translate "From" %}</label><input id="from" type="date" name="from" value="{{ period.first|date:'Y-m-d' }}">
+  <label for="to">{% translate "To" %}</label><input id="to" type="date" name="to" value="{{ period.last|date:'Y-m-d' }}">
+  <button type="submit" class="button button--secondary">{% translate "Show" %}</button>
+</form>
+{% for section in sections %}
+<section class="section" aria-labelledby="analytics-{{ section.key }}">
+  <div class="section__header"><h2 id="analytics-{{ section.key }}">{{ section.title }}</h2><a href="{% url 'administration:report' section.report %}?from={{ period.first|date:'Y-m-d' }}&amp;to={{ period.last|date:'Y-m-d' }}">{% translate "Open report" %}</a></div>
+  {% include "administration/analytics/_cards.html" %}
+  <div class="analytics-grid">
+    {% for chart in section.charts %}{% include "administration/analytics/_chart.html" %}{% endfor %}
+    {% for item in section.breakdowns %}{% include "administration/analytics/_breakdown.html" %}{% endfor %}
+  </div>
+  {% if section.table and section.table.rows %}
+  <h3 class="analytics-heading">{{ section.table.title }}</h3>
+  <table class="table">
+    <thead><tr>{% for column in section.table.columns %}<th scope="col">{{ column }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for row in section.table.rows %}<tr>{% for value in row %}<td>{{ value }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+  </table>
+  {% endif %}
+</section>
+{% endfor %}
+{% if financial %}
+<section class="section" aria-labelledby="analytics-financial">
+  <div class="section__header"><h2 id="analytics-financial">{% translate "Financial categories" %}</h2></div>
+  <p class="lead">{% translate "These categories are different things and are never added together. Only real money is money, and it stays locked." %}</p>
+  <div class="analytics-grid">
+    {% for section in financial %}
+    <section class="panel" aria-labelledby="analytics-{{ section.key }}">
+      <h3 class="panel__title" id="analytics-{{ section.key }}">{{ section.title }}</h3>
+      <p><span class="badge badge--sandbox">{{ section.funds_label }}</span></p>
+      {% include "administration/analytics/_cards.html" %}
+      <a href="{% url 'administration:report' section.report %}?from={{ period.first|date:'Y-m-d' }}&amp;to={{ period.last|date:'Y-m-d' }}">{% translate "Open report" %}</a>
+    </section>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

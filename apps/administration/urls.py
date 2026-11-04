@@ -14,6 +14,7 @@ urlpatterns = [
     path("members/<uuid:pk>/", views.MemberDetailView.as_view(), name="member"),
     path("members/<uuid:pk>/complimentary/", views.ComplimentaryGrantView.as_view(), name="member_complimentary"),
     path("security/", views.SecurityView.as_view(), name="security"),
+    path("analytics/", reports.AnalyticsView.as_view(), name="analytics"),
     path("reports/", reports.ReportListView.as_view(), name="reports"),
     path("reports/<slug:slug>/", reports.ReportView.as_view(), name="report"),
     path("reports/<slug:slug>/export/", reports.ReportExportView.as_view(), name="report_export"),

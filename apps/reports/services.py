@@ -209,16 +209,28 @@ def _advertising(period, exact):
     ]
 
 
+def _reward_figures():
+    from apps.rewards.models import DemoReward
+
+    S = DemoReward.Status
+    return {"qualified": Count("id", filter=Q(status=S.QUALIFIED)), "reversed": Count("id", filter=Q(status=S.REVERSED)),
+            "rejected": Count("id", filter=Q(status=S.REJECTED)),
+            "demo_consumed": Sum("amount", filter=Q(status=S.QUALIFIED), default=0)}
+
+
+def reward_totals(period):
+    from apps.rewards.models import DemoReward
+
+    return DemoReward.objects.filter(**period.of("decided_at")).aggregate(**_reward_figures())
+
+
 def _rewards(period, exact):
     from apps.rewards.models import DemoReward, RewardPolicy
 
-    S = DemoReward.Status
     rewards = DemoReward.objects.filter(**period.of("decided_at"))
-    figures = {"qualified": Count("id", filter=Q(status=S.QUALIFIED)), "reversed": Count("id", filter=Q(status=S.REVERSED)),
-               "rejected": Count("id", filter=Q(status=S.REJECTED)),
-               "demo_consumed": Sum("amount", filter=Q(status=S.QUALIFIED), default=0)}
-    totals = rewards.aggregate(**figures)
-    by_campaign = list(rewards.values("campaign__name").annotate(**figures).order_by("campaign__name")[:MAX_ROWS + 1])
+    totals = reward_totals(period)
+    by_campaign = list(rewards.values("campaign__name").annotate(**_reward_figures())
+                       .order_by("campaign__name")[:MAX_ROWS + 1])
     rows = []
     for row in by_campaign[:MAX_ROWS]:
         qualified = _figure(row["qualified"], exact=exact)

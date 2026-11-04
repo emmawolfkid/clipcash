@@ -1,0 +1,96 @@
+/* Phase 15-D: staff analytics dashboard (server-rendered SVG charts). */
+.analytics-grid {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+}
+
+.analytics-heading {
+  font-size: var(--text-base);
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+.analytics-chart {
+  margin: 0;
+  min-width: 0;
+}
+
+.analytics-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.analytics-bar--1 {
+  fill: var(--accent);
+}
+
+.analytics-bar--2 {
+  fill: var(--action-bg);
+  stroke: var(--accent);
+  stroke-width: 0.5;
+}
+
+.analytics-axis {
+  stroke: var(--control-border);
+}
+
+.analytics-grid-line {
+  stroke: var(--border);
+  stroke-dasharray: 4 4;
+}
+
+.analytics-label {
+  fill: var(--muted);
+  font-size: 14px;
+}
+
+.analytics-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  font-size: var(--text-sm);
+}
+
+.analytics-legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.analytics-swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.analytics-data {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.analytics-breakdown {
+  display: grid;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.analytics-breakdown__label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.analytics-meter {
+  display: block;
+  width: 100%;
+  height: 0.5rem;
+  background: var(--surface-soft);
+  border-radius: var(--radius-sm);
+}

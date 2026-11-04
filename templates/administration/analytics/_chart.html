@@ -1,0 +1,20 @@
+{% load i18n l10n %}<figure class="panel analytics-chart">
+  <figcaption class="panel__title">{{ chart.title }}</figcaption>
+  {% if chart.empty %}<p class="empty-state">{% translate "No activity in this period." %}</p>{% else %}
+  <ul class="analytics-legend">{% for entry in chart.legend %}<li><svg class="analytics-swatch" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><rect class="analytics-bar--{{ entry.series }}" width="10" height="10"/></svg>{{ entry.label }}</li>{% endfor %}</ul>
+  <svg class="analytics-svg" viewBox="0 0 {{ chart.width|unlocalize }} {{ chart.height|unlocalize }}" role="img" aria-label="{{ chart.title }}">
+    <line class="analytics-axis" x1="{{ chart.left|unlocalize }}" x2="{{ chart.right|unlocalize }}" y1="{{ chart.baseline|unlocalize }}" y2="{{ chart.baseline|unlocalize }}"/>
+    <line class="analytics-grid-line" x1="{{ chart.left|unlocalize }}" x2="{{ chart.right|unlocalize }}" y1="{{ chart.top|unlocalize }}" y2="{{ chart.top|unlocalize }}"/>
+    <text class="analytics-label" x="{{ chart.text_x|unlocalize }}" y="{{ chart.peak_y|unlocalize }}" text-anchor="end">{{ chart.peak }}</text>
+    <text class="analytics-label" x="{{ chart.text_x|unlocalize }}" y="{{ chart.zero_y|unlocalize }}" text-anchor="end">0</text>
+    {% for bar in chart.bars %}<rect class="analytics-bar--{{ bar.series }}" x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}"><title>{{ bar.title }}</title></rect>{% endfor %}
+    {% for tick in chart.ticks %}<text class="analytics-label" x="{{ tick.x }}" y="{{ chart.label_y|unlocalize }}" text-anchor="{{ tick.anchor }}">{{ tick.label }}</text>{% endfor %}
+  </svg>
+  <details class="analytics-data"><summary>{% translate "Show the figures" %}</summary>
+    <table class="table">
+      <thead><tr><th scope="col">{% translate "Period" %}</th>{% for column in chart.columns %}<th scope="col">{{ column }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for row in chart.rows %}<tr><td>{{ row.label }}</td>{% for value in row.values %}<td>{{ value }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+    </table>
+  </details>
+  {% endif %}
+</figure>

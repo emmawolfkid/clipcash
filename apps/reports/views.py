@@ -1,7 +1,7 @@
 """
-Staff reports in the administrator console (/manage/reports/). Each report needs its
-own permission. Viewing is read-only; a CSV export is a POST (CSRF-protected), also
-needs reports.export_reports, and is audited.
+Staff reports and analytics in the administrator console (/manage/reports/,
+/manage/analytics/). Each report needs its own permission. Viewing is read-only; a CSV
+export is a POST (CSRF-protected), also needs reports.export_reports, and is audited.
 """
 
 from django.contrib import messages
@@ -15,7 +15,7 @@ from django.views import View
 
 from apps.administration.views import console, console_links
 
-from . import services
+from . import analytics, services
 
 CRUMBS = [("Overview", "administration:overview"), ("Reports", "administration:reports")]
 
@@ -52,6 +52,23 @@ class ReportView(View):
             "can_export": services.can_export(request.user, slug), "minimum": services.privacy_minimum(),
             "can": console_links(request.user), "nav": "reports", "breadcrumbs": CRUMBS},
             status=400 if error else 200)
+
+
+@console
+class AnalyticsView(View):
+    def get(self, request):
+        if not analytics.can_view(request.user):
+            raise PermissionDenied
+        error = ""
+        try:
+            period = services.period_from(request.GET.get("from", "")[:10], request.GET.get("to", "")[:10])
+        except services.PeriodError as problem:
+            error, period = str(problem), services.period_from()
+        sections, financial = analytics.dashboard(request.user, period)
+        return render(request, "administration/analytics/dashboard.html", {
+            "sections": sections, "financial": financial, "period": period, "period_error": error,
+            "can": console_links(request.user), "nav": "analytics",
+            "breadcrumbs": [("Overview", "administration:overview")]}, status=400 if error else 200)
 
 
 @console

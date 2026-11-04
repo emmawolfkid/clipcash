@@ -45,6 +45,7 @@
       </ul>{% endif %}
       {% if can.reports %}<p class="app-nav__group" id="console-reports">{% translate "Reports" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-reports">
+        {% if can.analytics %}<li><a class="app-nav__link{% if nav == 'analytics' %} is-current{% endif %}"{% if nav == 'analytics' %} aria-current="page"{% endif %} href="{% url 'administration:analytics' %}">{% translate "Analytics" %}</a></li>{% endif %}
         <li><a class="app-nav__link{% if nav == 'reports' %} is-current{% endif %}"{% if nav == 'reports' %} aria-current="page"{% endif %} href="{% url 'administration:reports' %}">{% translate "Reports" %}</a></li>
       </ul>{% endif %}
       {% if can.settings %}<p class="app-nav__group" id="console-operations">{% translate "Operations" %}</p>
