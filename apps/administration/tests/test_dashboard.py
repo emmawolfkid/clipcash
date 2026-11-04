@@ -8,7 +8,7 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.accounts.tests.helpers import make_user
+from apps.accounts.tests.helpers import make_user, run_worker
 from apps.administration import summary
 from apps.audit.models import AuditEvent
 from apps.core.jobs.services import enqueue
@@ -142,6 +142,9 @@ class ReadOnlyAndAccuracyTests(DashboardTestCase):
         self.client.force_login(self.root)
 
         def count():
+            # The test client delivers queued email after every request (DeliveringClient);
+            # deliver notices queued by the setup first so only the page is measured.
+            run_worker()
             with CaptureQueriesContext(connection) as queries:
                 self.client.get(OVERVIEW)
             return len(queries)

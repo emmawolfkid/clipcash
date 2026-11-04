@@ -1,0 +1,52 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Notifications" %}{% endblock %}
+{% block main_class %} site-main--wide{% endblock %}
+{% block content %}
+<div class="section__header">
+  <h1>{% translate "Notifications" %}</h1>
+  {% if unread_notifications %}<form method="post" action="{% url 'notifications:read_all' %}">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ current_path }}">
+    <button type="submit" class="button button--secondary">{% translate "Mark all as read" %}</button>
+  </form>{% endif %}
+</div>
+
+<form method="get" class="notification-filters" aria-label="{% translate 'Filter notifications' %}">
+  <label for="id_category">{% translate "Category" %}</label>
+  <select id="id_category" name="category">
+    <option value="">{% translate "All categories" %}</option>
+    {% for value, label in categories %}<option value="{{ value }}"{% if value == category %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <label class="notification-filters__check"><input type="checkbox" name="unread" value="1"{% if unread_only %} checked{% endif %}> {% translate "Unread only" %}</label>
+  <button type="submit" class="button button--secondary">{% translate "Filter" %}</button>
+</form>
+
+{% if page.object_list %}
+<ul class="notification-list" aria-label="{% translate 'Notifications' %}">
+  {% for notice in page %}
+  <li class="notification{% if not notice.is_read %} notification--unread{% endif %}">
+    <div class="notification__body">
+      <p class="notification__meta">
+        <span class="badge badge--pending">{{ notice.get_category_display }}</span>
+        <time datetime="{{ notice.created_at|date:'c' }}">{{ notice.created_at|date:"SHORT_DATETIME_FORMAT" }}</time>
+        {% if not notice.is_read %}<span class="notification__state">{% translate "Unread" %}</span>{% endif %}
+      </p>
+      <h2 class="notification__title">{{ notice.title }}</h2>
+      {% if notice.message %}<p class="notification__message">{{ notice.message }}</p>{% endif %}
+    </div>
+    <div class="notification__actions">
+      {% if notice.link %}<form method="post" action="{% url 'notifications:open' notice.pk %}">{% csrf_token %}
+        <button type="submit" class="button">{% translate "Open" %}<span class="visually-hidden">: {{ notice.title }}</span></button>
+      </form>{% endif %}
+      {% if not notice.is_read %}<form method="post" action="{% url 'notifications:read' notice.pk %}">{% csrf_token %}
+        <input type="hidden" name="next" value="{{ current_path }}">
+        <button type="submit" class="button button--secondary">{% translate "Mark as read" %}<span class="visually-hidden">: {{ notice.title }}</span></button>
+      </form>{% endif %}
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% include "components/pagination.html" %}
+{% else %}
+<p class="empty-state">{% if category or unread_only %}{% translate "No notifications match this filter." %}{% else %}{% translate "You have no notifications yet. Updates about your membership, campaigns, reviews and demo activity will appear here." %}{% endif %}</p>
+{% endif %}
+{% endblock %}

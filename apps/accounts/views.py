@@ -9,6 +9,7 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import FormView, TemplateView
@@ -260,6 +261,9 @@ class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
         with transaction.atomic():
             response = super().form_valid(form)  # Saves the new password.
             record_business_event("auth.password_reset.completed", actor=form.user, target=form.user)
+            services.notify_account(form.user, "password_reset", "Your password was reset",
+                                    "If you did not do this, reset your password again now and contact ClipCash.",
+                                    key=f"password_reset:{form.user.pk}:{timezone.now().isoformat()}")
         return response
 
 
@@ -277,6 +281,9 @@ class PasswordChangeView(auth_views.PasswordChangeView):
         with transaction.atomic():
             response = super().form_valid(form)  # Saves the password, keeps this session.
             record_business_event("auth.password.changed", target=self.request.user)
+            services.notify_account(self.request.user, "password_changed", "Your password was changed",
+                                    "Other sessions were signed out. If this was not you, reset your password now.",
+                                    key=f"password_changed:{self.request.user.pk}:{timezone.now().isoformat()}")
         return response
 
 

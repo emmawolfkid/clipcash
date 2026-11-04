@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
@@ -62,3 +63,63 @@ class OutboundEmail(BaseModel):
     def masked_recipient(self):
         local, _, domain = self.recipient.partition("@")
         return f"{local[:1]}***@{domain}" if domain else "***"
+
+
+class Notification(BaseModel):
+    """
+    One in-app notice for one account (Phase 15-A).
+
+    Written by the authoritative business service inside its own transaction, so a
+    notice exists only if the change it describes was committed. ``dedupe_key`` is
+    unique per recipient: retries, repeated jobs and replayed requests cannot create
+    a second notice for the same event. ``link`` is an internal path only (database
+    rule), never an external URL. Text is written for the recipient and carries no
+    secrets, tokens or other members' personal data.
+    """
+
+    class Category(models.TextChoices):
+        ACCOUNT = "ACCOUNT", _("Account and security")
+        MEMBERSHIP = "MEMBERSHIP", _("Membership")
+        ADVERTISING = "ADVERTISING", _("Advertising")
+        VIDEO = "VIDEO", _("Videos")
+        VIEWING = "VIEWING", _("Sponsored viewing")
+        REWARD = "REWARD", _("Demo rewards")
+        WITHDRAWAL = "WITHDRAWAL", _("Demo withdrawals")
+        OPERATIONS = "OPERATIONS", _("Operations")
+
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
+    category = models.CharField(_("category"), max_length=12, choices=Category.choices)
+    kind = models.CharField(_("event"), max_length=64)
+    title = models.CharField(_("title"), max_length=120)
+    message = models.CharField(_("message"), max_length=400, blank=True)
+    link = models.CharField(_("link"), max_length=200, blank=True)
+    dedupe_key = models.CharField(_("event key"), max_length=160)
+    read_at = models.DateTimeField(_("read at"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("notification")
+        verbose_name_plural = _("notifications")
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["recipient", "-created_at"], name="notification_recipient_idx"),
+            models.Index(fields=["recipient"], condition=Q(read_at__isnull=True), name="notification_unread_idx"),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=["recipient", "dedupe_key"], name="notification_once_per_event"),
+            models.CheckConstraint(
+                condition=Q(category__in=["ACCOUNT", "MEMBERSHIP", "ADVERTISING", "VIDEO", "VIEWING", "REWARD",
+                                          "WITHDRAWAL", "OPERATIONS"]),
+                name="notification_category_valid"),
+            # Internal paths only: "" or "/..." but never "//host" (protocol-relative) or a URL.
+            models.CheckConstraint(condition=Q(link="") | (Q(link__startswith="/") & ~Q(link__startswith="//")
+                                                            & ~Q(link__contains="\\")),
+                                   name="notification_link_internal"),
+            models.CheckConstraint(condition=~Q(title=""), name="notification_title_not_blank"),
+        ]
+
+    def __str__(self):
+        return f"{self.kind} -> {self.recipient_id}"
+
+    @property
+    def is_read(self):
+        return self.read_at is not None

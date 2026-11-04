@@ -207,6 +207,7 @@ def create_organization(user, **values):
         AdvertiserMembership.objects.create(organization=organization, user=user, role=ROLE.OWNER)
         record_business_event("advertiser.created", actor=user, target=organization,
                               metadata={"country": organization.country})
+        _notify_application(organization)
     return organization
 
 
@@ -245,6 +246,7 @@ def resubmit_organization(user, organization):
         organization.reviewed_by = None
         organization.save()
         record_business_event("advertiser.resubmitted", actor=user, target=organization)
+        _notify_application(organization)
     return organization
 
 
@@ -283,6 +285,7 @@ def review_organization(actor, organization, decision, *, expected_status, reaso
         organization.save()
         record_business_event(f"advertiser.verification.{name}", actor=actor, target=organization,
                               metadata={"from_status": current, "reason": reason[:100]})
+        _notify_organization_decision(name, organization)
     return organization
 
 
@@ -311,6 +314,7 @@ def invite_member(user, organization, email, role=ROLE.MANAGER):
         invitation.save()
         # The invitee's address is not written to the audit trail.
         record_business_event("advertiser.member.invited", actor=user, target=organization, metadata={"role": role})
+        _notify_invitee(invitation)
     return invitation
 
 
@@ -552,6 +556,92 @@ def _event(name, actor, campaign, from_status, reason=""):
     record_business_event(f"campaign.{name}", actor=actor, target=campaign,
                           metadata={"from_status": from_status, "revision": campaign.revision,
                                     "reason": reason[:100]})
+    _notify_campaign(name, actor, campaign, from_status)
+
+
+# --- Notifications (Phase 15-A) -------------------------------------------------------------
+# Sent inside the transaction of the change. Team notices go to every active member of
+# the organization; review-queue notices to staff who may review. Texts carry no
+# reviewer notes, reasons, budgets or other organizations' data.
+
+CAMPAIGN_NOTICES = {
+    # event: (title, message, email to the team)
+    "submitted": ("Campaign submitted for review", "ClipCash staff will review “{name}”.", False),
+    "approved": ("Campaign approved", "“{name}” was approved and will run on its scheduled dates.", True),
+    "rejected": ("Changes requested for a campaign", "“{name}” needs changes before it can run. "
+                 "Open it to see the reviewer's note.", True),
+    "activated": ("Campaign is now running", "“{name}” started and is shown to eligible members.", False),
+    "completed": ("Campaign finished", "“{name}” reached its end date.", False),
+    "paused": ("Campaign paused by ClipCash", "“{name}” is paused. Open it for details.", True),
+    "resumed": ("Campaign resumed", "“{name}” is running again.", False),
+    "cancelled": ("Campaign cancelled by ClipCash", "“{name}” was cancelled. Open it for details.", True),
+}
+STAFF_ONLY_EVENTS = ("paused", "resumed", "cancelled")  # The team's own actions are not notified.
+ORGANIZATION_NOTICES = {
+    "approved": ("Your advertiser account is approved", "You can now submit campaigns for review.", True),
+    "rejected": ("Your advertiser application was not approved", "Open your advertiser page for the reason "
+                 "and to apply again.", True),
+    "suspended": ("Your advertiser account is suspended", "Campaigns are paused. Open your advertiser page "
+                  "for details.", True),
+    "reinstated": ("Your advertiser account is active again", "You can manage and submit campaigns again.", False),
+}
+
+
+def _team(organization):
+    return [membership.user for membership in
+            organization.memberships.select_related("user").filter(is_active=True)]
+
+
+def _notify_campaign(name, actor, campaign, from_status):
+    from apps.notifications import inbox
+
+    if name not in CAMPAIGN_NOTICES or (name in STAFF_ONLY_EVENTS and not getattr(actor, "is_staff", False)):
+        return
+    title, message, email = CAMPAIGN_NOTICES[name]
+    stamp = campaign.updated_at.isoformat() if name in ("paused", "resumed") else ""
+    inbox.notify(_team(campaign.organization), f"campaign.{name}", category=inbox.Category.ADVERTISING,
+                 title=title, message=message.format(name=campaign.name),
+                 link=inbox.link_to("advertising:campaign", campaign.organization_id, campaign.pk),
+                 dedupe_key=f"campaign.{name}:{campaign.pk}:{campaign.revision}:{from_status}:{stamp}", email=email)
+    if name == "submitted":
+        inbox.notify(inbox.staff_with_permission("advertising.review_campaigns"), "campaign.review_needed",
+                     category=inbox.Category.ADVERTISING, title="Campaign awaiting review",
+                     message=f"“{campaign.name}” from {campaign.organization.display_name} was submitted.",
+                     link=inbox.link_to("administration:campaign_review", campaign.pk),
+                     dedupe_key=f"campaign.review_needed:{campaign.pk}:{campaign.revision}")
+
+
+def _notify_organization_decision(name, organization):
+    from apps.notifications import inbox
+
+    title, message, email = ORGANIZATION_NOTICES[name]
+    inbox.notify(_team(organization), f"advertiser.{name}", category=inbox.Category.ADVERTISING, title=title,
+                 message=message, link=inbox.link_to("advertising:organization", organization.pk),
+                 dedupe_key=f"advertiser.{name}:{organization.pk}:{organization.reviewed_at.isoformat()}",
+                 email=email)
+
+
+def _notify_invitee(invitation):
+    """Only if an active account already uses the invited address (no notice is created
+    for addresses without an account)."""
+    from apps.notifications import inbox
+
+    invitee = get_user_model().objects.filter(email__iexact=invitation.email, is_active=True).first()
+    inbox.notify(invitee, "advertiser.invitation", category=inbox.Category.ADVERTISING,
+                 title="You were invited to an advertiser team",
+                 message=f"{invitation.organization.display_name} invited you as "
+                         f"{invitation.get_role_display().lower()}. Accept or decline on your advertiser page.",
+                 link=inbox.link_to("advertising:home"), dedupe_key=f"advertiser.invitation:{invitation.pk}")
+
+
+def _notify_application(organization):
+    from apps.notifications import inbox
+
+    inbox.notify(inbox.staff_with_permission("advertising.review_advertisers"), "advertiser.review_needed",
+                 category=inbox.Category.ADVERTISING, title="Advertiser application awaiting review",
+                 message=f"{organization.display_name} applied to advertise.",
+                 link=inbox.link_to("administration:advertiser_review", organization.pk),
+                 dedupe_key=f"advertiser.review_needed:{organization.pk}:{organization.submitted_at.isoformat()}")
 
 
 def _activation_blocker(campaign, now):

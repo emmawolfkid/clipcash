@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.administration.admin import OperationsReadOnlyAdmin
 
-from .models import OutboundEmail
+from .models import Notification, OutboundEmail
 
 
 @admin.register(OutboundEmail)
@@ -24,3 +24,24 @@ class OutboundEmailAdmin(OperationsReadOnlyAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return self.fields
+
+
+@admin.register(Notification)
+class NotificationAdmin(OperationsReadOnlyAdmin):
+    """Read-only, Super Administrators only: notices can mention members' own activity."""
+
+    list_display = ("created_at", "category", "kind", "recipient", "read_at")
+    list_filter = ("category", "kind")
+    date_hierarchy = "created_at"
+    actions = None
+    fields = ("id", "recipient", "category", "kind", "title", "message", "link", "dedupe_key", "read_at",
+              "created_at")
+
+    def get_readonly_fields(self, request, obj=None):
+        return self.fields
+
+    def has_module_permission(self, request):
+        return request.user.is_active and request.user.is_superuser
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_active and request.user.is_superuser

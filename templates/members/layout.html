@@ -26,6 +26,7 @@
       <p class="app-nav__group" id="nav-account">{% translate "Account" %}</p>
       <ul class="app-nav__list" aria-labelledby="nav-account">
         {% if features.advertisers %}<li><a class="app-nav__link{% if nav == 'advertiser' %} is-current{% endif %}"{% if nav == 'advertiser' %} aria-current="page"{% endif %} href="{% url 'advertising:home' %}">{% translate "Advertise" %}</a></li>{% endif %}
+        <li><a class="app-nav__link{% if nav == 'notifications' %} is-current{% endif %}"{% if nav == 'notifications' %} aria-current="page"{% endif %} href="{% url 'notifications:inbox' %}">{% translate "Notifications" %}{% if unread_notifications %} <span class="badge badge--pending">{{ unread_notifications }}</span>{% endif %}</a></li>
         <li><a class="app-nav__link{% if nav == 'profile' %} is-current{% endif %}"{% if nav == 'profile' %} aria-current="page"{% endif %} href="{% url 'accounts:profile' %}">{% translate "Profile and security" %}</a></li>
         <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit" class="app-nav__link app-nav__button">{% translate "Sign out" %}</button></form></li>
       </ul>

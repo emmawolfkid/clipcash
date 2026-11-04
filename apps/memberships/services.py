@@ -341,7 +341,76 @@ def _transition(subscription, new_status, *, actor, now, reason="", audit_actor=
         metadata={"from_status": old, "to_status": new_status, "reason": reason or "",
                   "plan_code": subscription.plan.code, **(metadata or {})},
     )
+    _notify_member(subscription, old, new_status, reason)
     return subscription
+
+
+def _notify_member(subscription, old, new, reason):
+    """In-app notice (and for important changes an email) for the member, in the same
+    transaction as the change. Members' own actions (cancelling or replacing a choice)
+    are not notified; reasons for suspension or cancellation are never stated."""
+    from apps.notifications import inbox
+
+    plan = subscription.plan_name
+    notice = None
+    if new == S.ACTIVE and old == S.SUSPENDED:
+        notice = ("reinstated", f"Your {plan} membership was reinstated",
+                  f"Access is restored until {inbox.when(subscription.expires_at)}.", False)
+    elif new == S.ACTIVE and subscription.activation_source == Subscription.Source.COMPLIMENTARY:
+        notice = ("complimentary", f"Complimentary {plan} membership granted",
+                  f"You have demonstration access until {inbox.when(subscription.expires_at)}. "
+                  "No payment was taken and nothing renews automatically.", True)
+    elif new == S.ACTIVE:
+        starts = "" if subscription.starts_at <= timezone.now() else f" from {inbox.when(subscription.starts_at)}"
+        notice = ("activated", f"Your {plan} membership is active",
+                  f"Access runs{starts} until {inbox.when(subscription.expires_at)}.", True)
+    elif new == S.SUSPENDED:
+        notice = ("suspended", f"Your {plan} membership was suspended",
+                  "Access is paused. Contact ClipCash if you think this is a mistake.", True)
+    elif new == S.EXPIRED:
+        notice = ("expired", f"Your {plan} membership has ended",
+                  "Membership content is no longer available. Nothing renews automatically.", True)
+    elif new == S.CANCELLED and old == S.PENDING and reason == R.UNPAID_TIMEOUT:
+        notice = ("choice_expired", f"Your {plan} membership choice expired",
+                  "It was not activated in time. You can choose a plan again at any time.", False)
+    elif new == S.CANCELLED and old in (S.ACTIVE, S.SUSPENDED):
+        notice = ("cancelled", f"Your {plan} membership was cancelled",
+                  "Access has ended. Contact ClipCash if you have questions.", True)
+    if notice is None:
+        return
+    event, title, message, email = notice
+    inbox.notify(subscription.member, f"membership.{event}", category=inbox.Category.MEMBERSHIP, title=title,
+                 message=message, link=inbox.link_to("memberships:subscription_detail", subscription.pk),
+                 dedupe_key=f"membership.{event}:{subscription.pk}:{old}", email=email)
+
+
+def send_expiry_reminders(now=None, limit=500):
+    """Remind members MEMBERSHIPS_EXPIRY_REMINDER_DAYS before an active membership ends,
+    unless a renewal is already scheduled. Once per membership (event key), so the job
+    may run any number of times. Never renews, charges or changes anything."""
+    from apps.notifications import inbox
+
+    days = settings.MEMBERSHIPS_EXPIRY_REMINDER_DAYS
+    if days <= 0:
+        return 0
+    now = now or timezone.now()
+    due = (Subscription.objects.select_related("member")
+           .filter(status=S.ACTIVE, starts_at__lte=now, expires_at__gt=now,
+                   expires_at__lte=now + timedelta(days=days))
+           .order_by("expires_at")[:limit])
+    sent = 0
+    for subscription in due:
+        renewal = Subscription.objects.filter(member_id=subscription.member_id, status=S.ACTIVE,
+                                              starts_at__gte=subscription.expires_at).exists()
+        if renewal:
+            continue
+        sent += inbox.notify(
+            subscription.member, "membership.expiring", category=inbox.Category.MEMBERSHIP,
+            title=f"Your {subscription.plan_name} membership ends soon",
+            message=f"Access ends on {inbox.when(subscription.expires_at)}. Nothing renews automatically; "
+                    "you can choose a plan when you are ready.",
+            link=inbox.link_to("memberships:mine"), dedupe_key=f"membership.expiring:{subscription.pk}", email=True)
+    return sent
 
 
 def _activate(subscription, *, source, payment_reference, amount_paid, actor, now, period=None, note=None):

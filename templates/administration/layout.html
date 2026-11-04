@@ -9,6 +9,7 @@
       <ul class="app-nav__list" aria-labelledby="console-overview">
         {% if True %}<li><a class="app-nav__link{% if nav == 'overview' %} is-current{% endif %}"{% if nav == 'overview' %} aria-current="page"{% endif %} href="{% url 'administration:overview' %}">{% translate "Overview" %}</a></li>{% endif %}
         {% if True %}<li><a class="app-nav__link{% if nav == 'health' %} is-current{% endif %}"{% if nav == 'health' %} aria-current="page"{% endif %} href="{% url 'administration:health' %}">{% translate "Operational health" %}</a></li>{% endif %}
+        <li><a class="app-nav__link" href="{% url 'notifications:inbox' %}">{% translate "My notifications" %}{% if unread_notifications %} <span class="badge badge--pending">{{ unread_notifications }}</span>{% endif %}</a></li>
       </ul>{% endif %}
       {% if can.members or can.plans %}<p class="app-nav__group" id="console-members">{% translate "Members" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-members">

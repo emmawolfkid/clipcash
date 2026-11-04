@@ -16,6 +16,7 @@ urlpatterns = [
     path("wallet/", include("apps.wallets.urls")),
     path("withdrawals/", include("apps.withdrawals.urls")),
     path("manage/", include("apps.administration.urls")),
+    path("notifications/", include("apps.notifications.urls")),
     path("dashboard/", MemberDashboardView.as_view(), name="dashboard"),
     path("dashboard/activity/", MemberActivityView.as_view(), name="activity"),
     path("i18n/", include("django.conf.urls.i18n")),

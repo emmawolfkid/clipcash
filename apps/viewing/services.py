@@ -498,7 +498,38 @@ def _close(session, now, *, trigger):
     if flags:
         record_security_event("viewing.fraud.flagged", outcome=FAILURE, actor=None, target=session,
                               metadata={"campaign": str(session.campaign_id), "flags": flags})
+    if session.outcome == Out.SUSPICIOUS_REVIEW:
+        _notify_reviewers(now)
     return session
+
+
+# --- Notifications (Phase 15-A) ----------------------------------------------------------------
+# Members learn the outcome of a staff decision about their view; the texts never mention
+# fraud signals, flags or reviewer notes. Reviewers get at most one queue reminder a day.
+
+MEMBER_NOTICES = {
+    "review_confirmed": ("Your view was confirmed", "Staff confirmed your view of “{name}”."),
+    "review_rejected": ("Your view was not accepted", "After review, your view of “{name}” was not accepted."),
+    "revoked": ("A verified view was withdrawn", "Your verified view of “{name}” no longer counts."),
+}
+
+
+def _notify_member(session, event):
+    from apps.notifications import inbox
+
+    title, message = MEMBER_NOTICES[event]
+    inbox.notify(session.member, f"viewing.{event}", category=inbox.Category.VIEWING, title=title,
+                 message=message.format(name=session.campaign.name), link=inbox.link_to("viewing:history"),
+                 dedupe_key=f"viewing.{event}:{session.pk}")
+
+
+def _notify_reviewers(now):
+    from apps.notifications import inbox
+
+    inbox.notify(inbox.staff_with_permission("viewing.review_viewing"), "viewing.review_needed",
+                 category=inbox.Category.VIEWING, title="Viewing sessions are awaiting review",
+                 message="At least one sponsored view was flagged for a staff decision.",
+                 link=inbox.link_to("administration:viewing"), dedupe_key=f"viewing.review_needed:{now.date()}")
 
 
 def finish_session(member, session_id):
@@ -570,6 +601,7 @@ def review_session(actor, session, decision, *, expected_status, reason):
         session.save()
         record_business_event("viewing.review.decided", actor=actor, target=session,
                               metadata={"decision": decision, "reason": reason[:100], "flags": session.flags})
+        _notify_member(session, "review_confirmed" if session.outcome == Out.VERIFIED_EVIDENCE else "review_rejected")
         if decision == "reject":
             session_reversed.send(sender=WatchSession, session=session, actor=actor, reason=reason[:300])
     return session
@@ -605,6 +637,7 @@ def revoke_verified_session(actor, session, *, reason):
         session.save()
         record_business_event("viewing.session.revoked", actor=actor, target=session,
                               metadata={"campaign": str(session.campaign_id), "reason": reason[:100]})
+        _notify_member(session, "revoked")
         session_reversed.send(sender=WatchSession, session=session, actor=actor, reason=reason[:300])
     return session
 

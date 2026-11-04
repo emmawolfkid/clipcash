@@ -24,6 +24,7 @@ import socket
 import time
 from datetime import timedelta
 
+import django.dispatch
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.models import Count, F, Min
@@ -35,6 +36,10 @@ from apps.audit.services import record_business_event
 from ..models import Job, WorkerHeartbeat
 from .errors import JobError
 from .registry import get_job_type, validate_payload
+
+# Sent when a job fails terminally (after its on_failure hook and audit event), inside
+# the failure transaction, with job=<Job>. Lets other apps react without core importing them.
+job_failed = django.dispatch.Signal()
 
 log = logging.getLogger("clipcash.jobs")
 
@@ -135,6 +140,7 @@ def _fail_or_retry(job, error_class, summary, now, *, permanent=False):
             "jobs.job.failed", actor=None, target=job,
             metadata={"job_type": job.job_type, "attempts": job.attempts, "error_class": error_class},
         )
+        job_failed.send(sender=Job, job=job)  # Same transaction: listeners' writes commit with the failure.
         log.error("job_failed id=%s type=%s attempts=%s class=%s", job.pk, job.job_type, job.attempts, error_class)
         return S.FAILED
     delay = compute_backoff(job.attempts, definition.backoff_base_seconds, definition.backoff_max_seconds)

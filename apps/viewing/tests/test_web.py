@@ -120,6 +120,11 @@ class ConsoleTests(ViewingTestCase):
         self.client.force_login(self.root)
 
         def count():
+            # The test client delivers queued email after every request (DeliveringClient);
+            # deliver notices queued by the setup first so only the page is measured.
+            from apps.accounts.tests.helpers import run_worker
+
+            run_worker()
             with CaptureQueriesContext(connection) as queries:
                 self.client.get(reverse("administration:viewing"))
             return len(queries)

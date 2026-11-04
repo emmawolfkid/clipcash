@@ -286,6 +286,18 @@ def report_upload_finished(actor, video):
     return video
 
 
+def _notify_video(video, event, title, message):
+    """Tell the staff member who created the video (or, if that account is gone, the
+    video managers). Once per video, event and status change."""
+    from apps.notifications import inbox
+
+    creator = video.created_by if video.created_by_id and video.created_by.is_active else None
+    recipients = [creator] if creator else inbox.staff_with_permission("videos.manage_videos")
+    inbox.notify(recipients, f"video.{event}", category=inbox.Category.VIDEO, title=title, message=message,
+                 link=inbox.link_to("administration:video_detail", video.pk),
+                 dedupe_key=f"video.{event}:{video.pk}:{video.updated_at.isoformat() if video.updated_at else ''}")
+
+
 def report_upload_failed(actor, video, reason):
     _require(can_manage_videos, actor, "video.upload_failed", video)
     reason = reason if reason in ("network", "aborted", "rejected", "unknown") else "unknown"
@@ -297,6 +309,8 @@ def report_upload_failed(actor, video, reason):
         video.processing_error = "The upload did not complete. You can try again."
         video.save(update_fields=["processing_status", "processing_error", "updated_at"])
         record_business_event("video.upload.failed", actor=actor, target=video, metadata={"reason": reason})
+        _notify_video(video, "failed", "Video upload did not complete",
+                      f"“{video.title}” was not uploaded. You can try again.")
     return video
 
 
@@ -340,11 +354,15 @@ def sync_video(video_id):
             video.processing_error = ""
             record_business_event("video.processing.completed", actor=None, target=video,
                                   metadata={"duration_seconds": video.duration_seconds or 0})
+            _notify_video(video, "ready", "Video is ready", f"“{video.title}” finished processing and can be "
+                          "published.")
         elif info.processing == P.FAILED and video.processing_status != P.FAILED:
             video.processing_status = P.FAILED
             video.processing_error = info.error[:200]
             record_business_event("video.processing.failed", actor=None, target=video,
                                   metadata={"status_code": info.status_code})
+            _notify_video(video, "failed", "Video processing failed",
+                          f"“{video.title}” could not be processed. Open it to upload again.")
         elif info.processing == P.PROCESSING and video.processing_status in (P.PENDING, P.UPLOADING):
             video.processing_status = P.PROCESSING  # Bunny received the upload.
         video.save()

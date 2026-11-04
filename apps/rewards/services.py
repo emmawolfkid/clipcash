@@ -117,7 +117,34 @@ def create_policy(actor, campaign, *, reward_amount, notes=""):
                                              created_by=actor)
         record_business_event("rewards.policy.created", actor=actor, target=policy,
                               metadata={"campaign": str(campaign.pk), "version": version, "amount": amount})
+        _notify_approvers(policy, actor)
     return policy
+
+
+# --- Notifications (Phase 15-A) ----------------------------------------------------------------
+# Every reward text says "simulated" and states no amount: demo figures must never read as money.
+
+
+def _notify_member(reward, event, title, message):
+    from apps.notifications import inbox
+
+    inbox.notify(reward.member, f"rewards.{event}", category=inbox.Category.REWARD, title=title,
+                 message=message.format(name=reward.campaign.name), link=inbox.link_to("rewards:history"),
+                 dedupe_key=f"rewards.{event}:{reward.pk}")
+
+
+def _notify_approvers(policy, drafter):
+    """Four-eyes: ask the other approvers (never the drafter) to decide."""
+    from apps.notifications import inbox
+
+    approvers = [user for user in inbox.staff_with_permission("rewards.approve_reward_policies")
+                 if user.pk != drafter.pk]
+    inbox.notify(approvers, "rewards.policy_review_needed", category=inbox.Category.REWARD,
+                 title="Demo reward policy awaiting a second approver",
+                 message=f"Version {policy.version} for “{policy.campaign.name}” needs approval by someone "
+                         "other than its author.",
+                 link=inbox.link_to("administration:reward_policy", policy.pk),
+                 dedupe_key=f"rewards.policy_review_needed:{policy.pk}")
 
 
 def _check_policy_campaign(campaign, amount):
@@ -321,6 +348,9 @@ def evaluate_session(session_id, *, actor=None):
         record_business_event("rewards.decision.qualified", actor=None, target=reward, metadata={
             "campaign": str(session.campaign_id), "policy_version": policy.version, "amount": amount,
             "demo_consumed": budget.demo_consumed})
+        _notify_member(reward, "recorded", "Demo reward recorded (simulated, not money)",
+                       "Your verified view of “{name}” earned a simulated demo reward. It is not money and "
+                       "cannot be withdrawn.")
     return reward
 
 
@@ -362,6 +392,8 @@ def _reverse_locked(reward, *, actor, reason, source):
     reward.reversed_by = actor if getattr(actor, "is_authenticated", False) else None
     reward.reversal_reason = reason[:300]
     reward.save()
+    _notify_member(reward, "reversed", "Demo reward reversed (simulated)",
+                   "A simulated demo reward for “{name}” was reversed. No money was involved.")
     record_business_event("rewards.reward.reversed", actor=actor if reward.reversed_by else None, target=reward,
                           metadata={"campaign": str(reward.campaign_id), "amount": reward.amount, "source": source,
                                     "reason": reason[:100]})

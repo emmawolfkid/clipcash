@@ -125,6 +125,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.core.context_processors.site',
+                'apps.notifications.context_processors.notifications',
             ],
         },
     },
@@ -279,6 +280,11 @@ JOBS_FAILED_RETENTION_DAYS = 90
 JOBS_SCHEDULE_INTERVALS = env.dict("DJANGO_JOBS_SCHEDULE_INTERVALS", cast={"value": int}, default={})
 NOTIFICATIONS_DEFAULT_EMAIL_TTL = 60 * 60 * 24 * 3  # Non-token emails stay deliverable 3 days.
 NOTIFICATIONS_OUTBOX_RETENTION_DAYS = 90
+# In-app notifications (Phase 15-A): read notices are deleted after this; unread ones are kept.
+NOTIFICATIONS_RETENTION_DAYS = 365
+# Members are reminded this many days before a membership ends (no renewal is
+# initiated; nothing is charged). 0 disables the reminder.
+MEMBERSHIPS_EXPIRY_REMINDER_DAYS = env.int("DJANGO_MEMBERSHIPS_EXPIRY_REMINDER_DAYS", default=7)
 
 # Memberships (apps.memberships). Payments stay locked off; see
 # docs/architecture/memberships.md.

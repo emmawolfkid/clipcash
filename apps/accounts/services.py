@@ -18,6 +18,7 @@ import logging
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.audit.services import (
@@ -155,7 +156,19 @@ def confirm_email(user_pk, token):
         user.email_verified = True
         user.save(update_fields=["email_verified", "updated_at"])
         record_business_event("account.email_confirmed", actor=user, target=user)
+        notify_account(user, "email_confirmed", "Your email address is confirmed",
+                       "You can now use every member feature that needs a confirmed address.",
+                       key=f"email_confirmed:{user.pk}:{user.email}")
     return user
+
+
+def notify_account(user, event, title, message, *, key):
+    """In-app account and security notice (never emailed here: the account emails keep
+    their existing behaviour). No codes, tokens or addresses are included."""
+    from apps.notifications import inbox
+
+    inbox.notify(user, f"account.{event}", category=inbox.Category.ACCOUNT, title=title, message=message,
+                 link=inbox.link_to("accounts:profile"), dedupe_key=f"account.{key}")
 
 
 # --- Role and status changes --------------------------------------------------
@@ -249,6 +262,11 @@ def log_access_change(actor, user, *, old_role, old_status):
             target=user,
             metadata={"from_status": old_status, "to_status": user.status},
         )
+        if user.status == Status.ACTIVE and old_status in (Status.SUSPENDED, Status.DISABLED):
+            # Suspended or disabled accounts cannot sign in to read a notice; reactivation is shown.
+            notify_account(user, "reactivated", "Your account is active again",
+                           "You can sign in and use ClipCash as before.",
+                           key=f"reactivated:{user.pk}:{timezone.now().isoformat()}")
 
 
 @transaction.atomic

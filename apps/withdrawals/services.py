@@ -364,6 +364,41 @@ def _decide(withdrawal, action, from_status, *, actor=None, reason_code="", note
     DemoWithdrawalDecision.objects.create(withdrawal=withdrawal, action=action, from_status=from_status,
                                           to_status=withdrawal.status, actor=actor, reason_code=reason_code,
                                           note=note[:300])
+    _notify(withdrawal, action, actor)
+
+
+# --- Notifications (Phase 15-A) ----------------------------------------------------------------
+# Demo scenarios only: every member text says so, and none states an amount or destination.
+
+MEMBER_NOTICES = {
+    D.REQUESTED: ("Demo withdrawal scenario created", "Staff created a demonstration withdrawal for you. "
+                  "It is a simulation: no money moves."),
+    D.APPROVED: ("Demo withdrawal approved (simulation)", "The demonstration withdrawal was approved. No money moves."),
+    D.REJECTED: ("Demo withdrawal rejected (simulation)", "The demonstration withdrawal was rejected."),
+    D.CANCELLED: ("Demo withdrawal cancelled (simulation)", "The demonstration withdrawal was cancelled."),
+    D.PAID: ("Demo payout completed (simulated)", "The simulated payout completed. No money was sent."),
+    D.FAILED: ("Demo payout failed (simulated)", "The simulated payout failed. No money was involved."),
+    D.EXPIRED: ("Demo withdrawal expired (simulation)", "The demonstration withdrawal expired before review."),
+    D.RETURNED: ("Demo payout returned (simulated)", "The simulated payout was returned. No money was involved."),
+}
+
+
+def _notify(withdrawal, action, actor):
+    from apps.notifications import inbox
+
+    if action != "approval_recorded" and withdrawal.status in MEMBER_NOTICES:
+        title, message = MEMBER_NOTICES[withdrawal.status]
+        inbox.notify(withdrawal.member, f"withdrawals.{withdrawal.status.lower()}", category=inbox.Category.WITHDRAWAL,
+                     title=title, message=message, link=inbox.link_to("withdrawals:demo", withdrawal.pk),
+                     dedupe_key=f"withdrawals.{withdrawal.status}:{withdrawal.pk}")
+    if action == "created":
+        reviewers = [user for user in inbox.staff_with_permission("withdrawals.review_withdrawals")
+                     if user.pk not in (getattr(actor, "pk", None), withdrawal.member_id)]
+        inbox.notify(reviewers, "withdrawals.review_needed", category=inbox.Category.WITHDRAWAL,
+                     title="Demo withdrawal awaiting review",
+                     message="A demonstration withdrawal needs a reviewer other than its creator.",
+                     link=inbox.link_to("administration:withdrawal", withdrawal.pk),
+                     dedupe_key=f"withdrawals.review_needed:{withdrawal.pk}")
 
 
 def _risk_flags(member, beneficiary, amount):

@@ -3,7 +3,7 @@ from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
-from apps.accounts.tests.helpers import make_user
+from apps.accounts.tests.helpers import make_user, run_worker
 from apps.audit.models import AuditEvent
 from apps.payments import services as payments
 from apps.payments import simulator
@@ -127,6 +127,9 @@ class SummaryTests(MemberExperienceTestCase):
         self.client.force_login(self.member)
 
         def count():
+            # The test client delivers queued email after every request (DeliveringClient);
+            # deliver notices queued by the setup first so only the page is measured.
+            run_worker()
             with CaptureQueriesContext(connection) as queries:
                 self.assertEqual(self.client.get(DASHBOARD).status_code, 200)
             return len(queries)
