@@ -1,19 +1,19 @@
-{% load i18n %}{# Usage: {% include "components/campaign_performance.html" with performance=performance %} #}
-<section class="panel section" aria-labelledby="performance-title">
-  <h3 class="panel__title" id="performance-title">{% translate "Performance" %}</h3>
-  <div class="stat-grid">
-    <div class="stat"><span class="stat__value">{{ performance.viewing.verified.display }}</span><span class="stat__label">{% translate "Verified views" %}</span></div>
-    <div class="stat"><span class="stat__value">{{ performance.viewing.viewers.display }}</span><span class="stat__label">{% translate "Unique viewers (verified)" %}</span></div>
-    <div class="stat"><span class="stat__value">{{ performance.viewing.sessions.display }}</span><span class="stat__label">{% translate "Sessions started" %}</span></div>
-    <div class="stat"><span class="stat__value">{{ performance.viewing.in_review.display }}</span><span class="stat__label">{% translate "Awaiting staff review" %}</span></div>
-    <div class="stat"><span class="stat__value">{{ performance.viewing.not_verified.display }}</span><span class="stat__label">{% translate "Not verified" %}</span></div>
-  </div>
-  <p class="lead">{% translate "A verified view means ClipCash's server-side checks passed for the required watch time. It is evidence of playback, not proof of attention. Revoked views are not counted." %}</p>
-  <h4>{% translate "Demo rewards (simulated, not money)" %}</h4>
-  <div class="stat-grid">
-    <div class="stat stat--demo"><span class="stat__value">{{ performance.demo_rewards.qualified.display }}</span><span class="stat__label">{% translate "Simulated rewards recorded" %}</span></div>
-    <div class="stat stat--demo"><span class="stat__value">{{ performance.demo_rewards.reversed.display }}</span><span class="stat__label">{% translate "Simulated rewards reversed" %}</span></div>
-    <div class="stat stat--demo"><span class="stat__value">{% if performance.demo_rewards.demo_consumed is None %}{% translate "Hidden for privacy" %} / TZS {{ performance.demo_rewards.demo_allocated }}{% else %}TZS {{ performance.demo_rewards.demo_consumed }} / {{ performance.demo_rewards.demo_allocated }}{% endif %}</span><span class="stat__label">{% translate "Demo budget used (simulated figure, never charged)" %}</span></div>
-  </div>
-  <p class="lead">{% translate "Spend: not applicable. No money is charged to advertisers or paid to members in this demonstration." %}</p>
+{% load i18n money %}{# Administration console only. Usage: {% include "components/campaign_performance.html" with performance=performance %} #}
+<section class="workspace-section" aria-labelledby="performance-title">
+  <h2 class="workspace-section__title" id="performance-title">{% translate "Performance" %}</h2>
+  <dl class="metric-row">
+    <div class="metric"><dt>{% translate "Verified views" %}</dt><dd>{{ performance.viewing.verified.display }}</dd></div>
+    <div class="metric"><dt>{% translate "Unique viewers (verified)" %}</dt><dd>{{ performance.viewing.viewers.display }}</dd></div>
+    <div class="metric"><dt>{% translate "Sessions started" %}</dt><dd>{{ performance.viewing.sessions.display }}</dd></div>
+    <div class="metric"><dt>{% translate "Awaiting staff review" %}</dt><dd>{{ performance.viewing.in_review.display }}</dd></div>
+    <div class="metric"><dt>{% translate "Not verified" %}</dt><dd>{{ performance.viewing.not_verified.display }}</dd></div>
+  </dl>
+  <p class="workspace-note">{% translate "A verified view means ClipCash's server-side checks passed for the required watch time. It is evidence of playback, not proof of attention. Revoked views are not counted." %}</p>
+  <h3 class="workspace-subtitle">{% translate "Demo rewards (simulated, not money)" %}</h3>
+  <dl class="details">
+    <dt>{% translate "Simulated rewards recorded" %}</dt><dd>{{ performance.demo_rewards.qualified.display }}</dd>
+    <dt>{% translate "Simulated rewards reversed" %}</dt><dd>{{ performance.demo_rewards.reversed.display }}</dd>
+    <dt>{% translate "Demo budget used (simulated figure, never charged)" %}</dt><dd>{% if performance.demo_rewards.demo_consumed is None %}{% blocktranslate with allocated=performance.demo_rewards.demo_allocated|tzs %}Hidden for privacy, of {{ allocated }}{% endblocktranslate %}{% else %}{% blocktranslate with used=performance.demo_rewards.demo_consumed|tzs allocated=performance.demo_rewards.demo_allocated|tzs %}{{ used }} of {{ allocated }}{% endblocktranslate %}{% endif %}</dd>
+  </dl>
+  <p class="workspace-note">{% translate "Spend: not applicable. No money is charged to advertisers or paid to members in this demonstration." %}</p>
 </section>

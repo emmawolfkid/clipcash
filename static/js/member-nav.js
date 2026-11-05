@@ -59,6 +59,13 @@
     tabs.scrollLeft = currentTab.offsetLeft - tabs.offsetLeft;
   }
 
+  // The console menu scrolls on its own: start with the current page in view.
+  var sidebar = document.querySelector(".app-sidebar");
+  var currentLink = sidebar && sidebar.querySelector(".is-current");
+  if (currentLink && sidebar.scrollHeight > sidebar.clientHeight) {
+    sidebar.scrollTop = currentLink.offsetTop - sidebar.clientHeight / 2;
+  }
+
   var siteToggle = document.querySelector(".site-menu-toggle");
   var sidebarToggle = document.querySelector(".app-nav__toggle");
   var siteMenu = siteToggle && document.getElementById(siteToggle.getAttribute("aria-controls"));

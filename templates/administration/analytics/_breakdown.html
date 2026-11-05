@@ -1,5 +1,5 @@
-{% load i18n %}<div class="panel">
-  <h3 class="panel__title">{{ item.title }}</h3>
+{% load i18n %}<div>
+  <h3 class="workspace-subtitle">{{ item.title }}</h3>
   {% if item.empty %}<p class="empty-state">{% translate "No activity in this period." %}</p>{% else %}
   <ul class="analytics-breakdown">
     {% for row in item.rows %}<li><span class="analytics-breakdown__label"><span>{{ row.label }}</span><strong>{{ row.value }}</strong></span><svg class="analytics-meter" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true" focusable="false"><rect class="analytics-bar--1" width="{{ row.width }}" height="4"/></svg></li>{% endfor %}

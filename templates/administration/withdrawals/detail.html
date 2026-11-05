@@ -1,22 +1,22 @@
-{% extends "administration/layout.html" %}{% load i18n %}
+{% extends "administration/layout.html" %}{% load i18n console_labels money %}
 {% block title %}{{ demo.reference }}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{{ demo.reference }} <span class="badge badge--sandbox">{% translate "Demo" %}</span></h1><a href="{% url 'administration:withdrawals' %}">{% translate "All demo withdrawals" %}</a></div>
+<div class="page-heading"><h1 class="page-title">{{ demo.reference }} <span class="badge badge--sandbox">{% translate "Demo" %}</span></h1><a href="{% url 'administration:withdrawals' %}">{% translate "All demo withdrawals" %}</a></div>
 {% include "components/demo_withdrawal_notice.html" %}
-<div class="card-grid">
-<section class="panel"><h2 class="panel__title">{% translate "Request" %}</h2><dl class="details">
+<div class="console-split">
+<section><h2 class="workspace-section__title">{% translate "Request" %}</h2><dl class="details">
   <dt>{% translate "Member" %}</dt><dd>{{ demo.member.email }}</dd>
-  <dt>{% translate "Simulated amount" %}</dt><dd>TZS {{ demo.simulated_amount }}</dd>
+  <dt>{% translate "Simulated amount" %}</dt><dd>{{ demo.simulated_amount|tzs }}</dd>
   <dt>{% translate "Destination (snapshot)" %}</dt><dd>{{ demo.destination_provider }} •••• {{ demo.destination_last4 }} · {{ demo.destination_holder }}</dd>
-  <dt>{% translate "Status" %}</dt><dd>{{ demo.get_status_display }}{% if demo.reason_code %} · {{ demo.reason_code }}{% endif %}</dd>
-  <dt>{% translate "Risk" %}</dt><dd>{% if demo.high_risk %}{% translate "High: two approvers required" %}{% else %}{% translate "Standard" %}{% endif %} {{ demo.flags|join:", " }}</dd>
+  <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ demo.status|lower }}">{{ demo.get_status_display }}</span>{% if demo.reason_code %} · {{ demo.reason_code|code_label }}{% endif %}</dd>
+  <dt>{% translate "Risk" %}</dt><dd>{% if demo.high_risk %}{% translate "High: two approvers required" %}{% else %}{% translate "Standard" %}{% endif %} {{ demo.flags|code_labels }}</dd>
   <dt>{% translate "Created / approved / payout by" %}</dt><dd>{{ demo.created_by.email }} / {{ demo.approved_by.email|default:"—" }}{% if demo.second_approved_by %} + {{ demo.second_approved_by.email }}{% endif %} / {{ demo.payout_initiated_by.email|default:"—" }}</dd>
   <dt>{% translate "Simulated payout ref." %}</dt><dd>{{ demo.payout_reference|default:"—" }}</dd>
 </dl></section>
-<section class="panel"><h2 class="panel__title">{% translate "Actions" %}</h2>
+<section><h2 class="workspace-section__title">{% translate "Actions" %}</h2>
   {% if can_review %}<form method="post" class="form">{% csrf_token %}<input type="hidden" name="expected_status" value="{{ demo.status }}">
     <label for="note">{% translate "Note" %}</label><input id="note" name="note" type="text" maxlength="300">
-    <label for="reason">{% translate "Reason code (reject/cancel)" %}</label><select id="reason" name="reason_code">{% for code in reasons %}<option value="{{ code }}">{{ code }}</option>{% endfor %}</select>
+    <label for="reason">{% translate "Reason code (reject/cancel)" %}</label><select id="reason" name="reason_code">{% for code in reasons %}<option value="{{ code }}">{{ code|code_label }}</option>{% endfor %}</select>
     <div class="actions">
       {% if demo.status == "DEMO_REQUESTED" %}<button class="button" name="action" value="start_review" type="submit">{% translate "Start review" %}</button>{% endif %}
       {% if demo.status == "DEMO_UNDER_REVIEW" %}<button class="button" name="action" value="approve" type="submit">{% if demo.approved_by %}{% translate "Second approval" %}{% else %}{% translate "Approve" %}{% endif %}</button>{% endif %}
@@ -24,10 +24,10 @@
       <button class="button button--secondary" name="action" value="cancel" type="submit">{% translate "Cancel" %}</button>{% endif %}
       {% if can_operate and demo.status == "DEMO_APPROVED" %}<button class="button" name="action" value="initiate" type="submit">{% translate "Start simulated payout" %}</button>{% endif %}
     </div></form>{% endif %}
-  {% if can_operate and demo.payout_reference %}<h3>{% translate "Payout simulator" %}</h3><form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="simulate">
+  {% if can_operate and demo.payout_reference %}<h3 class="workspace-subtitle">{% translate "Payout simulator" %}</h3><form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="simulate">
     {% for value, label in simulator_actions %}<button class="button button--secondary" name="simulate" value="{{ value }}" type="submit">{{ label }}</button>{% endfor %}</form>{% endif %}
 </section></div>
-<section class="section"><h2>{% translate "Decision history" %}</h2><ul class="list">{% for d in decisions %}<li class="list__item"><span>{{ d.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ d.action }} · {{ d.from_status|default:"—" }} → {{ d.to_status }}{% if d.reason_code %} · {{ d.reason_code }}{% endif %}{% if d.note %} · {{ d.note }}{% endif %}</span><span>{{ d.actor.email|default:"system" }}</span></li>{% endfor %}</ul></section>
-<section class="section"><h2>{% translate "Payout events" %}</h2>{% for e in events %}<p>{{ e.received_at|date:"SHORT_DATETIME_FORMAT" }} · {{ e.outcome }} · {{ e.summary.status|default:"" }}{% if not e.authenticated %} ({% translate "not authenticated" %}){% endif %}</p>{% empty %}<p class="lead">—</p>{% endfor %}</section>
-<section class="section"><h2>{% translate "Audit history" %}</h2><ul class="list">{% for e in history %}<li class="list__item"><span>{{ e.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ e.action }}</span><span>{{ e.actor_email|default:"system" }}</span></li>{% empty %}<li>—</li>{% endfor %}</ul></section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Decision history" %}</h2><ul class="list">{% for d in decisions %}<li class="list__item"><span>{{ d.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ d.action|code_label }} · {{ d.from_status|code_label|default:"—" }} → {{ d.to_status|code_label }}{% if d.reason_code %} · {{ d.reason_code|code_label }}{% endif %}{% if d.note %} · {{ d.note }}{% endif %}</span><span>{{ d.actor.email|default:"system" }}</span></li>{% endfor %}</ul></section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Payout events" %}</h2>{% for e in events %}<p>{{ e.received_at|date:"SHORT_DATETIME_FORMAT" }} · {{ e.outcome|code_label }} · {{ e.summary.status|default:""|code_label }}{% if not e.authenticated %} ({% translate "not authenticated" %}){% endif %}</p>{% empty %}<p class="lead">—</p>{% endfor %}</section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Audit history" %}</h2><ul class="list">{% for e in history %}<li class="list__item"><span>{{ e.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ e.action|code_label }}<code class="audit-code">{{ e.action }}</code></span><span>{{ e.actor_email|default:"system" }}</span></li>{% empty %}<li>—</li>{% endfor %}</ul></section>
 {% endblock %}

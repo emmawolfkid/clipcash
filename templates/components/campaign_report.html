@@ -1,17 +1,17 @@
-{% load i18n %}
-<div class="stat-grid">
-  <div class="stat"><span class="stat__value">{{ report.total }}</span><span class="stat__label">{% translate "Campaigns" %}</span></div>
-  <div class="stat"><span class="stat__value">{{ report.n_draft }}</span><span class="stat__label">{% translate "Drafts" %}</span></div>
-  <div class="stat"><span class="stat__value">{{ report.n_submitted }}</span><span class="stat__label">{% translate "Awaiting review" %}</span></div>
-  <div class="stat"><span class="stat__value">{{ report.n_scheduled }}</span><span class="stat__label">{% translate "Approved, scheduled" %}</span></div>
-  <div class="stat"><span class="stat__value">{{ report.n_active }}</span><span class="stat__label">{% translate "Active" %}</span></div>
-  <div class="stat"><span class="stat__value">{{ report.n_paused }}</span><span class="stat__label">{% translate "Paused" %}</span></div>
-  <div class="stat"><span class="stat__value">{{ report.n_completed }}</span><span class="stat__label">{% translate "Completed" %}</span></div>
-  <div class="stat stat--demo"><span class="stat__value">TZS {{ report.demo_budget_running }}</span><span class="stat__label">{% translate "Demo budget in approved campaigns (not money)" %}</span></div>
-</div>
-<div class="stat-grid">
-  <div class="stat"><span class="stat__value">{{ report.viewing.verified.display }}</span><span class="stat__label">{% translate "Verified views" %}</span></div>
-  <div class="stat"><span class="stat__value">{{ report.viewing.viewers.display }}</span><span class="stat__label">{% translate "Unique viewers (verified)" %}</span></div>
-  <div class="stat"><span class="stat__value">{{ report.viewing.sessions.display }}</span><span class="stat__label">{% translate "Viewing sessions started" %}</span></div>
-  <div class="stat stat--unavailable"><span class="stat__value">—</span><span class="stat__label">{% translate "Spend: not applicable (no real money is charged)" %}</span></div>
-</div>
+{% load i18n money %}{# Administration console only; the advertiser workspace has its own summary. #}
+<dl class="metric-row">
+  <div class="metric"><dt>{% translate "Campaigns" %}</dt><dd>{{ report.total }}</dd></div>
+  <div class="metric"><dt>{% translate "Awaiting review" %}</dt><dd>{{ report.n_submitted }}</dd></div>
+  <div class="metric"><dt>{% translate "Active" %}</dt><dd>{{ report.n_active }}</dd></div>
+  <div class="metric"><dt>{% translate "Verified views" %}</dt><dd>{{ report.viewing.verified.display }}</dd></div>
+  <div class="metric"><dt>{% translate "Unique viewers (verified)" %}</dt><dd>{{ report.viewing.viewers.display }}</dd></div>
+</dl>
+<dl class="details">
+  <dt>{% translate "Drafts" %}</dt><dd>{{ report.n_draft }}</dd>
+  <dt>{% translate "Approved, scheduled" %}</dt><dd>{{ report.n_scheduled }}</dd>
+  <dt>{% translate "Paused" %}</dt><dd>{{ report.n_paused }}</dd>
+  <dt>{% translate "Completed" %}</dt><dd>{{ report.n_completed }}</dd>
+  <dt>{% translate "Viewing sessions started" %}</dt><dd>{{ report.viewing.sessions.display }}</dd>
+  <dt>{% translate "Demo budget in approved campaigns (not money)" %}</dt><dd>{{ report.demo_budget_running|tzs }}</dd>
+  <dt>{% translate "Spend" %}</dt><dd>{% translate "Spend: not applicable (no real money is charged)" %}</dd>
+</dl>

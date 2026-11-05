@@ -1,4 +1,4 @@
-/* UI-06: advertiser settings-style pages (application, profile, campaign form, team). */
+/* UI-06, shared since UI-07: settings-style form groups and the confirmation disclosure. */
 .settings-group {
   display: grid;
   grid-template-columns: minmax(0, 15rem) minmax(0, 32rem);

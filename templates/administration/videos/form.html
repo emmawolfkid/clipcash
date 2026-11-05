@@ -4,5 +4,5 @@
 <h1 class="page-title">{% translate "New video" %}</h1>
 {% if demo %}<p class="notice">{% translate "Demo mode: this creates a labelled demo record. No file is uploaded and no processing takes place." %}</p>
 {% else %}<p class="lead">{% translate "Create the video first; you can then upload the file directly to Bunny Stream." %}</p>{% endif %}
-<section class="panel">{% include "components/form.html" with button=_("Create video") %}</section>
+<section>{% include "components/form.html" with button=_("Create video") %}</section>
 {% endblock %}

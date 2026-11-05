@@ -5,8 +5,8 @@
 <h1 class="page-title">{{ report.title }}</h1>
 {% if period_error %}<p class="notice notice--warning" role="alert">{{ period_error }} {% translate "Showing the default period." %}</p>{% endif %}
 <form class="toolbar" method="get" aria-label="{% translate 'Report period' %}">
-  <label for="from">{% translate "From" %}</label><input id="from" type="date" name="from" value="{{ period.first|date:'Y-m-d' }}">
-  <label for="to">{% translate "To" %}</label><input id="to" type="date" name="to" value="{{ period.last|date:'Y-m-d' }}">
+  <div class="period-field"><label for="from">{% translate "From" %}</label><input id="from" type="date" name="from" value="{{ period.first|date:'Y-m-d' }}"></div>
+  <div class="period-field"><label for="to">{% translate "To" %}</label><input id="to" type="date" name="to" value="{{ period.last|date:'Y-m-d' }}"></div>
   <button type="submit" class="button button--secondary">{% translate "Show" %}</button>
 </form>
 {% if can_export %}<form class="toolbar" method="post" action="{% url 'administration:report_export' report.slug %}">{% csrf_token %}
@@ -15,9 +15,9 @@
   {% if minimum %}<small>{% blocktranslate %}Exports are audited. Per-campaign counts below {{ minimum }} are hidden in the file.{% endblocktranslate %}</small>{% endif %}
 </form>{% endif %}
 {% for section in report.sections %}
-<section class="section">
+<section class="workspace-section">
   <div class="section__header"><h2>{{ section.title }}</h2><span>{% if section.funds_label %}<span class="badge badge--sandbox">{{ section.funds_label }}</span> {% endif %}<span class="badge badge--pending">{% if section.as_of_now %}{% translate "As of today" %}{% else %}{% translate "In this period" %}{% endif %}</span></span></div>
-  {% if section.rows %}<table class="table">
+  {% if section.rows %}<table class="table workspace-table"><caption class="visually-hidden">{{ section.title }}</caption>
     <thead><tr>{% for column in section.columns %}<th scope="col">{{ column }}</th>{% endfor %}</tr></thead>
     <tbody>{% for row in section.rows %}<tr>{% for value in row %}<td>{{ value }}</td>{% endfor %}</tr>{% endfor %}</tbody>
   </table>{% if section.truncated %}<p class="lead">{% translate "Only the first rows are shown." %}</p>{% endif %}

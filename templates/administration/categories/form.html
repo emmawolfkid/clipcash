@@ -1,8 +1,8 @@
 {% extends "administration/layout.html" %}{% load i18n %}
 {% block title %}{{ category.name }}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{{ category.name }}</h1><a href="{% url 'administration:categories' %}">{% translate "All categories" %}</a></div>
-<section class="panel">{% include "components/form.html" with button=_("Save category") %}</section>
+<div class="page-heading"><h1 class="page-title">{{ category.name }}</h1><a href="{% url 'administration:categories' %}">{% translate "All categories" %}</a></div>
+<section>{% include "components/form.html" with button=_("Save category") %}</section>
 <form method="post" class="section">{% csrf_token %}<input type="hidden" name="toggle" value="1">
   <button type="submit" class="button button--secondary">{% if category.is_active %}{% translate "Deactivate category" %}{% else %}{% translate "Activate category" %}{% endif %}</button>
   <p class="lead">{% translate "While a category is inactive, it and all of its videos are hidden from members. Reactivating shows them again." %}</p>

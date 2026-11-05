@@ -1,3 +1,3 @@
-{% load i18n %}<div class="stat-grid">
-  {% for card in section.cards %}<div class="stat{% if section.funds %} stat--demo{% endif %}"><span class="stat__value">{{ card.value }}</span><span class="stat__label">{{ card.label }}{% if card.now %} <small>({% translate "today" %})</small>{% endif %}</span></div>{% endfor %}
-</div>
+{% load i18n console_labels %}<dl class="metric-row">
+  {% for card in section.cards %}<div class="metric"><dt>{{ card.label }}{% if card.now %} <small>({% translate "today" %})</small>{% endif %}</dt><dd>{{ card.value|grouped }}</dd></div>{% endfor %}
+</dl>

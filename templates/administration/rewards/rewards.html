@@ -1,17 +1,17 @@
-{% extends "administration/layout.html" %}{% load i18n %}
+{% extends "administration/layout.html" %}{% load i18n console_labels money %}
 {% block title %}{% translate "Demo rewards" %}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{% translate "Demo rewards" %}</h1><a href="{% url 'administration:reward_policies' %}">{% translate "Policies" %}</a></div>
+<div class="page-heading"><h1 class="page-title">{% translate "Demo rewards" %}</h1><a href="{% url 'administration:reward_policies' %}">{% translate "Policies" %}</a></div>
 {% include "components/demo_reward_notice.html" %}
 {% if can_manage %}<form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="evaluate">
   <button class="button button--secondary" type="submit">{% translate "Evaluate verified views now" %}</button>
   <span class="lead">{% blocktranslate count n=pending_count %}{{ n }} verified view waiting{% plural %}{{ n }} verified views waiting{% endblocktranslate %}</span></form>{% endif %}
-<section class="section"><h2>{% translate "Campaign totals (simulated)" %}</h2>
-{% if totals %}<table class="table">
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Campaign totals (simulated)" %}</h2>
+{% if totals %}<table class="table workspace-table"><caption class="visually-hidden">{% translate "Simulated totals by campaign" %}</caption>
   <thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Recorded" %}</th><th scope="col">{% translate "Reversed" %}</th><th scope="col">{% translate "Not eligible" %}</th><th scope="col">{% translate "Demo consumed / allocated" %}</th></tr></thead>
-  <tbody>{% for row in totals %}<tr><td><a href="?campaign={{ row.campaign_id }}">{{ row.campaign__name }}</a></td><td>{{ row.qualified }}</td><td>{{ row.reversed }}</td><td>{{ row.rejected }}</td><td>TZS {{ row.demo_consumed }} / {{ row.campaign__demo_budget_amount }}</td></tr>{% endfor %}</tbody>
+  <tbody>{% for row in totals %}<tr><td><a href="?campaign={{ row.campaign_id }}">{{ row.campaign__name }}</a></td><td>{{ row.qualified }}</td><td>{{ row.reversed }}</td><td>{{ row.rejected }}</td><td>{{ row.demo_consumed|tzs }} / {{ row.campaign__demo_budget_amount|tzs }}</td></tr>{% endfor %}</tbody>
 </table>{% else %}<p class="lead">{% translate "No demo reward decisions yet." %}</p>{% endif %}
-{% if reasons %}<p class="lead">{% translate "Not-eligible reasons:" %} {% for row in reasons %}{{ row.code }} ({{ row.n }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+{% if reasons %}<p class="lead">{% translate "Not-eligible reasons:" %} {% for row in reasons %}{{ row.code|code_label }} ({{ row.n }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
 </section>
 <form class="toolbar" method="get">
   <label class="visually-hidden" for="f-member">{% translate "Member email" %}</label>
@@ -22,11 +22,11 @@
   <button class="button button--secondary" type="submit">{% translate "Filter" %}</button>
 </form>
 {% if page.object_list %}
-<table class="table">
+<table class="table workspace-table"><caption class="visually-hidden">{% translate "Demo reward decisions" %}</caption>
   <thead><tr><th scope="col">{% translate "Decided" %}</th><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Simulated amount" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
   <tbody>{% for r in page.object_list %}
-    <tr><td>{{ r.decided_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ r.member.email }}</td><td>{{ r.campaign.name }}</td><td>{% if r.amount %}TZS {{ r.amount }}{% else %}—{% endif %}</td>
-      <td><span class="badge badge--{{ r.status|lower }}">{{ r.get_status_display }}</span> <span class="lead">{{ r.reasons|join:", " }}{% if r.reversal_reason %} · {{ r.reversal_reason }}{% endif %}</span></td>
+    <tr><td>{{ r.decided_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ r.member.email }}</td><td>{{ r.campaign.name }}</td><td>{% if r.amount %}{{ r.amount|tzs }}{% else %}—{% endif %}</td>
+      <td><span class="badge badge--{{ r.status|lower }}">{{ r.get_status_display }}</span> <span class="lead">{{ r.reasons|code_labels }}{% if r.reversal_reason %} · {{ r.reversal_reason }}{% endif %}</span></td>
       <td>{% if can_manage and r.status == "DEMO_QUALIFIED" %}<form method="post" class="confirm-form">{% csrf_token %}<input type="hidden" name="action" value="reverse"><input type="hidden" name="reward" value="{{ r.pk }}">
         <label class="visually-hidden" for="rev-{{ r.pk }}">{% translate "Reason" %}</label><input id="rev-{{ r.pk }}" name="reason" type="text" maxlength="300" required placeholder="{% translate 'Reason' %}">
         <button class="button--link" type="submit">{% translate "Reverse" %}</button></form>{% endif %}</td></tr>

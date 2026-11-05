@@ -102,7 +102,8 @@ class OverviewView(View):
     def get(self, request):
         can, sections = admin_summary.overview(request.user)
         return render(request, "administration/overview.html", {
-            "nav": "overview", "sections": sections, "can": can, "provider": settings.VIDEO_PROVIDER})
+            "nav": "overview", "sections": sections, "can": can, "provider": settings.VIDEO_PROVIDER,
+            "attention": admin_summary.attention_items(sections)})
 
 
 @console

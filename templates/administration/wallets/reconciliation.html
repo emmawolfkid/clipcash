@@ -1,11 +1,11 @@
-{% extends "administration/layout.html" %}{% load i18n %}
+{% extends "administration/layout.html" %}{% load i18n console_labels %}
 {% block title %}{% translate "Wallet reconciliation" %}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{% translate "Wallet reconciliation" %}</h1><a href="{% url 'administration:wallets' %}">{% translate "Wallets" %}</a></div>
+<div class="page-heading"><h1 class="page-title">{% translate "Wallet reconciliation" %}</h1><a href="{% url 'administration:wallets' %}">{% translate "Wallets" %}</a></div>
 <p class="lead">{% translate "Checks wallets against the ledger. Findings are reported, never corrected automatically, and resolving one does not change any financial record." %}</p>
 <form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="run"><button class="button button--secondary" type="submit">{% translate "Run reconciliation now" %}</button></form>
-{% if page.object_list %}<table class="table"><thead><tr><th scope="col">{% translate "Found" %}</th><th scope="col">{% translate "Check" %}</th><th scope="col">{% translate "Wallet / account" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
-<tbody>{% for d in page.object_list %}<tr><td>{{ d.created_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ d.code }}<br><span class="lead">{{ d.detail }}</span></td>
+{% if page.object_list %}<table class="table workspace-table"><caption class="visually-hidden">{% translate "Reconciliation findings" %}</caption><thead><tr><th scope="col">{% translate "Found" %}</th><th scope="col">{% translate "Check" %}</th><th scope="col">{% translate "Wallet / account" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
+<tbody>{% for d in page.object_list %}<tr><td>{{ d.created_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ d.code|code_label }}<br><span class="lead">{{ d.detail }}</span></td>
 <td>{% if d.wallet %}<a href="{% url 'administration:wallet' d.wallet.pk %}">{{ d.wallet.number }}</a>{% elif d.account %}{{ d.account.code }}{% endif %}</td><td>{{ d.get_status_display }}{% if d.resolution_note %} · {{ d.resolution_note }}{% endif %}</td>
 <td>{% if can_manage and d.status == "OPEN" %}<form method="post" class="confirm-form">{% csrf_token %}<input type="hidden" name="action" value="resolve"><input type="hidden" name="discrepancy" value="{{ d.pk }}">
 <input name="note" type="text" maxlength="300" required placeholder="{% translate 'Resolution note' %}" aria-label="{% translate 'Resolution note' %}"><button class="button--link" type="submit">{% translate "Resolve" %}</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table>

@@ -7,8 +7,8 @@
 <p class="lead">{% translate "Trends from the platform's own records. You see only the areas you are permitted to report on. Figures contain no personal details." %}</p>
 {% if period_error %}<p class="notice notice--warning" role="alert">{{ period_error }} {% translate "Showing the default period." %}</p>{% endif %}
 <form class="toolbar" method="get" aria-label="{% translate 'Analytics period' %}">
-  <label for="from">{% translate "From" %}</label><input id="from" type="date" name="from" value="{{ period.first|date:'Y-m-d' }}">
-  <label for="to">{% translate "To" %}</label><input id="to" type="date" name="to" value="{{ period.last|date:'Y-m-d' }}">
+  <div class="period-field"><label for="from">{% translate "From" %}</label><input id="from" type="date" name="from" value="{{ period.first|date:'Y-m-d' }}"></div>
+  <div class="period-field"><label for="to">{% translate "To" %}</label><input id="to" type="date" name="to" value="{{ period.last|date:'Y-m-d' }}"></div>
   <button type="submit" class="button button--secondary">{% translate "Show" %}</button>
 </form>
 {% for section in sections %}
@@ -21,7 +21,7 @@
   </div>
   {% if section.table and section.table.rows %}
   <h3 class="analytics-heading">{{ section.table.title }}</h3>
-  <table class="table">
+  <table class="table workspace-table"><caption class="visually-hidden">{{ section.table.title }}</caption>
     <thead><tr>{% for column in section.table.columns %}<th scope="col">{{ column }}</th>{% endfor %}</tr></thead>
     <tbody>{% for row in section.table.rows %}<tr>{% for value in row %}<td>{{ value }}</td>{% endfor %}</tr>{% endfor %}</tbody>
   </table>

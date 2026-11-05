@@ -1,20 +1,103 @@
-/* UI-02: layouts / admin. */
-.count-list {
-  list-style: none;
+/* UI-07: layouts / administration console. Rules for one page live in pages/administration/. */
+.app-shell--console .page-title {
+  font-size: 1.5rem;
+}
+
+/* Two related sections side by side, separated by a rule rather than card borders. */
+.console-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-5) var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.console-split > * {
+  min-width: 0;
+}
+
+/* Action tables scroll on phones rather than crushing their columns. */
+.app-shell--console .table-scroll .workspace-table:not([class*="hide-narrow"]) td {
+  min-width: 7rem;
+}
+
+.console-record {
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-shell--console .form {
+  display: grid;
+  gap: var(--space-2);
+  max-width: var(--layout-form);
+}
+
+.app-shell--console .form label {
+  margin: var(--space-2) 0 0;
+}
+
+.app-shell--console .form > .button {
+  justify-self: start;
+  margin-top: var(--space-2);
+}
+
+.count-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 0.15rem;
-  font-size: 0.85rem;
-}
-
-.count-list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.count-list span {
+  list-style: none;
   color: var(--muted);
+  font-size: var(--text-sm);
 }
 
+.count-inline strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.overview-areas td:first-child {
+  font-weight: 600;
+}
+
+.overview-areas p {
+  margin: var(--space-1) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.audit-code {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+/* Internal notes never reach customers, so they must not look like a reply. */
+.support-note--internal {
+  padding-inline: var(--space-3);
+  background: var(--warning-bg);
+  border-left: 4px solid var(--warning);
+}
+
+/* The console menu is longer than most screens, so it scrolls on its own beside the page. */
+@media (min-width: 52.01rem) {
+  .app-shell--console .app-sidebar {
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+}
+
+/* Queues keep their essential columns on phones; the detail page holds the rest. */
+@media (max-width: 40rem) {
+  .hide-narrow-2 tr > :nth-child(2),
+  .hide-narrow-3 tr > :nth-child(3),
+  .hide-narrow-4 tr > :nth-child(4),
+  .hide-narrow-5 tr > :nth-child(5),
+  .hide-narrow-6 tr > :nth-child(6),
+  .hide-narrow-7 tr > :nth-child(7),
+  .hide-narrow-8 tr > :nth-child(8) {
+    display: none;
+  }
+}

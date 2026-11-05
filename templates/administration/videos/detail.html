@@ -2,10 +2,10 @@
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/administration/videos/detail.css' %}">{% endblock %}
 {% block title %}{{ video.title }}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{{ video.title }}</h1><a href="{% url 'administration:videos' %}">{% translate "All videos" %}</a></div>
-<div class="card-grid">
-  <section class="panel">
-    <h2 class="panel__title">{% translate "Status" %}</h2>
+<div class="page-heading"><h1 class="page-title">{{ video.title }}</h1><a href="{% url 'administration:videos' %}">{% translate "All videos" %}</a></div>
+<div class="console-split">
+  <section>
+    <h2 class="workspace-section__title">{% translate "Status" %}</h2>
     <dl class="details">
       <dt>{% translate "Processing" %}</dt><dd><span class="badge badge--{{ video.processing_status|lower }}">{{ video.get_processing_status_display }}</span></dd>
       <dt>{% translate "Publication" %}</dt><dd><span class="badge badge--{{ video.publication_status|lower }}">{{ video.get_publication_status_display }}</span></dd>
@@ -28,11 +28,11 @@
     {% if video.publication_status == "DRAFT" and video.processing_status != "READY" %}<p class="lead">{% translate "Publishing becomes available when processing is ready." %}</p>{% endif %}
   </section>
   {% if upload_allowed and can_manage %}
-  <section class="panel" id="upload-panel" data-authorize-url="{% url 'administration:video_upload' video.pk 'authorize' %}"
+  <section id="upload-panel" data-authorize-url="{% url 'administration:video_upload' video.pk 'authorize' %}"
            data-finished-url="{% url 'administration:video_upload' video.pk 'finished' %}"
            data-failed-url="{% url 'administration:video_upload' video.pk 'failed' %}"
            data-types="{{ upload_types }}" data-max-mb="{{ upload_max_mb }}">
-    <h2 class="panel__title">{% translate "Upload video file" %}</h2>
+    <h2 class="workspace-section__title">{% translate "Upload video file" %}</h2>
     <p class="lead">{% blocktranslate with mb=upload_max_mb %}MP4, MOV, WebM, MKV or AVI, up to {{ mb }} MB. The file goes directly to Bunny Stream.{% endblocktranslate %}</p>
     {% csrf_token %}
     <label for="upload-file">{% translate "Video file" %}</label>
@@ -43,8 +43,8 @@
   {% endif %}
 </div>
 {% if can_manage and video.publication_status != "ARCHIVED" %}
-<section class="panel section">
-  <h2 class="panel__title">{% translate "Details" %}</h2>
+<section class="workspace-section">
+  <h2 class="workspace-section__title">{% translate "Details" %}</h2>
   {% include "components/form.html" with button=_("Save changes") %}
 </section>
 {% endif %}

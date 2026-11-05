@@ -17,7 +17,7 @@
   <button type="submit" class="button button--secondary">{% translate "Filter" %}</button>
 </form>
 {% if page.object_list %}
-<table class="table">
+<table class="table workspace-table hide-narrow-3 hide-narrow-4 hide-narrow-5 hide-narrow-7 hide-narrow-8"><caption class="visually-hidden">{% translate "Support tickets" %}</caption>
   <thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Subject" %}</th><th scope="col">{% translate "Customer" %}</th><th scope="col">{% translate "Category" %}</th><th scope="col">{% translate "Priority" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Assignee" %}</th><th scope="col">{% translate "Last activity" %}</th></tr></thead>
   <tbody>{% for ticket in page.object_list %}<tr>
     <td><a href="{% url 'administration:support_ticket' ticket.reference %}">{{ ticket.reference }}</a></td>

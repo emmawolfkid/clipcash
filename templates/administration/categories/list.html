@@ -3,7 +3,7 @@
 {% block console_content %}
 <h1 class="page-title">{% translate "Video categories" %}</h1>
 {% if categories %}
-<table class="table">
+<table class="table workspace-table hide-narrow-2 hide-narrow-3 hide-narrow-4"><caption class="visually-hidden">{% translate "Video categories" %}</caption>
   <thead><tr><th scope="col">{% translate "Name" %}</th><th scope="col">{% translate "Slug" %}</th><th scope="col">{% translate "Order" %}</th><th scope="col">{% translate "Videos" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
   <tbody>{% for category in categories %}
     <tr><td><a href="{% url 'administration:category_edit' category.pk %}">{{ category.name }}</a></td><td>{{ category.slug }}</td><td>{{ category.display_order }}</td><td>{{ category.video_count }}</td>
@@ -11,5 +11,5 @@
   {% endfor %}</tbody>
 </table>
 {% else %}<p class="empty-state">{% translate "No categories yet." %}</p>{% endif %}
-<section class="panel section"><h2 class="panel__title">{% translate "New category" %}</h2>{% include "components/form.html" with button=_("Create category") %}</section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "New category" %}</h2>{% include "components/form.html" with button=_("Create category") %}</section>
 {% endblock %}

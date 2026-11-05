@@ -10,7 +10,7 @@
   <button class="button button--secondary" type="submit">{% translate "Filter" %}</button>
 </form>
 {% if page.object_list %}
-<table class="table">
+<table class="table workspace-table hide-narrow-2 hide-narrow-4 hide-narrow-5"><caption class="visually-hidden">{% translate "Campaigns" %}</caption>
   <thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Advertiser" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Runs" %}</th><th scope="col">{% translate "Submitted" %}</th></tr></thead>
   <tbody>{% for c in page.object_list %}
     <tr><td><a href="{% url 'administration:campaign_review' c.pk %}">{{ c.name }}</a></td><td>{{ c.organization.display_name }}</td>

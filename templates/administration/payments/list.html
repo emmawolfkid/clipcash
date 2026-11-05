@@ -1,7 +1,7 @@
-{% extends "administration/layout.html" %}{% load i18n %}
+{% extends "administration/layout.html" %}{% load i18n money %}
 {% block title %}{% translate "Payments (sandbox)" %}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{% translate "Payments" %} <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></h1>
+<div class="page-heading"><h1 class="page-title">{% translate "Payments" %} <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></h1>
 <span><a href="{% url 'administration:payment_exceptions' %}">{% blocktranslate count n=open_exceptions %}{{ n }} open exception{% plural %}{{ n }} open exceptions{% endblocktranslate %}</a> · <a href="{% url 'administration:payment_funding' %}">{% translate "Funding and sandbox journal" %}</a></span></div>
 {% include "components/sandbox_notice.html" %}
 <form class="toolbar" method="get">
@@ -9,8 +9,8 @@
   <label class="visually-hidden" for="f-status">{% translate "Status" %}</label><select id="f-status" name="status"><option value="">{% translate "Any status" %}</option>{% for v, l in statuses %}<option value="{{ v }}"{% if filters.status == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select>
   <label class="visually-hidden" for="f-purpose">{% translate "Purpose" %}</label><select id="f-purpose" name="purpose"><option value="">{% translate "Any purpose" %}</option>{% for v, l in purposes %}<option value="{{ v }}"{% if filters.purpose == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select>
   <button class="button button--secondary" type="submit">{% translate "Filter" %}</button></form>
-{% if page.object_list %}<table class="table">
+{% if page.object_list %}<table class="table workspace-table hide-narrow-2 hide-narrow-3"><caption class="visually-hidden">{% translate "Sandbox payments" %}</caption>
   <thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Payer" %}</th><th scope="col">{% translate "Purpose" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
-  <tbody>{% for i in page.object_list %}<tr><td><a href="{% url 'administration:payment' i.pk %}">{{ i.reference }}</a></td><td>{{ i.payer.email }}{% if i.organization %} · {{ i.organization.display_name }}{% endif %}</td><td>{{ i.get_purpose_display }}</td><td>TZS {{ i.amount }}</td><td><span class="badge badge--{{ i.status|lower }}">{{ i.get_status_display }}</span></td></tr>{% endfor %}</tbody>
+  <tbody>{% for i in page.object_list %}<tr><td><a href="{% url 'administration:payment' i.pk %}">{{ i.reference }}</a></td><td>{{ i.payer.email }}{% if i.organization %} · {{ i.organization.display_name }}{% endif %}</td><td>{{ i.get_purpose_display }}</td><td>{{ i.amount|tzs }}</td><td><span class="badge badge--{{ i.status|lower }}">{{ i.get_status_display }}</span></td></tr>{% endfor %}</tbody>
 </table>{% include "components/pagination.html" %}{% else %}<p class="empty-state">{% translate "No payments match." %}</p>{% endif %}
 {% endblock %}

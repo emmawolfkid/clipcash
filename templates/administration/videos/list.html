@@ -1,7 +1,7 @@
 {% extends "administration/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Video management" %}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{% translate "Video management" %}</h1>
+<div class="page-heading"><h1 class="page-title">{% translate "Video management" %}</h1>
 {% if can_manage %}<a class="button" href="{% url 'administration:video_create' %}">{% translate "New video" %}</a>{% endif %}</div>
 <form class="toolbar" method="get">
   <label class="visually-hidden" for="q">{% translate "Search" %}</label>
@@ -15,7 +15,7 @@
   <button type="submit" class="button button--secondary">{% translate "Filter" %}</button>
 </form>
 {% if page.object_list %}
-<table class="table">
+<table class="table workspace-table hide-narrow-2 hide-narrow-3 hide-narrow-5"><caption class="visually-hidden">{% translate "Videos" %}</caption>
   <thead><tr><th scope="col">{% translate "Title" %}</th><th scope="col">{% translate "Category" %}</th><th scope="col">{% translate "Processing" %}</th><th scope="col">{% translate "Publication" %}</th><th scope="col">{% translate "Created" %}</th></tr></thead>
   <tbody>{% for video in page.object_list %}
     <tr>

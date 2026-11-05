@@ -1,1 +1,1 @@
-{% load i18n %}{% if counts %}<ul class="count-list">{% for key, value in counts.items %}<li><span>{{ key|lower|capfirst }}</span><strong>{{ value }}</strong></li>{% endfor %}</ul>{% else %}<p class="summary-card__status">{% translate "None yet." %}</p>{% endif %}
+{% load i18n console_labels %}{% if counts %}<ul class="count-inline">{% for key, value in counts.items %}<li>{{ key|code_label }} <strong>{{ value }}</strong></li>{% endfor %}</ul>{% else %}<p>{% translate "None yet." %}</p>{% endif %}

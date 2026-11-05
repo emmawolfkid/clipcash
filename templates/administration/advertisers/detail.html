@@ -1,11 +1,11 @@
 {% extends "administration/layout.html" %}{% load i18n %}
 {% block title %}{{ organization.display_name }}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{{ organization.display_name }}</h1>
+<div class="page-heading"><h1 class="page-title">{{ organization.display_name }}</h1>
 <span class="badge badge--{{ organization.verification_status|lower }}">{{ organization.get_verification_status_display }}</span></div>
-<div class="card-grid">
-  <section class="panel">
-    <h2 class="panel__title">{% translate "Profile" %}</h2>
+<div class="console-split">
+  <section>
+    <h2 class="workspace-section__title">{% translate "Profile" %}</h2>
     <dl class="details">
       <dt>{% translate "Legal name" %}</dt><dd>{{ organization.legal_name }}</dd>
       <dt>{% translate "Country" %}</dt><dd>{{ organization.country }}</dd>
@@ -18,11 +18,11 @@
       <dt>{% translate "Submitted" %}</dt><dd>{{ organization.submitted_at|date:"DATETIME_FORMAT"|default:"—" }}</dd>
       {% if organization.reviewed_at %}<dt>{% translate "Last decision" %}</dt><dd>{{ organization.reviewed_at|date:"DATETIME_FORMAT" }}{% if organization.review_reason %} · {{ organization.review_reason }}{% endif %}</dd>{% endif %}
     </dl>
-    {% if can_review %}<h3>{% translate "Team" %}</h3><ul class="list-plain">{% for m in members %}<li>{{ m.user.email }} · {{ m.get_role_display }}</li>{% empty %}<li>—</li>{% endfor %}</ul>{% endif %}
+    {% if can_review %}<h3 class="workspace-subtitle">{% translate "Team" %}</h3><ul class="list-plain">{% for m in members %}<li>{{ m.user.email }} · {{ m.get_role_display }}</li>{% empty %}<li>—</li>{% endfor %}</ul>{% endif %}
   </section>
   {% if can_review %}
-  <section class="panel">
-    <h2 class="panel__title">{% translate "Verification decision" %}</h2>
+  <section>
+    <h2 class="workspace-section__title">{% translate "Verification decision" %}</h2>
     <form method="post" class="form">{% csrf_token %}
       <input type="hidden" name="expected_status" value="{{ organization.verification_status }}">
       <label for="reason">{% translate "Reason (required to reject or suspend; shown to the advertiser)" %}</label>
@@ -38,8 +38,8 @@
   </section>
   {% endif %}
 </div>
-<section class="panel section">
-  <h2 class="panel__title">{% translate "Authorized videos" %}</h2>
+<section class="workspace-section">
+  <h2 class="workspace-section__title">{% translate "Authorized videos" %}</h2>
   {% if grants %}<ul class="list">{% for grant in grants %}<li class="list__item"><span>{{ grant.video.title }} <span class="badge badge--{{ grant.video.publication_status|lower }}">{{ grant.video.get_publication_status_display }}</span></span>
     {% if can_grant %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="revoke"><input type="hidden" name="grant" value="{{ grant.pk }}"><button class="button--link" type="submit">{% translate "Revoke" %}</button></form>{% endif %}</li>{% endfor %}</ul>
   {% else %}<p class="lead">{% translate "No videos authorized yet." %}</p>{% endif %}
@@ -49,7 +49,7 @@
     <select id="grant-video" name="video">{% for video in grantable %}<option value="{{ video.pk }}">{{ video.title }} ({{ video.get_publication_status_display }})</option>{% endfor %}</select>
     <button class="button button--secondary" type="submit">{% translate "Authorize video" %}</button></form>{% endif %}
 </section>
-<section class="section"><h2>{% translate "Campaigns" %}</h2>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Campaigns" %}</h2>
   {% include "components/campaign_report.html" %}
   {% if campaigns %}<ul class="list">{% for c in campaigns %}<li class="list__item"><a href="{% url 'administration:campaign_review' c.pk %}">{{ c.name }}</a> <span class="badge badge--{{ c.status|lower }}">{{ c.get_status_display }}</span></li>{% endfor %}</ul>{% endif %}
 </section>

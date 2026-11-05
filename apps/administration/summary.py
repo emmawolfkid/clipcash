@@ -24,6 +24,9 @@ from django.contrib.auth import get_user_model
 from django.db import connection
 from django.db.models import Count, OuterRef, Q, Subquery, Sum
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
+from .labels import code_label
 
 HEALTHY = "healthy"
 ATTENTION = "attention"
@@ -85,6 +88,31 @@ def overview(user):
     if can["operations"]:
         sections["jobs"] = _jobs()
     return can, sections
+
+
+def attention_items(sections):
+    """Open work for the overview, built only from the figures this staff member may see.
+    Sandbox and demo items are named as such, and nothing is added across categories."""
+    advertising = sections.get("advertising") or {}
+    videos, viewing = sections.get("videos") or {}, sections.get("viewing") or {}
+    rewards, payments = sections.get("rewards") or {}, sections.get("payments") or {}
+    wallets, withdrawals = sections.get("wallets") or {}, sections.get("withdrawals") or {}
+    rows = (
+        (_("Advertisers awaiting review"), advertising.get("organizations", {}).get("PENDING"), "administration:advertisers", ""),
+        (_("Campaigns awaiting review"), advertising.get("campaigns", {}).get("SUBMITTED"), "administration:campaigns", ""),
+        (_("Stuck video uploads"), videos.get("stuck"), "administration:videos", ""),
+        (_("Viewing sessions awaiting review"), viewing.get("pending_review"), "administration:viewing", "?review=1"),
+        (_("Demo reward policies awaiting approval"), rewards.get("draft_policies"), "administration:reward_policies", ""),
+        (_("Sandbox payment exceptions"), payments.get("open_exceptions"), "administration:payment_exceptions", ""),
+        (_("Sandbox refunds awaiting approval"), payments.get("pending_refunds"), "administration:payments", ""),
+        (_("Sandbox disputes"), payments.get("open_disputes"), "administration:payments", ""),
+        (_("Wallet reconciliation findings"), wallets.get("open_findings"), "administration:wallet_reconciliation", ""),
+        (_("Demo withdrawals in review"), withdrawals.get("review_queue"), "administration:withdrawals", ""),
+        (_("Demo withdrawals with unknown payout status"), withdrawals.get("uncertain"), "administration:withdrawals", "?status=DEMO_UNCERTAIN"),
+        (_("Demo withdrawal exceptions"), withdrawals.get("open_exceptions"), "administration:withdrawal_exceptions", ""),
+    )
+    return [{"label": label, "count": count, "url_name": url_name, "query": query}
+            for label, count, url_name, query in rows if count]
 
 
 def _members():
@@ -221,7 +249,8 @@ def health(user):
     if "jobs" in sections:
         jobs = sections["jobs"]
         details = {NOT_CHECKED: "No worker heartbeat recorded yet.", HEALTHY: "Worker heartbeat is fresh.",
-                   ATTENTION: ", ".join(jobs["problems"]) or f"{jobs['failed_last_24h']} failed in 24 h"}
+                   ATTENTION: ", ".join(str(code_label(code)) for code in jobs["problems"])
+                   or f"{jobs['failed_last_24h']} failed in 24 h"}
         checks.append(HealthCheck("jobs", "Background jobs", jobs["status"], details[jobs["status"]]))
         checks.append(_email_check())
     if "videos" in sections:

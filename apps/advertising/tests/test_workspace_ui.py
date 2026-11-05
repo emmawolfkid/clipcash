@@ -336,15 +336,13 @@ class ModuleAndMenuTests(SimpleTestCase):
                 self.assertNotIn(name, (TEMPLATES / f"advertising/{page}.html").read_text(encoding="utf-8"))
 
     def test_page_modules_are_loaded_only_where_they_are_used(self):
-        settings_pages = {"onboard", "profile", "team", "campaign_form"}
         for name in ADVERTISER_TEMPLATES:
             source = (TEMPLATES / f"advertising/{name}.html").read_text(encoding="utf-8")
             with self.subTest(template=name):
-                self.assertEqual("pages/advertising/settings.css" in source, name in settings_pages)
                 self.assertEqual("pages/advertising/campaign.css" in source, name == "campaign_detail")
 
     def test_workspace_table_badges_never_break_mid_word(self):
-        css = (CSS / "layouts/advertiser.css").read_text(encoding="utf-8")
+        css = (CSS / "components/workspace.css").read_text(encoding="utf-8")
         self.assertRegex(css, r"\.workspace-table \.badge \{\s*white-space: nowrap;")
 
     def test_one_menu_button_is_shared_with_the_sidebar(self):

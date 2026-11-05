@@ -1,0 +1,192 @@
+/* UI-06, shared since UI-07: page headings, metric rows and data tables for the staff and advertiser workspaces. */
+.page-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.page-heading .page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  overflow-wrap: anywhere;
+}
+
+.page-heading__text {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.page-intro {
+  max-width: 44rem;
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+}
+
+/* Figures separated by hairlines rather than individual cards. */
+.metric-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) 0;
+  border-block: 1px solid var(--border);
+}
+
+.metric {
+  min-width: 0;
+  padding: var(--space-1) var(--space-4);
+  border-left: 1px solid var(--border);
+}
+
+.metric:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.metric dt {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.metric dd {
+  margin: var(--space-1) 0 0;
+  font-size: 1.25rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.workspace-section {
+  margin-top: var(--space-6);
+}
+
+.workspace-section__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+}
+
+.workspace-subtitle {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--text-base);
+}
+
+.workspace-note {
+  max-width: 44rem;
+  margin: var(--space-3) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.status-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.status-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+}
+
+.status-links__count {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.table .table__numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cell-meta {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.cell-meta--narrow {
+  display: none;
+}
+
+.table-scroll .workspace-table {
+  background: var(--surface);
+}
+
+.table-scroll .workspace-table th,
+.table-scroll .workspace-table td {
+  min-width: 0;
+}
+
+.workspace-table td {
+  vertical-align: middle;
+  overflow-wrap: break-word;
+}
+
+.table-scroll .workspace-table th:first-child,
+.table-scroll .workspace-table td:first-child {
+  min-width: 9rem;
+}
+
+.workspace-table th {
+  overflow-wrap: normal;
+}
+
+.table th.table__numeric {
+  white-space: normal;
+}
+
+.workspace-table caption {
+  padding-inline: var(--space-3);
+}
+
+.workspace-table .badge {
+  white-space: nowrap;
+}
+
+.not-applicable {
+  color: var(--muted);
+}
+
+.period-field {
+  display: flex;
+  flex: 1 1 14rem;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
+}
+
+/* Phones show the essential columns; the remaining detail moves under the name. */
+@media (max-width: 40rem) {
+  .metric-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3) 0;
+  }
+
+  .metric,
+  .metric:first-child {
+    padding: 0 var(--space-3) 0 0;
+    border-left: 0;
+  }
+
+  .workspace-table .col-optional {
+    display: none;
+  }
+
+  .cell-meta--narrow {
+    display: block;
+  }
+
+  .page-heading > .button {
+    width: 100%;
+  }
+}

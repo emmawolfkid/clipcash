@@ -1,20 +1,23 @@
-{% extends "administration/layout.html" %}{% load i18n %}
+{% extends "administration/layout.html" %}{% load i18n console_labels %}
 {% block title %}{% translate "Security summary" %}{% endblock %}
 {% block crumb %}{% translate "Security summary" %}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{% translate "Security and audit" %}</h1><a href="{% url 'admin:audit_auditevent_changelist' %}">{% translate "Full audit log" %}</a></div>
-<p class="lead">{% blocktranslate with h=summary.hours %}Last {{ h }} hours. Audit records are permanent; this page shows no event metadata.{% endblocktranslate %}</p>
-<div class="summary-grid">
-  <section class="summary-card" aria-labelledby="sec-outcomes"><h2 class="summary-card__title" id="sec-outcomes">{% translate "Events by outcome" %}</h2>{% include "administration/_counts.html" with counts=summary.by_outcome %}</section>
-  <section class="summary-card" aria-labelledby="sec-denied"><h2 class="summary-card__title" id="sec-denied">{% translate "Denied, by area" %}</h2>{% include "administration/_counts.html" with counts=summary.denied_by_category %}</section>
-  <section class="summary-card" aria-labelledby="sec-fin"><h2 class="summary-card__title" id="sec-fin">{% translate "Refused financial actions" %}</h2><p class="summary-card__value">{{ summary.financial_denials }}</p><p class="summary-card__status">{% translate "Payments, wallets, withdrawals, rewards and ledger." %}</p></section>
-</div>
-<section class="section"><h2>{% translate "Recent staff actions" %}</h2>
-{% if summary.staff_actions %}<table class="table"><thead><tr><th scope="col">{% translate "Time" %}</th><th scope="col">{% translate "Action" %}</th><th scope="col">{% translate "Staff" %}</th></tr></thead>
-<tbody>{% for e in summary.staff_actions %}<tr><td>{{ e.occurred_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ e.action }}</td><td>{{ e.actor_email|default:"—" }}</td></tr>{% endfor %}</tbody></table>
+<div class="page-heading"><div class="page-heading__text"><h1 class="page-title">{% translate "Security and audit" %}</h1>
+  <p class="page-intro">{% blocktranslate with h=summary.hours %}Last {{ h }} hours. Audit records are permanent; this page shows no event metadata.{% endblocktranslate %}</p></div>
+  <a href="{% url 'admin:audit_auditevent_changelist' %}">{% translate "Full audit log" %}</a></div>
+<dl class="metric-row">
+  {% for outcome, count in summary.by_outcome.items %}<div class="metric"><dt>{{ outcome|code_label }}</dt><dd>{{ count }}</dd></div>{% endfor %}
+  <div class="metric"><dt>{% translate "Refused financial actions" %}</dt><dd>{{ summary.financial_denials }}</dd></div>
+</dl>
+<section class="workspace-section" aria-labelledby="sec-denied"><h2 class="workspace-section__title" id="sec-denied">{% translate "Denied, by area" %}</h2>
+  {% include "administration/_counts.html" with counts=summary.denied_by_category %}
+  <p class="workspace-note">{% translate "Refused financial actions cover payments, wallets, withdrawals, rewards and the ledger." %}</p></section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Recent staff actions" %}</h2>
+{% if summary.staff_actions %}<table class="table workspace-table hide-narrow-3"><caption class="visually-hidden">{% translate "Recent staff actions" %}</caption><thead><tr><th scope="col">{% translate "Time" %}</th><th scope="col">{% translate "Action" %}</th><th scope="col">{% translate "Staff" %}</th></tr></thead>
+<tbody>{% for e in summary.staff_actions %}<tr><td>{{ e.occurred_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ e.action|code_label }}<code class="audit-code">{{ e.action }}</code></td><td>{{ e.actor_email|default:"—" }}</td></tr>{% endfor %}</tbody></table>
 {% else %}<p class="empty-state">{% translate "No staff actions in this period." %}</p>{% endif %}</section>
-<section class="section"><h2>{% translate "Recent events" %}</h2>
-{% if summary.events %}<table class="table"><thead><tr><th scope="col">{% translate "Time" %}</th><th scope="col">{% translate "Area" %}</th><th scope="col">{% translate "Action" %}</th><th scope="col">{% translate "Outcome" %}</th></tr></thead>
-<tbody>{% for e in summary.events %}<tr><td>{{ e.occurred_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ e.category|lower|capfirst }}</td><td>{{ e.action }}</td><td>{{ e.outcome|lower|capfirst }}</td></tr>{% endfor %}</tbody></table>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Recent events" %}</h2>
+{% if summary.events %}<table class="table workspace-table hide-narrow-2"><caption class="visually-hidden">{% translate "Recent audit events" %}</caption><thead><tr><th scope="col">{% translate "Time" %}</th><th scope="col">{% translate "Area" %}</th><th scope="col">{% translate "Action" %}</th><th scope="col">{% translate "Outcome" %}</th></tr></thead>
+<tbody>{% for e in summary.events %}<tr><td>{{ e.occurred_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ e.category|code_label }}</td><td>{{ e.action|code_label }}<code class="audit-code">{{ e.action }}</code></td><td>{{ e.outcome|code_label }}</td></tr>{% endfor %}</tbody></table>
 {% else %}<p class="empty-state">{% translate "No events in this period." %}</p>{% endif %}</section>
 {% endblock %}

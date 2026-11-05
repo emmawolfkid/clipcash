@@ -1,70 +1,64 @@
-{% extends "administration/layout.html" %}{% load i18n %}
+{% extends "administration/layout.html" %}{% load i18n money console_labels %}
 {% block title %}{% translate "Overview" %}{% endblock %}
 {% block console_content %}
-<h1 class="page-title">{% translate "Overview" %}</h1>
-<p class="lead">{% translate "Live database figures you are permitted to see. Sandbox payments, simulated demo rewards and real wallet balances are separate and never added together." %}</p>
+<div class="page-heading"><div class="page-heading__text"><h1 class="page-title">{% translate "Overview" %}</h1>
+  <p class="page-intro">{% translate "Live database figures you are permitted to see. Sandbox payments, simulated demo rewards and real wallet balances are separate and never added together." %}</p></div>
+  <a class="button button--secondary" href="{% url 'administration:health' %}">{% translate "Operational health" %}</a></div>
 {% if provider == "demo" and sections.videos %}<p class="notice">{% translate "Video provider: DEMO. No Bunny Stream connection; demo videos are labelled as samples." %}</p>{% endif %}
-<p><a class="button button--secondary" href="{% url 'administration:health' %}">{% translate "Operational health" %}</a></p>
-<div class="summary-grid">
-{% with m=sections.members %}{% if m %}
-  <section class="summary-card" aria-labelledby="ov-members"><h2 class="summary-card__title" id="ov-members">{% translate "Members" %}</h2>
-    <p class="summary-card__value">{{ m.total }}</p>
-    <p class="summary-card__status">{% blocktranslate with a=m.active v=m.verified r=m.restricted %}{{ a }} active, {{ v }} email-confirmed, {{ r }} suspended or disabled.{% endblocktranslate %}</p>
-    <p class="summary-card__status">{% blocktranslate with c=m.current_memberships %}{{ c }} current memberships{% endblocktranslate %}</p>
-    {% include "administration/_counts.html" with counts=m.memberships %}
-    <a class="summary-card__action" href="{% url 'administration:members' %}">{% translate "Member directory" %}</a></section>
-{% endif %}{% endwith %}
-{% with a=sections.advertising %}{% if a %}
-  <section class="summary-card" aria-labelledby="ov-adv"><h2 class="summary-card__title" id="ov-adv">{% translate "Advertising" %}</h2>
-    {% if a.organizations is not None %}<p class="summary-card__status">{% translate "Advertisers" %}</p>{% include "administration/_counts.html" with counts=a.organizations %}{% endif %}
-    {% if a.campaigns is not None %}<p class="summary-card__status">{% translate "Campaigns" %}</p>{% include "administration/_counts.html" with counts=a.campaigns %}
-    <p class="summary-card__status">{% blocktranslate with t=a.demo_budget_running f=a.funded %}Demo budgets in approved campaigns: TZS {{ t }} (configuration, not funding). Funded campaigns: {{ f }}.{% endblocktranslate %}</p>{% endif %}
-    {% if can.campaigns %}<a class="summary-card__action" href="{% url 'administration:campaigns' %}">{% translate "Campaign queue" %}</a>{% elif can.advertisers %}<a class="summary-card__action" href="{% url 'administration:advertisers' %}">{% translate "Advertiser queue" %}</a>{% endif %}</section>
-{% endif %}{% endwith %}
-{% with v=sections.videos %}{% if v %}
-  <section class="summary-card" aria-labelledby="ov-videos"><h2 class="summary-card__title" id="ov-videos">{% translate "Videos" %}</h2>
-    {% include "administration/_counts.html" with counts=v.publication %}
-    <p class="summary-card__status">{% translate "Processing" %}</p>{% include "administration/_counts.html" with counts=v.processing %}
-    {% if v.stuck %}<p class="summary-card__status"><span class="badge badge--paused">{% translate "Attention" %}</span> {% blocktranslate count n=v.stuck %}{{ n }} stuck upload{% plural %}{{ n }} stuck uploads{% endblocktranslate %}</p>{% endif %}
-    <a class="summary-card__action" href="{% url 'administration:videos' %}">{% translate "Video management" %}</a></section>
-{% endif %}{% endwith %}
-{% with w=sections.viewing %}{% if w %}
-  <section class="summary-card" aria-labelledby="ov-viewing"><h2 class="summary-card__title" id="ov-viewing">{% translate "Viewing" %}</h2>
-    {% include "administration/_counts.html" with counts=w.outcomes %}
-    <p class="summary-card__status">{% blocktranslate with p=w.pending_review r=w.revoked %}{{ p }} awaiting review, {{ r }} revoked.{% endblocktranslate %}</p>
-    <a class="summary-card__action" href="{% url 'administration:viewing' %}?review=1">{% translate "Review queue" %}</a></section>
-{% endif %}{% endwith %}
-{% with r=sections.rewards %}{% if r %}
-  <section class="summary-card summary-card--demo" aria-labelledby="ov-rewards"><h2 class="summary-card__title" id="ov-rewards">{% translate "Demo rewards" %} <span class="badge badge--sandbox">{% translate "Demo / simulated" %}</span></h2>
-    <p class="summary-card__value">TZS {{ r.simulated_total }} <span class="summary-card__unit">{% translate "simulated, not money" %}</span></p>
-    <p class="summary-card__status">{% blocktranslate with q=r.qualified v=r.reversed x=r.rejected d=r.draft_policies %}{{ q }} recorded, {{ v }} reversed, {{ x }} not eligible. {{ d }} policy drafts awaiting approval.{% endblocktranslate %}</p>
-    {% if r.budgets %}<ul class="count-list">{% for b in r.budgets %}<li><span>{{ b.campaign }}</span><strong>{{ b.consumed }} / {{ b.allocated }}</strong></li>{% endfor %}</ul>{% endif %}
-    <a class="summary-card__action" href="{% url 'administration:demo_rewards' %}">{% translate "Demo rewards" %}</a></section>
-{% endif %}{% endwith %}
-{% with p=sections.payments %}{% if p %}
-  <section class="summary-card summary-card--demo" aria-labelledby="ov-payments"><h2 class="summary-card__title" id="ov-payments">{% translate "Payments" %} <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></h2>
-    {% include "administration/_counts.html" with counts=p.statuses %}
-    <p class="summary-card__status">{% blocktranslate with e=p.open_exceptions r=p.pending_refunds d=p.open_disputes v=p.previews %}{{ e }} exceptions, {{ r }} refunds awaiting approval, {{ d }} disputes, {{ v }} membership previews (never activated). Not real cash.{% endblocktranslate %}</p>
-    <a class="summary-card__action" href="{% url 'administration:payments' %}">{% translate "Payments console" %}</a></section>
-{% endif %}{% endwith %}
-{% with w=sections.wallets %}{% if w %}
-  <section class="summary-card" aria-labelledby="ov-wallets"><h2 class="summary-card__title" id="ov-wallets">{% translate "Wallets (real ledger)" %}</h2>
-    <p class="summary-card__value">{{ w.total }}</p>
-    <p class="summary-card__status">{% blocktranslate with r=w.restricted f=w.open_findings u=w.unexpected_balance %}{{ r }} restricted, {{ f }} open findings, {{ u }} unexpected balances. Every balance must be TZS 0.{% endblocktranslate %}</p>
-    <a class="summary-card__action" href="{% url 'administration:wallet_reconciliation' %}">{% translate "Reconciliation" %}</a></section>
-{% endif %}{% endwith %}
-{% with x=sections.withdrawals %}{% if x %}
-  <section class="summary-card summary-card--demo" aria-labelledby="ov-withdrawals"><h2 class="summary-card__title" id="ov-withdrawals">{% translate "Withdrawals" %} <span class="badge badge--sandbox">{% translate "Demo" %}</span></h2>
-    {% include "administration/_counts.html" with counts=x.statuses %}
-    <p class="summary-card__status">{% blocktranslate with q=x.review_queue u=x.uncertain e=x.open_exceptions %}{{ q }} in review, {{ u }} with unknown payout status, {{ e }} exceptions. Real withdrawals are locked.{% endblocktranslate %}</p>
-    <a class="summary-card__action" href="{% url 'administration:withdrawals' %}">{% translate "Withdrawals console" %}</a></section>
-{% endif %}{% endwith %}
-{% with j=sections.jobs %}{% if j %}
-  <section class="summary-card" aria-labelledby="ov-jobs"><h2 class="summary-card__title" id="ov-jobs">{% translate "Background jobs" %}</h2>
-    <p class="summary-card__value"><span class="badge badge--health-{{ j.status }}">{% translate j.status_label %}</span></p>
-    <p class="summary-card__status">{% blocktranslate with f=j.failed_last_24h %}{{ f }} failed in 24 h.{% endblocktranslate %} {{ j.problems|join:", " }}</p>
-    <a class="summary-card__action" href="{% url 'administration:health' %}">{% translate "Operational health" %}</a></section>
-{% endif %}{% endwith %}
-</div>
-{% if not sections %}<p class="empty-state">{% translate "Your role has no dashboard sections. Use the menu for the areas you can access." %}</p>{% endif %}
+{% if sections %}
+<dl class="metric-row">
+  <div class="metric"><dt>{% translate "Open items" %}</dt><dd>{{ attention|length }}</dd></div>
+  {% if sections.members %}<div class="metric"><dt>{% translate "Members" %}</dt><dd>{{ sections.members.total }}</dd></div>
+  <div class="metric"><dt>{% translate "Current memberships" %}</dt><dd>{{ sections.members.current_memberships }}</dd></div>{% endif %}
+  {% if sections.advertising.campaigns is not None %}<div class="metric"><dt>{% translate "Active campaigns" %}</dt><dd>{{ sections.advertising.campaigns.ACTIVE|default:0 }}</dd></div>{% endif %}
+  {% if sections.viewing %}<div class="metric"><dt>{% translate "Verified views" %}</dt><dd>{{ sections.viewing.outcomes.VERIFIED_EVIDENCE|default:0 }}</dd></div>{% endif %}
+</dl>
+
+<section class="workspace-section" aria-labelledby="ov-attention">
+  <h2 class="workspace-section__title" id="ov-attention">{% translate "Needs attention" %}</h2>
+  {% if attention %}
+  <table class="table workspace-table"><caption class="visually-hidden">{% translate "Open items you can act on" %}</caption>
+    <thead><tr><th scope="col">{% translate "Item" %}</th><th scope="col" class="table__numeric">{% translate "Open" %}</th></tr></thead>
+    <tbody>{% for item in attention %}<tr><td><a href="{% url item.url_name %}{{ item.query }}">{{ item.label }}</a></td><td class="table__numeric">{{ item.count }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p class="empty-state">{% translate "Nothing is waiting in the areas you can see." %}</p>{% endif %}
+</section>
+
+<section class="workspace-section" aria-labelledby="ov-areas">
+  <h2 class="workspace-section__title" id="ov-areas">{% translate "By area" %}</h2>
+  <table class="table workspace-table overview-areas"><caption class="visually-hidden">{% translate "Current figures by area" %}</caption>
+    <thead><tr><th scope="col">{% translate "Area" %}</th><th scope="col">{% translate "Current figures" %}</th></tr></thead>
+    <tbody>
+    {% with m=sections.members %}{% if m %}<tr><td><a href="{% url 'administration:members' %}">{% translate "Members" %}</a></td>
+      <td><p>{% translate "Memberships" %}</p>{% include "administration/_counts.html" with counts=m.memberships %}
+        <p>{% blocktranslate with a=m.active v=m.verified r=m.restricted %}{{ a }} active, {{ v }} email-confirmed, {{ r }} suspended or disabled.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
+    {% with a=sections.advertising %}{% if a %}<tr><td>{% if can.campaigns %}<a href="{% url 'administration:campaigns' %}">{% translate "Advertising" %}</a>{% elif can.advertisers %}<a href="{% url 'administration:advertisers' %}">{% translate "Advertising" %}</a>{% else %}{% translate "Advertising" %}{% endif %}</td>
+      <td>{% if a.organizations is not None %}<p>{% translate "Advertisers" %}</p>{% include "administration/_counts.html" with counts=a.organizations %}{% endif %}
+        {% if a.campaigns is not None %}<p>{% translate "Campaigns" %}</p>{% include "administration/_counts.html" with counts=a.campaigns %}
+        <p>{% blocktranslate with t=a.demo_budget_running|tzs f=a.funded %}Demo budgets in approved campaigns: {{ t }} (configuration, not funding). Funded campaigns: {{ f }}.{% endblocktranslate %}</p>{% endif %}</td></tr>{% endif %}{% endwith %}
+    {% with v=sections.videos %}{% if v %}<tr><td><a href="{% url 'administration:videos' %}">{% translate "Videos" %}</a></td>
+      <td>{% include "administration/_counts.html" with counts=v.publication %}
+        <p>{% translate "Processing" %}</p>{% include "administration/_counts.html" with counts=v.processing %}</td></tr>{% endif %}{% endwith %}
+    {% with w=sections.viewing %}{% if w %}<tr><td><a href="{% url 'administration:viewing' %}">{% translate "Viewing" %}</a></td>
+      <td>{% include "administration/_counts.html" with counts=w.outcomes %}
+        <p>{% blocktranslate with p=w.pending_review r=w.revoked %}{{ p }} awaiting review, {{ r }} revoked.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
+    {% with r=sections.rewards %}{% if r %}<tr><td><a href="{% url 'administration:demo_rewards' %}">{% translate "Demo rewards" %}</a> <span class="badge badge--sandbox">{% translate "Demo / simulated" %}</span></td>
+      <td><p>{{ r.simulated_total|tzs }} {% translate "simulated, not money" %}</p>
+        <p>{% blocktranslate with q=r.qualified v=r.reversed x=r.rejected d=r.draft_policies %}{{ q }} recorded, {{ v }} reversed, {{ x }} not eligible. {{ d }} policy drafts awaiting approval.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
+    {% with p=sections.payments %}{% if p %}<tr><td><a href="{% url 'administration:payments' %}">{% translate "Payments" %}</a> <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></td>
+      <td>{% include "administration/_counts.html" with counts=p.statuses %}
+        <p>{% blocktranslate with e=p.open_exceptions r=p.pending_refunds d=p.open_disputes v=p.previews %}{{ e }} exceptions, {{ r }} refunds awaiting approval, {{ d }} disputes, {{ v }} membership previews (never activated). Not real cash.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
+    {% with w=sections.wallets %}{% if w %}<tr><td><a href="{% url 'administration:wallets' %}">{% translate "Wallets (real ledger)" %}</a></td>
+      <td><p>{% blocktranslate count n=w.total %}{{ n }} wallet{% plural %}{{ n }} wallets{% endblocktranslate %}</p>
+        <p>{% blocktranslate with r=w.restricted f=w.open_findings u=w.unexpected_balance %}{{ r }} restricted, {{ f }} open findings, {{ u }} unexpected balances. Every balance must be TZS 0.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
+    {% with x=sections.withdrawals %}{% if x %}<tr><td><a href="{% url 'administration:withdrawals' %}">{% translate "Withdrawals" %}</a> <span class="badge badge--sandbox">{% translate "Demo" %}</span></td>
+      <td>{% include "administration/_counts.html" with counts=x.statuses %}
+        <p>{% blocktranslate with q=x.review_queue u=x.uncertain e=x.open_exceptions %}{{ q }} in review, {{ u }} with unknown payout status, {{ e }} exceptions. Real withdrawals are locked.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
+    {% with j=sections.jobs %}{% if j %}<tr><td><a href="{% url 'administration:health' %}">{% translate "Background jobs" %}</a></td>
+      <td><span class="badge badge--health-{{ j.status }}">{% translate j.status_label %}</span>
+        <p>{% blocktranslate with f=j.failed_last_24h %}{{ f }} failed in 24 h.{% endblocktranslate %}{% if j.problems %} {{ j.problems|code_labels }}.{% endif %}</p></td></tr>{% endif %}{% endwith %}
+    </tbody>
+  </table>
+</section>
+{% else %}<p class="empty-state">{% translate "Your role has no dashboard sections. Use the menu for the areas you can access." %}</p>{% endif %}
 {% endblock %}

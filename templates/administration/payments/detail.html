@@ -1,39 +1,39 @@
-{% extends "administration/layout.html" %}{% load i18n %}
+{% extends "administration/layout.html" %}{% load i18n console_labels money %}
 {% block title %}{{ intent.reference }}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{{ intent.reference }} <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></h1><a href="{% url 'administration:payments' %}">{% translate "All payments" %}</a></div>
-<div class="card-grid">
-<section class="panel"><h2 class="panel__title">{% translate "Payment" %}</h2><dl class="details">
+<div class="page-heading"><h1 class="page-title">{{ intent.reference }} <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></h1><a href="{% url 'administration:payments' %}">{% translate "All payments" %}</a></div>
+<div class="console-split">
+<section><h2 class="workspace-section__title">{% translate "Payment" %}</h2><dl class="details">
   <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ intent.status|lower }}">{{ intent.get_status_display }}</span> {{ intent.status_reason }}</dd>
   <dt>{% translate "Purpose / domain" %}</dt><dd>{{ intent.get_purpose_display }} · {{ intent.get_funds_domain_display }}</dd>
   <dt>{% translate "Payer" %}</dt><dd>{{ intent.payer.email }}{% if intent.organization %} · {{ intent.organization.display_name }}{% endif %}</dd>
-  <dt>{% translate "Amount" %}</dt><dd>TZS {{ intent.amount }}{% if intent.provider_amount is not None %} ({% translate "provider reported" %} {{ intent.provider_currency }} {{ intent.provider_amount }}){% endif %}</dd>
+  <dt>{% translate "Amount" %}</dt><dd>{{ intent.amount|tzs }}{% if intent.provider_amount is not None %} ({% translate "provider reported" %} {{ intent.provider_currency }} {{ intent.provider_amount }}){% endif %}</dd>
   <dt>{% translate "Provider ref." %}</dt><dd>{{ intent.provider }} · {{ intent.provider_reference|default:"—" }}</dd>
   <dt>{% translate "Confirmed / reconciled / settled" %}</dt><dd>{{ intent.confirmed_at|date:"SHORT_DATETIME_FORMAT"|default:"—" }} / {{ intent.reconciled_at|date:"SHORT_DATETIME_FORMAT"|default:"—" }} / {{ intent.settled_at|date:"SHORT_DATETIME_FORMAT"|default:"—" }}</dd>
   {% if preview %}<dt>{% translate "Membership preview" %}</dt><dd>{{ preview.get_decision_display }}{% if preview.would_start %} {{ preview.would_start|date:"SHORT_DATE_FORMAT" }}–{{ preview.would_end|date:"SHORT_DATE_FORMAT" }}{% endif %} ({% translate "not activated" %})</dd>{% endif %}
 </dl></section>
-{% if can_simulate %}<section class="panel"><h2 class="panel__title">{% translate "Sandbox provider simulator" %}</h2>
+{% if can_simulate %}<section><h2 class="workspace-section__title">{% translate "Sandbox provider simulator" %}</h2>
   <p class="lead">{% translate "Acts as the external provider and sends a signed notice through the normal verification path." %}</p>
   <form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="simulate">
   {% for value, label in simulator_actions %}<button class="button button--secondary" name="simulate" value="{{ value }}" type="submit">{{ label }}</button>{% endfor %}</form></section>{% endif %}
 </div>
-{% if can_refund %}<section class="panel section"><h2 class="panel__title">{% translate "Refunds and disputes" %}</h2>
-  {% for r in refunds %}<p>{% translate "Refund" %}: TZS {{ r.amount }} · {{ r.get_status_display }} · {{ r.reason }} ({% translate "requested by" %} {{ r.requested_by.email }}){% if r.status == "REQUESTED" %}
+{% if can_refund %}<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Refunds and disputes" %}</h2>
+  {% for r in refunds %}<div class="console-record">{% translate "Refund" %}: {{ r.amount|tzs }} · {{ r.get_status_display }} · {{ r.reason }} ({% translate "requested by" %} {{ r.requested_by.email }}){% if r.status == "REQUESTED" %}
     <form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="decide_refund"><input type="hidden" name="refund" value="{{ r.pk }}">
     <input name="note" type="text" maxlength="300" placeholder="{% translate 'Note' %}" aria-label="{% translate 'Note' %}">
-    <button class="button" name="approve" value="1" type="submit">{% translate "Approve refund (second person)" %}</button><button class="button button--secondary" name="approve" value="0" type="submit">{% translate "Reject" %}</button></form>{% endif %}</p>{% endfor %}
+    <button class="button" name="approve" value="1" type="submit">{% translate "Approve refund (second person)" %}</button><button class="button button--secondary" name="approve" value="0" type="submit">{% translate "Reject" %}</button></form>{% endif %}</div>{% endfor %}
   {% if intent.status == "SETTLED" %}<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="request_refund">
     <label for="refund-reason">{% translate "Refund reason" %}</label><input id="refund-reason" name="reason" type="text" maxlength="300" required>
     <button class="button button--secondary" type="submit">{% translate "Request full refund" %}</button></form>{% endif %}
-  {% for d in disputes %}<p>{% translate "Dispute" %}: {{ d.get_status_display }} · {% translate "frozen" %} TZS {{ d.frozen_amount }} · {% translate "shortfall" %} TZS {{ d.shortfall_amount }}{% if d.status == "OPEN" %}
+  {% for d in disputes %}<div class="console-record">{% translate "Dispute" %}: {{ d.get_status_display }} · {% translate "frozen" %} {{ d.frozen_amount|tzs }} · {% translate "shortfall" %} {{ d.shortfall_amount|tzs }}{% if d.status == "OPEN" %}
     <form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="resolve_dispute"><input type="hidden" name="dispute" value="{{ d.pk }}">
     <input name="note" type="text" maxlength="300" required placeholder="{% translate 'Resolution note' %}" aria-label="{% translate 'Resolution note' %}">
-    <button class="button" name="won" value="1" type="submit">{% translate "Won" %}</button><button class="button button--secondary" name="won" value="0" type="submit">{% translate "Lost (chargeback)" %}</button></form>{% endif %}</p>{% endfor %}
+    <button class="button" name="won" value="1" type="submit">{% translate "Won" %}</button><button class="button button--secondary" name="won" value="0" type="submit">{% translate "Lost (chargeback)" %}</button></form>{% endif %}</div>{% endfor %}
 </section>{% endif %}
-<section class="section"><h2>{% translate "Provider events" %}</h2>{% if events %}<table class="table"><thead><tr><th scope="col">{% translate "Received" %}</th><th scope="col">{% translate "Kind" %}</th><th scope="col">{% translate "Authenticated" %}</th><th scope="col">{% translate "Outcome" %}</th><th scope="col">{% translate "Summary" %}</th></tr></thead>
-<tbody>{% for e in events %}<tr><td>{{ e.received_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ e.get_kind_display }}</td><td>{{ e.authenticated|yesno }}</td><td>{{ e.get_outcome_display }} {{ e.reason }}</td><td>{{ e.summary.status|default:"" }} {{ e.summary.amount|default:"" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="lead">—</p>{% endif %}</section>
-<section class="section"><h2>{% translate "Sandbox journal postings" %}</h2>{% if postings %}<table class="table"><thead><tr><th scope="col">{% translate "Type" %}</th><th scope="col">{% translate "Debit" %}</th><th scope="col">{% translate "Credit" %}</th><th scope="col">{% translate "Amount" %}</th></tr></thead>
-<tbody>{% for p in postings %}<tr><td>{{ p.posting_type }}</td><td>{{ p.debit_account }}</td><td>{{ p.credit_account }}</td><td>TZS {{ p.amount }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="lead">—</p>{% endif %}</section>
-<section class="section"><h2>{% translate "Exceptions" %}</h2>{% for x in exceptions %}<p><a href="{% url 'administration:payment_exceptions' %}">{{ x.get_reason_display }}</a> · {{ x.get_status_display }}</p>{% empty %}<p class="lead">—</p>{% endfor %}</section>
-<section class="section"><h2>{% translate "Audit history" %}</h2><ul class="list">{% for event in history %}<li class="list__item"><span>{{ event.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ event.action }}</span><span>{{ event.actor_email|default:"system" }}</span></li>{% empty %}<li>—</li>{% endfor %}</ul></section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Provider events" %}</h2>{% if events %}<table class="table workspace-table"><caption class="visually-hidden">{% translate "Provider events" %}</caption><thead><tr><th scope="col">{% translate "Received" %}</th><th scope="col">{% translate "Kind" %}</th><th scope="col">{% translate "Authenticated" %}</th><th scope="col">{% translate "Outcome" %}</th><th scope="col">{% translate "Summary" %}</th></tr></thead>
+<tbody>{% for e in events %}<tr><td>{{ e.received_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ e.get_kind_display }}</td><td>{{ e.authenticated|yesno }}</td><td>{{ e.get_outcome_display }} {{ e.reason|code_label }}</td><td>{{ e.summary.status|default:"" }} {{ e.summary.amount|default:"" }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="lead">—</p>{% endif %}</section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Sandbox journal postings" %}</h2>{% if postings %}<table class="table workspace-table"><caption class="visually-hidden">{% translate "Sandbox journal postings" %}</caption><thead><tr><th scope="col">{% translate "Type" %}</th><th scope="col">{% translate "Debit" %}</th><th scope="col">{% translate "Credit" %}</th><th scope="col">{% translate "Amount" %}</th></tr></thead>
+<tbody>{% for p in postings %}<tr><td>{{ p.posting_type|code_label }}</td><td>{{ p.debit_account }}</td><td>{{ p.credit_account }}</td><td>{{ p.amount|tzs }}</td></tr>{% endfor %}</tbody></table>{% else %}<p class="lead">—</p>{% endif %}</section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Exceptions" %}</h2>{% for x in exceptions %}<p><a href="{% url 'administration:payment_exceptions' %}">{{ x.get_reason_display }}</a> · {{ x.get_status_display }}</p>{% empty %}<p class="lead">—</p>{% endfor %}</section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Audit history" %}</h2><ul class="list">{% for event in history %}<li class="list__item"><span>{{ event.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ event.action|code_label }}<code class="audit-code">{{ event.action }}</code></span><span>{{ event.actor_email|default:"system" }}</span></li>{% empty %}<li>—</li>{% endfor %}</ul></section>
 {% endblock %}

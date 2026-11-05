@@ -2,10 +2,10 @@
 {% block title %}{{ ticket.reference }}{% endblock %}
 {% block crumb %}{{ ticket.reference }}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{{ ticket.reference }} · {{ ticket.subject }}</h1>{% include "support/_status_badge.html" with staff=True %}</div>
-<div class="card-grid">
-  <section class="panel">
-    <h2 class="panel__title">{% translate "Ticket" %}</h2>
+<div class="page-heading"><h1 class="page-title">{{ ticket.reference }} · {{ ticket.subject }}</h1>{% include "support/_status_badge.html" with staff=True %}</div>
+<div class="console-split">
+  <section>
+    <h2 class="workspace-section__title">{% translate "Ticket" %}</h2>
     <dl class="details">
       <dt>{% translate "Customer" %}</dt><dd>{{ ticket.requester.email }}</dd>
       {% if ticket.organization %}<dt>{% translate "Advertiser" %}</dt><dd>{{ ticket.organization.display_name }}</dd>{% endif %}
@@ -19,8 +19,8 @@
     </dl>
   </section>
   {% if can_manage and not ticket.is_closed %}
-  <section class="panel">
-    <h2 class="panel__title">{% translate "Manage" %}</h2>
+  <section>
+    <h2 class="workspace-section__title">{% translate "Manage" %}</h2>
     <form method="post" class="toolbar">{% csrf_token %}<input type="hidden" name="action" value="assign"><input type="hidden" name="expected_status" value="{{ ticket.status }}">
       <label for="assignee">{% translate "Assignee" %}</label>
       <select id="assignee" name="assignee"><option value="">{% translate "Unassigned" %}</option>{% for agent in agents %}<option value="{{ agent.pk }}"{% if agent.pk == ticket.assignee_id %} selected{% endif %}>{{ agent.email }}{% if agent.pk == user.pk %} ({% translate "me" %}){% endif %}</option>{% endfor %}</select>
@@ -36,13 +36,13 @@
   </section>
   {% endif %}
 </div>
-<section class="section">
-  <h2>{% translate "Conversation and history" %}</h2>
+<section class="workspace-section">
+  <h2 class="workspace-section__title">{% translate "Conversation and history" %}</h2>
   {% include "support/_conversation.html" with items=items staff=True %}
 </section>
 {% if can_manage and not ticket.is_closed %}
-<section class="panel section">
-  <h2 class="panel__title">{% translate "Reply or add an internal note" %}</h2>
+<section class="workspace-section">
+  <h2 class="workspace-section__title">{% translate "Reply or add an internal note" %}</h2>
   <form class="form" method="post" novalidate>{% csrf_token %}<input type="hidden" name="action" value="reply">
     {% if reply_form.errors %}<div class="error-summary" role="alert"><ul>{% for field in reply_form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}{% for error in reply_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
     {% for field in reply_form.visible_fields %}{{ field.as_field_group }}{% endfor %}

@@ -11,9 +11,24 @@
   margin: var(--space-4) 0 var(--space-2);
 }
 
+/* A chart alone in its section must not stretch to the full page width. */
 .analytics-chart {
   margin: 0;
   min-width: 0;
+  max-width: 40rem;
+}
+
+/* Only the financial categories keep a box of their own; their figures wrap without dividers. */
+.analytics-grid .panel .metric {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.analytics-data summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  cursor: pointer;
 }
 
 .analytics-svg {

@@ -2,10 +2,10 @@
 {% block title %}{% translate "Complimentary demo membership" %}{% endblock %}
 {% block crumb %}{{ member.email }}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{% translate "Complimentary demo membership" %}</h1><a href="{% url 'administration:member' member.pk %}">{% translate "Back to member" %}</a></div>
+<div class="page-heading"><h1 class="page-title">{% translate "Complimentary demo membership" %}</h1><a href="{% url 'administration:member' member.pk %}">{% translate "Back to member" %}</a></div>
 <p class="notice notice--warning" role="note">{% translate "This grants membership access without any payment. It is not a payment, records no money, creates no payment, ledger, wallet, reward-funding or withdrawal entry, and ends automatically at the expiry you set." %}</p>
 
-<section class="panel"><h2 class="panel__title">{% translate "Member" %}</h2><dl class="details">
+<section><h2 class="workspace-section__title">{% translate "Member" %}</h2><dl class="details">
   <dt>{% translate "Account" %}</dt><dd>{{ member.email }}</dd>
   <dt>{% translate "Status" %}</dt><dd>{{ member.get_status_display }}</dd>
   <dt>{% translate "Email confirmed" %}</dt><dd>{{ member.email_verified|yesno:_("Yes,No") }}</dd>
@@ -16,9 +16,9 @@
 {% elif current %}<p class="notice notice--warning">{% translate "This member already has a membership. It is never replaced, shortened or extended here; the grant will be refused." %}</p>{% endif %}
 </section>
 
-<section class="panel">
+<section>
 {% if review %}
-  <h2 class="panel__title">{% translate "Review and confirm" %}</h2>
+  <h2 class="workspace-section__title">{% translate "Review and confirm" %}</h2>
   <dl class="details">
     <dt>{% translate "Plan" %}</dt><dd>{{ review.plan.name }} ({{ review.plan.code }})</dd>
     <dt>{% translate "Access starts" %}</dt><dd>{% translate "Immediately on confirmation" %}</dd>
@@ -42,7 +42,7 @@
   </form>
   <form method="get" class="section"><button type="submit" class="button button--secondary">{% translate "Start again" %}</button></form>
 {% else %}
-  <h2 class="panel__title">{% translate "Grant details" %}</h2>
+  <h2 class="workspace-section__title">{% translate "Grant details" %}</h2>
   <form class="form" method="post" novalidate>{% csrf_token %}
     <input type="hidden" name="step" value="review">
     {% if form.non_field_errors %}<ul class="errorlist nonfield" role="alert">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}

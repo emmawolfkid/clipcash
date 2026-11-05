@@ -9,13 +9,11 @@
     <p class="app-sidebar__title">{% translate "Administration" %}</p>
     <button type="button" class="app-nav__toggle" aria-expanded="true" aria-controls="console-menu" hidden>{% translate "Menu" %}</button>
     <nav id="console-menu" class="app-nav" aria-label="{% translate 'Administration menu' %}">
-      {% if True %}<p class="app-nav__group" id="console-overview">{% translate "Overview" %}</p>
+      <p class="app-nav__group" id="console-overview">{% translate "Overview" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-overview">
-        {% if True %}<li><a class="app-nav__link{% if nav == 'overview' %} is-current{% endif %}"{% if nav == 'overview' %} aria-current="page"{% endif %} href="{% url 'administration:overview' %}">{% translate "Overview" %}</a></li>{% endif %}
-        {% if True %}<li><a class="app-nav__link{% if nav == 'health' %} is-current{% endif %}"{% if nav == 'health' %} aria-current="page"{% endif %} href="{% url 'administration:health' %}">{% translate "Operational health" %}</a></li>{% endif %}
-        <li><a class="app-nav__link" href="{% url 'notifications:inbox' %}">{% translate "My notifications" %}{% if unread_notifications %} <span class="badge badge--pending">{{ unread_notifications }}</span>{% endif %}</a></li>
-        <li><a class="app-nav__link" href="{% url 'accounts:profile' %}">{% translate "My account" %}</a></li>
-      </ul>{% endif %}
+        <li><a class="app-nav__link{% if nav == 'overview' %} is-current{% endif %}"{% if nav == 'overview' %} aria-current="page"{% endif %} href="{% url 'administration:overview' %}">{% translate "Overview" %}</a></li>
+        <li><a class="app-nav__link{% if nav == 'health' %} is-current{% endif %}"{% if nav == 'health' %} aria-current="page"{% endif %} href="{% url 'administration:health' %}">{% translate "Operational health" %}</a></li>
+      </ul>
       {% if can.members or can.plans %}<p class="app-nav__group" id="console-members">{% translate "Members" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-members">
         {% if can.members %}<li><a class="app-nav__link{% if nav == 'members' %} is-current{% endif %}"{% if nav == 'members' %} aria-current="page"{% endif %} href="{% url 'administration:members' %}">{% translate "Member directory" %}</a></li>{% endif %}
@@ -58,6 +56,11 @@
         {% if can.audit %}<li><a class="app-nav__link{% if nav == 'security' %} is-current{% endif %}"{% if nav == 'security' %} aria-current="page"{% endif %} href="{% url 'administration:security' %}">{% translate "Security summary" %}</a></li>{% endif %}
         {% if can.audit %}<li><a class="app-nav__link" href="{% url 'admin:audit_auditevent_changelist' %}">{% translate "Audit logs" %}</a></li>{% endif %}
       </ul>{% endif %}
+      <p class="app-nav__group" id="console-account">{% translate "Your account" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-account">
+        <li><a class="app-nav__link" href="{% url 'notifications:inbox' %}">{% translate "My notifications" %}{% if unread_notifications %} <span class="badge badge--pending">{{ unread_notifications }}</span>{% endif %}</a></li>
+        <li><a class="app-nav__link" href="{% url 'accounts:profile' %}">{% translate "My account" %}</a></li>
+      </ul>
     </nav>
   </aside>
   <main id="content" class="app-main" tabindex="-1">

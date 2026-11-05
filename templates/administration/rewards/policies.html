@@ -1,25 +1,25 @@
-{% extends "administration/layout.html" %}{% load i18n %}
+{% extends "administration/layout.html" %}{% load i18n money %}
 {% block title %}{% translate "Demo reward policies" %}{% endblock %}
 {% block console_content %}
-<div class="section__header"><h1 class="page-title">{% translate "Demo reward policies" %}</h1><a href="{% url 'administration:demo_rewards' %}">{% translate "Demo rewards" %}</a></div>
+<div class="page-heading"><h1 class="page-title">{% translate "Demo reward policies" %}</h1><a href="{% url 'administration:demo_rewards' %}">{% translate "Demo rewards" %}</a></div>
 {% include "components/demo_reward_notice.html" %}
 {% if policies %}
-<table class="table">
+<table class="table workspace-table hide-narrow-2 hide-narrow-5"><caption class="visually-hidden">{% translate "Demo reward policies" %}</caption>
   <thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Version" %}</th><th scope="col">{% translate "Demo amount" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Effective" %}</th></tr></thead>
   <tbody>{% for policy in policies %}
     <tr><td><a href="{% url 'administration:reward_policy' policy.pk %}">{{ policy.campaign.name }}</a></td><td>v{{ policy.version }} ({% translate "rev." %} {{ policy.campaign_revision }})</td>
-      <td>TZS {{ policy.reward_amount }}</td><td><span class="badge badge--{{ policy.status|lower }}">{{ policy.get_status_display }}</span></td>
+      <td>{{ policy.reward_amount|tzs }}</td><td><span class="badge badge--{{ policy.status|lower }}">{{ policy.get_status_display }}</span></td>
       <td>{{ policy.effective_from|date:"SHORT_DATETIME_FORMAT"|default:"—" }}{% if policy.effective_until %} – {{ policy.effective_until|date:"SHORT_DATETIME_FORMAT" }}{% endif %}</td></tr>
   {% endfor %}</tbody>
 </table>
 {% include "components/pagination.html" with page=policies_page %}
 {% else %}<p class="empty-state">{% translate "No demo reward policies yet." %}</p>{% endif %}
 {% if can_manage %}
-<section class="panel section"><h2 class="panel__title">{% translate "New policy draft" %}</h2>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "New policy draft" %}</h2>
 {% if campaigns %}
 <form method="post" class="form">{% csrf_token %}
   <label for="p-campaign">{% translate "Approved campaign" %}</label>
-  <select id="p-campaign" name="campaign">{% for c in campaigns %}<option value="{{ c.pk }}">{{ c.name }} · {{ c.organization.display_name }} ({% translate "max" %} TZS {{ c.demo_reward_per_view }})</option>{% endfor %}</select>
+  <select id="p-campaign" name="campaign">{% for c in campaigns %}<option value="{{ c.pk }}">{{ c.name }} · {{ c.organization.display_name }} ({% translate "max" %} {{ c.demo_reward_per_view|tzs }})</option>{% endfor %}</select>
   <label for="p-amount">{% translate "Demo reward per verified view (whole TZS)" %}</label>
   <input id="p-amount" name="reward_amount" type="number" min="1" step="1" required>
   <label for="p-notes">{% translate "Notes" %}</label><input id="p-notes" name="notes" type="text" maxlength="300">
