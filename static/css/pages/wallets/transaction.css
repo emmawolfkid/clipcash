@@ -1,7 +1,0 @@
-.transaction-amount {
-  color: var(--text);
-  font-size: var(--text-lg);
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}

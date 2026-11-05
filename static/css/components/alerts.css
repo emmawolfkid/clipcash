@@ -1,13 +1,4 @@
 /* UI-02: components / alerts. */
-.notice--demo {
-  margin-top: 1rem;
-}
-
-.notice--sandbox {
-  border-left-color: var(--warning);
-  background: var(--warning-bg);
-}
-
 .messages {
   list-style: none;
   padding: 0;
@@ -22,6 +13,16 @@
   border-left: 4px solid var(--accent);
   padding: var(--space-4);
   border-radius: var(--radius-sm);
+}
+
+/* Variants follow .notice: the same specificity, so source order decides. */
+.notice--demo {
+  margin-top: 1rem;
+}
+
+.notice--sandbox {
+  border-left-color: var(--warning);
+  background: var(--warning-bg);
 }
 
 .messages .messages__item--success {

@@ -18,7 +18,7 @@
 <section class="section"><h2>{% translate "History" %}</h2>
 {% if intents %}<table class="table financial-table payment-history-table"><caption>{% translate "Sandbox payment intents" %}</caption>
   <thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Created" %}</th></tr></thead>
-  <tbody>{% for intent in intents %}<tr><td><a href="{% url 'payments:intent' intent.pk %}">{{ intent.reference }}</a></td><td><span class="financial-amount">{{ intent.amount|tzs }}</span></td>
+  <tbody>{% for intent in intents %}<tr><td><a class="financial-reference" href="{% url 'payments:intent' intent.pk %}">{{ intent.reference }}</a></td><td><span class="financial-amount">{{ intent.amount|tzs }}</span></td>
     <td><span class="badge badge--{{ intent.status|lower }}">{{ intent.get_status_display }}</span></td><td>{{ intent.created_at|date:"SHORT_DATETIME_FORMAT" }}</td></tr>{% endfor %}</tbody>
 </table>{% else %}<p class="empty-state">{% translate "No payments yet." %}</p>{% endif %}</section>
 {% endblock %}

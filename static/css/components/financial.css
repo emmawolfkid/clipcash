@@ -7,10 +7,39 @@
   overflow-wrap: anywhere;
 }
 
+.financial-amount--large {
+  font-size: var(--text-lg);
+  font-weight: 750;
+}
+
 .financial-table td:last-child {
   min-width: 8rem;
 }
 
 .financial-table .badge {
   white-space: nowrap;
+}
+
+/* Tables scroll inside their region, so whole values can stay on one line. */
+.financial-table .financial-amount,
+.financial-reference {
+  white-space: nowrap;
+}
+
+.financial-form {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.financial-form label {
+  margin: var(--space-2) 0 0;
+}
+
+.financial-form .helptext {
+  margin: 0;
+}
+
+.financial-form .button {
+  justify-self: start;
+  margin-top: var(--space-3);
 }

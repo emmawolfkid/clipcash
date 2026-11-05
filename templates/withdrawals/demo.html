@@ -6,9 +6,10 @@
 <p><a href="{% url 'withdrawals:overview' %}">{% translate "Back to withdrawals" %}</a></p>
 {% include "components/demo_withdrawal_notice.html" %}
 <section class="panel"><dl class="details">
-  <dt>{% translate "Simulated amount" %}</dt><dd class="demo-withdrawal-amount">{{ demo.simulated_amount|tzs }}</dd>
+  <dt>{% translate "Simulated amount" %}</dt><dd><span class="financial-amount financial-amount--large">{{ demo.simulated_amount|tzs }}</span></dd>
   <dt>{% translate "Destination" %}</dt><dd>{{ demo.destination_provider }} •••• {{ demo.destination_last4 }}</dd>
   <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ demo.status|lower }}">{{ demo.get_status_display }}</span></dd>
+  <dt>{% translate "Created" %}</dt><dd>{{ demo.created_at|date:"DATETIME_FORMAT" }}</dd>
 </dl></section>
-<section class="section"><h2>{% translate "History" %}</h2>{% if decisions %}<ol class="list demo-decision-list">{% for d in decisions %}<li class="list__item"><span>{{ d.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ d.action }}</span><span class="badge">{{ d.to_status }}</span></li>{% endfor %}</ol>{% else %}<p class="empty-state">{% translate "No demo decisions have been recorded." %}</p>{% endif %}</section>
+<section class="section"><h2>{% translate "History" %}</h2>{% if decisions %}<ol class="list demo-decision-list">{% for d in decisions %}<li class="list__item"><span>{{ d.created_at|date:"SHORT_DATETIME_FORMAT" }}</span><span class="badge badge--{{ d.to_status|lower }}">{{ d.status_label }}</span></li>{% endfor %}</ol>{% else %}<p class="empty-state">{% translate "No demo decisions have been recorded." %}</p>{% endif %}</section>
 {% endblock %}

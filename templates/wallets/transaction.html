@@ -1,13 +1,15 @@
-{% extends "members/layout.html" %}{% load static i18n money %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/wallets/transaction.css' %}">{% endblock %}
+{% extends "members/layout.html" %}{% load i18n money %}
 {% block title %}{% translate "Wallet transaction" %}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{% translate "Wallet transaction" %}</h1>
 <p><a href="{% url 'wallets:wallet' %}">{% translate "Back to wallet" %}</a></p>
 <section class="panel"><dl class="details">
   <dt>{% translate "Reference" %}</dt><dd>{{ txn.reference }}</dd>
+  <dt>{% translate "Date" %}</dt><dd>{{ txn.created_at|date:"DATETIME_FORMAT" }}</dd>
   <dt>{% translate "Type" %}</dt><dd>{{ txn.get_category_display }}</dd>
-  <dt>{% translate "Amount" %}</dt><dd class="transaction-amount">{{ txn.amount|tzs }}</dd>
+  <dt>{% translate "Direction" %}</dt><dd>{{ txn.get_direction_display }}</dd>
+  <dt>{% translate "Balance" %}</dt><dd>{{ txn.get_bucket_display }}</dd>
+  <dt>{% translate "Amount" %}</dt><dd><span class="financial-amount financial-amount--large">{{ txn.amount|tzs }}</span></dd>
 </dl></section>
 {% include "components/wallet_notice.html" %}
 {% endblock %}

@@ -1,12 +1,28 @@
-/* UI-02: components / badges. */
+/* UI-02: components / badges. The base rule comes first so that variants can override it. */
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  line-height: 1.5;
+}
+
 .badge--draft,
 .badge--uploading,
 .badge--processing,
 .badge--submitted,
 .badge--insufficient_evidence,
-.badge--pending {
+.badge--pending,
+.badge--demo_requested,
+.badge--demo_under_review,
+.badge--demo_approved,
+.badge--demo_payout_pending {
   border-color: var(--muted);
   color: var(--muted);
+  background: var(--surface);
 }
 
 .badge--sandbox {
@@ -22,17 +38,7 @@
 .badge--health-not_checked {
   border-color: var(--muted);
   color: var(--muted);
-}
-
-.badge {
-  display: inline-block;
-  padding: 0.1rem 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
-  background: var(--surface-soft);
-  line-height: 1.5;
+  background: var(--surface);
 }
 
 .badge--active,
@@ -55,7 +61,8 @@
 .badge--suspended,
 .badge--restricted,
 .badge--disputed,
-.badge--refunded {
+.badge--refunded,
+.badge--demo_failed {
   color: var(--danger);
   border-color: var(--danger);
   background: var(--danger-bg);
@@ -69,7 +76,8 @@
 }
 
 .badge--paused,
-.badge--suspicious_review {
+.badge--suspicious_review,
+.badge--demo_uncertain {
   color: var(--warning);
   border-color: var(--warning);
   background: var(--warning-bg);
@@ -81,7 +89,11 @@
 .badge--archived,
 .badge--retired,
 .badge--demo_reversed,
-.badge--demo_rejected {
+.badge--demo_rejected,
+.badge--demo_paid,
+.badge--demo_returned,
+.badge--demo_cancelled,
+.badge--demo_expired {
   color: var(--muted);
   border-color: var(--muted);
   background: var(--surface);

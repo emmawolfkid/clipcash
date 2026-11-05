@@ -15,15 +15,16 @@
 <section class="section"><h2>{% translate "History" %}</h2>
 {% if page.object_list %}
 <table class="table financial-table reward-financial-table"><caption>{% translate "Demo reward decisions" %}</caption>
-  <thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Simulated amount" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
+  <thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Simulated amount" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Verified view" %}</th></tr></thead>
   <tbody>{% for reward in page.object_list %}
     <tr><td>{{ reward.decided_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ reward.campaign.name }}</td>
-      <td>{% if reward.amount %}<span class="financial-amount">{{ reward.amount|tzs }}</span>{% else %}—{% endif %}</td>
+      <td>{% if reward.amount %}<span class="financial-amount">{{ reward.amount|tzs }}</span> <span class="badge badge--sandbox">{% translate "Demo" %}</span>{% else %}—{% endif %}</td>
       <td><span class="badge badge--{{ reward.status|lower }}">{{ reward.get_status_display }}</span>
-        <span class="lead">{% if reward.status == "DEMO_REVERSED" %}{% translate "Reversed after review." %}{% else %}{{ reward.reason_text }}{% endif %}</span></td></tr>
+        <span class="lead">{% if reward.status == "DEMO_REVERSED" %}{% translate "Reversed after review." %}{% else %}{{ reward.reason_text }}{% endif %}</span></td>
+      <td><a href="{% url 'viewing:session' reward.session_id %}">{% translate "View session" %}<span class="visually-hidden"> {{ reward.campaign.name }}</span></a></td></tr>
   {% endfor %}</tbody>
 </table>
 {% include "components/pagination.html" %}
-{% else %}<p class="empty-state">{% translate "No demo rewards yet. They appear after a sponsored view is verified." %}</p>{% endif %}
+{% else %}<div class="empty-state"><p>{% translate "No demo rewards yet. They appear after a sponsored view is verified." %}</p><a class="button button--secondary" href="{% url 'viewing:list' %}">{% translate "See sponsored videos" %}</a></div>{% endif %}
 </section>
 {% endblock %}

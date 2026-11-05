@@ -3,6 +3,7 @@
   width: 100%;
   border-collapse: collapse;
   display: block;
+  position: relative;
   max-width: 100%;
   overflow-x: auto;
   font-size: var(--text-sm);
@@ -38,6 +39,7 @@
 }
 
 .table-scroll {
+  position: relative;
   max-width: 100%;
   min-width: 0;
   overflow-x: auto;

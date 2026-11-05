@@ -5,7 +5,7 @@
 <h1 class="page-title">{% translate "Withdrawals" %}</h1>
 <p class="notice"><strong>{% translate "Withdrawals are not available yet." %}</strong> {% translate "Real rewards and payouts are not active, and your wallet balance is TZS 0. Demo rewards can never be withdrawn." %}</p>
 {% if demo_unconfirmed_account %}{% include "components/demo_unconfirmed_notice.html" %}{% endif %}
-{% if balances and balances.restricted %}<p class="notice notice--warning">{% translate "Your wallet is under review, so withdrawals would be paused." %}</p>{% endif %}
+{% if balances and balances.restricted %}<p class="notice notice--warning" role="status">{% translate "Your wallet is under review, so withdrawals would be paused." %}</p>{% endif %}
 <div class="card-grid">
   <section class="panel"><h2 class="panel__title">{% translate "What a withdrawal will need" %}</h2>
     <ul class="checklist">{% for message in messages_for %}<li class="checklist__item checklist__item--no">{{ message }}</li>{% endfor %}</ul>
@@ -15,16 +15,16 @@
     <a class="button button--secondary" href="{% url 'withdrawals:destinations' %}">{% translate "Manage destinations" %}</a></section>
 </div>
 <section class="panel section"><h2 class="panel__title">{% translate "Preview (nothing is saved)" %}</h2>
-  <form method="get" class="toolbar"><label class="visually-hidden" for="pv">{% translate "Amount (TZS)" %}</label>
-    <input id="pv" name="preview_amount" type="number" min="1" step="1" value="{{ preview.amount|default:'' }}" placeholder="{% translate 'Amount in TZS' %}">
+  <form method="get" class="toolbar"><label for="pv">{% translate "Amount (TZS)" %}</label>
+    <input id="pv" name="preview_amount" type="number" min="1" step="1" value="{{ preview.amount|default:'' }}">
     <button class="button button--secondary" type="submit">{% translate "Check" %}</button></form>
-  {% if preview %}<p>{% blocktranslate with amount=preview.amount %}For TZS {{ amount }}, these rules would block a withdrawal today:{% endblocktranslate %}</p>
+  {% if preview %}<p>{% blocktranslate with amount=preview.amount|tzs %}For {{ amount }}, these rules would block a withdrawal today:{% endblocktranslate %}</p>
     <ul class="checklist">{% for message in preview.messages %}<li class="checklist__item checklist__item--no">{{ message }}</li>{% endfor %}</ul>
     {% if preview.high_risk %}<p class="lead">{% translate "Amounts this large would need two ClipCash reviewers." %}</p>{% endif %}{% endif %}
 </section>
 {% if demos %}<section class="section"><h2>{% translate "Demo scenarios (simulated)" %}</h2>{% include "components/demo_withdrawal_notice.html" %}
 <table class="table financial-table withdrawal-demo-table"><caption>{% translate "Simulated withdrawal scenarios" %}</caption><thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Simulated amount" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
-<tbody>{% for d in demos %}<tr><td><a href="{% url 'withdrawals:demo' d.pk %}">{{ d.reference }}</a></td><td><span class="financial-amount">{{ d.simulated_amount|tzs }}</span> <span class="badge badge--sandbox">{% translate "Demo" %}</span></td><td><span class="badge badge--{{ d.status|lower }}">{{ d.get_status_display }}</span></td></tr>{% endfor %}</tbody></table></section>{% endif %}
+<tbody>{% for d in demos %}<tr><td><a class="financial-reference" href="{% url 'withdrawals:demo' d.pk %}">{{ d.reference }}</a></td><td><span class="financial-amount">{{ d.simulated_amount|tzs }}</span> <span class="badge badge--sandbox">{% translate "Demo" %}</span></td><td><span class="badge badge--{{ d.status|lower }}">{{ d.get_status_display }}</span></td></tr>{% endfor %}</tbody></table></section>{% endif %}
 <section class="panel section"><h2 class="panel__title">{% translate "Stay safe" %}</h2>
   <ul><li>{% translate "ClipCash will never ask for your mobile-money PIN, one-time codes or bank passwords." %}</li>
   <li>{% translate "Only add destinations in your own name." %}</li>

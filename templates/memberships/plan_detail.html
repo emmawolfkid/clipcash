@@ -2,10 +2,9 @@
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/memberships/plans.css' %}">{% endblock %}
 {% block title %}{{ plan.name }}{% endblock %}
 {% block member_content %}
-<h1>{{ plan.name }}</h1>
+<h1 class="page-title">{{ plan.name }}</h1>
 <p><a href="{% url 'memberships:plans' %}">{% translate "Back to all plans" %}</a></p>
 <div class="membership-price"><span class="membership-price__amount">{{ plan.price_amount|tzs }}</span><span class="membership-price__term">{% blocktranslate count days=plan.duration_days %}for {{ days }} day{% plural %}for {{ days }} days{% endblocktranslate %}</span></div>
-<p class="lead">{% blocktranslate count days=plan.duration_days %}Membership for {{ days }} day.{% plural %}Membership for {{ days }} days.{% endblocktranslate %}</p>
 {% if plan.description %}<p>{{ plan.description|linebreaksbr }}</p>{% endif %}
 {% if plan.benefits %}<h2>{% translate "Benefits" %}</h2><ul>{% for benefit in plan.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
 {% if entitlement_labels %}<h2>{% translate "Includes" %}</h2><ul>{% for item in entitlement_labels %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
@@ -20,6 +19,6 @@
   <button type="submit" class="button">{% translate "Choose this plan" %}</button>
 </form>
 {% else %}
-<p><a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">{% translate "Sign in to choose this plan" %}</a></p>
+<p><a class="button" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">{% translate "Sign in to choose this plan" %}</a></p>
 {% endif %}
 {% endblock %}

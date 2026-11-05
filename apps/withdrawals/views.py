@@ -86,8 +86,11 @@ class DestinationsView(VerifiedAccountRequiredMixin, View):
 class DemoDetailView(VerifiedAccountRequiredMixin, View):
     def get(self, request, withdrawal_id):
         demo = get_object_or_404(DemoWithdrawal, pk=withdrawal_id, member=request.user)
-        return render(request, "withdrawals/demo.html", {"nav": "withdrawals", "demo": demo,
-                                                         "decisions": demo.decisions.all()})
+        decisions = list(demo.decisions.all())
+        labels = dict(DemoWithdrawal.Status.choices)  # Decisions store the status code without its label.
+        for decision in decisions:
+            decision.status_label = labels.get(decision.to_status, "")
+        return render(request, "withdrawals/demo.html", {"nav": "withdrawals", "demo": demo, "decisions": decisions})
 
 
 @method_decorator(csrf_exempt, name="dispatch")
