@@ -1,5 +1,7 @@
 # Deploying ClipCash on Render
 
+For the November 2026 restricted demo, use [restricted_demo_runbook.md](restricted_demo_runbook.md); this guide is the reference.
+
 Status: **prepared, not deployed.** This guide configures a Render Web Service
 connected to the GitHub repository `emmawolfkid/clipcash` and the Render
 PostgreSQL database `clipcash-db`.
@@ -156,9 +158,11 @@ only, owns nothing). Procedure, **on a staging copy first**:
 6. After any deploy whose migrations add tables, re-run `03_grant_runtime.sql`.
    `/manage/health/` reports a regression.
 
-Status: scripts written and the verification script validated against the
-isolated test database (it changes nothing); **not yet executed with real roles**
-because no local administrator role was available (Phase 14-B report).
+Status: executed end to end with real roles on a throwaway PostgreSQL 18 server in
+Phase 16 (non-superuser owner with CREATEROLE), which found and fixed three defects in
+the scripts and one missing revoke. **Not yet executed on Render.** For the restricted
+demo, follow [restricted_demo_runbook.md](restricted_demo_runbook.md), which keeps the
+migrator credential off Render.
 
 ## 6. Web Service configuration
 
@@ -339,7 +343,8 @@ cannot deliver email.
   `RESTORE_DATABASE_URL="<its URL>" bash scripts/database/restore_check.sh <file.dump>`.
   It refuses any other database name or a non-empty database, restores, and
   confirms the 13 lock triggers and 2 lock constraints came back. Record the date
-  and counts. *Not yet performed against a real backup (Phase 14-B).*
+  and counts. *Rehearsed on a throwaway server in Phase 16; not yet performed against a
+  real Render backup.*
 
 ## 11. Automatic deploys from GitHub
 

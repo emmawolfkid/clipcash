@@ -6,6 +6,8 @@
 -- (scripts/database/backup.sh):
 --   psql "<admin connection to the app database>" -f scripts/database/roles/02_transfer_ownership.sql
 --
+-- Run once. A second run stops with an error and changes nothing; only step 3 is repeated.
+--
 -- Moves every table, sequence, view and function in schema public to
 -- clipcash_owner and lets clipcash_owner create objects there. Triggers and
 -- constraints are not changed (they belong to their tables).
@@ -14,7 +16,12 @@
 
 BEGIN;
 
-GRANT USAGE, CREATE ON SCHEMA public TO clipcash_owner;
+-- PostgreSQL 16+: a non-superuser may only give objects to a role it can SET ROLE to.
+-- Render's default user creates clipcash_owner but is not automatically a member.
+GRANT clipcash_owner TO CURRENT_USER;
+
+-- WITH GRANT OPTION: step 3 runs as the migrator and must grant schema access itself.
+GRANT USAGE, CREATE ON SCHEMA public TO clipcash_owner WITH GRANT OPTION;
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
 SELECT format('ALTER TABLE public.%I OWNER TO clipcash_owner', tablename)

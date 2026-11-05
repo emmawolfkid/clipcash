@@ -57,6 +57,9 @@ FROM unnest(ARRAY['public.wallets_wallettransaction', 'public.withdrawals_withdr
                   'public.django_migrations']) AS name
 WHERE to_regclass(name) IS NOT NULL \gexec
 
+-- Migration history belongs to the migrator (it has no trigger, so step 2 does not cover it).
+REVOKE DELETE ON TABLE public.django_migrations FROM clipcash_app;
+
 -- 5. Ledger accounts: only status/name changes by the application, and the balance
 -- column that the ledger_line_apply trigger maintains (it runs with the inserting
 -- role's privileges; direct balance edits are still refused by ledger_account_guard).

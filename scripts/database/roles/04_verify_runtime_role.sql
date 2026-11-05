@@ -56,8 +56,9 @@ BEGIN
         ('no INSERT of wallet transactions',    NOT has_table_privilege('public.wallets_wallettransaction', 'INSERT,UPDATE,DELETE')),
         ('no DELETE on subscriptions',          NOT has_table_privilege('public.memberships_subscription', 'DELETE')),
         ('no write to migration history',       NOT has_table_privilege('public.django_migrations', 'INSERT,UPDATE,DELETE')),
-        ('no TRUNCATE anywhere',                NOT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public'
-                                                           AND has_table_privilege(format('public.%I', tablename), 'TRUNCATE'))),
+        ('no TRUNCATE anywhere',                NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                                                           WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p')
+                                                           AND has_table_privilege(c.oid, 'TRUNCATE'))),
         ('read accounts',                       has_table_privilege('public.accounts_user', 'SELECT')),
         ('write accounts',                      has_table_privilege('public.accounts_user', 'INSERT,UPDATE')),
         ('append audit events',                 has_table_privilege('public.audit_auditevent', 'INSERT')),
