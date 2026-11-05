@@ -1,11 +1,16 @@
 import uuid
+from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models, router, transaction
 from django.db.models import Q
 from django.db.models.functions import Lower
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+from apps.core.models import BaseModel
 
 from .managers import DERIVED_ACCESS_FIELDS, UserManager
 from .phone_numbers import E164_PATTERN, normalize_phone_number, validate_e164
@@ -281,3 +286,30 @@ class User(AbstractUser):
             self._loaded_email = self.email
         self._loaded_role = self.role
         self._loaded_status = self.status
+
+
+class PendingEmailChange(BaseModel):
+    """
+    A self-service email change waiting for the new inbox to confirm it. The sign-in
+    address only changes on confirmation (apps.accounts.services.confirm_email_change),
+    because advertiser invitations and the demo allowlist trust the address on the account.
+
+    At most one per account. A new request, confirmation, cancellation or password change
+    deletes the row, which ends its link; the audit trail keeps the history. An expired row
+    is ignored and stays until the next of those.
+    """
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="pending_email_change")
+    new_email = models.EmailField(_("new email address"), max_length=254)
+
+    class Meta:
+        verbose_name = _("pending email change")
+        verbose_name_plural = _("pending email changes")
+
+    def __str__(self):
+        return f"{self.user_id} -> {self.new_email}"
+
+    @property
+    def is_expired(self):
+        lifetime = timedelta(seconds=settings.ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT)
+        return timezone.now() >= self.created_at + lifetime

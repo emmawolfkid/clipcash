@@ -43,4 +43,8 @@ urlpatterns = [
         views.PasswordChangeDoneView.as_view(),
         name="password_change_done",
     ),
+    path("profile/edit/", views.ProfileEditView.as_view(), name="profile_edit"),
+    path("email-change/", views.EmailChangeRequestView.as_view(), name="email_change"),
+    path("email-change/cancel/", views.EmailChangeCancelView.as_view(), name="email_change_cancel"),
+    path("email-change/<uuid:pk>/<token>/", views.EmailChangeConfirmView.as_view(), name="email_change_confirm"),
 ]

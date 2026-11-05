@@ -15,6 +15,7 @@ ever recorded.
 
 import logging
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -24,6 +25,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.audit.services import (
     DENIED,
     SUCCESS,
+    hash_identifier,
     record_business_event,
     record_security_event,
 )
@@ -31,7 +33,9 @@ from apps.audit.services import (
 from apps.notifications.services import base_url, enqueue_email
 
 from . import emails
-from .tokens import verification_token_generator
+from .access import demo_unconfirmed
+from .models import PendingEmailChange
+from .tokens import email_change_token_generator, verification_token_generator
 
 security_log = logging.getLogger("clipcash.security")
 
@@ -160,6 +164,129 @@ def confirm_email(user_pk, token):
                        "You can now use every member feature that needs a confirmed address.",
                        key=f"email_confirmed:{user.pk}:{user.email}")
     return user
+
+
+PROFILE_FIELDS = ("first_name", "last_name", "phone_number")
+
+
+def update_profile(user, **values):
+    """Save the owner's own contact details. Only PROFILE_FIELDS and only the changed
+    ones are written, on a freshly locked row, so a role or status change made while the
+    form was open is never overwritten. Returns the names of the changed fields."""
+    with transaction.atomic():
+        account = User.objects.select_for_update().get(pk=user.pk)
+        changed = [name for name in PROFILE_FIELDS if getattr(account, name) != values[name]]
+        if not changed:
+            return []
+        for name in changed:
+            setattr(account, name, values[name])
+        account.save(update_fields=[*changed, "updated_at"])
+        record_business_event("account.profile_updated", actor=account, target=account,
+                              metadata={"changed_fields": changed})
+        if "phone_number" in changed:
+            notify_account(account, "phone_changed", "Your phone number was changed",
+                           "If this was not you, change your password now and contact ClipCash.",
+                           key=f"phone_changed:{account.pk}:{timezone.now().isoformat()}")
+    return changed
+
+
+# --- Email address change ---------------------------------------------------------
+
+
+def email_change_available(user):
+    """
+    Closed to demo accounts using the verification waiver: they sign in because their
+    address is on the allowlist and must not swap it. Also closed when the site runs
+    the ``dummy`` email backend, because the confirmation link could never arrive.
+    """
+    return not demo_unconfirmed(user) and "dummy" not in settings.EMAIL_BACKEND
+
+
+def pending_email_change(user):
+    change = PendingEmailChange.objects.filter(user=user).first()
+    return None if change is None or change.is_expired else change
+
+
+def request_email_change(user, new_email, request):
+    """
+    Start a change to ``new_email``. The account keeps its address until the new inbox
+    confirms. If the address already belongs to an account, everything looks the same to
+    the requester (the request is shown as waiting) but no link is sent, so this cannot
+    be used to find out which addresses are registered.
+    """
+    new_email = User.objects.normalize_email(new_email)
+    with transaction.atomic():
+        account = User.objects.select_for_update().get(pk=user.pk)
+        PendingEmailChange.objects.filter(user=account).delete()  # Ends any earlier link.
+        change = PendingEmailChange.objects.create(user=account, new_email=new_email)
+        available = not User.objects.filter(email=new_email).exists()
+        record_business_event("account.email_change.requested", actor=account, target=account,
+                              metadata={"new_address_hash": hash_identifier(new_email),
+                                        "address_available": available})
+        site = base_url(request)
+        if available:
+            enqueue_email(emails.EMAIL_CHANGE_CONFIRM, recipient=new_email, user=account,
+                          context={"base_url": site, "change": str(change.pk)})
+        enqueue_email(emails.EMAIL_CHANGE_REQUESTED, recipient=account.email, user=account,
+                      context={"base_url": site})
+        notify_account(account, "email_change_requested", "An email address change was requested",
+                       "Nothing changes until the new address is confirmed. If this was not you, "
+                       "cancel it from your account and change your password.",
+                       key=f"email_change_requested:{change.pk}")
+    return change
+
+
+def cancel_email_change(user):
+    """Withdraw the owner's waiting change, if any. Its link stops working."""
+    with transaction.atomic():
+        deleted, _details = PendingEmailChange.objects.filter(user=user).delete()
+        if deleted:
+            record_business_event("account.email_change.cancelled", actor=user, target=user)
+    return bool(deleted)
+
+
+def discard_email_change(user):
+    """A password change or reset ends a waiting change without its own audit event:
+    the request may have come from whoever the owner is locking out."""
+    PendingEmailChange.objects.filter(user=user).delete()
+
+
+def confirm_email_change(change_pk, token):
+    """
+    Complete a change from the link sent to the new address. Checked again on the locked
+    rows, so a replay or concurrent submission cannot succeed twice. Returns the account,
+    or None for any invalid link (including an address taken since it was requested).
+    """
+    try:
+        with transaction.atomic():
+            change = (PendingEmailChange.objects.select_for_update().select_related("user")
+                      .filter(pk=change_pk).first())
+            if (
+                change is None
+                or change.user.status != Status.ACTIVE
+                or not email_change_token_generator.check_token(change, token)
+            ):
+                return None
+            account, new_email = change.user, change.new_email
+            if User.objects.filter(email=new_email).exclude(pk=account.pk).exists():
+                change.delete()
+                return None
+            old_email = account.email
+            account.email = new_email
+            account.save(update_fields=["email", "updated_at"])  # Clears email_verified.
+            account.email_verified = True  # The owner of this address has just proved it.
+            account.save(update_fields=["email_verified", "updated_at"])
+            change.delete()
+            record_business_event("account.email_changed", actor=account, target=account,
+                                  metadata={"previous_address_hash": hash_identifier(old_email),
+                                            "new_address_hash": hash_identifier(new_email)})
+            enqueue_email(emails.EMAIL_CHANGED, recipient=old_email, user=account, context={})
+            notify_account(account, "email_changed", "Your email address was changed",
+                           "Use the new address to sign in. If this was not you, contact ClipCash now.",
+                           key=f"email_changed:{change_pk}")
+    except IntegrityError:  # A concurrent registration took the address first.
+        return None
+    return account
 
 
 def notify_account(user, event, title, message, *, key):

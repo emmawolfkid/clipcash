@@ -41,5 +41,22 @@ class AccountPasswordResetTokenGenerator(_TimedAccountTokenGenerator):
     timeout_setting = "ACCOUNTS_PASSWORD_RESET_TIMEOUT"
 
 
+class EmailChangeTokenGenerator(_TimedAccountTokenGenerator):
+    """
+    Signs a PendingEmailChange, not a user. Bound to that request and the account's
+    address, password and status. Unlike the others it ignores last_login, so the link
+    still works when the owner has to sign in on another device to read the new inbox.
+    Deleting the request row is what makes it single-use.
+    """
+
+    key_salt = "apps.accounts.tokens.EmailChangeTokenGenerator"
+    timeout_setting = "ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT"
+
+    def _make_hash_value(self, change, timestamp):
+        user = change.user
+        return f"{change.pk}{change.new_email}{user.pk}{user.email}{user.password}{user.status}{timestamp}"
+
+
 verification_token_generator = AccountVerificationTokenGenerator()
 password_reset_token_generator = AccountPasswordResetTokenGenerator()
+email_change_token_generator = EmailChangeTokenGenerator()

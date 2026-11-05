@@ -1,0 +1,8 @@
+{% load i18n %}{% autoescape off %}{% translate "A ClipCash account asked to use this email address. Open this link to confirm the change:" %}
+
+{{ url }}
+
+{% blocktranslate count hours=valid_hours %}The link expires in {{ hours }} hour and can be used once.{% plural %}The link expires in {{ hours }} hours and can be used once.{% endblocktranslate %}
+
+{% translate "If you did not ask for this, ignore this email. Nothing will change." %}
+{% endautoescape %}

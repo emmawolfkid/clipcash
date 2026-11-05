@@ -1,0 +1,4 @@
+{% load i18n %}{% autoescape off %}{% translate "The email address on your ClipCash account was changed, and this address can no longer be used to sign in." %}
+
+{% translate "If this was not you, contact ClipCash support straight away." %}
+{% endautoescape %}

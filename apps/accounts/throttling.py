@@ -109,6 +109,15 @@ REGISTRATIONS_PER_IP = Throttle("register-ip", limit=10, window_seconds=60 * 60)
 EMAIL_REQUESTS_PER_IP = Throttle("email-request-ip", limit=20, window_seconds=60 * 60)
 EMAIL_REQUESTS_PER_ACCOUNT = Throttle("email-request-account", limit=3, window_seconds=60 * 60)
 
+# Signed-in account changes. Wrong current passwords: a stolen session must not be able to
+# guess the password. Phone attempts: a duplicate number is refused, so attempts are limited.
+CURRENT_PASSWORD_FAILURES = Throttle("current-password", limit=5, window_seconds=15 * 60)
+PHONE_CHANGE_ATTEMPTS = Throttle("phone-change", limit=10, window_seconds=60 * 60)
+# The per-address limit has its own scope: otherwise a member could use up someone
+# else's password-reset allowance by naming their address here.
+EMAIL_CHANGE_REQUESTS_PER_ACCOUNT = Throttle("email-change-account", limit=5, window_seconds=60 * 60)
+EMAIL_CHANGE_REQUESTS_PER_ADDRESS = Throttle("email-change-address", limit=3, window_seconds=60 * 60)
+
 
 def resolve_client_ip(request):
     """

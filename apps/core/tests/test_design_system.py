@@ -106,7 +106,7 @@ class DesignSystemTests(SimpleTestCase):
             ("memberships/plan_list.html", "/memberships/", True, "pages/memberships/plans.css", "member.css"),
             ("videos/detail.html", "/videos/example/", False, "pages/videos/detail.css", "member.css"),
             ("videos/library.html", "/videos/", False, "pages/videos/library.css", "member.css"),
-            ("wallets/wallet.html", "/wallet/", True, None, "member.css"),
+            ("wallets/wallet.html", "/wallet/", True, "pages/wallets/wallet.css", "member.css"),
             ("administration/videos/detail.html", "/manage/videos/00000000-0000-0000-0000-000000000001/", True, "pages/administration/videos/detail.css", "admin.css"),
             ("viewing/session.html", "/watch/session/00000000-0000-0000-0000-000000000001/", True, "pages/viewing/session.css", "member.css"),
             ("withdrawals/overview.html", "/withdrawals/", True, "pages/withdrawals/overview.css", "member.css"),

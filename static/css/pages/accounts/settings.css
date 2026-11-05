@@ -1,0 +1,18 @@
+/* Phase 17-A: pages / accounts / profile and security. */
+.account-form {
+  max-width: 36rem;
+}
+
+.account-pending {
+  overflow-wrap: anywhere;
+}
+
+.account-pending form {
+  margin-top: var(--space-3);
+}
+
+.account-note {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin-bottom: 0;
+}

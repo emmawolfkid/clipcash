@@ -1,8 +1,15 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load i18n static %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/accounts/settings.css' %}">{% endblock %}
 {% block title %}{% translate "My account" %}{% endblock %}
 {% block crumb %}{% translate "Profile and security" %}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{% translate "My account" %}</h1>
+{% if pending_email_change %}
+<div class="notice notice--warning account-pending" role="status">
+  {% blocktranslate with email=pending_email_change.new_email %}A change to <strong>{{ email }}</strong> is waiting for confirmation. Your email address stays the same until the link sent there is used.{% endblocktranslate %}
+  <form method="post" action="{% url 'accounts:email_change_cancel' %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Cancel this change" %}</button></form>
+</div>
+{% endif %}
 <div class="card-grid">
   <section class="panel"><h2 class="panel__title">{% translate "Profile" %}</h2>
     <dl class="details">
@@ -14,8 +21,17 @@
       <dt>{% translate "Status" %}</dt><dd>{{ user.get_status_display }}</dd>
       <dt>{% translate "Member since" %}</dt><dd>{{ user.date_joined|date:"DATE_FORMAT" }}</dd>
       {% if features.memberships %}<dt>{% translate "Membership" %}</dt><dd>{% if membership %}{{ membership.plan_name }} · {{ membership.get_status_display }}{% else %}{% translate "None active" %}{% endif %} · <a href="{% url 'memberships:mine' %}">{% translate "My membership" %}</a></dd>{% endif %}
-    </dl></section>
+    </dl>
+    <ul class="links">
+      <li><a href="{% url 'accounts:profile_edit' %}">{% translate "Edit name and phone number" %}</a></li>
+      {% if email_change_available %}<li><a href="{% url 'accounts:email_change' %}">{% translate "Change email address" %}</a></li>{% endif %}
+    </ul>
+    <p class="account-note">{% translate "Your payout details are managed separately and do not change here." %}</p>
+  </section>
   <section class="panel"><h2 class="panel__title">{% translate "Security" %}</h2>
+    <dl class="details">
+      <dt>{% translate "Last sign-in" %}</dt><dd>{{ user.last_login|date:"SHORT_DATETIME_FORMAT"|default:"—" }}</dd>
+    </dl>
     <ul class="links">
       <li><a href="{% url 'accounts:password_change' %}">{% translate "Change password" %}</a></li>
       <li><a href="{% url 'accounts:password_reset' %}">{% translate "Forgotten password? Reset by email" %}</a></li>
@@ -28,4 +44,8 @@
     <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Sign out" %}</button></form>
   </section>
 </div>
+<section class="panel section"><h2 class="panel__title">{% translate "Recent security activity" %}</h2>
+  {% include "members/_activity_list.html" %}
+  <p class="account-note">{% translate "If you do not recognise something here, change your password and contact support." %}</p>
+</section>
 {% endblock %}

@@ -1,0 +1,1 @@
+{% load i18n %}{% translate "An email address change was requested on your ClipCash account" %}

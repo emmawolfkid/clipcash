@@ -64,7 +64,7 @@ class PublicAuthUITests(SimpleTestCase):
             password = forms.CharField(widget=forms.PasswordInput)
             operation = forms.CharField(widget=forms.HiddenInput, initial="preserve-operation")
         for template in (settings.BASE_DIR / "templates/accounts").glob("*.html"):
-            if template.stem in ("layout", "profile"):
+            if template.stem in ("layout", "profile", "profile_edit", "email_change_form"):  # Member layout.
                 continue
             with self.subTest(template=template.name):
                 context = self.context("/accounts/login/")

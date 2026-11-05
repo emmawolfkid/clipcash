@@ -1,0 +1,12 @@
+{% extends "members/layout.html" %}{% load i18n static %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/accounts/settings.css' %}">{% endblock %}
+{% block title %}{% translate "Change email address" %}{% endblock %}
+{% block crumb %}{% translate "Change email address" %}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{% translate "Change email address" %}</h1>
+<section class="panel account-form">
+  <p>{% blocktranslate with email=user.email %}Your current address is <strong>{{ email }}</strong>. We will also tell that address about this request.{% endblocktranslate %}</p>
+  {% include "components/form.html" with button=_("Send confirmation link") %}
+  <ul class="links"><li><a href="{% url 'accounts:profile' %}">{% translate "Cancel" %}</a></li></ul>
+</section>
+{% endblock %}

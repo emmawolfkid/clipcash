@@ -20,12 +20,15 @@ from django.utils.http import urlsafe_base64_encode
 
 from apps.notifications.services import SkipEmail, register_email_kind
 
-from .tokens import password_reset_token_generator, verification_token_generator
+from .tokens import email_change_token_generator, password_reset_token_generator, verification_token_generator
 
 ACTIVATION = "accounts.activation"
 CONFIRM_EMAIL = "accounts.confirm_email"
 PASSWORD_RESET = "accounts.password_reset"
 ALREADY_REGISTERED = "accounts.already_registered"
+EMAIL_CHANGE_CONFIRM = "accounts.email_change_confirm"
+EMAIL_CHANGE_REQUESTED = "accounts.email_change_requested"
+EMAIL_CHANGED = "accounts.email_changed"
 
 
 def _render(template_prefix, context):
@@ -100,7 +103,43 @@ def build_already_registered(email):
                                           "reset_url": base + reverse("accounts:password_reset")})
 
 
+def build_email_change_confirm(email):
+    """Sent to the new address. The token is signed here and exists only in the email."""
+    from .models import PendingEmailChange
+
+    change = (PendingEmailChange.objects.select_related("user")
+              .filter(pk=email.context["change"], user_id=email.user_id, new_email=email.recipient).first())
+    if change is None:
+        raise SkipEmail("change_withdrawn")
+    if change.user.status != get_user_model().Status.ACTIVE:
+        raise SkipEmail("status_changed")
+    token = _token_at_issue(email_change_token_generator, change, email.token_issued_at)
+    path = reverse("accounts:email_change_confirm", kwargs={"pk": change.pk, "token": token})
+    return _render("email_change_confirm", {"url": email.context["base_url"] + path,
+                                            "valid_hours": _hours("ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT")})
+
+
+def build_email_change_requested(email):
+    """Warning to the current address. Holds no link to act on and not the new address."""
+    _account(email, statuses=[get_user_model().Status.ACTIVE])
+    return _render("email_change_requested", {"account_url": email.context["base_url"] + reverse("accounts:profile")})
+
+
+def build_email_changed(email):
+    """Sent to the previous address, so the address check in _account does not apply."""
+    if not get_user_model().objects.filter(pk=email.user_id).exists():
+        raise SkipEmail("account_deleted")
+    return _render("email_changed", {})
+
+
 def register_kinds():
+    register_email_kind(EMAIL_CHANGE_CONFIRM, builder=build_email_change_confirm,
+                        ttl_seconds=lambda: settings.ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT,
+                        context_keys=("base_url", "change"))
+    register_email_kind(EMAIL_CHANGE_REQUESTED, builder=build_email_change_requested,
+                        ttl_seconds=lambda: settings.NOTIFICATIONS_DEFAULT_EMAIL_TTL)
+    register_email_kind(EMAIL_CHANGED, builder=build_email_changed,
+                        ttl_seconds=lambda: settings.NOTIFICATIONS_DEFAULT_EMAIL_TTL, context_keys=())
     register_email_kind(ACTIVATION, builder=build_activation,
                         ttl_seconds=lambda: settings.ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT)
     register_email_kind(CONFIRM_EMAIL, builder=build_confirm_email,

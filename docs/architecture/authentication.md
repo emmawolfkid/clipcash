@@ -38,8 +38,10 @@ withdrawals) are **not** part of this phase and remain disabled.
 * Nothing returns to PENDING. PENDING → ACTIVE happens only through activation.
 * Only ACTIVE accounts can sign in. Suspending or disabling an account ends its
   sessions on the next request.
-* Changing an email address clears `email_verified`; ACTIVE accounts then
-  confirm the new address with a single-use link before using member pages.
+* When staff change an email address in the admin, `email_verified` is cleared; ACTIVE
+  accounts then confirm the new address with a single-use link before using member pages.
+* When owners change their own address, it only switches once the new inbox confirms it
+  (see [Phase 17-A](../implementation/phase_17a_account_self_service.md)).
 * Member pages require ACTIVE **and** a verified email.
 
 ### Why registration takes no password
@@ -94,6 +96,9 @@ SUSPENDED and DISABLED addresses receive nothing. Login errors are generic.
 | Login (public and admin) | 5 failures / 15 min per account+IP; 50 / hour per account; 50 / 15 min per IP |
 | Registration | 10 / hour per IP |
 | Registration, verification resend, password reset emails | 3 / hour per address; 20 / hour per IP |
+| Wrong current password (password change, email change) | 5 / 15 min per account |
+| Email change requests | 5 / hour per account; 3 / hour per requested address; 20 / hour per IP |
+| Phone number changes | 10 attempts / hour per account |
 
 Per account+IP limiting means an attacker cannot lock a victim out from another
 network; the per-account ceiling still stops distributed guessing. Limits use

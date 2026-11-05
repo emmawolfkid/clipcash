@@ -1,17 +1,20 @@
 from django import forms
 from django.contrib.admin.forms import AdminAuthenticationForm
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 from apps.audit.services import DENIED, FAILURE, SUCCESS, hash_identifier, record_security_event
 
 from . import services
+from .phone_numbers import normalize_phone_number
 from .throttling import (
+    CURRENT_PASSWORD_FAILURES,
     LOGIN_FAILURES_PER_ACCOUNT,
     LOGIN_FAILURES_PER_ACCOUNT_IP,
     LOGIN_FAILURES_PER_IP,
+    PHONE_CHANGE_ATTEMPTS,
     client_ip_for_limits,
 )
 
@@ -126,6 +129,78 @@ class AccountPasswordResetForm(PasswordResetForm):
         for user in self.get_users(self.cleaned_data["email"]):
             enqueue_email(PASSWORD_RESET, recipient=user.email, user=user,
                           context={"base_url": base_url(request)})
+
+
+class CurrentPasswordMixin:
+    """Check the signed-in owner's password before a sensitive change. Failures are
+    limited per account and audited, so a stolen session cannot guess the password."""
+
+    def verify_current_password(self, user, password, *, operation):
+        if CURRENT_PASSWORD_FAILURES.is_limited(user.pk):
+            record_security_event("auth.current_password.failed", outcome=DENIED, target=user,
+                                  metadata={"operation": operation, "throttled": True})
+            raise ValidationError(_("Too many incorrect passwords. Please wait a few minutes and try again."),
+                                  code="throttled")
+        if not user.check_password(password):
+            CURRENT_PASSWORD_FAILURES.hit(user.pk)
+            record_security_event("auth.current_password.failed", outcome=FAILURE, target=user,
+                                  metadata={"operation": operation, "throttled": False})
+            raise ValidationError(_("Your current password was entered incorrectly."), code="password_incorrect")
+        CURRENT_PASSWORD_FAILURES.reset(user.pk)
+        return password
+
+
+class AccountPasswordChangeForm(CurrentPasswordMixin, PasswordChangeForm):
+    def clean_old_password(self):
+        return self.verify_current_password(self.user, self.cleaned_data["old_password"],
+                                            operation="password_change")
+
+
+class EmailChangeForm(CurrentPasswordMixin, forms.Form):
+    new_email = forms.EmailField(
+        label=_("New email address"), max_length=254,
+        help_text=_("We will send a confirmation link there. Your sign-in address stays the same until you use it."),
+        widget=forms.EmailInput(attrs={"autocomplete": "email", "autofocus": True}),
+    )
+    current_password = forms.CharField(
+        label=_("Current password"), strip=False, widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+
+    def clean_new_email(self):
+        email = User.objects.normalize_email(self.cleaned_data["new_email"])
+        if email == self.user.email:
+            raise ValidationError(_("This is already your email address."), code="unchanged")
+        return email
+
+    def clean_current_password(self):
+        return self.verify_current_password(self.user, self.cleaned_data["current_password"],
+                                            operation="email_change")
+
+
+class ProfileForm(forms.ModelForm):
+    """Only these fields can be changed here: never role, status, email or verification."""
+
+    class Meta:
+        model = User
+        fields = list(services.PROFILE_FIELDS)
+        widgets = {
+            "first_name": forms.TextInput(attrs={"autocomplete": "given-name"}),
+            "last_name": forms.TextInput(attrs={"autocomplete": "family-name"}),
+            "phone_number": forms.TextInput(attrs={"autocomplete": "tel", "inputmode": "tel"}),
+        }
+        error_messages = {"phone_number": {"unique": _("This phone number cannot be used. Please check it or contact support.")}}
+
+    def clean_phone_number(self):
+        phone = normalize_phone_number(self.cleaned_data.get("phone_number"))
+        if phone is not None and phone != self.instance.phone_number:
+            if PHONE_CHANGE_ATTEMPTS.is_limited(self.instance.pk):
+                raise ValidationError(_("Too many phone number changes. Please try again later."), code="throttled")
+            PHONE_CHANGE_ATTEMPTS.hit(self.instance.pk)
+        return phone
 
 
 class AccessChangeFormMixin:

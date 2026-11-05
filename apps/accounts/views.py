@@ -5,15 +5,18 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import INTERNAL_RESET_SESSION_TOKEN
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
+from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import FormView, TemplateView
 
+from apps.audit.models import AuditEvent
 from apps.audit.services import (
     DENIED,
     SUCCESS,
@@ -25,14 +28,25 @@ from apps.core import features
 
 from . import services
 from .access import VerifiedAccountRequiredMixin
-from .forms import AccountPasswordResetForm, EmailRequestForm, LoginForm, RegistrationForm
+from .forms import (
+    AccountPasswordChangeForm,
+    AccountPasswordResetForm,
+    EmailChangeForm,
+    EmailRequestForm,
+    LoginForm,
+    ProfileForm,
+    RegistrationForm,
+)
+from .models import PendingEmailChange
 from .throttling import (
+    EMAIL_CHANGE_REQUESTS_PER_ACCOUNT,
+    EMAIL_CHANGE_REQUESTS_PER_ADDRESS,
     EMAIL_REQUESTS_PER_ACCOUNT,
     EMAIL_REQUESTS_PER_IP,
     REGISTRATIONS_PER_IP,
     client_ip_for_limits,
 )
-from .tokens import password_reset_token_generator, verification_token_generator
+from .tokens import email_change_token_generator, password_reset_token_generator, verification_token_generator
 
 security_log = logging.getLogger("clipcash.security")
 
@@ -53,6 +67,48 @@ def _email_request_allowed(request, email):
         EMAIL_REQUESTS_PER_IP.hit(ip)
     EMAIL_REQUESTS_PER_ACCOUNT.hit(email)
     return True
+
+
+def _email_change_allowed(request, new_email):
+    """Limits per account, per requested address and per IP (when the client IP is known)."""
+    ip = client_ip_for_limits(request)
+    account = request.user.pk
+    if (
+        EMAIL_CHANGE_REQUESTS_PER_ACCOUNT.is_limited(account)
+        or EMAIL_CHANGE_REQUESTS_PER_ADDRESS.is_limited(new_email)
+        or (ip and EMAIL_REQUESTS_PER_IP.is_limited(ip))
+    ):
+        return False
+    EMAIL_CHANGE_REQUESTS_PER_ACCOUNT.hit(account)
+    EMAIL_CHANGE_REQUESTS_PER_ADDRESS.hit(new_email)
+    if ip:
+        EMAIL_REQUESTS_PER_IP.hit(ip)
+    return True
+
+
+# What the owner sees of their own account's audit trail: labels and times only,
+# never addresses, IP details or metadata.
+SECURITY_ACTIVITY = {
+    "auth.login.succeeded": ("sign-in", _("Signed in")),
+    "auth.login.failed": ("sign-in", _("Failed sign-in attempt")),
+    "auth.password.changed": ("password", _("Password changed")),
+    "auth.password_reset.completed": ("password", _("Password reset by email")),
+    "auth.current_password.failed": ("password", _("Incorrect current password entered")),
+    "account.email_change.requested": ("email", _("Email address change requested")),
+    "account.email_change.cancelled": ("email", _("Email address change cancelled")),
+    "account.email_changed": ("email", _("Email address changed")),
+    "account.email_confirmed": ("email", _("Email address confirmed")),
+    "account.profile_updated": ("profile", _("Profile updated")),
+}
+
+
+def _security_activity(user, limit=8):
+    events = (AuditEvent.objects
+              .filter(target_app_label="accounts", target_model="user", target_id=str(user.pk),
+                      action__in=SECURITY_ACTIVITY)
+              .order_by("-occurred_at").values("action", "occurred_at")[:limit])
+    return [{"kind": SECURITY_ACTIVITY[event["action"]][0], "text": SECURITY_ACTIVITY[event["action"]][1],
+             "when": event["occurred_at"]} for event in events]
 
 
 class AnonymousOnlyMixin:
@@ -260,6 +316,7 @@ class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
     def form_valid(self, form):
         with transaction.atomic():
             response = super().form_valid(form)  # Saves the new password.
+            services.discard_email_change(form.user)
             record_business_event("auth.password_reset.completed", actor=form.user, target=form.user)
             services.notify_account(form.user, "password_reset", "Your password was reset",
                                     "If you did not do this, reset your password again now and contact ClipCash.",
@@ -275,11 +332,13 @@ class PasswordChangeView(auth_views.PasswordChangeView):
     """Keeps the current session and ends all others (update_session_auth_hash)."""
 
     template_name = "accounts/password_change_form.html"
+    form_class = AccountPasswordChangeForm
     success_url = reverse_lazy("accounts:password_change_done")
 
     def form_valid(self, form):
         with transaction.atomic():
             response = super().form_valid(form)  # Saves the password, keeps this session.
+            services.discard_email_change(self.request.user)
             record_business_event("auth.password.changed", target=self.request.user)
             services.notify_account(self.request.user, "password_changed", "Your password was changed",
                                     "Other sessions were signed out. If this was not you, reset your password now.",
@@ -306,5 +365,100 @@ class ProfileView(VerifiedAccountRequiredMixin, TemplateView):
             from apps.memberships.access import check_access
 
             membership = check_access(self.request.user).subscription
-        context.update({"nav": "profile", "membership": membership, "breadcrumbs": [("Dashboard", "dashboard")]})
+        context.update({
+            "nav": "profile", "membership": membership, "breadcrumbs": [("Dashboard", "dashboard")],
+            "pending_email_change": services.pending_email_change(self.request.user),
+            "email_change_available": services.email_change_available(self.request.user),
+            "activity": _security_activity(self.request.user),
+        })
         return context
+
+
+class AccountPageMixin(VerifiedAccountRequiredMixin):
+    """A page inside "Profile and security". Every one acts on request.user alone."""
+
+    success_url = reverse_lazy("accounts:profile")
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(
+            nav="profile", breadcrumbs=[("Dashboard", "dashboard"), ("Profile and security", "accounts:profile")],
+            **kwargs,
+        )
+
+
+class ProfileEditView(AccountPageMixin, FormView):
+    template_name = "accounts/profile_edit.html"
+    form_class = ProfileForm
+
+    def get_form_kwargs(self):
+        # A separate copy: validating bad input must not alter request.user, which the page shows.
+        return {**super().get_form_kwargs(), "instance": User.objects.get(pk=self.request.user.pk)}
+
+    def form_valid(self, form):
+        try:
+            changed = services.update_profile(
+                self.request.user, **{name: getattr(form.instance, name) for name in services.PROFILE_FIELDS}
+            )
+        except IntegrityError:  # Another account took the phone number after validation.
+            form.add_error("phone_number", ProfileForm.Meta.error_messages["phone_number"]["unique"])
+            return self.form_invalid(form)
+        messages.success(self.request, _("Your profile was updated.") if changed else _("Nothing to change."))
+        return super().form_valid(form)
+
+
+class EmailChangeAvailableMixin:
+    def dispatch(self, request, *args, **kwargs):
+        if not services.email_change_available(request.user):
+            messages.warning(request, _("Email address changes are not available for this account at the moment."))
+            return redirect("accounts:profile")
+        return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator(sensitive_post_parameters("current_password"), name="dispatch")
+class EmailChangeRequestView(AccountPageMixin, EmailChangeAvailableMixin, FormView):
+    template_name = "accounts/email_change_form.html"
+    form_class = EmailChangeForm
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "user": self.request.user}
+
+    def form_valid(self, form):
+        new_email = form.cleaned_data["new_email"]
+        if not _email_change_allowed(self.request, new_email):
+            record_security_event("account.email_change.denied", outcome=DENIED, target=self.request.user,
+                                  metadata={"reason": "throttled"})
+            form.add_error(None, TOO_MANY_REQUESTS)
+            return self.form_invalid(form)
+        services.request_email_change(self.request.user, new_email, self.request)
+        # Worded so it does not say whether the address is already registered.
+        messages.success(self.request, _("If that address can be used, a confirmation link is on its way to it. "
+                                         "Your email address stays the same until the link is used."))
+        return super().form_valid(form)
+
+
+class EmailChangeCancelView(VerifiedAccountRequiredMixin, View):
+    http_method_names = ["post", "options"]
+
+    def post(self, request):
+        if services.cancel_email_change(request.user):
+            messages.success(request, _("The email address change was cancelled."))
+        return redirect("accounts:profile")
+
+
+class EmailChangeConfirmView(View):
+    """The emailed link. Works without signing in: the link proves the new inbox, and the
+    password was checked when the change was requested. GET only shows a button, so link
+    scanners cannot confirm; POST confirms once."""
+
+    template_name = "accounts/email_change_confirm.html"
+
+    def get(self, request, pk, token):
+        change = PendingEmailChange.objects.select_related("user").filter(pk=pk).first()
+        if change is None or not email_change_token_generator.check_token(change, token):
+            return render(request, INVALID_LINK_TEMPLATE, status=400)
+        return render(request, self.template_name, {"new_email": change.new_email})
+
+    def post(self, request, pk, token):
+        if services.confirm_email_change(pk, token) is None:
+            return render(request, INVALID_LINK_TEMPLATE, status=400)
+        return render(request, "accounts/email_change_complete.html")

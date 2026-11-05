@@ -1,0 +1,6 @@
+{% load i18n %}{% autoescape off %}{% translate "Someone signed in to your ClipCash account and asked to change its email address. Nothing changes unless the new address is confirmed." %}
+
+{% translate "If this was not you, sign in, cancel the change and change your password:" %}
+
+{{ account_url }}
+{% endautoescape %}
