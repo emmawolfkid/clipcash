@@ -1,4 +1,5 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/wallets/wallet.css' %}">{% endblock %}
 {% block title %}{% translate "Wallet" %}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{% translate "Wallet" %}</h1>
@@ -12,15 +13,15 @@
     <form method="post">{% csrf_token %}<button class="button" type="submit">{% translate "Open my wallet" %}</button></form></section>
 {% else %}
   {% if restrictions %}<p class="notice notice--warning">{% translate "Your wallet is restricted while ClipCash completes a review. Please contact support if you have questions." %}</p>{% endif %}
-  <p class="lead">{% translate "Wallet number" %}: <strong>{{ wallet.number }}</strong></p>
+  <p class="wallet-reference"><span>{% translate "Wallet number" %}</span><strong>{{ wallet.number }}</strong></p>
   <div class="stat-grid">
-    <div class="stat"><span class="stat__value">TZS {{ balances.available }}</span><span class="stat__label">{% translate "Available" %}</span></div>
-    <div class="stat"><span class="stat__value">TZS {{ balances.pending }}</span><span class="stat__label">{% translate "Pending (not spendable)" %}</span></div>
-    <div class="stat"><span class="stat__value">TZS {{ balances.reserved }}</span><span class="stat__label">{% translate "Reserved (not spendable)" %}</span></div>
+    <div class="stat"><span class="stat__value">{{ balances.available|tzs }}</span><span class="stat__label">{% translate "Available real ledger balance" %}</span></div>
+    <div class="stat"><span class="stat__value">{{ balances.pending|tzs }}</span><span class="stat__label">{% translate "Pending (not spendable)" %}</span></div>
+    <div class="stat"><span class="stat__value">{{ balances.reserved|tzs }}</span><span class="stat__label">{% translate "Reserved (not spendable)" %}</span></div>
   </div>
   <section class="section"><h2>{% translate "Transactions" %}</h2>
-  {% if transactions %}<table class="table"><thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Type" %}</th><th scope="col">{% translate "Amount" %}</th></tr></thead>
-  <tbody>{% for t in transactions %}<tr><td><a href="{% url 'wallets:transaction' t.pk %}">{{ t.created_at|date:"SHORT_DATETIME_FORMAT" }}</a></td><td>{{ t.get_category_display }}</td><td>TZS {{ t.amount }}</td></tr>{% endfor %}</tbody></table>
+  {% if transactions %}<table class="table financial-table"><caption>{% translate "Ledger-backed wallet transactions" %}</caption><thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Type" %}</th><th scope="col">{% translate "Amount" %}</th></tr></thead>
+  <tbody>{% for t in transactions %}<tr><td><a href="{% url 'wallets:transaction' t.pk %}">{{ t.created_at|date:"SHORT_DATETIME_FORMAT" }}</a></td><td>{{ t.get_category_display }}</td><td><span class="financial-amount">{{ t.amount|tzs }}</span></td></tr>{% endfor %}</tbody></table>
   {% else %}<p class="empty-state">{% translate "No wallet transactions. Real rewards are not available yet." %}</p>{% endif %}</section>
   {% if features.advertisers %}<p><a href="{% url 'rewards:history' %}">{% translate "See your demo rewards (simulated, not wallet money)" %}</a></p>{% endif %}
 {% endif %}

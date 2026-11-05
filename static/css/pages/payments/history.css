@@ -1,0 +1,7 @@
+.payment-history-table td:nth-child(2) {
+  white-space: nowrap;
+}
+
+.panel .list__item > span {
+  overflow-wrap: anywhere;
+}

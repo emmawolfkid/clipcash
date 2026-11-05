@@ -1,4 +1,4 @@
-{% extends "members/layout.html" %}{% load static i18n %}
+{% extends "members/layout.html" %}{% load static i18n money %}
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/withdrawals/overview.css' %}">{% endblock %}
 {% block title %}{% translate "Withdrawals" %}{% endblock %}
 {% block member_content %}
@@ -9,7 +9,7 @@
 <div class="card-grid">
   <section class="panel"><h2 class="panel__title">{% translate "What a withdrawal will need" %}</h2>
     <ul class="checklist">{% for message in messages_for %}<li class="checklist__item checklist__item--no">{{ message }}</li>{% endfor %}</ul>
-    <p class="lead">{% translate "Available wallet balance" %}: <strong>TZS {{ eligibility.available }}</strong></p></section>
+    <p class="lead">{% translate "Available wallet balance" %}: <strong class="financial-amount">{{ eligibility.available|tzs }}</strong></p></section>
   <section class="panel"><h2 class="panel__title">{% translate "Payout destinations" %}</h2>
     {% if beneficiaries %}<ul class="list-plain">{% for b in beneficiaries %}<li>{{ b.destination_label }} · {{ b.get_verification_display }}</li>{% endfor %}</ul>{% else %}<p class="lead">{% translate "None saved yet." %}</p>{% endif %}
     <a class="button button--secondary" href="{% url 'withdrawals:destinations' %}">{% translate "Manage destinations" %}</a></section>
@@ -23,8 +23,8 @@
     {% if preview.high_risk %}<p class="lead">{% translate "Amounts this large would need two ClipCash reviewers." %}</p>{% endif %}{% endif %}
 </section>
 {% if demos %}<section class="section"><h2>{% translate "Demo scenarios (simulated)" %}</h2>{% include "components/demo_withdrawal_notice.html" %}
-<table class="table"><thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Simulated amount" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
-<tbody>{% for d in demos %}<tr><td><a href="{% url 'withdrawals:demo' d.pk %}">{{ d.reference }}</a></td><td>TZS {{ d.simulated_amount }} <span class="badge badge--sandbox">{% translate "Demo" %}</span></td><td>{{ d.get_status_display }}</td></tr>{% endfor %}</tbody></table></section>{% endif %}
+<table class="table financial-table withdrawal-demo-table"><caption>{% translate "Simulated withdrawal scenarios" %}</caption><thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Simulated amount" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
+<tbody>{% for d in demos %}<tr><td><a href="{% url 'withdrawals:demo' d.pk %}">{{ d.reference }}</a></td><td><span class="financial-amount">{{ d.simulated_amount|tzs }}</span> <span class="badge badge--sandbox">{% translate "Demo" %}</span></td><td><span class="badge badge--{{ d.status|lower }}">{{ d.get_status_display }}</span></td></tr>{% endfor %}</tbody></table></section>{% endif %}
 <section class="panel section"><h2 class="panel__title">{% translate "Stay safe" %}</h2>
   <ul><li>{% translate "ClipCash will never ask for your mobile-money PIN, one-time codes or bank passwords." %}</li>
   <li>{% translate "Only add destinations in your own name." %}</li>

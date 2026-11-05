@@ -4,6 +4,7 @@
 
 {% block member_content %}
 <h1>{% translate "Membership plans" %}</h1>
+<p class="lead">{% translate "Choose access based on the published price, duration and included content. Membership does not promise earnings or create wallet money." %}</p>
 {% if not payments_available %}
 <p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
 {% endif %}
@@ -20,7 +21,7 @@
   {% endfor %}
 </ul>
 {% else %}
-<p>{% translate "No membership plans are available at the moment." %}</p>
+<p class="empty-state">{% translate "No membership plans are available at the moment." %}</p>
 {% endif %}
 {% if user.is_authenticated %}<ul class="links"><li><a href="{% url 'memberships:mine' %}">{% translate "My membership" %}</a></li></ul>{% endif %}
 {% endblock %}

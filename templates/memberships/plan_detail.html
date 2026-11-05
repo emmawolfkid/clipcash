@@ -3,7 +3,8 @@
 {% block title %}{{ plan.name }}{% endblock %}
 {% block member_content %}
 <h1>{{ plan.name }}</h1>
-<p class="plan-card__price">{{ plan.price_amount|tzs }}</p>
+<p><a href="{% url 'memberships:plans' %}">{% translate "Back to all plans" %}</a></p>
+<div class="membership-price"><span class="membership-price__amount">{{ plan.price_amount|tzs }}</span><span class="membership-price__term">{% blocktranslate count days=plan.duration_days %}for {{ days }} day{% plural %}for {{ days }} days{% endblocktranslate %}</span></div>
 <p class="lead">{% blocktranslate count days=plan.duration_days %}Membership for {{ days }} day.{% plural %}Membership for {{ days }} days.{% endblocktranslate %}</p>
 {% if plan.description %}<p>{{ plan.description|linebreaksbr }}</p>{% endif %}
 {% if plan.benefits %}<h2>{% translate "Benefits" %}</h2><ul>{% for benefit in plan.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
@@ -21,5 +22,4 @@
 {% else %}
 <p><a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">{% translate "Sign in to choose this plan" %}</a></p>
 {% endif %}
-<ul class="links"><li><a href="{% url 'memberships:plans' %}">{% translate "All plans" %}</a></li></ul>
 {% endblock %}

@@ -1,7 +1,9 @@
-{% extends "members/layout.html" %}{% load i18n money %}
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/memberships/overview.css' %}">{% endblock %}
 {% block title %}{{ subscription.plan_name }}{% endblock %}
 {% block member_content %}
 <h1>{{ subscription.plan_name }}</h1>
+<p><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></p>
 <p><span class="badge badge--{{ subscription.status|lower }}">{{ subscription.get_status_display }}</span></p>
 <dl class="details">
   <dt>{% translate "Price" %}</dt><dd>{{ subscription.price_amount|tzs }}</dd>
@@ -17,5 +19,4 @@
 {% if subscription.status == "PENDING" %}{% if not payments_available %}
 <p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
 {% endif %}{% endif %}
-<ul class="links"><li><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></li></ul>
 {% endblock %}

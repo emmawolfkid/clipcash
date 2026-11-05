@@ -1,12 +1,14 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/payments/history.css' %}">{% endblock %}
 {% block title %}{% translate "Payments (sandbox)" %}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{% translate "Payments" %} <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></h1>
 {% include "components/sandbox_notice.html" %}
+<p class="lead">{% translate "This page contains test payment intents only. Statuses describe the sandbox workflow and never confirm a real charge or membership activation." %}</p>
 {% if payable %}
 <section class="panel section"><h2 class="panel__title">{% translate "Memberships awaiting payment" %}</h2>
 <ul class="list">{% for subscription in payable %}
-  <li class="list__item"><span>{{ subscription.plan_name }} · TZS {{ subscription.price_amount }}</span>
+  <li class="list__item"><span><strong>{{ subscription.plan_name }}</strong> · <span class="financial-amount">{{ subscription.price_amount|tzs }}</span></span>
     <form method="post" action="{% url 'payments:start_membership' subscription.pk %}">{% csrf_token %}
       <input type="hidden" name="form_token" value="{{ form_token }}">
       <button class="button" type="submit">{% translate "Start sandbox payment" %}</button></form></li>{% endfor %}
@@ -14,9 +16,9 @@
 <p class="lead">{% translate "A sandbox payment shows what would happen. It does not activate your membership." %}</p></section>
 {% endif %}
 <section class="section"><h2>{% translate "History" %}</h2>
-{% if intents %}<table class="table">
+{% if intents %}<table class="table financial-table payment-history-table"><caption>{% translate "Sandbox payment intents" %}</caption>
   <thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Created" %}</th></tr></thead>
-  <tbody>{% for intent in intents %}<tr><td><a href="{% url 'payments:intent' intent.pk %}">{{ intent.reference }}</a></td><td>TZS {{ intent.amount }}</td>
+  <tbody>{% for intent in intents %}<tr><td><a href="{% url 'payments:intent' intent.pk %}">{{ intent.reference }}</a></td><td><span class="financial-amount">{{ intent.amount|tzs }}</span></td>
     <td><span class="badge badge--{{ intent.status|lower }}">{{ intent.get_status_display }}</span></td><td>{{ intent.created_at|date:"SHORT_DATETIME_FORMAT" }}</td></tr>{% endfor %}</tbody>
 </table>{% else %}<p class="empty-state">{% translate "No payments yet." %}</p>{% endif %}</section>
 {% endblock %}

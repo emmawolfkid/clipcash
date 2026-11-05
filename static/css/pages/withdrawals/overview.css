@@ -19,3 +19,13 @@
   color: var(--danger);
 }
 
+.withdrawal-demo-table td:nth-child(2) {
+  white-space: nowrap;
+}
+
+@media (max-width: 30rem) {
+  .panel .toolbar .button {
+    width: 100%;
+  }
+}
+

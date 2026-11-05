@@ -71,7 +71,7 @@ The first full run executed **539 tests in 280.287s**, with **1 failure and 0 er
 
 Source palette contrast calculations: navy/white **16.55:1**, navy/yellow **11.18:1**, slate/white **4.89:1**, slate/page background **4.56:1**. These calculations do not substitute for rendered-page accessibility testing.
 
-PostgreSQL result: pending final output.
+PostgreSQL result: the corrected full rerun passed **539 tests in 284.957s**, with **0 failures and 0 errors**. The isolated database was preserved.
 
 ## Browser and remaining review
 
@@ -81,4 +81,4 @@ Manual review remains at **320, 375, 390, 768, 1024 and 1440px**: dashboard gree
 
 All new strings use Django translation hooks, including JavaScript messages supplied through escaped data attributes. English/Swahili template rendering is covered. Human Swahili catalogue translation/review remains outstanding; existing backend-generated activity text is unchanged.
 
-Acceptance recommendation: pending automated result; visual acceptance remains subject to the manual browser review above.
+Acceptance recommendation: **accept UI-04 implementation and automated verification**, subject to the manual visual, keyboard and live Bunny playback review above.

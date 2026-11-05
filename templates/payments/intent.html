@@ -1,11 +1,13 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/payments/intent.css' %}">{% endblock %}
 {% block title %}{{ intent.reference }}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{{ intent.reference }} <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></h1>
+<p><a href="{% url 'payments:history' %}">{% translate "Back to sandbox payments" %}</a></p>
 {% include "components/sandbox_notice.html" %}
 <section class="panel"><dl class="details">
   <dt>{% translate "Purpose" %}</dt><dd>{{ intent.get_purpose_display }}{% if intent.organization %} · {{ intent.organization.display_name }}{% endif %}</dd>
-  <dt>{% translate "Amount" %}</dt><dd>TZS {{ intent.amount }}</dd>
+  <dt>{% translate "Amount" %}</dt><dd class="payment-amount">{{ intent.amount|tzs }}</dd>
   <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ intent.status|lower }}">{{ intent.get_status_display }}</span></dd>
   <dt>{% translate "Expires" %}</dt><dd>{{ intent.expires_at|date:"DATETIME_FORMAT" }}</dd>
   {% if intent.settled_at %}<dt>{% translate "Settled (simulated)" %}</dt><dd>{{ intent.settled_at|date:"DATETIME_FORMAT" }}</dd>{% endif %}

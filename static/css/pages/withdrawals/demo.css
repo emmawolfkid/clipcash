@@ -1,0 +1,10 @@
+.demo-withdrawal-amount {
+  font-size: var(--text-lg);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.demo-decision-list .list__item {
+  padding-block: var(--space-4);
+}

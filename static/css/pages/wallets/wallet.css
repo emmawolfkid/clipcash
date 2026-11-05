@@ -1,0 +1,19 @@
+.wallet-reference {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-soft);
+  border-radius: var(--radius-sm);
+  overflow-wrap: anywhere;
+}
+
+.wallet-reference span {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.stat-grid .stat__value {
+  overflow-wrap: anywhere;
+}

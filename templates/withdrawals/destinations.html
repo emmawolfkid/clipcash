@@ -1,9 +1,10 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load static i18n %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/withdrawals/destinations.css' %}">{% endblock %}
 {% block title %}{% translate "Payout destinations" %}{% endblock %}
 {% block member_content %}
 <div class="section__header"><h1 class="page-title">{% translate "Payout destinations" %}</h1><a href="{% url 'withdrawals:overview' %}">{% translate "Withdrawals" %}</a></div>
 <p class="lead">{% translate "ClipCash keeps only the last four digits and a protected fingerprint of your number. Never enter a PIN or password here." %}</p>
-{% if beneficiaries %}<table class="table"><thead><tr><th scope="col">{% translate "Destination" %}</th><th scope="col">{% translate "Holder" %}</th><th scope="col">{% translate "Check" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
+{% if beneficiaries %}<table class="table destination-table"><caption>{% translate "Saved payout destinations" %}</caption><thead><tr><th scope="col">{% translate "Destination" %}</th><th scope="col">{% translate "Holder" %}</th><th scope="col">{% translate "Check" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
 <tbody>{% for b in beneficiaries %}<tr><td>{{ b.destination_label }}{% if b.status == "DEACTIVATED" %} <span class="badge badge--cancelled">{% translate "Removed" %}</span>{% endif %}</td><td>{{ b.holder_name }}</td><td>{{ b.get_verification_display }}</td>
 <td>{% if b.status == "ACTIVE" %}<span class="actions">{% if sandbox and b.verification == "UNVERIFIED" %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="demo_verify"><input type="hidden" name="beneficiary" value="{{ b.pk }}"><button class="button--link" type="submit">{% translate "Run demo check" %}</button></form>{% endif %}
 <form method="post">{% csrf_token %}<input type="hidden" name="action" value="remove"><input type="hidden" name="beneficiary" value="{{ b.pk }}"><button class="button--link" type="submit">{% translate "Remove" %}</button></form></span>{% endif %}</td></tr>{% endfor %}</tbody></table>
@@ -12,13 +13,13 @@
 {% include "components/demo_unconfirmed_notice.html" %}
 {% else %}
 <div class="card-grid section">
-<section class="panel"><h2 class="panel__title">{% translate "Add mobile money" %}</h2>
+<section class="panel destination-form"><h2 class="panel__title">{% translate "Add mobile money" %}</h2>
   <form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="add"><input type="hidden" name="kind" value="MOBILE_MONEY">
     <label for="m-network">{% translate "Network" %}</label><select id="m-network" name="network">{% for v, l in networks %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
     <label for="m-number">{% translate "Mobile number" %}</label><input id="m-number" name="identifier" type="tel" autocomplete="off" required placeholder="0712345678">
     <label for="m-holder">{% translate "Registered name" %}</label><input id="m-holder" name="holder_name" type="text" maxlength="100" required>
     <button class="button" type="submit">{% translate "Save destination" %}</button></form></section>
-<section class="panel"><h2 class="panel__title">{% translate "Add bank account" %}</h2>
+<section class="panel destination-form"><h2 class="panel__title">{% translate "Add bank account" %}</h2>
   <form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="add"><input type="hidden" name="kind" value="BANK">
     <label for="b-code">{% translate "Bank code" %}</label><input id="b-code" name="bank_code" type="text" maxlength="12" required placeholder="CRDB">
     <label for="b-number">{% translate "Account number" %}</label><input id="b-number" name="identifier" type="text" inputmode="numeric" autocomplete="off" required>

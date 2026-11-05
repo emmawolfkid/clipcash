@@ -1,0 +1,23 @@
+.membership-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.membership-status__label {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.membership-history caption {
+  color: var(--text);
+}
+
+.membership-history td:nth-child(3) {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

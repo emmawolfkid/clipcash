@@ -1,11 +1,13 @@
-{% extends "members/layout.html" %}{% load i18n money %}
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/memberships/overview.css' %}">{% endblock %}
 {% block title %}{% translate "My membership" %}{% endblock %}
 
 {% block member_content %}
 <h1>{% translate "My membership" %}</h1>
+<p class="lead">{% translate "Your membership controls access to included content. Dates and status below come from your current subscription records." %}</p>
 {% if current %}
   <div class="status-panel">
-    <p><span class="badge badge--{{ current.status|lower }}">{{ current.get_status_display }}</span> {{ current.plan_name }}</p>
+    <div class="membership-status"><div><span class="membership-status__label">{% translate "Current plan" %}</span><strong>{{ current.plan_name }}</strong></div><span class="badge badge--{{ current.status|lower }}">{{ current.get_status_display }}</span></div>
     {% if current.activation_source == "COMPLIMENTARY" %}<p class="notice">{% translate "Complimentary demonstration access: no payment was made, and access ends on the date below." %}</p>{% endif %}
     <dl class="details">
       <dt>{% translate "Started" %}</dt><dd>{{ current.starts_at|date:"DATETIME_FORMAT" }}</dd>
@@ -15,7 +17,7 @@
     {% if current.status == "SUSPENDED" %}<p class="notice">{% translate "Your membership is suspended. Please contact support." %}</p>{% endif %}
   </div>
 {% else %}
-  <p>{% translate "You do not have an active membership." %} <a href="{% url 'memberships:plans' %}">{% translate "See plans" %}</a></p>
+  <div class="empty-state"><p>{% translate "You do not have an active membership." %}</p><a class="button" href="{% url 'memberships:plans' %}">{% translate "See plans" %}</a></div>
 {% endif %}
 
 {% if queued %}
@@ -44,7 +46,7 @@
 
 <h2>{% translate "History" %}</h2>
 {% if history %}
-<table class="table">
+<table class="table membership-history"><caption>{% translate "Your membership records" %}</caption>
   <thead><tr><th scope="col">{% translate "Plan" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Price" %}</th><th scope="col">{% translate "Period" %}</th></tr></thead>
   <tbody>
   {% for item in history %}

@@ -1,0 +1,16 @@
+/* Shared financial presentation. Values remain supplied by backend records. */
+.financial-amount {
+  display: inline-block;
+  max-width: 100%;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.financial-table td:last-child {
+  min-width: 8rem;
+}
+
+.financial-table .badge {
+  white-space: nowrap;
+}

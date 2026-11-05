@@ -1,0 +1,17 @@
+.destination-table td:first-child {
+  min-width: 11rem;
+}
+
+.destination-table td:last-child {
+  min-width: 8rem;
+}
+
+.destination-form .form {
+  margin-bottom: 0;
+}
+
+.destination-form input,
+.destination-form select {
+  min-width: 0;
+  width: 100%;
+}
