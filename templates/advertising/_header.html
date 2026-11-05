@@ -1,8 +1,7 @@
 {% load i18n %}
-<div class="section__header">
-  <h1 class="page-title">{{ organization.display_name }}</h1>
+<p class="workspace-org"><span class="workspace-org__name">{{ organization.display_name }}</span>
   <span class="badge badge--{{ organization.verification_status|lower }}">{{ organization.get_verification_status_display }}</span>
-</div>
+  {% if membership %}<span>{{ membership.get_role_display }}</span>{% endif %}</p>
 <nav class="tabs" aria-label="{% translate 'Advertiser sections' %}">
   <a class="tab{% if tab == 'overview' %} is-current{% endif %}"{% if tab == 'overview' %} aria-current="page"{% endif %} href="{% url 'advertising:organization' organization.pk %}">{% translate "Overview" %}</a>
   <a class="tab{% if tab == 'campaigns' %} is-current{% endif %}"{% if tab == 'campaigns' %} aria-current="page"{% endif %} href="{% url 'advertising:campaigns' organization.pk %}">{% translate "Campaigns" %}</a>
@@ -11,6 +10,6 @@
   {% if sandbox_payments %}<a class="tab{% if tab == 'funding' %} is-current{% endif %}"{% if tab == 'funding' %} aria-current="page"{% endif %} href="{% url 'payments:funding' organization.pk %}">{% translate "Funding (sandbox)" %}</a>{% endif %}
   <a class="tab{% if tab == 'profile' %} is-current{% endif %}"{% if tab == 'profile' %} aria-current="page"{% endif %} href="{% url 'advertising:profile' organization.pk %}">{% translate "Profile" %}</a>
 </nav>
-{% if organization.verification_status == "PENDING" %}<p class="notice">{% translate "Your advertiser application is awaiting review by ClipCash. You can prepare draft campaigns meanwhile; they can be submitted once you are approved." %}</p>
-{% elif organization.verification_status == "REJECTED" %}<p class="notice notice--warning">{% translate "Your application was not approved." %}{% if organization.review_reason %} {% translate "Reason:" %} {{ organization.review_reason }}{% endif %} <a href="{% url 'advertising:profile' organization.pk %}">{% translate "Update and resubmit" %}</a></p>
-{% elif organization.verification_status == "SUSPENDED" %}<p class="notice notice--warning">{% translate "This advertiser is suspended. Campaigns cannot run. Please contact support." %}</p>{% endif %}
+{% if organization.verification_status == "PENDING" %}<p class="notice" role="status">{% translate "Your advertiser application is awaiting review by ClipCash. You can prepare draft campaigns meanwhile; they can be submitted once you are approved." %}</p>
+{% elif organization.verification_status == "REJECTED" %}<p class="notice notice--warning" role="status">{% translate "Your application was not approved." %}{% if organization.review_reason %} {% translate "Reason:" %} {{ organization.review_reason }}{% endif %} <a href="{% url 'advertising:profile' organization.pk %}">{% translate "Update and resubmit" %}</a></p>
+{% elif organization.verification_status == "SUSPENDED" %}<p class="notice notice--warning" role="status">{% translate "This advertiser is suspended. Campaigns cannot run. Please contact support." %}</p>{% endif %}

@@ -1,0 +1,15 @@
+{% load i18n %}{% include "advertising/_form_errors.html" %}
+<section class="settings-group" aria-labelledby="group-identity">
+  <div><h2 class="settings-group__title" id="group-identity">{% translate "Public identity" %}</h2>
+    <p class="settings-group__help">{% translate "How your advertiser appears on ClipCash." %}</p></div>
+  <div class="settings-group__fields"><div class="form-field">{{ form.display_name.as_field_group }}</div><div class="form-field">{{ form.website.as_field_group }}</div></div>
+</section>
+<section class="settings-group" aria-labelledby="group-contact">
+  <div><h2 class="settings-group__title" id="group-contact">{% translate "Contact" %}</h2></div>
+  <div class="settings-group__fields"><div class="form-field">{{ form.contact_email.as_field_group }}</div><div class="form-field">{{ form.contact_phone.as_field_group }}</div></div>
+</section>
+<section class="settings-group" aria-labelledby="group-registration">
+  <div><h2 class="settings-group__title" id="group-registration">{% translate "Legal and registration" %}</h2>
+    <p class="settings-group__help">{% if organization.is_approved %}{% translate "These details were verified, so they are read-only here." %}{% else %}{% translate "ClipCash uses these details to review the application." %}{% endif %}</p></div>
+  <div class="settings-group__fields"><div class="form-field">{{ form.legal_name.as_field_group }}</div><div class="form-field">{{ form.country.as_field_group }}</div><div class="form-field">{{ form.registration_number.as_field_group }}</div><div class="form-field">{{ form.tax_id.as_field_group }}</div></div>
+</section>

@@ -149,6 +149,11 @@
     align-items: stretch;
   }
 
+  /* Set by member-nav.js only where the sidebar offers the same destination. */
+  .site-nav .site-nav__duplicate {
+    display: none;
+  }
+
   .site-nav > form {
     flex: 1 1 10rem;
   }

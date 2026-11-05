@@ -1,15 +1,15 @@
 {% extends "advertising/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Advertise" %}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{% translate "Advertise on ClipCash" %}</h1>
+<div class="page-heading"><h1 class="page-title">{% translate "Advertise on ClipCash" %}</h1></div>
 {% if account_reason == "staff_account" %}
   <p class="notice">{% translate "Staff accounts cannot act for an advertiser. Use the administration console to review advertisers." %}</p>
 {% elif demo_unconfirmed_account %}
   {% include "components/demo_unconfirmed_notice.html" %}
 {% else %}
   {% if invitations %}
-  <section class="panel section">
-    <h2 class="panel__title">{% translate "Invitations" %}</h2>
+  <section class="workspace-section">
+    <h2 class="workspace-section__title">{% translate "Invitations" %}</h2>
     <ul class="list">{% for invitation in invitations %}
       <li class="list__item"><span>{% blocktranslate with name=invitation.organization.display_name role=invitation.get_role_display %}{{ name }} invited you as {{ role }}.{% endblocktranslate %}</span>
         <span class="actions">
@@ -20,16 +20,19 @@
   </section>
   {% endif %}
   {% if memberships %}
-  <ul class="card-grid list-plain">{% for membership in memberships %}
-    <li class="panel"><h2 class="panel__title"><a href="{% url 'advertising:organization' membership.organization.pk %}">{{ membership.organization.display_name }}</a></h2>
-      <p><span class="badge badge--{{ membership.organization.verification_status|lower }}">{{ membership.organization.get_verification_status_display }}</span> {{ membership.get_role_display }}</p></li>
-  {% endfor %}</ul>
-  {% else %}
-  <section class="panel">
-    <p class="lead">{% translate "Promote your brand with sponsored videos shown to ClipCash members. Every advertiser is reviewed before campaigns can run." %}</p>
-    <a class="button" href="{% url 'advertising:onboard' %}">{% translate "Apply for an advertiser account" %}</a>
+  <section class="workspace-section">
+  <table class="table workspace-table">
+    <caption class="visually-hidden">{% translate "Your advertisers" %}</caption>
+    <thead><tr><th scope="col">{% translate "Advertiser" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col" class="col-optional">{% translate "Your role" %}</th></tr></thead>
+    <tbody>{% for membership in memberships %}<tr><td><a href="{% url 'advertising:organization' membership.organization.pk %}">{{ membership.organization.display_name }}</a></td>
+      <td><span class="badge badge--{{ membership.organization.verification_status|lower }}">{{ membership.organization.get_verification_status_display }}</span></td>
+      <td class="col-optional">{{ membership.get_role_display }}</td></tr>{% endfor %}</tbody>
+  </table>
+  <p class="workspace-note"><a href="{% url 'advertising:onboard' %}">{% translate "Register another advertiser" %}</a></p>
   </section>
+  {% else %}
+  <p class="page-intro">{% translate "Promote your brand with sponsored videos shown to ClipCash members. Every advertiser is reviewed before campaigns can run." %}</p>
+  <p class="workspace-section"><a class="button" href="{% url 'advertising:onboard' %}">{% translate "Apply for an advertiser account" %}</a></p>
   {% endif %}
-  {% if memberships %}<p class="section"><a href="{% url 'advertising:onboard' %}">{% translate "Register another advertiser" %}</a></p>{% endif %}
 {% endif %}
 {% endblock %}

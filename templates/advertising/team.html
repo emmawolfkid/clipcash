@@ -1,25 +1,33 @@
-{% extends "advertising/layout.html" %}{% load i18n %}
+{% extends "advertising/layout.html" %}{% load static i18n %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/advertising/settings.css' %}">{% endblock %}
 {% block title %}{% translate "Team" %}{% endblock %}
 {% block member_content %}
 {% include "advertising/_header.html" %}
-<table class="table">
-  <thead><tr><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Role" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
+<div class="page-heading"><div class="page-heading__text"><h1 class="page-title">{% translate "Team" %}</h1>
+  <p class="page-intro">{% translate "Owners manage the profile and the team. Campaign managers work on campaigns." %}{% if not is_owner %} {% translate "Only owners can invite or remove other people." %}{% endif %}</p></div></div>
+<table class="table workspace-table">
+  <caption class="visually-hidden">{% translate "People with access to this advertiser" %}</caption>
+  <thead><tr><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Role" %}</th><th scope="col" class="col-optional">{% translate "Added" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
   <tbody>{% for member in members %}
-    <tr><td>{{ member.user.email }}{% if member.user == user %} ({% translate "you" %}){% endif %}</td><td>{{ member.get_role_display }}</td>
-      <td>{% if is_owner or member.user == user %}<form method="post" action="{% url 'advertising:team_change' organization.pk 'remove' member.pk %}">{% csrf_token %}<button class="button--link" type="submit">{% if member.user == user %}{% translate "Leave" %}{% else %}{% translate "Remove" %}{% endif %}</button></form>{% endif %}</td></tr>
+    <tr><td>{{ member.user.email }}{% if member.user == user %} ({% translate "you" %}){% endif %}</td><td>{{ member.get_role_display }}</td><td class="col-optional">{{ member.created_at|date:"SHORT_DATE_FORMAT" }}</td>
+      <td>{% if is_owner or member.user == user %}<details class="confirm-disclosure"><summary>{% if member.user == user %}{% translate "Leave" %}{% else %}{% translate "Remove" %}{% endif %}<span class="visually-hidden"> {{ member.user.email }}</span></summary>
+        <div class="confirm-disclosure__body"><p>{% if member.user == user %}{% translate "You will lose access to this advertiser." %}{% else %}{% translate "This person will lose access to this advertiser." %}{% endif %}</p>
+        <form method="post" action="{% url 'advertising:team_change' organization.pk 'remove' member.pk %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% if member.user == user %}{% translate "Confirm leaving" %}{% else %}{% translate "Confirm removal" %}{% endif %}</button></form></div></details>{% endif %}</td></tr>
   {% endfor %}</tbody>
 </table>
 {% if is_owner %}
-<section class="panel section">
-  <h2 class="panel__title">{% translate "Invite a team member" %}</h2>
-  <p class="lead">{% translate "The person must already have a verified ClipCash account with this email address. They will see the invitation on their Advertise page." %}</p>
-  {% include "components/form.html" with button=_("Create invitation") %}
-</section>
 {% if invitations %}
-<section class="section"><h2>{% translate "Pending invitations" %}</h2>
-<ul class="list">{% for invitation in invitations %}
-  <li class="list__item"><span>{{ invitation.email }} · {{ invitation.get_role_display }} · {% blocktranslate with date=invitation.expires_at|date:"SHORT_DATE_FORMAT" %}expires {{ date }}{% endblocktranslate %}</span>
-  <form method="post" action="{% url 'advertising:team_change' organization.pk 'revoke' invitation.pk %}">{% csrf_token %}<button class="button--link" type="submit">{% translate "Revoke" %}</button></form></li>
-{% endfor %}</ul></section>{% endif %}
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Pending invitations" %}</h2>
+<table class="table workspace-table">
+  <caption class="visually-hidden">{% translate "Invitations waiting for a response" %}</caption>
+  <thead><tr><th scope="col">{% translate "Email" %}</th><th scope="col">{% translate "Role" %}</th><th scope="col" class="col-optional">{% translate "Expires" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
+  <tbody>{% for invitation in invitations %}<tr><td>{{ invitation.email }}</td><td>{{ invitation.get_role_display }}</td><td class="col-optional">{{ invitation.expires_at|date:"SHORT_DATE_FORMAT" }}</td>
+    <td><form method="post" action="{% url 'advertising:team_change' organization.pk 'revoke' invitation.pk %}">{% csrf_token %}<button class="button--link" type="submit">{% translate "Revoke" %}<span class="visually-hidden"> {{ invitation.email }}</span></button></form></td></tr>{% endfor %}</tbody>
+</table></section>{% endif %}
+<section class="settings-group workspace-section" aria-labelledby="group-invite">
+  <div><h2 class="settings-group__title" id="group-invite">{% translate "Invite a team member" %}</h2>
+    <p class="settings-group__help">{% translate "The person must already have a verified ClipCash account with this email address. They will see the invitation on their Advertise page." %}</p></div>
+  <div>{% include "components/form.html" with button=_("Create invitation") %}</div>
+</section>
 {% endif %}
 {% endblock %}

@@ -34,7 +34,8 @@
   margin-top: 0.25rem;
 }
 
-.app-nav.is-collapsed {
+.app-nav.is-collapsed,
+.app-sidebar.is-collapsed {
   display: none;
 }
 

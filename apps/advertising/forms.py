@@ -52,7 +52,7 @@ class CampaignForm(forms.ModelForm):
                   "demo_budget_amount", "demo_reward_per_view"]
         widgets = {"description": forms.Textarea(attrs={"rows": 4})}
         help_texts = {
-            "max_views_per_member": _("1 to 10. Used when verified viewing is introduced."),
+            "max_views_per_member": _("1 to 10. How many verified views one member can count for this campaign."),
             "demo_budget_amount": _("Demonstration figure only. It is not money and is never charged or paid out."),
             "demo_reward_per_view": _("Demonstration figure only. No rewards are paid yet."),
         }

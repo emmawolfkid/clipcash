@@ -1,16 +1,41 @@
-{% extends "advertising/layout.html" %}{% load i18n %}
+{% extends "advertising/layout.html" %}{% load static i18n %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/advertising/settings.css' %}">{% endblock %}
 {% block title %}{% if campaign %}{% translate "Edit campaign" %}{% else %}{% translate "New campaign" %}{% endif %}{% endblock %}
 {% block member_content %}
 {% include "advertising/_header.html" %}
-<h2>{% if campaign %}{% translate "Edit campaign" %}{% else %}{% translate "New campaign" %}{% endif %}</h2>
-{% include "components/demo_budget_notice.html" %}
-{% if not form.fields.video.queryset.exists %}<p class="notice notice--warning">{% translate "ClipCash has not authorized any videos for your advertiser account yet. Contact us to have your sponsored video uploaded and authorized." %}</p>{% endif %}
-<section class="panel">
+<p><a href="{% if campaign %}{% url 'advertising:campaign' organization.pk campaign.pk %}{% else %}{% url 'advertising:campaigns' organization.pk %}{% endif %}">{% if campaign %}{% translate "Back to campaign" %}{% else %}{% translate "All campaigns" %}{% endif %}</a></p>
+<div class="page-heading"><div class="page-heading__text"><h1 class="page-title">{% if campaign %}{% translate "Edit campaign" %}{% else %}{% translate "New campaign" %}{% endif %}</h1>
+  <p class="page-intro">{% translate "This saves a draft. Members see nothing until ClipCash has reviewed and approved the campaign." %}</p></div></div>
+{% if not campaign and organization.verification_status == "SUSPENDED" or not campaign and organization.verification_status == "REJECTED" %}
+<p class="notice notice--warning" role="status">{% translate "New campaigns cannot be created while this advertiser is not in good standing." %}</p>
+{% else %}
+{% if not form.fields.video.queryset.exists %}<p class="notice notice--warning" role="status">{% translate "ClipCash has not authorized any videos for your advertiser account yet. Contact us to have your sponsored video uploaded and authorized." %}</p>{% endif %}
 <form class="form" method="post" novalidate>{% csrf_token %}
   {% if campaign %}<input type="hidden" name="revision" value="{{ campaign.revision }}">{% endif %}
-  {% if form.non_field_errors %}<ul class="errorlist nonfield" role="alert">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
-  {% for field in form.visible_fields %}{{ field.as_field_group }}{% endfor %}
-  <button type="submit" class="button">{% translate "Save draft" %}</button>
+  {% include "advertising/_form_errors.html" %}
+  <section class="settings-group" aria-labelledby="group-details">
+    <div><h2 class="settings-group__title" id="group-details">{% translate "Campaign details" %}</h2></div>
+    <div class="settings-group__fields"><div class="form-field">{{ form.name.as_field_group }}</div><div class="form-field">{{ form.description.as_field_group }}</div></div>
+  </section>
+  <section class="settings-group" aria-labelledby="group-video">
+    <div><h2 class="settings-group__title" id="group-video">{% translate "Video" %}</h2>
+      <p class="settings-group__help">{% translate "ClipCash uploads and authorizes sponsored videos. It must be published and ready before the campaign can be submitted." %}</p></div>
+    <div class="settings-group__fields"><div class="form-field">{{ form.video.as_field_group }}</div></div>
+  </section>
+  <section class="settings-group" aria-labelledby="group-schedule">
+    <div><h2 class="settings-group__title" id="group-schedule">{% translate "Schedule" %}</h2></div>
+    <div class="settings-group__fields"><div class="form-field">{{ form.starts_at.as_field_group }}</div><div class="form-field">{{ form.ends_at.as_field_group }}</div></div>
+  </section>
+  <section class="settings-group" aria-labelledby="group-audience">
+    <div><h2 class="settings-group__title" id="group-audience">{% translate "Audience" %}</h2></div>
+    <div class="settings-group__fields"><div class="form-field">{{ form.target_plans.as_field_group }}</div><div class="form-field">{{ form.max_views_per_member.as_field_group }}</div></div>
+  </section>
+  <section class="settings-group" aria-labelledby="group-demo">
+    <div><h2 class="settings-group__title" id="group-demo">{% translate "Demo planning figures" %}</h2>
+      <p class="settings-group__help">{% translate "Demonstration budgets only. No money is charged, held or paid out." %}</p></div>
+    <div class="settings-group__fields"><div class="form-field">{{ form.demo_budget_amount.as_field_group }}</div><div class="form-field">{{ form.demo_reward_per_view.as_field_group }}</div></div>
+  </section>
+  <div class="settings-actions"><button type="submit" class="button">{% translate "Save draft" %}</button></div>
 </form>
-</section>
+{% endif %}
 {% endblock %}

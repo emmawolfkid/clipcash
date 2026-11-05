@@ -1,0 +1,99 @@
+/* UI-06: advertiser settings-style pages (application, profile, campaign form, team). */
+.settings-group {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, 32rem);
+  gap: var(--space-3) var(--space-6);
+  padding-block: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.settings-group__title {
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.settings-group__help {
+  margin: var(--space-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.settings-group__fields {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.settings-group__fields > * {
+  min-width: 0;
+}
+
+/* As specific as the shared .form input rule, which would otherwise make these look editable. */
+.settings-group__fields input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):disabled {
+  color: var(--text);
+  background: var(--surface-soft);
+  border-style: dashed;
+}
+
+.settings-group__fields ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-group__fields fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.settings-group__fields legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  font-weight: 600;
+}
+
+.settings-group__fields .helptext {
+  margin-bottom: var(--space-2);
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.confirm-disclosure summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+  list-style: none;
+}
+
+.confirm-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.confirm-disclosure__body {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  padding-bottom: var(--space-2);
+}
+
+.confirm-disclosure__body p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 52rem) {
+  .settings-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

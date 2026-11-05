@@ -1,45 +1,91 @@
-{% extends "advertising/layout.html" %}{% load i18n %}
+{% extends "advertising/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/advertising/campaign.css' %}">{% endblock %}
 {% block title %}{{ campaign.name }}{% endblock %}
 {% block member_content %}
 {% include "advertising/_header.html" %}
-<div class="section__header"><h2>{{ campaign.name }}</h2><span class="badge badge--{{ campaign.status|lower }}">{{ campaign.get_status_display }}</span></div>
-{% if campaign.status == "REJECTED" and campaign.review_notes %}<p class="notice notice--warning">{% translate "Changes requested:" %} {{ campaign.review_notes }}</p>{% endif %}
-{% if campaign.paused_by_staff %}<p class="notice notice--warning">{% translate "Paused by ClipCash staff. Please contact support." %}</p>{% endif %}
-<div class="card-grid">
-  <section class="panel">
-    <h3 class="panel__title">{% translate "Details" %}</h3>
-    <dl class="details">
-      <dt>{% translate "Video" %}</dt><dd>{{ campaign.video.title }}</dd>
-      <dt>{% translate "Runs" %}</dt><dd>{{ campaign.starts_at|date:"DATETIME_FORMAT" }} – {{ campaign.ends_at|date:"DATETIME_FORMAT" }}</dd>
-      <dt>{% translate "Audience" %}</dt><dd>{% if plans %}{% for plan in plans %}{{ plan.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}{% translate "All members with an active membership" %}{% endif %}</dd>
-      <dt>{% translate "Views per member" %}</dt><dd>{{ campaign.max_views_per_member }}</dd>
-      <dt>{% translate "Demo budget" %}</dt><dd>TZS {{ campaign.demo_budget_amount }} <span class="badge badge--pending">{% translate "Demo" %}</span></dd>
-      <dt>{% translate "Demo reward per view" %}</dt><dd>TZS {{ campaign.demo_reward_per_view }} ({% blocktranslate with n=campaign.demo_view_capacity %}about {{ n }} views{% endblocktranslate %})</dd>
-      <dt>{% translate "Funding" %}</dt><dd><span class="badge badge--draft">{{ campaign.get_funding_status_display }}</span></dd>
-      <dt>{% translate "Revision" %}</dt><dd>{{ campaign.revision }}{% if campaign.approved_revision %} ({% blocktranslate with n=campaign.approved_revision %}approved revision {{ n }}{% endblocktranslate %}){% endif %}</dd>
-    </dl>
-    {% if campaign.description %}<p>{{ campaign.description|linebreaksbr }}</p>{% endif %}
-  </section>
-  <section class="panel">
-    <h3 class="panel__title">{% translate "Video preview" %}</h3>
+<p><a href="{% url 'advertising:campaigns' organization.pk %}">{% translate "All campaigns" %}</a></p>
+<div class="page-heading"><div class="page-heading__text"><h1 class="page-title">{{ campaign.name }}</h1></div>{% include "advertising/_campaign_status.html" %}</div>
+{% if campaign.status == "REJECTED" and campaign.review_notes %}<p class="notice notice--warning" role="status">{% translate "Changes requested:" %} {{ campaign.review_notes }}</p>{% endif %}
+{% if campaign.paused_by_staff %}<p class="notice notice--warning" role="status">{% translate "Paused by ClipCash staff. Please contact support." %}</p>{% endif %}
+<div class="campaign-actions">
+  {% if campaign.is_editable %}<a class="button button--secondary" href="{% url 'advertising:campaign_edit' organization.pk campaign.pk %}">{% translate "Edit" %}</a>{% endif %}
+  {% if campaign.status == "DRAFT" %}<form method="post" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'submit' %}">{% csrf_token %}<button class="button" type="submit"{% if not organization.is_approved %} disabled aria-describedby="submit-help"{% endif %}>{% translate "Submit for review" %}</button></form>{% endif %}
+  {% if campaign.status == "SUBMITTED" %}<form method="post" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'withdraw' %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Withdraw to draft" %}</button></form>{% endif %}
+  {% if campaign.status == "SCHEDULED" or campaign.status == "ACTIVE" %}<form method="post" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'pause' %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Pause" %}</button></form>{% endif %}
+  {% if campaign.status == "PAUSED" and not campaign.paused_by_staff %}<form method="post" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'resume' %}">{% csrf_token %}<button class="button" type="submit">{% translate "Resume" %}</button></form>{% endif %}
+  {% if campaign.status == "SCHEDULED" or campaign.status == "PAUSED" %}<form method="post" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'reopen' %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Change (needs new review)" %}</button></form>{% endif %}
+</div>
+{% if campaign.status == "DRAFT" and not organization.is_approved %}<p class="workspace-note" id="submit-help">{% translate "Submitting becomes available once your advertiser account is approved." %}</p>
+{% elif campaign.status == "DRAFT" %}<p class="workspace-note">{% translate "Drafts are not shown to members. ClipCash reviews every campaign before it can run." %}</p>
+{% elif campaign.status == "SUBMITTED" %}<p class="workspace-note">{% translate "ClipCash is reviewing this campaign. Withdraw it if you need to make changes." %}</p>
+{% elif campaign.status == "REJECTED" %}<p class="workspace-note">{% translate "Edit the campaign, then submit it for review again." %}</p>
+{% elif campaign.status == "COMPLETED" %}<p class="workspace-note">{% translate "This campaign has finished and is no longer shown to members." %}</p>
+{% elif campaign.status == "CANCELLED" %}<p class="workspace-note">{% translate "This campaign was cancelled and is no longer shown to members." %}</p>{% endif %}
+
+<div class="campaign-layout">
+  <div>
+    <section class="campaign-layout__group">
+      <h2 class="workspace-section__title">{% translate "Campaign overview" %}</h2>
+      <dl class="details">
+        <dt>{% translate "Runs" %}</dt><dd>{{ campaign.starts_at|date:"DATETIME_FORMAT" }} – {{ campaign.ends_at|date:"DATETIME_FORMAT" }}</dd>
+        <dt>{% translate "Revision" %}</dt><dd>{{ campaign.revision }}{% if campaign.approved_revision %} ({% blocktranslate with n=campaign.approved_revision %}approved revision {{ n }}{% endblocktranslate %}){% endif %}</dd>
+      </dl>
+      {% if campaign.description %}<p>{{ campaign.description|linebreaksbr }}</p>{% endif %}
+    </section>
+    <section class="campaign-layout__group">
+      <h2 class="workspace-section__title">{% translate "Targeting" %}</h2>
+      <dl class="details">
+        <dt>{% translate "Audience" %}</dt><dd>{% if plans %}{% for plan in plans %}{{ plan.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}{% translate "All members with an active membership" %}{% endif %}</dd>
+        <dt>{% translate "Views per member" %}</dt><dd>{{ campaign.max_views_per_member }}</dd>
+      </dl>
+    </section>
+  </div>
+  <section>
+    <h2 class="workspace-section__title">{% translate "Video" %}</h2>
+    <p>{{ campaign.video.title }}</p>
     {% include "components/preview_player.html" %}
-    {% if campaign.status == "SCHEDULED" or campaign.status == "ACTIVE" %}<p class="lead">{% if eligibility %}{% translate "Shown to eligible members." %}{% else %}{% translate "Not shown to members right now:" %} {{ eligibility_message }}{% endif %}</p>{% endif %}
+    {% if campaign.status == "SCHEDULED" or campaign.status == "ACTIVE" %}<p class="workspace-note">{% if eligibility %}{% translate "Shown to eligible members." %}{% else %}{% translate "Not shown to members right now:" %} {{ eligibility_message }}{% endif %}</p>{% endif %}
   </section>
 </div>
-{% include "components/campaign_performance.html" %}
-{% include "components/demo_budget_notice.html" %}
-<section class="panel section">
-  <h3 class="panel__title">{% translate "Actions" %}</h3>
-  <div class="actions">
-    {% if campaign.is_editable %}<a class="button button--secondary" href="{% url 'advertising:campaign_edit' organization.pk campaign.pk %}">{% translate "Edit" %}</a>{% endif %}
-    {% if campaign.status == "DRAFT" %}<form method="post" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'submit' %}">{% csrf_token %}<button class="button" type="submit"{% if not organization.is_approved %} disabled{% endif %}>{% translate "Submit for review" %}</button></form>{% endif %}
-    {% if campaign.status == "SUBMITTED" %}<form method="post" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'withdraw' %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Withdraw to draft" %}</button></form>{% endif %}
-    {% if campaign.status == "SCHEDULED" or campaign.status == "ACTIVE" %}<form method="post" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'pause' %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Pause" %}</button></form>{% endif %}
-    {% if campaign.status == "PAUSED" and not campaign.paused_by_staff %}<form method="post" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'resume' %}">{% csrf_token %}<button class="button" type="submit">{% translate "Resume" %}</button></form>{% endif %}
-    {% if campaign.status == "SCHEDULED" or campaign.status == "PAUSED" %}<form method="post" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'reopen' %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Change (needs new review)" %}</button></form>{% endif %}
-    {% if campaign.status != "COMPLETED" and campaign.status != "CANCELLED" and campaign.status != "ARCHIVED" %}<form method="post" class="confirm-form" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'cancel' %}">{% csrf_token %}<label><input type="checkbox" name="confirm" value="yes" required> {% translate "Cancelling is permanent" %}</label><button class="button button--secondary" type="submit">{% translate "Cancel campaign" %}</button></form>{% endif %}
-    {% if campaign.status == "COMPLETED" or campaign.status == "CANCELLED" or campaign.status == "REJECTED" %}<form method="post" class="confirm-form" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'archive' %}">{% csrf_token %}<label><input type="checkbox" name="confirm" value="yes" required> {% translate "Archiving is permanent" %}</label><button class="button button--secondary" type="submit">{% translate "Archive" %}</button></form>{% endif %}
-  </div>
-  {% if campaign.status == "DRAFT" and not organization.is_approved %}<p class="lead">{% translate "Submitting becomes available once your advertiser account is approved." %}</p>{% endif %}
+
+<section class="workspace-section" aria-labelledby="performance-title">
+  <h2 class="workspace-section__title" id="performance-title">{% translate "Performance" %}</h2>
+  {% if not campaign.activated_at and performance.viewing.sessions.value == 0 %}
+  <p class="empty-state">{% translate "No results yet: this campaign has not run." %}</p>
+  {% else %}
+  <dl class="metric-row">
+    <div class="metric"><dt>{% translate "Verified views" %}</dt><dd>{{ performance.viewing.verified.display }}</dd></div>
+    <div class="metric"><dt>{% translate "Unique viewers (verified)" %}</dt><dd>{{ performance.viewing.viewers.display }}</dd></div>
+    <div class="metric"><dt>{% translate "Sessions started" %}</dt><dd>{{ performance.viewing.sessions.display }}</dd></div>
+    <div class="metric"><dt>{% translate "Awaiting staff review" %}</dt><dd>{{ performance.viewing.in_review.display }}</dd></div>
+    <div class="metric"><dt>{% translate "Not verified" %}</dt><dd>{{ performance.viewing.not_verified.display }}</dd></div>
+  </dl>
+  <p class="workspace-note">{% translate "A verified view means ClipCash's server-side checks passed for the required watch time. It is evidence of playback, not proof of attention. Revoked views are not counted." %}</p>
+  {% endif %}
+  <h3 class="workspace-subtitle">{% translate "Demo rewards (simulated, not money)" %}</h3>
+  <dl class="details">
+    <dt>{% translate "Simulated rewards recorded" %}</dt><dd>{{ performance.demo_rewards.qualified.display }}</dd>
+    <dt>{% translate "Simulated rewards reversed" %}</dt><dd>{{ performance.demo_rewards.reversed.display }}</dd>
+    <dt>{% translate "Demo budget used (simulated figure, never charged)" %}</dt><dd>{% if performance.demo_rewards.demo_consumed is None %}{% blocktranslate with allocated=performance.demo_rewards.demo_allocated|tzs %}Hidden for privacy, of {{ allocated }}{% endblocktranslate %}{% else %}{% blocktranslate with used=performance.demo_rewards.demo_consumed|tzs allocated=performance.demo_rewards.demo_allocated|tzs %}{{ used }} of {{ allocated }}{% endblocktranslate %}{% endif %}</dd>
+  </dl>
+  <p class="workspace-note">{% translate "Spend: not applicable. No money is charged to advertisers or paid to members in this demonstration." %}</p>
 </section>
+
+<section class="workspace-section">
+  <h2 class="workspace-section__title">{% translate "Demo planning figures" %}</h2>
+  <dl class="details">
+    <dt>{% translate "Demo budget" %}</dt><dd>{{ campaign.demo_budget_amount|tzs }} <span class="badge badge--sandbox">{% translate "Demo" %}</span></dd>
+    <dt>{% translate "Demo reward per view" %}</dt><dd>{{ campaign.demo_reward_per_view|tzs }} ({% blocktranslate with n=campaign.demo_view_capacity %}about {{ n }} views{% endblocktranslate %})</dd>
+    <dt>{% translate "Funding" %}</dt><dd><span class="badge badge--draft">{{ campaign.get_funding_status_display }}</span></dd>
+  </dl>
+  {% include "components/demo_budget_notice.html" %}
+</section>
+
+{% if campaign.status != "ARCHIVED" %}
+<section class="workspace-section campaign-closing">
+  <h2 class="workspace-section__title">{% if campaign.status == "COMPLETED" or campaign.status == "CANCELLED" %}{% translate "Archive this campaign" %}{% else %}{% translate "End this campaign" %}{% endif %}</h2>
+  {% if campaign.status != "COMPLETED" and campaign.status != "CANCELLED" %}<form method="post" class="confirm-form" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'cancel' %}">{% csrf_token %}<label><input type="checkbox" name="confirm" value="yes" required> {% translate "Cancelling is permanent" %}</label><button class="button button--secondary" type="submit">{% translate "Cancel campaign" %}</button></form>{% endif %}
+  {% if campaign.status == "COMPLETED" or campaign.status == "CANCELLED" or campaign.status == "REJECTED" %}<form method="post" class="confirm-form" action="{% url 'advertising:campaign_action' organization.pk campaign.pk 'archive' %}">{% csrf_token %}<label><input type="checkbox" name="confirm" value="yes" required> {% translate "Archiving is permanent" %}</label><button class="button button--secondary" type="submit">{% translate "Archive" %}</button></form>{% endif %}
+</section>
+{% endif %}
 {% endblock %}

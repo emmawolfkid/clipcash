@@ -2,27 +2,32 @@
 {% block title %}{% translate "Reports" %}{% endblock %}
 {% block member_content %}
 {% include "advertising/_header.html" %}
-<div class="section__header"><h2>{% translate "Campaign reports" %}</h2></div>
+<div class="page-heading"><div class="page-heading__text"><h1 class="page-title">{% translate "Reports" %}</h1>
+  <p class="page-intro">{% translate "Results come from verified viewing sessions started in this period. Small counts are shown as a range to protect viewers' privacy. Demo rewards are simulated, never money." %}</p></div></div>
 <form class="toolbar" method="get" aria-label="{% translate 'Report period' %}">
-  <label for="from">{% translate "From" %}</label><input id="from" type="date" name="from" value="{{ period.first|date:'Y-m-d' }}">
-  <label for="to">{% translate "To" %}</label><input id="to" type="date" name="to" value="{{ period.last|date:'Y-m-d' }}">
+  <div class="period-field"><label for="from">{% translate "From" %}</label><input id="from" type="date" name="from" value="{{ period.first|date:'Y-m-d' }}"></div>
+  <div class="period-field"><label for="to">{% translate "To" %}</label><input id="to" type="date" name="to" value="{{ period.last|date:'Y-m-d' }}"></div>
   <button type="submit" class="button button--secondary">{% translate "Show" %}</button>
 </form>
-<p class="lead">{% translate "Results come from verified viewing sessions started in this period. Small counts are shown as a range to protect viewers' privacy. Demo rewards are simulated, never money." %}</p>
-<div class="stat-grid">
-  <div class="stat"><span class="stat__value">{{ report.totals.verified }}</span><span class="stat__label">{% translate "Verified views" %}</span></div>
-  <div class="stat"><span class="stat__value">{{ report.totals.viewers }}</span><span class="stat__label">{% translate "Unique viewers (verified)" %}</span></div>
-  <div class="stat"><span class="stat__value">{{ report.totals.sessions }}</span><span class="stat__label">{% translate "Sessions started" %}</span></div>
-</div>
+<dl class="metric-row">
+  <div class="metric"><dt>{% translate "Verified views" %}</dt><dd>{{ report.totals.verified }}</dd></div>
+  <div class="metric"><dt>{% translate "Unique viewers (verified)" %}</dt><dd>{{ report.totals.viewers }}</dd></div>
+  <div class="metric"><dt>{% translate "Sessions started" %}</dt><dd>{{ report.totals.sessions }}</dd></div>
+</dl>
 {% if report.rows %}
-<table class="table">
-  <thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Sessions" %}</th><th scope="col">{% translate "Verified views" %}</th><th scope="col">{% translate "Unique viewers" %}</th><th scope="col">{% translate "In review" %}</th><th scope="col">{% translate "Not verified" %}</th><th scope="col">{% translate "Demo rewards (simulated)" %}</th></tr></thead>
-  <tbody>{% for row in report.rows %}<tr>
-    <td><a href="{% url 'advertising:campaign' organization.pk row.campaign.pk %}">{{ row.campaign.name }}</a></td>
-    <td>{{ row.campaign.get_status_display }}</td>
-    <td>{{ row.sessions }}</td><td>{{ row.verified }}</td><td>{{ row.viewers }}</td><td>{{ row.in_review }}</td><td>{{ row.not_verified }}</td><td>{{ row.qualified }}</td>
-  </tr>{% endfor %}</tbody>
+{% if report.totals.sessions == "0" %}<p class="workspace-note">{% translate "No viewing sessions started in this period." %}</p>{% endif %}
+<table class="table workspace-table">
+  <caption>{% blocktranslate with first=period.first|date:"DATE_FORMAT" last=period.last|date:"DATE_FORMAT" %}Results by campaign, {{ first }} to {{ last }}{% endblocktranslate %}</caption>
+  <thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col" class="col-optional">{% translate "Status" %}</th><th scope="col" class="table__numeric">{% translate "Verified views" %}</th><th scope="col" class="col-optional table__numeric">{% translate "Unique viewers" %}</th><th scope="col" class="col-optional table__numeric">{% translate "Sessions" %}</th><th scope="col" class="col-optional table__numeric">{% translate "In review" %}</th><th scope="col" class="col-optional table__numeric">{% translate "Not verified" %}</th><th scope="col" class="col-optional table__numeric">{% translate "Demo rewards (simulated)" %}</th></tr></thead>
+  <tbody>{% for row in report.rows %}{% with campaign=row.campaign %}<tr>
+    <td><a href="{% url 'advertising:campaign' organization.pk campaign.pk %}">{{ campaign.name }}</a>
+      <span class="cell-meta cell-meta--narrow">{% include "advertising/_campaign_status.html" %}</span></td>
+    <td class="col-optional">{% include "advertising/_campaign_status.html" %}</td>
+    {% if not campaign.activated_at and row.sessions == "0" %}<td class="table__numeric not-applicable">{% translate "Has not run" %}</td><td class="col-optional" colspan="5"><span class="visually-hidden">{% translate "Has not run" %}</span></td>
+    {% else %}<td class="table__numeric">{{ row.verified }}</td><td class="col-optional table__numeric">{{ row.viewers }}</td><td class="col-optional table__numeric">{{ row.sessions }}</td><td class="col-optional table__numeric">{{ row.in_review }}</td><td class="col-optional table__numeric">{{ row.not_verified }}</td><td class="col-optional table__numeric">{{ row.qualified }}</td>{% endif %}
+  </tr>{% endwith %}{% endfor %}</tbody>
 </table>
 {% include "components/pagination.html" %}
+<p class="workspace-note cell-meta--narrow">{% translate "This narrow view shows verified views. Open a campaign for its other figures." %}</p>
 {% else %}<p class="empty-state">{% translate "No campaigns yet." %}</p>{% endif %}
 {% endblock %}

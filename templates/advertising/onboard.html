@@ -1,7 +1,11 @@
-{% extends "advertising/layout.html" %}{% load i18n %}
+{% extends "advertising/layout.html" %}{% load static i18n %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/advertising/settings.css' %}">{% endblock %}
 {% block title %}{% translate "Advertiser application" %}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{% translate "Advertiser application" %}</h1>
-<p class="lead">{% translate "Tell us about the business. ClipCash reviews every application before campaigns can be submitted. Do not upload or paste identity documents here." %}</p>
-<section class="panel">{% include "components/form.html" with button=_("Submit application") %}</section>
+<div class="page-heading"><div class="page-heading__text"><h1 class="page-title">{% translate "Advertiser application" %}</h1>
+  <p class="page-intro">{% translate "Tell us about the business. ClipCash reviews every application before campaigns can be submitted. Do not upload or paste identity documents here." %}</p></div></div>
+<form class="form" method="post" novalidate>{% csrf_token %}
+  {% include "advertising/_organization_fields.html" %}
+  <div class="settings-actions"><button type="submit" class="button">{% translate "Submit application" %}</button></div>
+</form>
 {% endblock %}

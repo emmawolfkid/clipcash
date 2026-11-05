@@ -71,7 +71,7 @@ button:disabled {
 }
 
 .button:disabled {
-  background: var(--surface-soft);
+  background: var(--surface);
   color: var(--muted);
   border-color: var(--control-border);
 }

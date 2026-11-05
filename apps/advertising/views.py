@@ -128,7 +128,8 @@ class InvitationResponseView(AdvertiserBaseView):
 @advertisers_feature
 class OrganizationView(AdvertiserBaseView):
     def get(self, request, organization_id):
-        recent = self.organization.campaigns.select_related("video").order_by("-created_at")[:5]
+        recent = (self.organization.campaigns.select_related("video").prefetch_related("target_plans")
+                  .order_by("-created_at")[:5])
         return render(request, "advertising/organization.html", self.context(
             tab="overview", report=services.organization_report(self.organization), recent=recent))
 
@@ -231,7 +232,7 @@ class TeamChangeView(AdvertiserBaseView):
 @advertisers_feature
 class CampaignListView(AdvertiserBaseView):
     def get(self, request, organization_id):
-        qs = self.organization.campaigns.select_related("video").order_by("-created_at")
+        qs = self.organization.campaigns.select_related("video").prefetch_related("target_plans").order_by("-created_at")
         query = request.GET.get("q", "").strip()[:100]
         status = request.GET.get("status", "")
         if query:

@@ -1,0 +1,2 @@
+{% load i18n %}{# The service refuses new campaigns from rejected and suspended advertisers, so the action is not offered to them. #}
+{% if organization.verification_status != "SUSPENDED" and organization.verification_status != "REJECTED" %}<a class="button" href="{% url 'advertising:campaign_create' organization.pk %}">{% translate "New campaign" %}</a>{% endif %}

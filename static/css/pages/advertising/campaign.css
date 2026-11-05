@@ -1,0 +1,45 @@
+/* UI-06: advertiser campaign detail. */
+.campaign-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.campaign-actions form {
+  margin: 0;
+}
+
+.campaign-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+  gap: var(--space-6);
+  align-items: start;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.campaign-layout .workspace-section__title {
+  margin-top: 0;
+}
+
+.campaign-layout__group + .campaign-layout__group {
+  margin-top: var(--space-5);
+}
+
+.campaign-closing {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.campaign-closing form {
+  margin: 0;
+}
+
+@media (max-width: 64rem) {
+  .campaign-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

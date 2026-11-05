@@ -2,14 +2,15 @@
 {% block title %}{% translate "Funding (sandbox)" %}{% endblock %}
 {% block member_content %}
 {% include "advertising/_header.html" %}
+<div class="page-heading"><h1 class="page-title">{% translate "Funding (sandbox)" %}</h1></div>
 {% include "components/sandbox_notice.html" %}
-<div class="stat-grid">
-  <div class="stat stat--demo"><span class="stat__value financial-amount">{{ funds.received|tzs }}</span><span class="stat__label">{% translate "Settled deposits (sandbox)" %}</span></div>
-  <div class="stat stat--demo"><span class="stat__value financial-amount">{{ funds.allocated|tzs }}</span><span class="stat__label">{% translate "Allocated to campaigns" %}</span></div>
-  <div class="stat stat--demo"><span class="stat__value financial-amount">{{ funds.available|tzs }}</span><span class="stat__label">{% translate "Unallocated (sandbox)" %}</span></div>
-  <div class="stat stat--demo"><span class="stat__value financial-amount">{{ funds.frozen|tzs }}</span><span class="stat__label">{% translate "Frozen (refund/dispute)" %}</span></div>
-  <div class="stat stat--demo"><span class="stat__value financial-amount">{{ funds.refunded|tzs }}</span><span class="stat__label">{% translate "Refunded" %}</span></div>
-</div>
+<dl class="metric-row">
+  <div class="metric"><dt>{% translate "Settled deposits (sandbox)" %}</dt><dd>{{ funds.received|tzs }}</dd></div>
+  <div class="metric"><dt>{% translate "Allocated to campaigns" %}</dt><dd>{{ funds.allocated|tzs }}</dd></div>
+  <div class="metric"><dt>{% translate "Unallocated (sandbox)" %}</dt><dd>{{ funds.available|tzs }}</dd></div>
+  <div class="metric"><dt>{% translate "Frozen (refund/dispute)" %}</dt><dd>{{ funds.frozen|tzs }}</dd></div>
+  <div class="metric"><dt>{% translate "Refunded" %}</dt><dd>{{ funds.refunded|tzs }}</dd></div>
+</dl>
 <p class="lead">{% translate "Campaign funding status stays 'Not funded' until real funding is approved in a later phase." %}</p>
 {% if is_owner %}
 <div class="card-grid section">

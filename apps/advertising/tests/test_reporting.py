@@ -88,7 +88,7 @@ class ReportPageTests(RewardsTestCase):
         self.assertEqual((report["viewing"]["verified"]["value"], report["demo_rewards"]["qualified"]["value"]), (1, 1))
         self.assertContains(detail, "Demo rewards (simulated, not money)")
         self.assertContains(detail, "Demo budget used (simulated figure, never charged)")
-        self.assertContains(detail, "TZS 100 / 100000")
+        self.assertContains(detail, "TZS 100 of TZS 100,000")
 
     def test_staff_campaign_page_shows_exact_results(self):
         self.verified_session()

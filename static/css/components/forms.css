@@ -72,6 +72,13 @@ input {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* The focus lands on a segment inside date inputs, so :focus-visible never matches the input itself. */
+input[type="date"]:focus-within,
+input[type="datetime-local"]:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
 input:disabled,
 select:disabled,
 textarea:disabled {

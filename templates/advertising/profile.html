@@ -1,18 +1,36 @@
-{% extends "advertising/layout.html" %}{% load i18n %}
+{% extends "advertising/layout.html" %}{% load static i18n %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/advertising/settings.css' %}">{% endblock %}
 {% block title %}{% translate "Advertiser profile" %}{% endblock %}
 {% block member_content %}
 {% include "advertising/_header.html" %}
+<div class="page-heading"><h1 class="page-title">{% translate "Profile" %}</h1></div>
+<section class="settings-group" aria-labelledby="group-review">
+  <div><h2 class="settings-group__title" id="group-review">{% translate "Review status" %}</h2>
+    <p class="settings-group__help">{% translate "Set by ClipCash." %}</p></div>
+  <dl class="details">
+    <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ organization.verification_status|lower }}">{{ organization.get_verification_status_display }}</span></dd>
+    {% if organization.submitted_at %}<dt>{% translate "Submitted" %}</dt><dd>{{ organization.submitted_at|date:"DATE_FORMAT" }}</dd>{% endif %}
+    {% if organization.reviewed_at %}<dt>{% translate "Reviewed" %}</dt><dd>{{ organization.reviewed_at|date:"DATE_FORMAT" }}</dd>{% endif %}
+  </dl>
+</section>
 {% if is_owner and organization.verification_status != "SUSPENDED" %}
-<section class="panel">{% include "components/form.html" with button=_("Save profile") %}</section>
+<form class="form" method="post" novalidate>{% csrf_token %}
+  {% include "advertising/_organization_fields.html" %}
+  <div class="settings-actions"><button type="submit" class="button">{% translate "Save profile" %}</button></div>
+</form>
 {% if organization.verification_status == "REJECTED" %}
-<form method="post" class="section">{% csrf_token %}<input type="hidden" name="resubmit" value="1">
-  <button class="button" type="submit">{% translate "Resubmit for review" %}</button></form>{% endif %}
+<form method="post" class="workspace-section">{% csrf_token %}<input type="hidden" name="resubmit" value="1">
+  <button class="button button--secondary" type="submit">{% translate "Resubmit for review" %}</button></form>{% endif %}
 {% else %}
-<section class="panel"><dl class="details">
-  <dt>{% translate "Legal name" %}</dt><dd>{{ organization.legal_name }}</dd>
-  <dt>{% translate "Contact email" %}</dt><dd>{{ organization.contact_email }}</dd>
-  <dt>{% translate "Country" %}</dt><dd>{{ organization.country }}</dd>
-  {% if organization.website %}<dt>{% translate "Website" %}</dt><dd>{{ organization.website }}</dd>{% endif %}
-</dl>{% if not is_owner %}<p class="lead">{% translate "Only owners can change the profile." %}</p>{% endif %}</section>
+<section class="settings-group" aria-labelledby="group-details">
+  <div><h2 class="settings-group__title" id="group-details">{% translate "Details" %}</h2>
+    <p class="settings-group__help">{% if not is_owner %}{% translate "Only owners can change the profile." %}{% else %}{% translate "The profile cannot be changed while this advertiser is suspended." %}{% endif %}</p></div>
+  <dl class="details">
+    <dt>{% translate "Legal name" %}</dt><dd>{{ organization.legal_name }}</dd>
+    <dt>{% translate "Contact email" %}</dt><dd>{{ organization.contact_email }}</dd>
+    <dt>{% translate "Country" %}</dt><dd>{{ organization.country }}</dd>
+    {% if organization.website %}<dt>{% translate "Website" %}</dt><dd>{{ organization.website }}</dd>{% endif %}
+  </dl>
+</section>
 {% endif %}
 {% endblock %}

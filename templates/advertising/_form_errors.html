@@ -1,0 +1,9 @@
+{% load i18n %}{% if form.errors %}
+<div class="error-summary" tabindex="-1" role="alert" aria-labelledby="form-errors-title">
+  <h2 id="form-errors-title">{% translate "Please correct the errors below." %}</h2>
+  <ul>
+    {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+    {% for field in form.visible_fields %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}
+  </ul>
+</div>
+{% endif %}

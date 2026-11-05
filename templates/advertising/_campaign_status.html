@@ -1,0 +1,1 @@
+{# "Changes requested" is a request to act, not a failure, so it takes the attention colour rather than the danger one. #}<span class="badge badge--{% if campaign.status == 'REJECTED' %}paused{% else %}{{ campaign.status|lower }}{% endif %}">{{ campaign.get_status_display }}</span>

@@ -2,7 +2,7 @@
 {% block title %}{% translate "Campaigns" %}{% endblock %}
 {% block member_content %}
 {% include "advertising/_header.html" %}
-<div class="section__header"><h2>{% translate "Campaigns" %}</h2><a class="button" href="{% url 'advertising:campaign_create' organization.pk %}">{% translate "New campaign" %}</a></div>
+<div class="page-heading"><h1 class="page-title">{% translate "Campaigns" %}</h1>{% include "advertising/_new_campaign_action.html" %}</div>
 <form class="toolbar" method="get" role="search">
   <label class="visually-hidden" for="q">{% translate "Search campaigns" %}</label>
   <input id="q" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search campaigns' %}">
@@ -11,7 +11,9 @@
   <button type="submit" class="button button--secondary">{% translate "Filter" %}</button>
 </form>
 {% if page.object_list %}
-  {% include "advertising/_campaign_table.html" with campaigns=page.object_list %}
+  {% translate "Campaigns, newest first" as list_caption %}{% include "advertising/_campaign_table.html" with campaigns=page.object_list caption=list_caption %}
   {% include "components/pagination.html" %}
-{% else %}<p class="empty-state">{% if query or status %}{% translate "No campaigns match these filters." %}{% else %}{% translate "No campaigns yet." %}{% endif %}</p>{% endif %}
+{% elif query or status %}
+  <div class="empty-state"><p>{% translate "No campaigns match these filters." %}</p><a href="{% url 'advertising:campaigns' organization.pk %}">{% translate "Clear filters" %}</a></div>
+{% else %}<p class="empty-state">{% translate "No campaigns yet." %}</p>{% endif %}
 {% endblock %}
