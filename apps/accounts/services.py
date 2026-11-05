@@ -256,18 +256,23 @@ def confirm_email_change(change_pk, token):
     Complete a change from the link sent to the new address. Checked again on the locked
     rows, so a replay or concurrent submission cannot succeed twice. Returns the account,
     or None for any invalid link (including an address taken since it was requested).
+
+    Locks the account before the request, the order every other path uses (new request,
+    password change, password reset); the opposite order deadlocks against them.
     """
+    owner_id = PendingEmailChange.objects.filter(pk=change_pk).values_list("user_id", flat=True).first()
+    if owner_id is None:
+        return None
     try:
         with transaction.atomic():
-            change = (PendingEmailChange.objects.select_for_update().select_related("user")
-                      .filter(pk=change_pk).first())
-            if (
-                change is None
-                or change.user.status != Status.ACTIVE
-                or not email_change_token_generator.check_token(change, token)
-            ):
+            account = User.objects.select_for_update().filter(pk=owner_id).first()
+            change = PendingEmailChange.objects.select_for_update().filter(pk=change_pk, user_id=owner_id).first()
+            if account is None or change is None or account.status != Status.ACTIVE:
                 return None
-            account, new_email = change.user, change.new_email
+            change.user = account  # The token is checked against the locked account.
+            if not email_change_token_generator.check_token(change, token):
+                return None
+            new_email = change.new_email
             if User.objects.filter(email=new_email).exclude(pk=account.pk).exists():
                 change.delete()
                 return None

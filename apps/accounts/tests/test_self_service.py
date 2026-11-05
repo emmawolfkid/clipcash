@@ -1,6 +1,7 @@
 """Phase 17-A: profile editing, the email-change workflow and security information."""
 
 from datetime import timedelta
+from unittest import mock
 from urllib.parse import urlsplit
 
 from django.apps import apps
@@ -14,6 +15,7 @@ from django.utils import timezone
 
 from apps.accounts import services
 from apps.accounts.models import PendingEmailChange
+from apps.accounts.throttling import EMAIL_REQUESTS_PER_IP
 from apps.accounts.tokens import email_change_token_generator, verification_token_generator
 from apps.audit.models import AuditEvent
 from apps.core import features
@@ -281,6 +283,15 @@ class EmailChangeRequestTests(SelfServiceTestCase):
         self.client.post(reverse("accounts:password_reset"), {"email": victim.email})
         self.assertIn("reset", link_sent_to(victim.email))
 
+    def test_requests_are_limited_per_ip(self):
+        address = "203.0.113.9"
+        for _ in range(EMAIL_REQUESTS_PER_IP.limit):
+            EMAIL_REQUESTS_PER_IP.hit(address)
+        with mock.patch("apps.accounts.views.client_ip_for_limits", return_value=address):
+            self.assertContains(self.request_change(), "Too many requests")
+        self.assertFalse(PendingEmailChange.objects.exists())
+        self.assertEqual(mail.outbox, [])
+
     def test_audit_and_outbox_hold_no_token_or_plain_new_address_in_metadata(self):
         self.request_change()
         event = events("account.email_change.requested").get()
@@ -304,6 +315,38 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
         self.assertContains(response, NEW_EMAIL)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, "member@example.com")
+
+    def test_confirm_page_warns_the_reader_to_continue_only_if_they_asked(self):
+        self.assertContains(self.client.get(self.link()), "Only continue if you asked for this change")
+
+    def test_invalid_link_does_not_reveal_the_address(self):
+        link = self.link()
+        response = self.client.get(link[:-3] + "xx/")
+        self.assertEqual(response.status_code, 400)
+        self.assertNotContains(response, NEW_EMAIL, status_code=400)
+
+    def test_confirming_needs_a_csrf_token(self):
+        link = self.link()
+        client = self.client_class(enforce_csrf_checks=True)
+        self.assertEqual(client.post(link).status_code, 403)
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.email, "member@example.com")
+        client.get(link)
+        response = client.post(link, {"csrfmiddlewaretoken": client.cookies["csrftoken"].value})
+        self.assertEqual(response.status_code, 200)
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.email, NEW_EMAIL)
+
+    def test_changing_address_keeps_staff_role_flags_and_groups(self):
+        admin = make_user("root@example.com", role=User.Role.SUPER_ADMIN)
+        groups = set(admin.groups.values_list("name", flat=True))
+        self.client.force_login(admin)
+        self.client.post(self.link())
+        admin.refresh_from_db()
+        self.assertEqual(admin.email, NEW_EMAIL)
+        self.assertEqual((admin.role, admin.status), (User.Role.SUPER_ADMIN, User.Status.ACTIVE))
+        self.assertTrue(admin.is_staff and admin.is_superuser and admin.email_verified)
+        self.assertEqual(set(admin.groups.values_list("name", flat=True)), groups)
 
     def test_confirming_switches_the_sign_in_address_and_stays_verified(self):
         link = self.link()

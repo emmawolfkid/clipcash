@@ -3,6 +3,7 @@
 {% block auth_content %}
 <h1>{% translate "Confirm your new email address" %}</h1>
 <p>{% blocktranslate %}Use <strong>{{ new_email }}</strong> to sign in to your ClipCash account from now on?{% endblocktranslate %}</p>
+<p>{% translate "Only continue if you asked for this change. If you did not, close this page and nothing will change." %}</p>
 <form method="post">{% csrf_token %}
   <button type="submit" class="button">{% translate "Confirm new email address" %}</button>
 </form>
