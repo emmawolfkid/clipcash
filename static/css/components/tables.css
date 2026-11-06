@@ -54,6 +54,12 @@
   margin: 0;
 }
 
+.table-scroll__hint {
+  margin: 0 0 var(--space-1);
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
 .table-scroll:focus-visible {
   outline-offset: -3px;
 }

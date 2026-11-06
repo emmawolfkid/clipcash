@@ -145,7 +145,8 @@ textarea::placeholder {
   opacity: 1;
 }
 
-.form [aria-invalid="true"] {
+.form [aria-invalid="true"],
+.form input[aria-invalid="true"]:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]) {
   border: 2px solid var(--danger);
 }
 

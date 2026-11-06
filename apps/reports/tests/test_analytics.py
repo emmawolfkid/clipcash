@@ -1,7 +1,9 @@
 """Phase 15-D: staff analytics (access, correctness, filters, empty states, money separation)."""
 
 import re
-from datetime import date, datetime, timezone as dt_timezone
+from datetime import date, datetime, timedelta, timezone as dt_timezone
+from unittest import mock
+from zoneinfo import ZoneInfo
 
 from django.contrib.auth.models import Permission
 from django.core.cache import cache
@@ -272,6 +274,23 @@ class DemoWithdrawalTests(WithdrawalsTestCase):
         self.assertEqual(financial["demo"].funds, "demo")
 
 
+REPORTING_ZONE = ZoneInfo("Africa/Dar_es_Salaam")
+
+
+def reporting_today():
+    """The date in Tanzania. It differs from the UTC date from 00:00 to 03:00 local time."""
+    return timezone.now().astimezone(REPORTING_ZONE).date()
+
+
+def new_members_in(first, last):
+    period = services.period_from(first and first.isoformat(), last.isoformat())
+    return cards(analytics._memberships(period, analytics.DAY))["New members"]
+
+
+def new_members_on(day):
+    return new_members_in(day, day)
+
+
 class SupportAndOperationsTests(AccountsTestCase):
     def test_support_figures_and_trend(self):
         member = make_user("asker@example.com")
@@ -296,6 +315,32 @@ class SupportAndOperationsTests(AccountsTestCase):
 
     def test_period_today_is_included(self):
         make_user("today@example.com")
-        period = services.period_from("", timezone.now().date().isoformat())
-        section = analytics._memberships(period, analytics.DAY)
-        self.assertEqual(cards(section)["New members"], 1)
+        self.assertEqual(new_members_in("", reporting_today()), 1)
+
+    def test_reporting_day_follows_tanzania_not_utc(self):
+        member = make_user("boundary@example.com")
+
+        def utc(day, hour, minute=0, second=0):
+            return datetime(2026, 11, day, hour, minute, second, tzinfo=dt_timezone.utc)
+
+        cases = (  # Tanzanian time, the instant in UTC, its Tanzanian date, members in a period ending on the UTC date.
+            ("23:59:59 on the 5th, last second before the window", utc(5, 20, 59, 59), date(2026, 11, 5), 1),
+            ("00:00:00 on the 6th, the window opens", utc(5, 21), date(2026, 11, 6), 0),
+            ("00:30 on the 6th, inside the window", utc(5, 21, 30), date(2026, 11, 6), 0),
+            ("02:59:59 on the 6th, last second of the window", utc(5, 23, 59, 59), date(2026, 11, 6), 0),
+            ("03:00:00 on the 6th, the window closes", utc(6, 0), date(2026, 11, 6), 1),
+            ("12:00 on the 6th, well outside the window", utc(6, 9), date(2026, 11, 6), 1),
+        )
+        for label, instant, local_day, counted_by_utc_date in cases:
+            with self.subTest(label), mock.patch("django.utils.timezone.now", return_value=instant):
+                User.objects.filter(pk=member.pk).update(date_joined=instant)
+                self.assertEqual(reporting_today(), local_day)
+                self.assertEqual(services.period_from().last, local_day)
+                self.assertEqual(new_members_in("", local_day), 1)
+                self.assertEqual(new_members_in("", local_day - timedelta(days=1)), 0)
+                self.assertEqual(new_members_on(local_day), 1)
+                self.assertEqual(new_members_on(local_day - timedelta(days=1)), 0)
+                self.assertEqual(new_members_on(local_day + timedelta(days=1)), 0)
+                # Inside the window the UTC date is still yesterday, so a period ending on it misses this member.
+                # This is the exact shape of the old failure.
+                self.assertEqual(new_members_in("", instant.date()), counted_by_utc_date)

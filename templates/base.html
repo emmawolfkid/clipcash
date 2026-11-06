@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
   <title>{% block title %}{{ site_config.platform_name|default:"ClipCash" }}{% endblock %} · {{ site_config.platform_name|default:"ClipCash" }}</title>
   {% block stylesheets %}
     {% include "components/stylesheets.html" %}
@@ -22,7 +23,7 @@
   <script src="{% static 'js/member-nav.js' %}" defer></script>
   <script src="{% static 'js/shared-ui.js' %}" defer></script>
 </head>
-<body>
+<body data-table-scroll-hint="{% translate 'Scroll sideways to see all columns.' %}">
   <a class="skip-link" href="#content">{% translate "Skip to content" %}</a>
   <header class="site-header">
     <div class="site-header__inner">

@@ -17,6 +17,7 @@
 </nav>
 {% endif %}
 {% if videos %}
+  <h2 class="visually-hidden">{% translate "Videos" %}</h2>
   <ul class="video-grid">{% for video in videos %}{% include "components/video_card.html" %}{% endfor %}</ul>
   {% if page.has_other_pages %}
   <nav class="pagination" aria-label="{% translate 'Pages' %}">

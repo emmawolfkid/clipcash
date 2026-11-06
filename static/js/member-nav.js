@@ -30,9 +30,10 @@
     });
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape" && narrow.matches && isOpen()) {
+        // Move focus first: apply() reopens the menu while focus is inside a panel.
+        toggle.focus();
         toggle.setAttribute("aria-expanded", "false");
         apply();
-        toggle.focus();
       }
     });
     if (narrow.addEventListener) { narrow.addEventListener("change", apply); }

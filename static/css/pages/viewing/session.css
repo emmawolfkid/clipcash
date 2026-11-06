@@ -5,3 +5,7 @@
   margin: 0.25rem 0 0.5rem;
 }
 
+#watch-panel details > summary {
+  padding-block: 0.6rem;
+  cursor: pointer;
+}

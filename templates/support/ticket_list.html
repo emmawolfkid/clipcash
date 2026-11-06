@@ -10,7 +10,7 @@
   <button type="submit" class="button button--secondary">{% translate "Filter" %}</button>
 </form>
 {% if page.object_list %}
-<table class="table">
+<table class="table"><caption class="visually-hidden">{% translate "Your support tickets" %}</caption>
   <thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Subject" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Last update" %}</th></tr></thead>
   <tbody>{% for ticket in page.object_list %}<tr>
     <td><a href="{% url 'support:ticket' ticket.reference %}">{{ ticket.reference }}</a></td>
