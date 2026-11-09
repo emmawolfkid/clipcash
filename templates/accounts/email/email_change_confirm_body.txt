@@ -2,6 +2,8 @@
 
 {{ url }}
 
+{% translate "You will need to sign in to that account and confirm its password to finish." %}
+
 {% blocktranslate count hours=valid_hours %}The link expires in {{ hours }} hour and can be used once.{% plural %}The link expires in {{ hours }} hours and can be used once.{% endblocktranslate %}
 
 {% translate "If you did not ask for this, ignore this email. Nothing will change." %}

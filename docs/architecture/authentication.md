@@ -38,10 +38,19 @@ withdrawals) are **not** part of this phase and remain disabled.
 * Nothing returns to PENDING. PENDING → ACTIVE happens only through activation.
 * Only ACTIVE accounts can sign in. Suspending or disabling an account ends its
   sessions on the next request.
-* When staff change an email address in the admin, `email_verified` is cleared; ACTIVE
-  accounts then confirm the new address with a single-use link before using member pages.
+* Sessions are bound to the password hash **and** the sign-in address (RG-03,
+  `User._get_session_auth_hash`): changing either ends every session on its next request,
+  except the one that made the change.
+* When staff change an email address in the admin, `email_verified` is cleared and the
+  account's sessions end; ACTIVE accounts then confirm the new address with a single-use
+  link before using member pages.
 * When owners change their own address, it only switches once the new inbox confirms it
-  (see [Phase 17-A](../implementation/phase_17a_account_self_service.md)).
+  (see [Phase 17-A](../implementation/phase_17a_account_self_service.md)). Since RG-03 the
+  emailed link only moves its token into the session; the change is completed on a
+  token-free page by the **signed-in owner** with a **recent password confirmation**
+  (this session, within 5 minutes: `ACCOUNTS_REAUTHENTICATION_SECONDS`). Another account's
+  session is refused and audited (`account.email_change.denied`, reason `other_account`)
+  without consuming the link. See [rg_03_security_hardening.md](../implementation/rg_03_security_hardening.md).
 * Member pages require ACTIVE **and** a verified email.
 
 ### Why registration takes no password
@@ -96,7 +105,7 @@ SUSPENDED and DISABLED addresses receive nothing. Login errors are generic.
 | Login (public and admin) | 5 failures / 15 min per account+IP; 50 / hour per account; 50 / 15 min per IP |
 | Registration | 10 / hour per IP |
 | Registration, verification resend, password reset emails | 3 / hour per address; 20 / hour per IP |
-| Wrong current password (password change, email change) | 5 / 15 min per account |
+| Wrong current password (password change, email change request and confirmation) | 5 / 15 min per account |
 | Email change requests | 5 / hour per account; 3 / hour per requested address; 20 / hour per IP |
 | Phone number changes | 10 attempts / hour per account |
 
@@ -105,7 +114,10 @@ network; the per-account ceiling still stops distributed guessing. Limits use
 the Django cache. With `DJANGO_THROTTLE_REQUIRE_SHARED_CACHE` (default on when
 `DEBUG` is off) a per-process cache fails the startup check `accounts.E001`, and
 limits fail closed on cache errors. `X-Forwarded-For` is ignored unless
-`DJANGO_TRUSTED_PROXY_COUNT` is set.
+`DJANGO_TRUSTED_PROXY_COUNT` is set, and, when `DJANGO_TRUSTED_PROXY_NETWORKS` is set (required
+outside Render: `accounts.E007`), only from peers inside those networks; `X-Real-IP`,
+`CF-Connecting-IP` and `True-Client-IP` are read only if named in `DJANGO_CLIENT_IP_HEADER`
+(RG-03).
 
 ## Security logging
 

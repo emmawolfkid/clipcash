@@ -1,9 +1,10 @@
 import logging
 import re
 
-# Account links carry single-use tokens in the path: activate/, confirm-email/
-# and password reset/ (see apps/accounts/urls.py).
-TOKEN_PATH = re.compile(r"/(activate|confirm-email|reset)/[^/\s]+/[^/\s]+")
+# Account links carry single-use tokens in the path: activate/, confirm-email/,
+# password reset/ and email-change/ (see apps/accounts/urls.py). RG-03 added
+# email-change/, whose links were previously logged unredacted.
+TOKEN_PATH = re.compile(r"/(activate|confirm-email|reset|email-change)/[^/\s]+/[^/\s]+")
 
 
 class RedactTokenPaths(logging.Filter):

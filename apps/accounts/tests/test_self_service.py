@@ -13,7 +13,7 @@ from django.test import Client, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.accounts import services
+from apps.accounts import reauth, services, views
 from apps.accounts.models import PendingEmailChange
 from apps.accounts.throttling import EMAIL_REQUESTS_PER_IP
 from apps.accounts.tokens import email_change_token_generator, verification_token_generator
@@ -58,6 +58,15 @@ class SelfServiceTestCase(AccountsTestCase):
 
     def request_change(self, new_email=NEW_EMAIL, password=PASSWORD):
         return self.client.post(EMAIL_CHANGE, {"new_email": new_email, "current_password": password})
+
+    def confirm(self, link, password=PASSWORD, client=None):
+        """Open the emailed link, then complete the change on the review page (RG-03).
+        Returns the first response that is not the link's redirect."""
+        client = client or self.client
+        opened = client.get(link)
+        if opened.status_code != 302:
+            return opened
+        return client.post(opened.url, {"current_password": password})
 
 
 class ProfileEditTests(SelfServiceTestCase):
@@ -311,13 +320,13 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
 
     def test_opening_the_link_changes_nothing(self):
         link = self.link()
-        response = self.client.get(link)
+        response = self.client.get(link, follow=True)
         self.assertContains(response, NEW_EMAIL)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, "member@example.com")
 
     def test_confirm_page_warns_the_reader_to_continue_only_if_they_asked(self):
-        self.assertContains(self.client.get(self.link()), "Only continue if you asked for this change")
+        self.assertContains(self.client.get(self.link(), follow=True), "Only continue if you asked for this change")
 
     def test_invalid_link_does_not_reveal_the_address(self):
         link = self.link()
@@ -328,20 +337,28 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
     def test_confirming_needs_a_csrf_token(self):
         link = self.link()
         client = self.client_class(enforce_csrf_checks=True)
-        self.assertEqual(client.post(link).status_code, 403)
+        client.force_login(self.member)
+        review = client.get(link, follow=True).redirect_chain[-1][0]
+        self.assertEqual(client.post(review, {"current_password": PASSWORD}).status_code, 403)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, "member@example.com")
-        client.get(link)
-        response = client.post(link, {"csrfmiddlewaretoken": client.cookies["csrftoken"].value})
+        response = client.post(review, {"current_password": PASSWORD,
+                                        "csrfmiddlewaretoken": client.cookies["csrftoken"].value})
         self.assertEqual(response.status_code, 200)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, NEW_EMAIL)
+
+    def test_the_link_itself_cannot_be_posted(self):
+        """The token URL only moves the token into the session; the change needs the review page."""
+        self.assertEqual(self.client.post(self.link()).status_code, 405)
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.email, "member@example.com")
 
     def test_changing_address_keeps_staff_role_flags_and_groups(self):
         admin = make_user("root@example.com", role=User.Role.SUPER_ADMIN)
         groups = set(admin.groups.values_list("name", flat=True))
         self.client.force_login(admin)
-        self.client.post(self.link())
+        self.confirm(self.link())
         admin.refresh_from_db()
         self.assertEqual(admin.email, NEW_EMAIL)
         self.assertEqual((admin.role, admin.status), (User.Role.SUPER_ADMIN, User.Status.ACTIVE))
@@ -350,7 +367,7 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
 
     def test_confirming_switches_the_sign_in_address_and_stays_verified(self):
         link = self.link()
-        self.assertEqual(self.client.post(link).status_code, 200)
+        self.assertEqual(self.confirm(link).status_code, 200)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, NEW_EMAIL)
         self.assertTrue(self.member.email_verified)
@@ -363,13 +380,13 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
         self.assertEqual(get_user(self.client).pk, self.member.pk)
 
     def test_previous_address_is_told_without_the_new_one(self):
-        self.client.post(self.link())
+        self.confirm(self.link())
         notice = [message for message in mail.outbox if "member@example.com" in message.to][-1]
         self.assertIn("was changed", notice.subject)
         self.assertNotIn(NEW_EMAIL, notice.body)
 
     def test_audit_records_hashes_only(self):
-        self.client.post(self.link())
+        self.confirm(self.link())
         event = events("account.email_changed").get()
         self.assertEqual(event.actor_id, self.member.pk)
         self.assertEqual(set(event.metadata), {"previous_address_hash", "new_address_hash"})
@@ -378,32 +395,42 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
 
     def test_link_works_once(self):
         link = self.link()
-        self.client.post(link)
-        self.assertEqual(self.client.post(link).status_code, 400)
+        self.confirm(link)
+        self.assertEqual(self.confirm(link).status_code, 400)
         self.assertEqual(self.client.get(link).status_code, 400)
 
-    def test_link_works_signed_out_and_after_a_new_sign_in(self):
+    def test_a_signed_out_reader_must_sign_in_as_the_owner_first(self):
         link = self.link()
         self.client.logout()
-        self.client.post(LOGIN, {"username": "member@example.com", "password": PASSWORD})  # Updates last_login.
-        self.client.logout()
-        self.assertEqual(self.client.post(link).status_code, 200)
+        review = self.client.get(link)
+        self.assertEqual(review.status_code, 302)
+        self.assertNotIn(link.rstrip("/").rsplit("/", 1)[-1], review.url)  # The token never reaches a later URL.
+        to_login = self.client.get(review.url)
+        self.assertRedirects(to_login, f"{LOGIN}?next={review.url}", fetch_redirect_response=False)
+        self.client.post(LOGIN, {"username": "member@example.com", "password": PASSWORD})  # Session data survives.
+        self.assertEqual(self.client.post(review.url, {"current_password": PASSWORD}).status_code, 200)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, NEW_EMAIL)
 
-    def test_another_signed_in_account_opening_the_link_is_not_changed(self):
+    def test_another_signed_in_account_is_refused_and_the_owner_keeps_the_link(self):
         link = self.link()
         other = make_user("other@example.com")
         self.client.force_login(other)
-        self.client.post(link)
+        response = self.confirm(link)
+        self.assertEqual(response.status_code, 400)
+        self.assertNotContains(response, NEW_EMAIL, status_code=400)
         other.refresh_from_db()
         self.member.refresh_from_db()
-        self.assertEqual((other.email, self.member.email), ("other@example.com", NEW_EMAIL))
+        self.assertEqual((other.email, self.member.email), ("other@example.com", "member@example.com"))
+        denied = events("account.email_change.denied").get()
+        self.assertEqual((denied.target_id, denied.metadata["reason"]), (str(other.pk), "other_account"))
+        self.client.force_login(self.member)
+        self.assertEqual(self.confirm(link).status_code, 200)  # Still usable by its owner.
 
     def test_expired_link_is_refused_and_not_shown_as_waiting(self):
         link = self.link()
         with self.settings(ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT=-1):
-            self.assertEqual(self.client.post(link).status_code, 400)
+            self.assertEqual(self.confirm(link).status_code, 400)
             self.assertNotContains(self.client.get(PROFILE), NEW_EMAIL)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, "member@example.com")
@@ -421,15 +448,24 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
         bad_paths.append(reverse("accounts:email_change_confirm", kwargs={"pk": change.pk, "token": other_token}))
         for path in bad_paths:
             with self.subTest(path=path):
-                self.assertEqual(self.client.post(path).status_code, 400)
+                self.assertEqual(self.confirm(path).status_code, 400)
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.email, "member@example.com")
+
+    def test_review_page_needs_the_link_opened_in_this_browser(self):
+        self.link()
+        change = PendingEmailChange.objects.get()
+        review = reverse("accounts:email_change_review", kwargs={"pk": change.pk})
+        self.assertEqual(self.client.get(review).status_code, 400)
+        self.assertEqual(self.client.post(review, {"current_password": PASSWORD}).status_code, 400)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, "member@example.com")
 
     def test_new_request_ends_the_earlier_link(self):
         first = self.link()
         second = self.link("second@example.com")
-        self.assertEqual(self.client.post(first).status_code, 400)
-        self.assertEqual(self.client.post(second).status_code, 200)
+        self.assertEqual(self.confirm(first).status_code, 400)
+        self.assertEqual(self.confirm(second).status_code, 200)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, "second@example.com")
 
@@ -438,7 +474,7 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
         self.assertEqual(self.client.get(CANCEL).status_code, 405)
         self.assertTrue(PendingEmailChange.objects.exists())
         self.assertRedirects(self.client.post(CANCEL), PROFILE)
-        self.assertEqual(self.client.post(link).status_code, 400)
+        self.assertEqual(self.confirm(link).status_code, 400)
         self.assertEqual(events("account.email_change.cancelled").count(), 1)
 
     def test_cancelling_touches_only_the_signed_in_account(self):
@@ -453,7 +489,7 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
         self.client.post(PASSWORD_CHANGE, {"old_password": PASSWORD, "new_password1": NEW_PASSWORD,
                                            "new_password2": NEW_PASSWORD})
         self.assertFalse(PendingEmailChange.objects.exists())
-        self.assertEqual(self.client.post(link).status_code, 400)
+        self.assertEqual(self.confirm(link, password=NEW_PASSWORD).status_code, 400)
 
     def test_password_reset_ends_the_link(self):
         link = self.link()
@@ -463,7 +499,8 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
         self.client.post(reset.redirect_chain[-1][0], {"new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD})
         self.assertTrue(User.objects.get(pk=self.member.pk).check_password(NEW_PASSWORD))
         self.assertFalse(PendingEmailChange.objects.exists())
-        self.assertEqual(self.client.post(link).status_code, 400)
+        self.client.force_login(User.objects.get(pk=self.member.pk))
+        self.assertEqual(self.confirm(link, password=NEW_PASSWORD).status_code, 400)
 
     def test_link_expires_exactly_at_its_lifetime(self):
         self.request_change()
@@ -475,7 +512,7 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
         self.assertTrue(generator.check_token(change, token_aged(lifetime - 60)))
         self.assertFalse(generator.check_token(change, token_aged(lifetime + 60)))
         path = reverse("accounts:email_change_confirm", kwargs={"pk": change.pk, "token": token_aged(lifetime + 60)})
-        self.assertEqual(self.client.post(path).status_code, 400)
+        self.assertEqual(self.confirm(path).status_code, 400)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, "member@example.com")
 
@@ -486,18 +523,19 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
         OutboundEmail.objects.filter(recipient=NEW_EMAIL).update(
             token_issued_at=timezone.now() - timedelta(seconds=settings.ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT + 60))
         self.client.get(PROFILE)  # This client runs the worker: the email goes out late.
-        self.assertEqual(self.client.post(link_sent_to(NEW_EMAIL)).status_code, 400)
+        self.assertEqual(self.confirm(link_sent_to(NEW_EMAIL)).status_code, 400)
 
     def test_link_is_dead_once_the_password_hash_changes_even_with_the_row_present(self):
         link = self.link()
         self.member.set_password(NEW_PASSWORD)
         self.member.save()
-        self.assertEqual(self.client.post(link).status_code, 400)
+        self.client.force_login(self.member)
+        self.assertEqual(self.confirm(link, password=NEW_PASSWORD).status_code, 400)
 
     def test_address_taken_after_the_request_refuses_the_link(self):
         link = self.link()
         make_user(NEW_EMAIL)
-        self.assertEqual(self.client.post(link).status_code, 400)
+        self.assertEqual(self.confirm(link).status_code, 400)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, "member@example.com")
         self.assertFalse(PendingEmailChange.objects.exists())
@@ -512,7 +550,8 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
         self.member.status = User.Status.SUSPENDED
         self.member.save()
         self.client.logout()
-        self.assertEqual(self.client.post(link).status_code, 400)
+        response = self.client.get(link)  # A suspended account's token no longer verifies.
+        self.assertEqual(response.status_code, 400)
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, "member@example.com")
 
@@ -530,9 +569,124 @@ class EmailChangeConfirmTests(SelfServiceTestCase):
         reset = link_sent_to("member@example.com")
         self.assertEqual(self.client.get(reset).status_code, 302)  # Valid: moves the token into the session.
         self.client.force_login(self.member)
-        self.client.post(self.link())
+        self.confirm(self.link())
         self.client.logout()
         self.assertFalse(self.client.get(reset, follow=True).context["validlink"])
+
+
+class EmailChangeHardeningTests(SelfServiceTestCase):
+    """RG-03: signed-in owner, fresh password, other sessions revoked, token kept out of URLs."""
+
+    def link(self, new_email=NEW_EMAIL):
+        self.request_change(new_email)
+        return link_sent_to(new_email)
+
+    def make_stale(self, seconds=None):
+        session = self.client.session
+        age = (seconds if seconds is not None else settings.ACCOUNTS_REAUTHENTICATION_SECONDS) + 1
+        session[reauth.SESSION_KEY]["at"] -= age
+        session.save()
+
+    def test_a_fresh_password_from_the_request_needs_no_second_entry(self):
+        review = self.client.get(self.link(), follow=True)
+        self.assertNotContains(review, 'name="current_password"')
+        self.assertEqual(self.client.post(review.redirect_chain[-1][0], {}).status_code, 200)
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.email, NEW_EMAIL)
+
+    def test_a_stale_confirmation_asks_for_the_password_again(self):
+        link = self.link()
+        self.make_stale()
+        review = self.client.get(link, follow=True)
+        self.assertContains(review, 'name="current_password"')
+        url = review.redirect_chain[-1][0]
+        self.assertContains(self.client.post(url, {}), "This field is required")
+        self.assertContains(self.client.post(url, {"current_password": "wrong-password-123"}),
+                            "Your current password was entered incorrectly")
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.email, "member@example.com")
+        self.assertEqual(self.client.post(url, {"current_password": PASSWORD}).status_code, 200)
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.email, NEW_EMAIL)
+
+    def test_freshness_boundary(self):
+        link = self.link()
+        self.make_stale(seconds=settings.ACCOUNTS_REAUTHENTICATION_SECONDS - 2)  # Just inside the window.
+        self.assertNotContains(self.client.get(link, follow=True), 'name="current_password"')
+        self.make_stale(seconds=2)  # Now just past it.
+        self.assertContains(self.client.get(link, follow=True), 'name="current_password"')
+
+    def test_signing_in_alone_is_not_a_recent_confirmation(self):
+        link = self.link()
+        other_browser = self.client_class()
+        other_browser.post(LOGIN, {"username": "member@example.com", "password": PASSWORD})
+        self.assertContains(other_browser.get(link, follow=True), 'name="current_password"')
+
+    def test_wrong_passwords_are_limited_and_audited(self):
+        link = self.link()
+        self.make_stale()
+        url = self.client.get(link, follow=True).redirect_chain[-1][0]
+        for _ in range(5):
+            self.client.post(url, {"current_password": "wrong-password-123"})
+        self.assertContains(self.client.post(url, {"current_password": PASSWORD}), "Too many incorrect passwords")
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.email, "member@example.com")
+        self.assertTrue(events("auth.current_password.failed").filter(
+            metadata__operation="email_change_confirm").exists())
+
+    def test_other_sessions_are_signed_out_and_this_one_continues(self):
+        phone = self.client_class()
+        phone.force_login(self.member)
+        self.assertEqual(phone.get(PROFILE).status_code, 200)
+        self.confirm(self.link())
+        self.assertNotEqual(phone.get(PROFILE).status_code, 200)
+        self.assertFalse(get_user(phone).is_authenticated)
+        self.assertEqual(self.client.get(PROFILE).status_code, 200)
+        self.assertEqual(get_user(self.client).pk, self.member.pk)
+
+    def test_a_password_change_still_ends_other_sessions(self):
+        phone = self.client_class()
+        phone.force_login(self.member)
+        self.client.post(PASSWORD_CHANGE, {"old_password": PASSWORD, "new_password1": NEW_PASSWORD,
+                                           "new_password2": NEW_PASSWORD})
+        self.assertFalse(get_user(phone).is_authenticated)
+        self.assertTrue(get_user(self.client).is_authenticated)
+
+    def test_token_stays_out_of_later_urls_pages_and_headers(self):
+        link = self.link()
+        token = link.rstrip("/").rsplit("/", 1)[-1]
+        opened = self.client.get(link)
+        self.assertEqual(opened.status_code, 302)
+        self.assertNotIn(token, opened.url)
+        self.assertEqual(opened["Referrer-Policy"], "no-referrer")
+        self.assertIn("no-store", opened["Cache-Control"])
+        review = self.client.get(opened.url)
+        self.assertNotContains(review, token)
+        self.assertEqual(review["Referrer-Policy"], "no-referrer")
+        done = self.client.post(opened.url, {"current_password": PASSWORD})
+        self.assertNotContains(done, token)
+        self.assertNotIn(views.EMAIL_CHANGE_SESSION_KEY, self.client.session)
+
+    def test_other_token_links_send_no_referrer(self):
+        self.client.logout()
+        self.client.post(reverse("accounts:password_reset"), {"email": "member@example.com"})
+        reset = self.client.get(link_sent_to("member@example.com"))
+        self.assertEqual(reset["Referrer-Policy"], "no-referrer")
+        invalid = self.client.get(reverse("accounts:confirm_email", kwargs={"uidb64": "MTIz", "token": "x-y"}))
+        self.assertEqual(invalid["Referrer-Policy"], "no-referrer")
+
+    def test_a_link_opened_for_one_change_cannot_complete_another(self):
+        self.link()
+        first = PendingEmailChange.objects.get()
+        stale_link = link_sent_to(NEW_EMAIL)
+        self.client.get(stale_link)  # Token for the first request is now in the session.
+        self.link("second@example.com")  # Replaces the request: a new row and token.
+        second = PendingEmailChange.objects.get()
+        self.assertNotEqual(first.pk, second.pk)
+        review = reverse("accounts:email_change_review", kwargs={"pk": second.pk})
+        self.assertEqual(self.client.post(review, {"current_password": PASSWORD}).status_code, 400)
+        self.member.refresh_from_db()
+        self.assertEqual(self.member.email, "member@example.com")
 
 
 @DEMO
@@ -627,7 +781,7 @@ class FinancialSafeguardTests(SelfServiceTestCase):
         before = self.counts()
         self.client.post(EDIT, {"first_name": "A", "last_name": "B", "phone_number": "+255712345678"})
         self.request_change()
-        self.client.post(link_sent_to(NEW_EMAIL))
+        self.confirm(link_sent_to(NEW_EMAIL))
         self.assertEqual(self.counts(), before)
 
     def test_token_cannot_be_derived_from_a_verification_token(self):

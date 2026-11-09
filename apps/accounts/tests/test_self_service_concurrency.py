@@ -45,7 +45,7 @@ class EmailChangeConcurrencyTests(TransactionTestCase):
     def test_a_link_confirmed_concurrently_succeeds_exactly_once(self):
         change, token = self.pending()
         results = []
-        errors = run_concurrently(5, lambda _: results.append(services.confirm_email_change(change.pk, token)))
+        errors = run_concurrently(5, lambda _: results.append(services.confirm_email_change(change.pk, token, self.member)))
         self.assertEqual(errors, [])
         self.assertEqual(sum(result is not None for result in results), 1)
         self.member.refresh_from_db()
@@ -57,11 +57,12 @@ class EmailChangeConcurrencyTests(TransactionTestCase):
     def test_two_accounts_confirming_one_address_cannot_both_get_it(self):
         other = make_user("other@example.com")
         links = [self.pending(), self.pending(other)]
+        owners = [self.member, other]
         results = {}
 
         def confirm(index):
             change, token = links[index]
-            results[index] = services.confirm_email_change(change.pk, token)
+            results[index] = services.confirm_email_change(change.pk, token, owners[index])
 
         errors = run_concurrently(2, confirm)
         self.assertEqual(errors, [])
@@ -72,6 +73,32 @@ class EmailChangeConcurrencyTests(TransactionTestCase):
         self.assertEqual(len(emails), 2)
         self.assertIn(NEW_EMAIL, emails)
         self.assertEqual(len(emails & {"member@example.com", "other@example.com"}), 1)  # The loser keeps theirs.
+
+    def test_only_the_owner_can_complete_a_link_even_concurrently(self):
+        """RG-03: the service takes the confirming account; another account holding the same
+        token is refused, whatever the timing, and does not consume the link."""
+        change, token = self.pending()
+        intruder = make_user("intruder@example.com")
+        results = {}
+
+        def confirm(index):
+            results[index] = services.confirm_email_change(change.pk, token, (intruder, self.member)[index % 2])
+
+        errors = run_concurrently(6, confirm)
+        self.assertEqual(errors, [])
+        winners = [index for index, result in results.items() if result is not None]
+        self.assertEqual(len(winners), 1)
+        self.assertEqual(winners[0] % 2, 1)  # The owner.
+        intruder.refresh_from_db()
+        self.member.refresh_from_db()
+        self.assertEqual((self.member.email, intruder.email), (NEW_EMAIL, "intruder@example.com"))
+
+    def test_an_intruder_alone_leaves_the_link_usable(self):
+        change, token = self.pending()
+        self.assertIsNone(services.confirm_email_change(change.pk, token, make_user("intruder@example.com")))
+        self.assertIsNone(services.confirm_email_change(change.pk, token, None))
+        self.assertTrue(PendingEmailChange.objects.filter(pk=change.pk).exists())
+        self.assertIsNotNone(services.confirm_email_change(change.pk, token, self.member))
 
     def test_concurrent_requests_leave_one_waiting_change(self):
         errors = run_concurrently(
@@ -106,7 +133,7 @@ class EmailChangeConcurrencyTests(TransactionTestCase):
         def confirm():
             try:
                 account_locked.wait(10)
-                results.append(services.confirm_email_change(change.pk, token))
+                results.append(services.confirm_email_change(change.pk, token, self.member))
             except Exception as error:  # noqa: BLE001 - collected for assertions
                 errors.append(error)
             finally:

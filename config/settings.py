@@ -203,11 +203,17 @@ LOGOUT_REDIRECT_URL = "accounts:login"
 ACCOUNTS_PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
 ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT = 60 * 60 * 24  # 24 hours
 PASSWORD_RESET_TIMEOUT = max(ACCOUNTS_PASSWORD_RESET_TIMEOUT, ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT)
+# RG-03: how recently this session must have confirmed the current password before an
+# email-address change can be completed without asking again (apps.accounts.reauth).
+ACCOUNTS_REAUTHENTICATION_SECONDS = 5 * 60
 
 # Restricted demonstration: public registration is closed whatever the site
 # configuration says (apps.core.features), and the homepage says so. On by
 # default outside DEBUG; only a reviewed public launch sets it to False.
 RESTRICTED_DEMO_MODE = env.bool("DJANGO_RESTRICTED_DEMO", default=not DEBUG)
+# RG-03: turning restricted demo mode off outside DEBUG fails `check --deploy`
+# (core.E007) unless a reviewed public launch also sets this.
+PUBLIC_REGISTRATION_APPROVED = env.bool("DJANGO_PUBLIC_REGISTRATION_APPROVED", default=False)
 # Restricted demonstration only: the accounts listed in DJANGO_DEMO_ACCOUNTS
 # (comma-separated emails) may use pages that otherwise require a verified
 # email. Ignored unless RESTRICTED_DEMO_MODE is on and no payments (live or
@@ -228,9 +234,12 @@ CSRF_COOKIE_SAMESITE = "Lax"
 
 # Email
 
+# RG-03: outside DEBUG the default sends nothing rather than printing account links into
+# the logs (console); check --deploy warns (notifications.W001) until SMTP is configured
+# and refuses console, locmem and file backends (notifications.E001).
 EMAIL_BACKEND = env(
     "DJANGO_EMAIL_BACKEND",
-    default="django.core.mail.backends.console.EmailBackend",
+    default="django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.dummy.EmailBackend",
 )
 DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="ClipCash <no-reply@localhost>")
 # SMTP (DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend).
@@ -265,6 +274,16 @@ ACCOUNTS_THROTTLE_REQUIRE_SHARED_CACHE = env.bool(
 # 0 = direct connections (X-Forwarded-For ignored). Required behind a proxy: check
 # --deploy refuses 0 there (accounts.E004). Verify on /manage/health/.
 ACCOUNTS_TRUSTED_PROXY_COUNT = env.int("DJANGO_TRUSTED_PROXY_COUNT", default=0)
+# Networks the connecting peer (REMOTE_ADDR) must belong to before any forwarded
+# header is believed, e.g. Cloudflare's published ranges. A peer outside them is
+# treated as a direct client. Required outside Render whenever proxies are trusted
+# (accounts.E007), unless DJANGO_PROXY_ORIGIN_RESTRICTED attests that the web
+# server itself only accepts the proxy. Empty on Render (internal load balancer).
+ACCOUNTS_TRUSTED_PROXY_NETWORKS = env.list("DJANGO_TRUSTED_PROXY_NETWORKS", default=[])
+# Optional single-address header set by the trusted proxy (CF-Connecting-IP,
+# X-Real-IP or True-Client-IP). Never read unless configured here.
+ACCOUNTS_CLIENT_IP_HEADER = env("DJANGO_CLIENT_IP_HEADER", default="")
+ACCOUNTS_PROXY_ORIGIN_RESTRICTED = env.bool("DJANGO_PROXY_ORIGIN_RESTRICTED", default=False)
 
 
 # Background jobs (apps.core.jobs) and the email outbox (apps.notifications).

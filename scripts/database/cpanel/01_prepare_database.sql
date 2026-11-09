@@ -20,8 +20,10 @@
 --
 -- Why CREATE and TEMPORARY are taken away: the trigger functions that protect
 -- the ledger and audit history name their tables without a schema, so a login
--- that can create a schema or a temporary table could make a function read a
--- look-alike table. The runtime login gets neither privilege.
+-- that could create a schema or a temporary table could make a function read a
+-- look-alike table. Migration core.0004 (RG-03) pins every function's
+-- search_path, which closes that path; withholding both privileges keeps a
+-- second layer and stops the runtime login creating any object at all.
 
 \set ON_ERROR_STOP on
 \if :{?runtime_role}

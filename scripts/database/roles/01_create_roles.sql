@@ -18,7 +18,8 @@
 --   clipcash_app      LOGIN. Runtime web and worker role. Not a member of the
 --                     owner, owns nothing, cannot create objects, gets data
 --                     privileges only (step 3).
--- Idempotent: existing roles are left unchanged.
+-- Idempotent: existing roles are left unchanged; database privileges are reset to
+-- CONNECT only each time (re-run it once on databases prepared before RG-03).
 
 \set ON_ERROR_STOP on
 \if :{?app_db}
@@ -45,9 +46,14 @@ SELECT NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'clipcash_app') AS cre
   CREATE ROLE clipcash_app LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
 \endif
 
--- Database-level access.
-SELECT format('GRANT CONNECT, TEMPORARY ON DATABASE %I TO clipcash_app, clipcash_migrator', :'app_db') \gexec
-SELECT format('REVOKE CREATE ON DATABASE %I FROM PUBLIC', :'app_db') \gexec
+-- Database-level access: CONNECT only. Nobody but the database owner may create
+-- schemas or temporary tables (RG-03: a temporary table shadowed protected tables
+-- inside trigger checks until migration core.0004 pinned their search_path; the
+-- application never needs temporary tables). Safe to re-run on a database that
+-- was prepared by an earlier version of this script, which granted TEMPORARY.
+SELECT format('GRANT CONNECT ON DATABASE %I TO clipcash_app, clipcash_migrator', :'app_db') \gexec
+SELECT format('REVOKE CREATE, TEMPORARY ON DATABASE %I FROM PUBLIC', :'app_db') \gexec
+SELECT format('REVOKE CREATE, TEMPORARY ON DATABASE %I FROM clipcash_app, clipcash_migrator', :'app_db') \gexec
 
 -- Verification.
 SELECT rolname, rolcanlogin, rolsuper, rolcreaterole, rolcreatedb, rolinherit, rolbypassrls

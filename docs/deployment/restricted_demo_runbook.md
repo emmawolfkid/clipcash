@@ -63,6 +63,8 @@ without a decision (see "Remaining risks").
 Separate the roles, using generated passwords with letters and digits only so they are safe in URLs:
 
 ```powershell
+# RG-03: 01 now grants CONNECT only and takes TEMPORARY back. On a database prepared earlier, re-run 01 (as the
+# default user) and then 03 and 04; 02 is never repeated.
 psql $env:DATABASE_URL -v app_db=<database name> -f scripts/database/roles/01_create_roles.sql
 psql $env:DATABASE_URL -c "\password clipcash_migrator"
 psql $env:DATABASE_URL -c "\password clipcash_app"
@@ -106,10 +108,15 @@ Build the two URLs from the Render URL by replacing only the user and password:
 | `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS` | Only with a custom domain |
 
 **No SMTP yet?** Use `django.core.mail.backends.dummy.EmailBackend`, plus
-`DJANGO_DEMO_EMAIL_VERIFICATION_OPTIONAL=True` and `DJANGO_DEMO_ACCOUNTS=<comma-separated demo emails>`. Do not leave the
-default console backend: it prints activation and password-reset links into the logs.
+`DJANGO_DEMO_EMAIL_VERIFICATION_OPTIONAL=True` and `DJANGO_DEMO_ACCOUNTS=<comma-separated demo emails>`. Since RG-03 the
+default outside DEBUG is this dummy backend, and the build refuses console, locmem and file backends
+(`notifications.E001`): they keep activation and password-reset links in logs or files.
 
-**Never set:** `DJANGO_DEBUG=True`, `DJANGO_PAYMENTS_SANDBOX_ALLOWED`, `VIDEO_DEMO_ALLOWED`,
+On Render leave `DJANGO_TRUSTED_PROXY_NETWORKS`, `DJANGO_CLIENT_IP_HEADER` and `DJANGO_PROXY_ORIGIN_RESTRICTED` unset:
+the service is reachable only through Render's own proxy, whose internal addresses are not published.
+
+**Never set:** `DJANGO_DEBUG=True`, `DJANGO_RESTRICTED_DEMO=False`, `DJANGO_PUBLIC_REGISTRATION_APPROVED`,
+`DJANGO_PAYMENTS_SANDBOX_ALLOWED`, `VIDEO_DEMO_ALLOWED`,
 `DJANGO_ADVERTISING_REPORT_MIN_COUNT` below 5 (the default is 5; leave it unset),
 `MIGRATION_DATABASE_URL` (keeping the migrator credential off Render; see §7).
 
@@ -125,7 +132,10 @@ Create both with Auto-Deploy **Off**, same region as the database, branch `main`
 | Health Check Path | `/healthz` | n/a |
 
 `build.sh` runs `collectstatic` and `check --deploy --fail-level ERROR`, so a build fails if sandbox payments, the demo
-video provider, a proxy count of 0 or a missing shared cache is configured.
+video provider, a proxy count of 0 or a missing shared cache is configured. Since RG-03 it also fails on DEBUG, a
+weak or placeholder secret key, open allowed hosts, non-HTTPS trusted origins, a disabled HTTPS redirect, restricted
+demo mode turned off, any real-money feature, a log- or file-recording email backend, unencrypted remote SMTP and
+malformed Bunny values (see [netpoa_runbook.md](netpoa_runbook.md) §6 for the full list).
 
 Expected build warning: `security.W004` (HSTS, deliberately 0). `notifications.W001` appears only without SMTP, and
 `videos.W001` only without Bunny.

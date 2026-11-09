@@ -251,17 +251,20 @@ def discard_email_change(user):
     PendingEmailChange.objects.filter(user=user).delete()
 
 
-def confirm_email_change(change_pk, token):
+def confirm_email_change(change_pk, token, user):
     """
-    Complete a change from the link sent to the new address. Checked again on the locked
-    rows, so a replay or concurrent submission cannot succeed twice. Returns the account,
-    or None for any invalid link (including an address taken since it was requested).
+    Complete a change from the link sent to the new address, for ``user``, the signed-in
+    account that has just re-verified its password (RG-03; see views.EmailChangeReviewView).
+    A link belonging to another account is refused and left usable by its owner. Checked
+    again on the locked rows, so a replay or concurrent submission cannot succeed twice.
+    Returns the account, or None for any invalid link (including an address taken since
+    it was requested).
 
     Locks the account before the request, the order every other path uses (new request,
     password change, password reset); the opposite order deadlocks against them.
     """
     owner_id = PendingEmailChange.objects.filter(pk=change_pk).values_list("user_id", flat=True).first()
-    if owner_id is None:
+    if owner_id is None or user is None or owner_id != user.pk:
         return None
     try:
         with transaction.atomic():

@@ -26,7 +26,13 @@ BEGIN
         ('bypass triggers (replica role)', 'SET LOCAL session_replication_role = replica'),
         ('truncate audit history',        'TRUNCATE public.audit_auditevent'),
         ('create a table',                'CREATE TABLE public.clipcash_role_probe (id integer)'),
-        ('replace a trigger function',    'CREATE OR REPLACE FUNCTION public.withdrawals_locked() RETURNS trigger LANGUAGE plpgsql AS ''BEGIN RETURN NEW; END''')
+        ('replace a trigger function',    'CREATE OR REPLACE FUNCTION public.withdrawals_locked() RETURNS trigger LANGUAGE plpgsql AS ''BEGIN RETURN NEW; END'''),
+        -- RG-03: shadowing and escalation.
+        ('create a temporary table',      'CREATE TEMPORARY TABLE clipcash_role_probe_tmp (id integer)'),
+        ('create a schema',               'CREATE SCHEMA clipcash_role_probe'),
+        ('unpin a guard function',        'ALTER FUNCTION public.ledger_verify_entry(uuid) RESET search_path'),
+        ('assume the table owner role',   format('SET LOCAL ROLE %I', (SELECT tableowner FROM pg_tables
+                                                 WHERE schemaname = 'public' AND tablename = 'wallets_journalline')))
     ) AS p(label, statement) LOOP
         BEGIN
             EXECUTE probe.statement;
@@ -66,7 +72,21 @@ BEGIN
         ('maintain ledger balances (trigger)',  has_column_privilege('public.wallets_ledgeraccount', 'debit_balance', 'UPDATE')),
         ('run background jobs',                 has_table_privilege('public.core_job', 'SELECT,INSERT,UPDATE,DELETE')),
         ('owns no table',                       NOT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tableowner = current_user)),
-        ('is not a superuser',                  NOT (SELECT rolsuper FROM pg_roles WHERE rolname = current_user))
+        ('is not a superuser',                  NOT (SELECT rolsuper FROM pg_roles WHERE rolname = current_user)),
+        -- RG-03.
+        ('not a member of any table owner',     NOT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'public'
+                                                           AND pg_has_role(current_user, tableowner, 'MEMBER'))),
+        ('no CREATE or TEMPORARY on the database', NOT has_database_privilege(current_database(), 'CREATE')
+                                                AND NOT has_database_privilege(current_database(), 'TEMPORARY')),
+        ('no CREATE in schema public',          NOT has_schema_privilege('public', 'CREATE')),
+        ('guard functions pin search_path (migration core.0004)',
+                                                EXISTS (SELECT 1 FROM pg_proc WHERE oid = 'public.ledger_verify_entry(uuid)'::regprocedure)
+                                                AND NOT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+                                                    WHERE n.nspname = 'public'
+                                                    AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e')
+                                                    AND NOT coalesce(p.proconfig, '{}') @> ARRAY['search_path=pg_catalog, public, pg_temp'])),
+        ('no SECURITY DEFINER functions',       NOT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+                                                           WHERE n.nspname = 'public' AND p.prosecdef))
     ) AS p(label, ok) LOOP
         IF probe.ok THEN
             RAISE NOTICE 'PASS %', probe.label;

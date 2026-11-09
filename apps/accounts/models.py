@@ -182,6 +182,19 @@ class User(AbstractUser):
     def __str__(self):
         return self.email
 
+    def _get_session_auth_hash(self, secret=None):
+        """
+        RG-03: sessions are bound to the sign-in address as well as the password hash,
+        so changing either ends every other session on its next request (Django
+        compares this value on each request). The view that completes a change keeps
+        its own session with update_session_auth_hash. SECRET_KEY_FALLBACKS still work:
+        Django's fallback check calls this method with each old secret.
+        """
+        from django.utils.crypto import salted_hmac
+
+        return salted_hmac("apps.accounts.models.User.session_auth_hash", f"{self.password}\x1f{self.email}",
+                           secret=secret, algorithm="sha256").hexdigest()
+
     def sync_access_flags(self):
         """Derive is_staff, is_superuser and is_active from role and status."""
         self.is_staff, self.is_superuser = self.ROLE_ACCESS_FLAGS.get(self.role, (False, False))

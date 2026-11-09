@@ -46,5 +46,8 @@ urlpatterns = [
     path("profile/edit/", views.ProfileEditView.as_view(), name="profile_edit"),
     path("email-change/", views.EmailChangeRequestView.as_view(), name="email_change"),
     path("email-change/cancel/", views.EmailChangeCancelView.as_view(), name="email_change_cancel"),
-    path("email-change/<uuid:pk>/<token>/", views.EmailChangeConfirmView.as_view(), name="email_change_confirm"),
+    # RG-03: the emailed link only moves its token into the session; the change is
+    # completed on the token-free review page by the signed-in owner.
+    path("email-change/<uuid:pk>/confirm/", views.EmailChangeReviewView.as_view(), name="email_change_review"),
+    path("email-change/<uuid:pk>/<token>/", views.EmailChangeLinkView.as_view(), name="email_change_confirm"),
 ]

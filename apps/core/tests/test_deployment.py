@@ -214,6 +214,17 @@ class TokenRedactionTests(SimpleTestCase):
         self.assertTrue(RedactTokenPaths().filter(record))
         self.assertEqual(record.getMessage(), "Internal Server Error: /accounts/activate/[redacted]/")
 
+    def test_email_change_link_tokens_are_removed(self):
+        """RG-03: email-change links were not covered before."""
+        for path in ("/accounts/email-change/3f0c5b9e-1d2a-4c55-9f63-2a1b7e0c9d11/c4x9-0a1b2c3d4e5f6/",
+                     "/accounts/confirm-email/MTIz/c4x9-0a1b2c3d4e5f6/", "/accounts/reset/MTIz/set-password/"):
+            with self.subTest(path=path):
+                record = logging.LogRecord("django.security.csrf", logging.WARNING, __file__, 1,
+                                           "Forbidden (CSRF cookie not set.): %s", (path,), None)
+                RedactTokenPaths().filter(record)
+                self.assertNotIn("c4x9-0a1b2c3d4e5f6", record.getMessage())
+                self.assertIn("[redacted]", record.getMessage())
+
     def test_other_messages_are_unchanged(self):
         record = logging.LogRecord("django.request", logging.ERROR, __file__, 1, "Internal Server Error: %s",
                                    ("/dashboard/",), None)

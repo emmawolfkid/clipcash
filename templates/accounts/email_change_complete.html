@@ -3,6 +3,7 @@
 {% block auth_content %}
 <h1>{% translate "Email address changed" %}</h1>
 <p>{% translate "Your email address has been changed and confirmed. Use it the next time you sign in." %}</p>
+<p>{% translate "Every other device signed in to this account has been signed out." %}</p>
 <ul class="links">
   <li><a href="{% url 'accounts:profile' %}">{% translate "Go to my account" %}</a></li>
 </ul>

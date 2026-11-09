@@ -181,6 +181,28 @@ class EmailChangeForm(CurrentPasswordMixin, forms.Form):
                                             operation="email_change")
 
 
+class EmailChangeConfirmForm(CurrentPasswordMixin, forms.Form):
+    """Completes an email-address change (RG-03). Asks for the current password unless this
+    session confirmed it recently (apps.accounts.reauth)."""
+
+    current_password = forms.CharField(
+        label=_("Current password"), strip=False,
+        help_text=_("For your security, confirm your password to finish the change."),
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password", "autofocus": True}),
+    )
+
+    def __init__(self, *args, user, require_password, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.require_password = require_password
+        if not require_password:
+            del self.fields["current_password"]
+
+    def clean_current_password(self):
+        return self.verify_current_password(self.user, self.cleaned_data["current_password"],
+                                            operation="email_change_confirm")
+
+
 class ProfileForm(forms.ModelForm):
     """Only these fields can be changed here: never role, status, email or verification."""
 

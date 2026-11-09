@@ -303,6 +303,9 @@ def health(user):
     return checks
 
 
+# The search_path every ClipCash database function runs with (migration core.0004).
+PINNED_SEARCH_PATH = "search_path=pg_catalog, public, pg_temp"
+
 # Tables whose triggers and constraints carry the financial and audit guarantees.
 PROTECTED_TABLES = ("audit_auditevent", "wallets_journalentry", "wallets_journalline", "wallets_ledgeraccount",
                     "wallets_wallet", "wallets_wallettransaction", "withdrawals_withdrawalrequest",
@@ -321,6 +324,16 @@ def database_role_findings():
         cursor.execute("SELECT has_table_privilege('public.audit_auditevent', 'UPDATE,DELETE,TRUNCATE'), "
                        "has_table_privilege('public.wallets_journalline', 'UPDATE,DELETE,TRUNCATE')")
         audit_writable, ledger_writable = cursor.fetchone()
+        # RG-03: objects that could shadow protected tables, and guard functions that
+        # would resolve names through the caller's search_path (migration core.0004).
+        cursor.execute("SELECT has_database_privilege(current_database(), 'CREATE') "
+                       "OR has_database_privilege(current_database(), 'TEMPORARY')")
+        (can_shadow,) = cursor.fetchone()
+        cursor.execute("SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
+                       "WHERE n.nspname = 'public' "
+                       "AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e') "
+                       "AND NOT coalesce(p.proconfig, '{}') @> ARRAY[%s]", [PINNED_SEARCH_PATH])
+        (unpinned,) = cursor.fetchone()
     findings = []
     if superuser:
         findings.append("it connects as a database superuser")
@@ -330,6 +343,10 @@ def database_role_findings():
         findings.append("it may update, delete or truncate audit events")
     if ledger_writable:
         findings.append("it may update, delete or truncate ledger lines")
+    if can_shadow:
+        findings.append("it may create schemas or temporary tables in the database")
+    if unpinned:
+        findings.append(f"{unpinned} database guard functions do not pin their search_path (apply migrations)")
     return findings
 
 
@@ -337,12 +354,15 @@ def client_ip_diagnostics(request):
     """How this request's client address was resolved, for verifying
     DJANGO_TRUSTED_PROXY_COUNT on the real host (Super Administrators only: it shows
     the viewer's own addresses and the proxies' addresses)."""
-    from apps.accounts.throttling import resolve_client_ip
+    from apps.accounts.throttling import peer_is_trusted, resolve_client_ip, trusted_proxy_networks
 
     forwarded = [p.strip() for p in request.META.get("HTTP_X_FORWARDED_FOR", "").split(",") if p.strip()]
     address, resolved = resolve_client_ip(request)
-    return {"remote_addr": request.META.get("REMOTE_ADDR", ""), "forwarded": forwarded,
-            "trusted_proxies": settings.ACCOUNTS_TRUSTED_PROXY_COUNT, "address": address, "resolved": resolved}
+    remote_addr = request.META.get("REMOTE_ADDR", "")
+    return {"remote_addr": remote_addr, "forwarded": forwarded,
+            "trusted_proxies": settings.ACCOUNTS_TRUSTED_PROXY_COUNT, "address": address, "resolved": resolved,
+            "header": settings.ACCOUNTS_CLIENT_IP_HEADER, "networks": len(trusted_proxy_networks()),
+            "peer_trusted": peer_is_trusted(remote_addr)}
 
 
 def _email_check():

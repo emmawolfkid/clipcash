@@ -65,11 +65,65 @@ def _check_client_ip_configuration():
                  "docs/deployment/render.md (client IP).",
             id="accounts.E004",
         )]
+    messages = _check_proxy_boundary(proxies)
     if settings.DEPLOYED_ON_RENDER and proxies == 1:
-        return [Warning(
+        messages.append(Warning(
             "DJANGO_TRUSTED_PROXY_COUNT is 1 on Render, where requests pass Cloudflare and Render's load balancer.",
             hint="With 1, every visitor resolves to a Cloudflare edge address. Use 2 unless the Operational "
                  "health page shows the forwarded entries differ.",
             id="accounts.W002",
-        )]
-    return []
+        ))
+    return messages
+
+
+def _check_proxy_boundary(proxies):
+    """RG-03: forwarded headers are believed only from peers known to be the proxy."""
+    import ipaddress
+
+    from .throttling import CLIENT_IP_HEADERS
+
+    messages = []
+    header = settings.ACCOUNTS_CLIENT_IP_HEADER
+    networks = settings.ACCOUNTS_TRUSTED_PROXY_NETWORKS
+    invalid = []
+    for value in networks:
+        try:
+            ipaddress.ip_network(value.strip(), strict=False)
+        except ValueError:
+            invalid.append(value)
+    if invalid:
+        messages.append(Error(
+            f"DJANGO_TRUSTED_PROXY_NETWORKS has {len(invalid)} invalid network(s).",
+            hint="Use CIDR ranges such as 173.245.48.0/20 or 2400:cb00::/32, separated by commas.",
+            id="accounts.E006",
+        ))
+    if header and header not in CLIENT_IP_HEADERS:
+        messages.append(Error(
+            f"DJANGO_CLIENT_IP_HEADER {header!r} is not supported.",
+            hint="Use one of: " + ", ".join(sorted(CLIENT_IP_HEADERS)) + ", or leave it empty.",
+            id="accounts.E008",
+        ))
+    if header and not networks:
+        messages.append(Error(
+            "DJANGO_CLIENT_IP_HEADER is set without DJANGO_TRUSTED_PROXY_NETWORKS.",
+            hint="Any client can send that header. List the proxy's networks (e.g. Cloudflare's ranges) so the "
+                 "header is believed only from them.",
+            id="accounts.E005",
+        ))
+    elif (proxies > 0 or header) and not networks and not settings.DEPLOYED_ON_RENDER \
+            and not settings.ACCOUNTS_PROXY_ORIGIN_RESTRICTED:
+        messages.append(Error(
+            "Forwarded client addresses are trusted from any peer.",
+            hint="If the server can be reached without the proxy, a client can forge X-Forwarded-For to evade "
+                 "per-address limits and falsify audit records. Set DJANGO_TRUSTED_PROXY_NETWORKS to the proxy's "
+                 "networks, or, only if the web server itself refuses every other peer, "
+                 "DJANGO_PROXY_ORIGIN_RESTRICTED=True. See docs/deployment/netpoa_runbook.md (client addresses).",
+            id="accounts.E007",
+        ))
+    if networks and proxies <= 0 and not header:
+        messages.append(Warning(
+            "DJANGO_TRUSTED_PROXY_NETWORKS is set but no proxy count or client-address header is configured.",
+            hint="The networks have no effect: set DJANGO_TRUSTED_PROXY_COUNT or DJANGO_CLIENT_IP_HEADER.",
+            id="accounts.W003",
+        ))
+    return messages

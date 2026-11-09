@@ -130,13 +130,24 @@ segregation.
 
 Direct SQL that bypasses Django is rejected by the same rules (tested).
 
+**Name resolution (RG-03).** The trigger functions name their tables without a schema. Until
+migration `core.0004` they resolved those names through the caller's `search_path`, in which
+PostgreSQL searches the session's temporary schema first: a session that created a temporary
+`wallets_journalline` or `wallets_ledgeraccount` could make `ledger_verify_entry()` or
+`ledger_line_apply()` read its own copy, so an unbalanced entry could commit and a frozen account
+could be posted to (reproduced in `apps/core/tests/test_database_hardening.py`). Every function now
+runs with `search_path = pg_catalog, public, pg_temp`; a test keeps that true for any function a
+future migration adds, and `CREATE OR REPLACE FUNCTION` in a new migration must repeat the
+`SET search_path` clause (otherwise it is dropped and the test fails).
+
 **Limitations:** the table owner or a PostgreSQL superuser can disable
 triggers, alter constraints or TRUNCATE tables. Locally `clipcash_user` owns the
 tables. Production must run the web application as a role without ownership,
 with only `SELECT, INSERT` on journal tables and `SELECT, INSERT, UPDATE(status,
-name, updated_at)` on accounts; see
-`scripts/database/production_roles.example.sql` (extend it for the ledger
-before go-live). Off-site, write-once backups protect against the owner role.
+name, updated_at)` on accounts; see `scripts/database/roles/01-04` (Render) and
+`scripts/database/cpanel/01-03` (cPanel), which also deny the runtime role
+CREATE and TEMPORARY on the database. Off-site, write-once backups protect
+against the owner role.
 
 ## Concurrency and idempotency
 

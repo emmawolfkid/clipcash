@@ -17,6 +17,22 @@ class DatabaseRoleCheckTests(TestCase):
         self.assertTrue(any("protected tables" in finding for finding in findings), findings)
         self.assertTrue(any("audit events" in finding for finding in findings), findings)
 
+    def test_shadowing_privileges_and_unpinned_functions_are_reported(self):
+        """RG-03. The test login owns the database, so it may create temporary tables; migration
+        core.0004 has pinned every function, so that finding must not appear..."""
+        findings = summary.database_role_findings()
+        self.assertTrue(any("temporary tables" in finding for finding in findings), findings)
+        self.assertFalse(any("search_path" in finding for finding in findings), findings)
+
+    def test_an_unpinned_function_is_reported(self):
+        """...until a function loses its pin (rolled back with the test transaction)."""
+        from django.db import connection
+
+        with connection.cursor() as cursor:
+            cursor.execute("ALTER FUNCTION public.ledger_verify_entry(uuid) RESET search_path")
+        findings = summary.database_role_findings()
+        self.assertTrue(any("1 database guard functions do not pin" in finding for finding in findings), findings)
+
     def test_health_page_shows_attention_to_super_admins_only(self):
         self.client.force_login(make_user("root@example.com", role=User.Role.SUPER_ADMIN))
         checks = {c.key: c for c in self.client.get(reverse("administration:health")).context["checks"]}

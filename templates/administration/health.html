@@ -13,7 +13,8 @@
 <dl class="details">
   <dt>{% translate "Connection from" %}</dt><dd>{{ client_ip.remote_addr|default:"—" }}</dd>
   <dt>{% translate "X-Forwarded-For entries" %}</dt><dd>{% for entry in client_ip.forwarded %}{{ entry }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "none" %}{% endfor %}</dd>
-  <dt>{% translate "Trusted proxies configured" %}</dt><dd>{{ client_ip.trusted_proxies }}</dd>
+  <dt>{% translate "Trusted proxies configured" %}</dt><dd>{{ client_ip.trusted_proxies }}{% if client_ip.header %} · {{ client_ip.header }}{% endif %}</dd>
+  <dt>{% translate "Connection from a trusted proxy network" %}</dt><dd>{% if not client_ip.networks %}{% translate "No network list (every connection is treated as the proxy)" %}{% elif client_ip.peer_trusted %}{% translate "Yes" %}{% else %}{% translate "No: forwarded headers ignored" %}{% endif %}</dd>
   <dt>{% translate "Resolved client address" %}</dt><dd>{{ client_ip.address|default:"—" }} {% if client_ip.resolved %}<span class="badge badge--health-healthy">{% translate "Resolved" %}</span>{% else %}<span class="badge badge--health-attention">{% translate "Not resolved: per-IP limits skipped" %}</span>{% endif %}</dd>
 </dl>
 <p class="lead">{% translate "The resolved address must be your own public address (check it with a what-is-my-IP service). Then send a request with a made-up X-Forwarded-For header: the resolved address must not change." %}</p></section>{% endif %}

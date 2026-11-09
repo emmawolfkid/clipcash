@@ -27,7 +27,7 @@ Fill in this table as you go. A **STOP** result means do not deploy ClipCash on 
 | D3 | A login that owns the database | §3.2 | Yes, and you can connect as it | |
 | D4 | A separate runtime login | §3.2–3.3 | Not the owner, no CREATEROLE/CREATEDB/superuser; separation script passes | |
 | D5 | Backups | §4 | `pg_dump` works, or cPanel backups include PostgreSQL; restore drill passes | |
-| C1 | Cloudflare in front, direct origin access | §2.6 | Origin can be limited to Cloudflare, or RG-03 hardening is done | |
+| C1 | Cloudflare in front, direct origin access | §2.6 | Passenger sees Cloudflare's address as the peer (then `DJANGO_TRUSTED_PROXY_NETWORKS` applies), or the web server rewrites it from Cloudflare only | |
 
 ## 2. Host checks
 
@@ -85,10 +85,12 @@ few simultaneous sign-ins.
 Record: the hostname for ClipCash (use its **own subdomain**, not the existing site's), whether it will be proxied
 by Cloudflare (orange cloud), and the server's IP address (cPanel → General Information, "Shared IP Address").
 
-A server reachable directly (bypassing Cloudflare) lets anyone fake their IP address to ClipCash's rate limits
-(RG-01 finding S1). Ask NetPoa: can a `.htaccess` file restrict a subdomain to Cloudflare's address ranges, and does
-the web server replace the client address with Cloudflare's `CF-Connecting-IP` (mod_remoteip / LiteSpeed "use
-client IP in header")? The answer decides which runbook option applies (runbook §9).
+Since RG-03, ClipCash believes forwarded client addresses only from the networks in
+`DJANGO_TRUSTED_PROXY_NETWORKS` (Cloudflare's ranges), so a request sent straight to the server is attributed to its
+real sender. That works only if Passenger is given the real connecting address. Ask NetPoa: does the web server
+replace the client address with Cloudflare's `CF-Connecting-IP` (mod_remoteip / LiteSpeed "use client IP in
+header"), and if so, from which source addresses does it accept that header? Also ask whether a `.htaccess` file may
+restrict a subdomain to Cloudflare's ranges (an optional extra layer). The answers decide the runbook §9 case.
 
 ## 3. Database checks
 
@@ -175,7 +177,7 @@ cPanel → PostgreSQL Databases: delete `<account>_clipcash_probe` and the user 
 | H3 fails | Decide on building `psycopg[c]` or another host; do not change the pinned driver ad hoc |
 | H4 is 5 minutes | Set `DJANGO_JOBS_HEARTBEAT_STALE_SECONDS=900` and expect email delays up to 5 minutes. Over 5 minutes: **STOP** unless the no-email waiver is used |
 | H6 fails | Use NetPoa's relay if permitted, or the no-email waiver (runbook §8) |
-| C1: origin cannot be limited to Cloudflare | Restricted deployment waits for RG-03 (proxy allow-list in code) |
+| C1: the web server rewrites the client address from any source, not only Cloudflare | **STOP**: anyone could set their own address. Ask NetPoa to restrict the rewrite to Cloudflare's ranges, or to turn it off so ClipCash's network list applies |
 
 Record the completed sheet with the date and the person who ran it. Restricted deployment proceeds only when every
 row is PASS or has an owner-approved decision from this table.

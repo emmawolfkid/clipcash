@@ -138,4 +138,8 @@ class VerificationRequiredTests(AccountsTestCase):
         self.client.force_login(user)
         user.email = "new-address@example.com"
         user.save()
+        # RG-03: sessions are bound to the address, so a change made elsewhere (e.g. by staff)
+        # ends this session; once signed in again, the new address must be confirmed.
+        self.assertRedirects(self.client.get(PROFILE_URL), f"{reverse('accounts:login')}?next={PROFILE_URL}")
+        self.client.force_login(user)
         self.assertRedirects(self.client.get(PROFILE_URL), REQUIRED_URL)

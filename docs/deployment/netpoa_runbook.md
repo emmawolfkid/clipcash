@@ -132,7 +132,9 @@ login** (a separate cPanel database user). The owner credential is typed only wh
    psql "host=localhost dbname=<account>_clipcash user=<account>" -W \
         -v runtime_role=<account>_ccapp -f scripts/database/cpanel/02_grant_runtime.sql
    ```
-5. Verify **as the runtime login**. Both must end with "passed":
+5. Verify **as the runtime login**. Both must end with "passed". Since RG-03, `04_verify_runtime_role.sql` also
+   proves the runtime login cannot create temporary tables or schemas, unpin a guard function or switch to the owner
+   role, and that migration `core.0004` has pinned every function's `search_path`:
 
    ```bash
    psql "host=localhost dbname=<account>_clipcash user=<account>_ccapp" -W -f scripts/database/cpanel/03_verify_separation.sql
@@ -163,7 +165,9 @@ python -c "import secrets; print(secrets.token_urlsafe(64))"   # the secret key;
 | `DJANGO_SECURE_SSL_REDIRECT` | `True` |
 | `DJANGO_SECURE_PROXY_SSL_HEADER` | `False` (Passenger receives HTTPS itself with Cloudflare "Full (strict)", §9) |
 | `DJANGO_SECURE_HSTS_SECONDS` | `0` for now |
-| `DJANGO_TRUSTED_PROXY_COUNT` | `1` (Cloudflare), then verify in §13. **The deploy check cannot catch a missing value on this host** |
+| `DJANGO_TRUSTED_PROXY_COUNT` | `1` (Cloudflare), then verify in §13 |
+| `DJANGO_TRUSTED_PROXY_NETWORKS` | Cloudflare's current ranges from https://www.cloudflare.com/ips/ (IPv4 and IPv6, comma-separated). Forwarded headers are believed only from these peers (§9). Without it, `check --deploy` fails (`accounts.E007`) |
+| `DJANGO_CLIENT_IP_HEADER` | Optional: `CF-Connecting-IP` instead of the proxy count. Only together with the networks above (`accounts.E005`) |
 | `DJANGO_RESTRICTED_DEMO` | `True` (set explicitly) |
 | `DJANGO_PAYMENTS_MODE` | `disabled` |
 | `DJANGO_MEMBERSHIPS_COMPLIMENTARY_GRANTS` | `True` |
@@ -173,9 +177,10 @@ python -c "import secrets; print(secrets.token_urlsafe(64))"   # the secret key;
 | `DJANGO_EMAIL_HOST`, `DJANGO_EMAIL_PORT`, `DJANGO_EMAIL_USE_TLS` or `DJANGO_EMAIL_USE_SSL`, `DJANGO_EMAIL_HOST_USER`, `DJANGO_EMAIL_HOST_PASSWORD`, `DJANGO_DEFAULT_FROM_EMAIL` | From the provider |
 | `DJANGO_JOBS_HEARTBEAT_STALE_SECONDS` | Only if cron is every 5 minutes: `900` |
 
-**Never set:** `DJANGO_DEBUG=True`, `DJANGO_RESTRICTED_DEMO=False`, `DJANGO_PAYMENTS_SANDBOX_ALLOWED`,
-`DJANGO_PAYMENTS_MODE=sandbox`, `VIDEO_DEMO_ALLOWED`, `DJANGO_ADVERTISING_REPORT_MIN_COUNT` below 5, the console
-email backend (it writes activation and reset links into logs), or the owner database login anywhere in `.env`.
+**Never set:** `DJANGO_DEBUG=True`, `DJANGO_RESTRICTED_DEMO=False`, `DJANGO_PUBLIC_REGISTRATION_APPROVED`,
+`DJANGO_PAYMENTS_SANDBOX_ALLOWED`, `DJANGO_PAYMENTS_MODE=sandbox`, `VIDEO_DEMO_ALLOWED`,
+`DJANGO_ADVERTISING_REPORT_MIN_COUNT` below 5, a console, locmem or file email backend (they keep activation and
+reset links in logs or files), `DJANGO_PROXY_ORIGIN_RESTRICTED` (§9), or the owner database login anywhere in `.env`.
 
 Then:
 
@@ -184,7 +189,13 @@ python manage.py check --deploy --fail-level ERROR
 ```
 
 Expected warnings only: `security.W004` (HSTS 0); `notifications.W001` without SMTP; `videos.W001` without Bunny.
-Any error: stop and fix the value.
+Any error: stop and fix the value. Since RG-03 these configurations are **errors**, so the command fails:
+`DEBUG` on (`core.E002`); a missing, short or placeholder secret key (`core.E003`); `*` or empty allowed hosts
+(`core.E004`); non-HTTPS trusted origins (`core.E005`); HTTPS redirect off (`core.E006`); restricted demo off
+without an approved public launch (`core.E007`); any real-money feature enabled (`core.E008`); a console, locmem or
+file email backend (`notifications.E001`); SMTP to a remote server without TLS/SSL (`notifications.E003`); forwarded
+addresses trusted without a proxy network list (`accounts.E005`, `accounts.E007`); malformed Bunny values
+(`videos.E003`, `videos.E004`). The command checks configuration only; it cannot see the hosting facts in §9 and §13.
 
 ## 7. Static files and start
 
@@ -212,11 +223,21 @@ WhiteNoise serves the collected files through Passenger; no web-served static fo
    SSL/TLS → Manage SSL sites).
 2. Cloudflare → SSL/TLS: **Full (strict)**. Never "Flexible": the origin would receive HTTP and the HTTPS redirect
    would loop. Keep "Always Use HTTPS" on.
-3. **Origin access (RG-01 S1).** ClipCash takes the client address from the last `X-Forwarded-For` entry. Anyone who
-   reaches the server directly can forge that header and slip past per-address rate limits or plant false audit
-   addresses. Choose one, based on NetPoa's answer in checklist §2.6:
-   * **A. Limit the subdomain to Cloudflare.** Only if the web server does **not** replace the client address. In the
-     subdomain's document root `.htaccess`, *below* cPanel's Passenger block:
+3. **Client addresses and the proxy boundary (RG-01 S1, fixed in code by RG-03).** ClipCash believes
+   `X-Forwarded-For` (or the configured `CF-Connecting-IP`) only when the connection itself comes from a network in
+   `DJANGO_TRUSTED_PROXY_NETWORKS`. A request sent straight to the server is attributed to its own address, whatever
+   headers it carries, so forged headers cannot evade per-address limits or plant audit addresses. `X-Real-IP`,
+   `CF-Connecting-IP` and `True-Client-IP` are never read unless configured. This holds only if Passenger sees the
+   real peer address. Check which case applies (checklist §2.6) and verify it in §13:
+   * **The web server passes Cloudflare's address as the peer** (usual for Apache without mod_remoteip): keep the
+     settings in §6. On `/manage/health/` through Cloudflare, "Connection from a trusted proxy network" must say
+     **Yes** and the resolved address must be yours.
+   * **The web server already replaces the peer with the visitor's address** (mod_remoteip, LiteSpeed "use client
+     IP in header"): set `DJANGO_TRUSTED_PROXY_COUNT=0`, leave the networks and header unset, and confirm on
+     `/manage/health/` that the connection address is already your own. The web server's own trust list then decides
+     who may set the address; ask NetPoa that it lists only Cloudflare's ranges.
+   * Optional extra layer: limit the subdomain to Cloudflare in its `.htaccess` (below cPanel's Passenger block), only
+     in the first case:
 
      ```apache
      <RequireAny>
@@ -225,8 +246,9 @@ WhiteNoise serves the collected files through Passenger; no web-served static fo
      </RequireAny>
      ```
      Test from your PC: `curl -sk -o /dev/null -w "%{http_code}" --resolve <host>:443:<server IP> https://<host>/healthz`
-     must print `403`, while `https://<host>/healthz` through Cloudflare prints `200`.
-   * **B. Otherwise** restricted deployment waits for RG-03 (trust only Cloudflare's ranges in code).
+     must print `403`, while `https://<host>/healthz` through Cloudflare prints `200`. With this in place (and only
+     then) `DJANGO_PROXY_ORIGIN_RESTRICTED=True` may replace the network list; the list is still preferred.
+   * Cloudflare's ranges change rarely; re-check https://www.cloudflare.com/ips/ before each deploy.
 4. HSTS stays `0` until HTTPS has worked for a week; then raise it in a separate reviewed change.
 
 ## 10. Accounts and demo content
@@ -309,7 +331,8 @@ not a replacement.
 | Headers on `/accounts/login/` | `Secure` cookies, `Content-Security-Policy`, `X-Frame-Options: DENY` |
 | `/manage/health/` (Super Administrator) | Database privilege separation **Healthy**; Background jobs fresh; "Payments are disabled here" |
 | Client address on `/manage/health/` | Your real public IP. Repeat with `curl -H "X-Forwarded-For: 6.6.6.6"` through Cloudflare: the address shown is still yours. A Cloudflare address means the proxy count is wrong |
-| Direct origin (§9 option A) | `403` |
+| Direct origin, bypassing Cloudflare | `curl -sk --resolve <host>:443:<server IP> -H "X-Forwarded-For: 6.6.6.6" https://<host>/healthz` answers (or `403` with the optional `.htaccess` lock); then sign in through Cloudflare and check `/manage/health/` still shows your own address, never `6.6.6.6` |
+| Email change | Request a change, open the link in a private window: it asks you to sign in, then (after 5 minutes) for your password; afterwards your other browser is signed out |
 | Bunny embed without token | Refused |
 | Role checks | As in [restricted_demo_runbook.md](restricted_demo_runbook.md) §6 "By role" |
 
@@ -356,13 +379,18 @@ not a replacement.
 
 ## Known risks on this host
 
-* **Access logs.** Apache records every URL. Email-confirmation and email-change links keep their single-use token
-  in the URL; activation and password-reset links do on the first request only. Tokens expire (1 h for resets,
-  24 h for verification), but anyone with cPanel access can read the logs: keep cPanel access to the owner, and
-  turn off "Archive logs" in cPanel → Raw Access if you do not need them.
-* **Trigger functions and search_path.** The ledger and audit trigger functions name their tables without a schema.
-  The cPanel scripts therefore deny the runtime login CREATE and TEMPORARY on the database; do not grant them back.
-  A permanent fix (pinning `search_path` on those functions) belongs to RG-03.
+* **Access logs (cannot be fixed in code).** Apache (and Cloudflare) record the URL of every request, and the
+  application cannot switch that off. Each emailed link reaches the logs once, on its first request: activation,
+  password-reset and (since RG-03) email-change links then move the token into the session and redirect to a
+  token-free URL; email-confirmation links keep it for the confirming POST. Token pages send no `Referer`
+  (`Referrer-Policy: no-referrer`) and are not cached, and the application's own logs redact all four link types.
+  Tokens are single-use and expire (1 h for resets, 24 h for verification and email changes); an email-change link
+  is useless without the owner's signed-in session and password. Keep cPanel access to the owner, and turn off
+  "Archive logs" in cPanel → Raw Access if you do not need them.
+* **Trigger functions and search_path (fixed by RG-03).** Migration `core.0004` pins every ClipCash database
+  function to `search_path = pg_catalog, public, pg_temp`, so a session's own temporary tables or schemas can no
+  longer redirect a protected check. The cPanel scripts still deny the runtime login CREATE and TEMPORARY as a second
+  layer; do not grant them back. `roles/04_verify_runtime_role.sql` fails if any function is unpinned.
 * **Shared limits.** The existing site and ClipCash share CPU, memory and process limits; each sign-in costs about
   a second of CPU.
 * **Owner credential.** The cPanel account's database login may also own the existing site's database. Type it only

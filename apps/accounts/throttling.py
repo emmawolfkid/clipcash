@@ -119,17 +119,91 @@ EMAIL_CHANGE_REQUESTS_PER_ACCOUNT = Throttle("email-change-account", limit=5, wi
 EMAIL_CHANGE_REQUESTS_PER_ADDRESS = Throttle("email-change-address", limit=3, window_seconds=60 * 60)
 
 
+# Single-address headers a trusted proxy may set itself (DJANGO_CLIENT_IP_HEADER).
+# Anything else (X-Real-IP included) is never read unless it is configured here.
+CLIENT_IP_HEADERS = {"CF-Connecting-IP": "HTTP_CF_CONNECTING_IP", "X-Real-IP": "HTTP_X_REAL_IP",
+                     "True-Client-IP": "HTTP_TRUE_CLIENT_IP"}
+
+
+def trusted_proxy_networks():
+    """Parsed DJANGO_TRUSTED_PROXY_NETWORKS; invalid entries are skipped here and
+    reported by the accounts.E006 deploy check."""
+    networks = []
+    for value in settings.ACCOUNTS_TRUSTED_PROXY_NETWORKS:
+        try:
+            networks.append(ipaddress.ip_network(value.strip(), strict=False))
+        except ValueError:
+            continue
+    return networks
+
+
+def _parse_address(value):
+    """One bare IP address, or None (lists, ports, brackets and names are refused)."""
+    try:
+        return str(ipaddress.ip_address(value.strip()))
+    except (ValueError, AttributeError):
+        return None
+
+
+def peer_is_trusted(remote_addr):
+    networks = trusted_proxy_networks()
+    if not networks:
+        return True  # No allow-list: every peer is assumed to be the proxy (Render).
+    address = _parse_address(remote_addr)
+    if address is None:
+        return False
+    address = ipaddress.ip_address(address)
+    return any(address.version == network.version and address in network for network in networks)
+
+
+def _resolve(request):
+    remote_addr = request.META.get("REMOTE_ADDR", "")
+    proxies = settings.ACCOUNTS_TRUSTED_PROXY_COUNT
+    header = settings.ACCOUNTS_CLIENT_IP_HEADER
+    if proxies <= 0 and not header:
+        return remote_addr, True  # Direct connections: forwarded headers are client-supplied.
+    if not peer_is_trusted(remote_addr):
+        # The peer is not one of our proxies (e.g. a request sent straight to the origin):
+        # every forwarded header came from the client, and the peer itself is the client.
+        security_log.info("client_ip_untrusted_peer")
+        return remote_addr, True
+    if header:
+        value = request.META.get(CLIENT_IP_HEADERS.get(header, ""), "")
+        address = _parse_address(value) if "," not in value else None
+        if address is None:
+            security_log.warning("client_ip_unresolved header=%s present=%s", header, bool(value))
+            return remote_addr, False
+        return address, True
+    forwarded = [part.strip() for part in request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")]
+    forwarded = [part for part in forwarded if part]
+    if len(forwarded) >= proxies:
+        address = _parse_address(forwarded[-proxies])
+        if address is not None:
+            return address, True
+    security_log.warning("client_ip_unresolved forwarded_entries=%s trusted_proxies=%s", len(forwarded), proxies)
+    return remote_addr, False
+
+
 def resolve_client_ip(request):
     """
-    (address, resolved). X-Forwarded-For is used only when ACCOUNTS_TRUSTED_PROXY_COUNT
-    reverse proxies are configured. Each trusted proxy appends the address it received
-    the request from, so the entry ``proxies`` from the right is the address the
-    outermost trusted proxy saw; anything a client put further left is ignored (Render,
-    for example, keeps client-supplied entries and appends to them).
+    (address, resolved).
 
-    ``resolved`` is False when the configuration does not match the request (fewer
-    forwarded entries than trusted proxies, or an invalid entry): the address returned
-    is then REMOTE_ADDR, which behind a proxy is the proxy's own and shared by every
+    Forwarded information is used only when proxies are configured
+    (ACCOUNTS_TRUSTED_PROXY_COUNT or ACCOUNTS_CLIENT_IP_HEADER) and, if
+    ACCOUNTS_TRUSTED_PROXY_NETWORKS is set, only when the connecting peer
+    (REMOTE_ADDR) lies inside one of those networks. A peer outside them reached
+    the application directly, so its own address is the client and every forwarded
+    header it sent is ignored.
+
+    From a trusted peer: with ACCOUNTS_CLIENT_IP_HEADER (e.g. CF-Connecting-IP), that
+    single-address header is the client and X-Forwarded-For is ignored; otherwise the
+    entry ``proxies`` from the right of X-Forwarded-For is the address the outermost
+    trusted proxy saw, and anything a client put further left is ignored (Render, for
+    example, keeps client-supplied entries and appends to them).
+
+    ``resolved`` is False when a trusted proxy's information is missing or malformed
+    (fewer forwarded entries than trusted proxies, an invalid entry, a missing header):
+    the address returned is then REMOTE_ADDR, the proxy's own and shared by every
     visitor, so callers must not use it to limit or block individual clients.
     """
     if request is None:
@@ -137,21 +211,7 @@ def resolve_client_ip(request):
     cached = getattr(request, "_clipcash_client_ip", None)
     if cached is not None:
         return cached
-    remote_addr = request.META.get("REMOTE_ADDR", "")
-    proxies = settings.ACCOUNTS_TRUSTED_PROXY_COUNT
-    result = (remote_addr, True)
-    if proxies > 0:
-        forwarded = [part.strip() for part in request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")]
-        forwarded = [part for part in forwarded if part]
-        result = (remote_addr, False)
-        if len(forwarded) >= proxies:
-            try:
-                result = (str(ipaddress.ip_address(forwarded[-proxies])), True)
-            except ValueError:
-                pass
-        if not result[1]:
-            security_log.warning("client_ip_unresolved forwarded_entries=%s trusted_proxies=%s",
-                                 len(forwarded), proxies)
+    result = _resolve(request)
     try:
         request._clipcash_client_ip = result
     except AttributeError:

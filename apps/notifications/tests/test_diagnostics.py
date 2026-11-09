@@ -64,10 +64,32 @@ class EmailDiagnosticsTests(TestCase):
 
 
 class EmailDeployCheckTests(TestCase):
-    @override_settings(DEBUG=False, EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend")
+    @override_settings(DEBUG=False, EMAIL_BACKEND="django.core.mail.backends.dummy.EmailBackend")
     def test_non_delivering_backend_warns_in_production(self):
         self.assertEqual([m.id for m in check_email_delivery(None)], ["notifications.W001"])
+
+    def test_backends_that_record_account_links_fail_in_production(self):
+        """RG-03: console, locmem and file backends would keep every token link."""
+        for name in ("console", "locmem", "filebased"):
+            with self.subTest(name), override_settings(DEBUG=False,
+                                                       EMAIL_BACKEND=f"django.core.mail.backends.{name}.EmailBackend"):
+                self.assertEqual([m.id for m in check_email_delivery(None)], ["notifications.E001"])
+
+    @override_settings(DEBUG=True, EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend")
+    def test_console_is_fine_in_development(self):
+        self.assertEqual(check_email_delivery(None), [])
 
     @override_settings(DEBUG=False, EMAIL_BACKEND=SMTP)
     def test_smtp_backend_passes(self):
         self.assertEqual(check_email_delivery(None), [])
+
+    @override_settings(DEBUG=False, EMAIL_BACKEND=SMTP, EMAIL_HOST="smtp.example.com", EMAIL_USE_TLS=False,
+                       EMAIL_USE_SSL=False)
+    def test_unencrypted_remote_smtp_fails(self):
+        self.assertEqual([m.id for m in check_email_delivery(None)], ["notifications.E003"])
+        with override_settings(EMAIL_USE_TLS=True):
+            self.assertEqual(check_email_delivery(None), [])
+        with override_settings(EMAIL_USE_SSL=True):
+            self.assertEqual(check_email_delivery(None), [])
+        with override_settings(EMAIL_USE_TLS=True, EMAIL_USE_SSL=True):
+            self.assertEqual([m.id for m in check_email_delivery(None)], ["notifications.E002"])

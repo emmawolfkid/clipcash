@@ -1,7 +1,8 @@
 import logging
+from functools import wraps
 
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import INTERNAL_RESET_SESSION_TOKEN
@@ -13,6 +14,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
+from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.generic import FormView, TemplateView
 
@@ -26,11 +28,12 @@ from apps.audit.services import (
 )
 from apps.core import features
 
-from . import services
+from . import reauth, services
 from .access import VerifiedAccountRequiredMixin
 from .forms import (
     AccountPasswordChangeForm,
     AccountPasswordResetForm,
+    EmailChangeConfirmForm,
     EmailChangeForm,
     EmailRequestForm,
     LoginForm,
@@ -54,6 +57,19 @@ User = get_user_model()
 
 TOO_MANY_REQUESTS = _("Too many requests. Please wait a while and try again.")
 INVALID_LINK_TEMPLATE = "accounts/link_invalid.html"
+
+
+def no_referrer(view):
+    """RG-03: a page served at a token-bearing URL must not send that URL as the Referer of
+    its own stylesheet, script or image requests (web-server logs record Referer)."""
+
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        response = view(request, *args, **kwargs)
+        response["Referrer-Policy"] = "no-referrer"
+        return response
+
+    return wrapped
 
 
 def _email_request_allowed(request, email):
@@ -152,6 +168,7 @@ class RegisterDoneView(TemplateView):
     template_name = "accounts/register_done.html"
 
 
+@method_decorator([never_cache, no_referrer], name="dispatch")
 class ActivateAccountView(auth_views.PasswordResetConfirmView):
     """
     The emailed activation link. Like Django's reset flow, the token is moved into
@@ -180,6 +197,7 @@ class ActivationCompleteView(TemplateView):
     template_name = "accounts/activation_complete.html"
 
 
+@method_decorator([never_cache, no_referrer], name="dispatch")
 class ConfirmEmailView(View):
     """Email confirmation for ACTIVE accounts. GET only shows a button, so link
     scanners cannot confirm; POST confirms once."""
@@ -303,6 +321,7 @@ class PasswordResetDoneView(auth_views.PasswordResetDoneView):
     template_name = "accounts/password_reset_done.html"
 
 
+@method_decorator([never_cache, no_referrer], name="dispatch")
 class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
     template_name = "accounts/password_reset_confirm.html"
     token_generator = password_reset_token_generator
@@ -430,6 +449,7 @@ class EmailChangeRequestView(AccountPageMixin, EmailChangeAvailableMixin, FormVi
             form.add_error(None, TOO_MANY_REQUESTS)
             return self.form_invalid(form)
         services.request_email_change(self.request.user, new_email, self.request)
+        reauth.mark(self.request, self.request.user)  # The form has just checked the current password.
         # Worded so it does not say whether the address is already registered.
         messages.success(self.request, _("If that address can be used, a confirmation link is on its way to it. "
                                          "Your email address stays the same until the link is used."))
@@ -445,20 +465,84 @@ class EmailChangeCancelView(VerifiedAccountRequiredMixin, View):
         return redirect("accounts:profile")
 
 
-class EmailChangeConfirmView(View):
-    """The emailed link. Works without signing in: the link proves the new inbox, and the
-    password was checked when the change was requested. GET only shows a button, so link
-    scanners cannot confirm; POST confirms once."""
+# RG-03: the emailed link's token is kept in the session, never in a later URL.
+EMAIL_CHANGE_SESSION_KEY = "_clipcash_email_change_link"
 
-    template_name = "accounts/email_change_confirm.html"
+
+@method_decorator([never_cache, no_referrer], name="dispatch")
+class EmailChangeLinkView(View):
+    """
+    The emailed link (RG-03). Changes nothing: it checks the token, moves it into the
+    session and redirects to a page whose URL holds no token, like Django's password
+    reset. The token therefore reaches server and proxy logs once, never appears in a
+    Referer header or a later URL, and the change itself needs the signed-in owner.
+    """
+
+    http_method_names = ["get", "head", "options"]
 
     def get(self, request, pk, token):
         change = PendingEmailChange.objects.select_related("user").filter(pk=pk).first()
         if change is None or not email_change_token_generator.check_token(change, token):
             return render(request, INVALID_LINK_TEMPLATE, status=400)
-        return render(request, self.template_name, {"new_email": change.new_email})
+        request.session[EMAIL_CHANGE_SESSION_KEY] = {"pk": str(pk), "token": token}
+        return redirect("accounts:email_change_review", pk=pk)
 
-    def post(self, request, pk, token):
-        if services.confirm_email_change(pk, token) is None:
-            return render(request, INVALID_LINK_TEMPLATE, status=400)
-        return render(request, "accounts/email_change_complete.html")
+
+@method_decorator([never_cache, no_referrer, sensitive_post_parameters("current_password")], name="dispatch")
+class EmailChangeReviewView(LoginRequiredMixin, EmailChangeAvailableMixin, FormView):
+    """
+    Completes a change (RG-03). Requires: the link opened in this browser (token in the
+    session), a signed-in session of the account that asked for the change, and a recent
+    password confirmation (apps.accounts.reauth). Anyone else, including another
+    signed-in account, gets the invalid-link page and the owner's link stays usable.
+    On success every other session of the account ends (the session hash covers the
+    address) and this one continues.
+    """
+
+    template_name = "accounts/email_change_confirm.html"
+    form_class = EmailChangeConfirmForm
+
+    def _pending(self, pk):
+        stash = self.request.session.get(EMAIL_CHANGE_SESSION_KEY)
+        if not isinstance(stash, dict) or stash.get("pk") != str(pk):
+            return None, None
+        change = PendingEmailChange.objects.select_related("user").filter(pk=pk).first()
+        if change is None or not email_change_token_generator.check_token(change, stash.get("token", "")):
+            self.request.session.pop(EMAIL_CHANGE_SESSION_KEY, None)
+            return None, None
+        return change, stash["token"]
+
+    def _checked(self, pk):
+        change, token = self._pending(pk)
+        if change is None:
+            return render(self.request, INVALID_LINK_TEMPLATE, status=400)
+        if change.user_id != self.request.user.pk:
+            self.request.session.pop(EMAIL_CHANGE_SESSION_KEY, None)
+            record_security_event("account.email_change.denied", outcome=DENIED, target=self.request.user,
+                                  metadata={"reason": "other_account"})
+            return render(self.request, INVALID_LINK_TEMPLATE, status=400)
+        self.change, self.token = change, token
+        return None
+
+    def get(self, request, pk):
+        return self._checked(pk) or super().get(request)
+
+    def post(self, request, pk):
+        return self._checked(pk) or super().post(request)
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "user": self.request.user,
+                "require_password": not reauth.is_fresh(self.request, self.request.user)}
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(new_email=self.change.new_email, **kwargs)
+
+    def form_valid(self, form):
+        if form.require_password:
+            reauth.mark(self.request, self.request.user)
+        account = services.confirm_email_change(self.change.pk, self.token, self.request.user)
+        self.request.session.pop(EMAIL_CHANGE_SESSION_KEY, None)
+        if account is None:
+            return render(self.request, INVALID_LINK_TEMPLATE, status=400)
+        update_session_auth_hash(self.request, account)  # Keep this session; every other one ends.
+        return render(self.request, "accounts/email_change_complete.html")

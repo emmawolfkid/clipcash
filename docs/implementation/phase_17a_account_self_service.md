@@ -69,6 +69,11 @@ information: it is not verified by SMS and does not affect payout destinations.
 
 ## Known limits
 
+> **RG-03 update:** the first, sixth and eighth items below are resolved: other sessions now end on an
+> email change, confirmation requires the signed-in owner and a recent password, and the link's token moves
+> into the session (never posted, never in a later URL) with email-change paths redacted from logs. See
+> [rg_03_security_hardening.md](rg_03_security_hardening.md). The list is kept as originally written.
+
 - Other signed-in sessions stay signed in after an email change (only a password change ends them).
   Requesting a change needs the password and warns the current address.
 - A duplicate phone number is refused, which does reveal that it is in use. The message names
