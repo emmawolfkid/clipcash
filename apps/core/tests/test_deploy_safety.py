@@ -62,8 +62,12 @@ class DeployCheckUnitTests(SimpleTestCase):
         self.assertEqual(ids(checks.check_https_redirect(None)), ["core.E006"])
 
     @override_settings(DEBUG=False, RESTRICTED_DEMO_MODE=False, PUBLIC_REGISTRATION_APPROVED=False)
-    def test_leaving_restricted_demo_needs_an_explicit_approval(self):
-        self.assertEqual(ids(checks.check_restricted_demo(None)), ["core.E007"])
+    def test_leaving_restricted_demo_without_approval_keeps_registration_closed(self):
+        # NET-02: a warning, not an error. The runtime gate keeps registration closed.
+        from apps.core import features
+
+        self.assertEqual(ids(checks.check_restricted_demo(None)), ["core.W003"])
+        self.assertFalse(features.is_enabled("registration"))
         with override_settings(PUBLIC_REGISTRATION_APPROVED=True):
             self.assertEqual(checks.check_restricted_demo(None), [])
         with override_settings(RESTRICTED_DEMO_MODE=True):
@@ -113,7 +117,6 @@ class DeployCommandTests(SimpleTestCase):
             "core.E003": {"DJANGO_SECRET_KEY": "replace-with-a-generated-secret-key"},
             "core.E004": {"DJANGO_ALLOWED_HOSTS": "*"},
             "core.E006": {"DJANGO_SECURE_SSL_REDIRECT": "False"},
-            "core.E007": {"DJANGO_RESTRICTED_DEMO": "False"},
             "notifications.E001": {"DJANGO_EMAIL_BACKEND": "django.core.mail.backends.console.EmailBackend"},
             "payments.E001": {"DJANGO_PAYMENTS_MODE": "live"},
             # PAY-01: real manual payments never run inside the demo or beside sandbox payments.
@@ -128,6 +131,15 @@ class DeployCommandTests(SimpleTestCase):
         for check_id, overrides in cases.items():
             with self.subTest(check_id):
                 self.assert_fails_with(check_id, **overrides)
+
+    def test_production_stage_one_with_registration_closed_passes(self):
+        """NET-02 Stage 1: production mode, registration not yet approved, payments off."""
+        result = self.run_check(**NETPOA_ENV, DJANGO_RESTRICTED_DEMO="False", DJANGO_PAYMENTS_MODE="disabled",
+                                DJANGO_EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
+                                DJANGO_EMAIL_HOST="smtp.example.invalid", DJANGO_EMAIL_PORT="587",
+                                DJANGO_EMAIL_USE_TLS="True")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("core.W003", result.stderr + result.stdout)
 
     def test_reviewed_production_launch_with_manual_payments_passes(self):
         """PAY-01: the production profile for real registration and Airtel Lipa payments."""

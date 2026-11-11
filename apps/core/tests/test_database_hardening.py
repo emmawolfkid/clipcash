@@ -91,3 +91,33 @@ class TemporaryShadowTableTests(LedgerTestCase):
             raw_line(entry, 1, self.cash, "DEBIT", 10)
             raw_line(entry, 2, equity, "CREDIT", 10)
             check_deferred_now()
+
+
+class VerifyGuardsScriptTests(TestCase):
+    """NET-02: scripts/database/verify_guards.sql is what operators run after migrations and restores."""
+
+    def statements(self):
+        from django.conf import settings
+
+        sql = (settings.BASE_DIR / "scripts/database/verify_guards.sql").read_text(encoding="utf-8")
+        sql = "\n".join(line for line in sql.splitlines() if not line.startswith("\\"))  # psql meta-commands
+        report, _, block = sql.partition("\nDO $$")
+        return report.strip().rstrip(";"), "DO $$" + block.strip().rstrip(";")
+
+    def test_passes_on_a_migrated_database(self):
+        report, verdict = self.statements()
+        with connection.cursor() as cursor:
+            cursor.execute(report)
+            rows = cursor.fetchall()
+            self.assertGreaterEqual(len(rows), 30)
+            self.assertEqual([name for name, ok in rows if not ok], [])
+            cursor.execute(verdict)  # Raises if any check fails.
+
+    def test_fails_when_a_payment_guard_is_disabled(self):
+        _, verdict = self.statements()
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute("ALTER TABLE payments_manualmembershippayment DISABLE TRIGGER payments_manual_claim_guard")
+                with self.assertRaisesMessage(DatabaseError, "guards verification FAILED"), transaction.atomic():
+                    cursor.execute(verdict)
+            transaction.set_rollback(True)  # Re-enables the trigger.

@@ -99,11 +99,16 @@ def check_https_redirect(app_configs, **kwargs):
 
 @register(Tags.security, deploy=True)
 def check_restricted_demo(app_configs, **kwargs):
+    # RG-03 made this an error (core.E007) because leaving the demo opened registration. Since
+    # PAY-01, DJANGO_PUBLIC_REGISTRATION_APPROVED is also a runtime gate (apps.core.features):
+    # without it registration stays closed whatever the site configuration says. A production
+    # deployment that has not yet approved registration (NET-02 Stage 1) is therefore safe and
+    # only reported, so the operator knows registration is closed on purpose.
     if not settings.DEBUG and not settings.RESTRICTED_DEMO_MODE and not settings.PUBLIC_REGISTRATION_APPROVED:
-        return [Error("Restricted demo mode is off, so public registration can open.",
-                      hint="Keep DJANGO_RESTRICTED_DEMO=True. A reviewed public launch also sets "
-                           "DJANGO_PUBLIC_REGISTRATION_APPROVED=True.",
-                      id="core.E007")]
+        return [Warning("Public registration is closed: DJANGO_PUBLIC_REGISTRATION_APPROVED is not set.",
+                        hint="Expected before the reviewed registration launch. Set "
+                             "DJANGO_PUBLIC_REGISTRATION_APPROVED=True only after registration acceptance.",
+                        id="core.W003")]
     return []
 
 

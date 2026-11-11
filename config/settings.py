@@ -212,7 +212,7 @@ ACCOUNTS_REAUTHENTICATION_SECONDS = 5 * 60
 # default outside DEBUG; only a reviewed public launch sets it to False.
 RESTRICTED_DEMO_MODE = env.bool("DJANGO_RESTRICTED_DEMO", default=not DEBUG)
 # RG-03: turning restricted demo mode off outside DEBUG fails `check --deploy`
-# (core.E007) unless a reviewed public launch also sets this.
+# (reported by core.W003) unless a reviewed public launch also sets this.
 # PAY-01: also a runtime gate. Self-registration opens only when this is True, restricted
 # demo mode is off and the site configuration allows it (apps.core.features). Off by
 # default outside DEBUG.

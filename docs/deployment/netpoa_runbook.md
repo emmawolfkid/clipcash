@@ -191,8 +191,7 @@ python manage.py check --deploy --fail-level ERROR
 Expected warnings only: `security.W004` (HSTS 0); `notifications.W001` without SMTP; `videos.W001` without Bunny.
 Any error: stop and fix the value. Since RG-03 these configurations are **errors**, so the command fails:
 `DEBUG` on (`core.E002`); a missing, short or placeholder secret key (`core.E003`); `*` or empty allowed hosts
-(`core.E004`); non-HTTPS trusted origins (`core.E005`); HTTPS redirect off (`core.E006`); restricted demo off
-without an approved public launch (`core.E007`); any real-money feature enabled (`core.E008`); a console, locmem or
+(`core.E004`); non-HTTPS trusted origins (`core.E005`); HTTPS redirect off (`core.E006`); any real-money feature enabled (`core.E008`); a console, locmem or
 file email backend (`notifications.E001`); SMTP to a remote server without TLS/SSL (`notifications.E003`); forwarded
 addresses trusted without a proxy network list (`accounts.E005`, `accounts.E007`); malformed Bunny values
 (`videos.E003`, `videos.E004`). The command checks configuration only; it cannot see the hosting facts in §9 and §13.
