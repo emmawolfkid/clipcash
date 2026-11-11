@@ -1,0 +1,42 @@
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/payments/manual.css' %}">{% endblock %}
+{% block title %}{% translate "Membership payment" %} {{ claim.reference }}{% endblock %}
+{% block crumb %}{{ claim.reference }}{% endblock %}
+{% block member_content %}
+<div class="page-heading"><h1 class="page-title">{% translate "Membership payment" %}</h1><span class="badge badge--{{ claim.status|lower }}">{{ claim.get_status_display }}</span></div>
+
+{% if claim.status == "PENDING_VERIFICATION" %}
+<p class="notice" role="status">{% translate "We are checking this payment against our Airtel business records. Your membership starts as soon as it is confirmed; you will get a notification. Nothing else is needed from you." %}</p>
+{% elif claim.status == "APPROVED" %}
+<p class="notice notice--success" role="status">{% translate "Payment confirmed. Your membership is active." %} <a href="{% url 'memberships:subscription_detail' subscription.pk %}">{% translate "View membership" %}</a></p>
+{% elif claim.status == "REJECTED" %}
+<div class="notice notice--warning" role="status">
+  <p>{% translate "We could not confirm this payment." %} <strong>{{ claim.get_rejection_reason_display }}.</strong>{% if claim.review_note %} {{ claim.review_note }}{% endif %}</p>
+  {% if can_resubmit %}<p><a class="button" href="{% url 'payments:manual_pay' subscription.pk %}">{% translate "Submit corrected details" %}</a></p>
+  {% else %}<p>{% translate "If you paid and believe this is a mistake, contact support with the claim reference below." %}</p>{% endif %}
+</div>
+{% elif claim.status == "CANCELLED" %}
+<p class="notice" role="status">{% translate "You withdrew these payment details." %}{% if can_resubmit %} <a href="{% url 'payments:manual_pay' subscription.pk %}">{% translate "Submit payment details again" %}</a>{% endif %}</p>
+{% endif %}
+
+<section class="panel" aria-labelledby="claim-details"><h2 class="panel__title" id="claim-details">{% translate "What you submitted" %}</h2>
+<dl class="details">
+  <dt>{% translate "Claim reference" %}</dt><dd>{{ claim.reference }}</dd>
+  <dt>{% translate "Plan" %}</dt><dd>{{ claim.plan_name }}</dd>
+  <dt>{% translate "Amount" %}</dt><dd class="financial-amount">{{ claim.amount|tzs }}</dd>
+  <dt>{% translate "Paid to" %}</dt><dd>{{ claim.instruction.get_method_display }} {{ claim.instruction.business_number }} ({{ claim.instruction.recipient_name }})</dd>
+  <dt>{% translate "Paid from" %}</dt><dd>{{ claim.payer_phone }}</dd>
+  <dt>{% translate "Transaction reference" %}</dt><dd>{{ claim.transaction_reference }}</dd>
+  <dt>{% translate "Payment date" %}</dt><dd>{{ claim.paid_on|date:"DATE_FORMAT"|default:"—" }}</dd>
+  <dt>{% translate "Submitted" %}</dt><dd>{{ claim.created_at|date:"DATETIME_FORMAT" }}</dd>
+  {% if claim.reviewed_at %}<dt>{% translate "Reviewed" %}</dt><dd>{{ claim.reviewed_at|date:"DATETIME_FORMAT" }}</dd>{% endif %}
+</dl></section>
+
+{% if claim.status == "PENDING_VERIFICATION" %}
+<form method="post" class="manual-payment__withdraw">{% csrf_token %}<input type="hidden" name="action" value="cancel">
+  <button type="submit" class="button button--secondary">{% translate "Withdraw these details" %}</button>
+  <p class="form-help">{% translate "Only if you entered something wrong or did not pay. Withdrawing does not refund a payment." %}</p>
+</form>
+{% endif %}
+<p><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></p>
+{% endblock %}

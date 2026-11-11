@@ -1,0 +1,47 @@
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/payments/manual.css' %}">{% endblock %}
+{% block title %}{% translate "Pay for your membership" %}{% endblock %}
+{% block crumb %}{% translate "Pay" %}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{% translate "Pay for your membership" %}</h1>
+<p class="lead">{% translate "Pay with Airtel Money (Lipa), then tell us the transaction details. Your membership starts after our team confirms the payment in our Airtel business records, usually within one working day." %}</p>
+
+<section class="panel manual-payment__summary" aria-labelledby="pay-plan">
+  <h2 class="panel__title" id="pay-plan">{% translate "Your plan" %}</h2>
+  <dl class="details">
+    <dt>{% translate "Plan" %}</dt><dd>{{ subscription.plan_name }}</dd>
+    <dt>{% translate "Length" %}</dt><dd>{% blocktranslate count days=subscription.duration_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</dd>
+    <dt>{% translate "Amount to pay" %}</dt><dd><strong class="manual-payment__amount financial-amount">{{ subscription.price_amount|tzs }}</strong></dd>
+    <dt>{% translate "Price held until" %}</dt><dd>{{ subscription.pending_until|date:"DATETIME_FORMAT" }}</dd>
+  </dl>
+</section>
+
+{% if instruction %}
+<section class="panel manual-payment__instructions" aria-labelledby="pay-how">
+  <h2 class="panel__title" id="pay-how">{% translate "1. Pay with Airtel Money – Lipa" %}</h2>
+  <dl class="details">
+    <dt>{% translate "Lipa business number" %}</dt><dd><strong class="manual-payment__number">{{ instruction.business_number }}</strong></dd>
+    <dt>{% translate "Recipient name" %}</dt><dd>{{ instruction.recipient_name }}</dd>
+    <dt>{% translate "Exact amount" %}</dt><dd><strong class="financial-amount">{{ subscription.price_amount|tzs }}</strong></dd>
+  </dl>
+  {% if instruction.instructions %}<p class="manual-payment__steps">{{ instruction.instructions|linebreaksbr }}</p>{% endif %}
+  <p class="notice" role="note">{% translate "Check that Airtel shows the recipient name above before you confirm. Pay the exact amount in one payment: partial or extra amounts cannot be matched automatically. Never share your Airtel PIN with anyone, including ClipCash staff." %}</p>
+  <p>{% translate "Paid a different amount, paid twice, or paid to the wrong number? Do not submit it here." %} <a href="{% url 'support:tickets' %}">{% translate "Contact support" %}</a> {% translate "with your Airtel transaction reference so our team can check it and arrange any refund." %}</p>
+</section>
+
+<section class="panel" aria-labelledby="pay-tell">
+  <h2 class="panel__title" id="pay-tell">{% translate "2. Tell us about your payment" %}</h2>
+  <p>{% translate "Submitting these details does not activate your membership by itself. We check every payment against the official Airtel records first." %}</p>
+  {% include "components/form.html" with form=form button=_("Submit payment details") %}
+</section>
+{% else %}
+<p class="notice notice--warning" role="status">{% translate "Payments are temporarily unavailable. Your plan choice is saved; please try again later." %}</p>
+{% endif %}
+
+{% if previous %}
+<section class="section" aria-labelledby="pay-previous"><h2 id="pay-previous">{% translate "Earlier submissions for this plan" %}</h2>
+<ul class="list">{% for item in previous %}<li class="list__item"><span><a href="{% url 'payments:manual_claim' item.pk %}">{{ item.transaction_reference }}</a> · {{ item.created_at|date:"SHORT_DATETIME_FORMAT" }}</span><span class="badge badge--{{ item.status|lower }}">{{ item.get_status_display }}</span></li>{% endfor %}</ul>
+</section>
+{% endif %}
+<p><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></p>
+{% endblock %}

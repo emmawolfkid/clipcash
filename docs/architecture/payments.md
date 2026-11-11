@@ -176,6 +176,17 @@ database rule), so a second payment can never extend a membership twice.
 Real activation stays behind `activate_with_verified_payment` and the locked
 `live_payments` flag.
 
+## Manual membership payments (PAY-01, real money)
+
+Separate from everything above: `apps.payments.manual`, models
+`ManualPaymentInstruction` and `ManualMembershipPayment`. Members pay ClipCash's
+Airtel Lipa business number and submit a claim; authorized staff verify it in the
+official Airtel business records; approval posts `membership.manual_payment_received`
+(CASH → MEMBERSHIP_DEFERRED_REVENUE) to the real ledger and activates the membership
+through `activate_with_manual_payment`. Off unless `DJANGO_MANUAL_MEMBERSHIP_PAYMENTS`
+is set, never with restricted demo mode or sandbox payments. Audit events use the
+`MEMBERSHIP` category. Full description: `docs/implementation/pay_01_manual_membership_payments.md`.
+
 ## Jobs
 
 | Job | Interval | What it does |

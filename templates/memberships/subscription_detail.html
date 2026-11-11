@@ -8,7 +8,8 @@
 {% elif subscription.status == "EXPIRED" %}<p class="notice" role="status">{% translate "This membership has ended, so it no longer gives access to included content." %}</p>
 {% elif subscription.status == "CANCELLED" %}<p class="notice" role="status">{% translate "This membership choice was cancelled. It does not give access to included content." %}</p>
 {% elif subscription.status == "SUSPENDED" %}<p class="notice notice--warning" role="status">{% translate "Your membership is suspended. Please contact support." %}</p>
-{% elif subscription.status == "PENDING" and not payments_available %}<p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
+{% elif subscription.status == "PENDING" and pending_payment %}{% include "components/manual_payment_status.html" with claim=pending_payment pending=subscription %}
+{% elif subscription.status == "PENDING" %}{% include "components/membership_payment_notice.html" %}{% if manual_payments_ready %}<p><a class="button" href="{% url 'payments:manual_pay' subscription.pk %}">{% translate "Pay now" %}</a></p>{% endif %}
 {% endif %}
 <section class="panel">
 <div class="membership-status"><span class="membership-status__label">{% translate "Status" %}</span><span class="badge badge--{{ subscription.status|lower }}">{{ subscription.get_status_display }}</span></div>

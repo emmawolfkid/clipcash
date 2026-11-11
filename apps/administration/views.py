@@ -29,9 +29,11 @@ from apps.withdrawals import services as withdrawals
 from apps.withdrawals.models import DemoWithdrawal, PayoutBeneficiary, PayoutEvent, WithdrawalException
 from apps.wallets import wallet_services
 from apps.wallets.models import Wallet, WalletDiscrepancy, WalletRestriction
+from apps.payments import manual as manual_payments
 from apps.payments import services as payments
 from apps.payments import simulator as payment_simulator
 from apps.payments.models import (
+    ManualMembershipPayment,
     MembershipActivationPreview,
     PaymentDispute,
     PaymentIntent,
@@ -86,6 +88,10 @@ def console_links(user):
         "viewing": viewing.can_review_viewing(user),
         "rewards": rewards.can_use_rewards_console(user),
         "payments": payments.can_view_payments(user) and payments_sandbox_active(),
+        # PAY-01: real membership payments (Airtel Lipa), verified by staff.
+        "membership_payments": manual_payments.manual_payments_enabled() and manual_payments.can_view(user),
+        "payment_instructions": (manual_payments.manual_payments_enabled()
+                                 and manual_payments.can_manage_instructions(user)),
         "wallets": wallet_services.can_view_wallets(user),
         "withdrawals": withdrawals.can_view(user),
         "support": support.can_view_queue(user),
@@ -146,6 +152,9 @@ class MemberDetailView(View):
         return render(request, "administration/members/detail.html", {
             "member": member, "membership": check_access(member).subscription,
             "subscriptions": member.subscriptions.order_by("-created_at")[:5],
+            # PAY-01B: manual (Airtel Lipa) payment history, for staff allowed to see payments.
+            "manual_claims": (ManualMembershipPayment.objects.filter(member=member).order_by("-created_at")[:10]
+                              if can["membership_payments"] else None),
             "wallet": Wallet.objects.filter(member=member).first() if can["wallets"] else None,
             "activity": member_activity(member, limit=15),
             "can_change": request.user.has_perm("accounts.change_user"), "can": can, "nav": "members",
@@ -928,6 +937,299 @@ class PaymentFundingView(View):
                                                             .order_by("-created_at")[:100],
             "balances": balances, "balance_total": sum(row["balance"] for row in balances),
             "can": console_links(request.user), "nav": "payments"})
+
+
+# --- PAY-01B: membership plans (prices and durations) -------------------------------------------
+
+
+def _require_plan_admin(user):
+    if not is_super_admin(user):
+        raise PermissionDenied
+
+
+def _plan_queryset():
+    from apps.memberships.models import MembershipPlan
+
+    now = timezone.now()
+    return MembershipPlan.objects.annotate(
+        current_members=Count("subscriptions", filter=Q(subscriptions__status=Subscription.Status.ACTIVE,
+                                                        subscriptions__starts_at__lte=now,
+                                                        subscriptions__expires_at__gt=now), distinct=True),
+        pending_choices=Count("subscriptions", filter=Q(subscriptions__status=Subscription.Status.PENDING),
+                              distinct=True),
+        open_payments=Count("subscriptions__manual_payments",
+                            filter=Q(subscriptions__manual_payments__status="PENDING_VERIFICATION"), distinct=True),
+    )
+
+
+PLAN_ERRORS = {"stale_edit": _("Another administrator changed this plan's price or duration while you were "
+                               "editing. The form now shows the current terms; check them and save again.")}
+
+
+@console
+class PlanListView(View):
+    def get(self, request):
+        _require_plan_admin(request.user)
+        return render(request, "administration/plans/list.html", {
+            "plans": _plan_queryset().order_by("display_order", "price_amount", "name"),
+            "max_price": settings.MEMBERSHIPS_MAX_PLAN_PRICE,
+            "can": console_links(request.user), "nav": "plans"})
+
+
+@console
+class PlanCreateView(View):
+    template_name = "administration/plans/form.html"
+
+    def _render(self, request, form, status=200):
+        return render(request, self.template_name, {"form": form, "plan": None, "can": console_links(request.user),
+                                                    "nav": "plans"}, status=status)
+
+    def get(self, request):
+        from apps.memberships.forms import ConsolePlanForm
+
+        _require_plan_admin(request.user)
+        return self._render(request, ConsolePlanForm(initial={"display_order": 100, "is_public": True}))
+
+    def post(self, request):
+        from apps.memberships.forms import ConsolePlanForm
+
+        _require_plan_admin(request.user)
+        form = ConsolePlanForm(request.POST)
+        if not form.is_valid():
+            return self._render(request, form, status=400)
+        try:
+            plan = memberships.create_plan(request.user, code=form.cleaned_data["code"], **form.plan_values())
+        except memberships.NotAuthorized:
+            raise PermissionDenied from None
+        except ValidationError as error:
+            _form_errors(form, error)
+            return self._render(request, form, status=400)
+        messages.success(request, _("Plan created. It is active and can be bought now if it is listed."))
+        return redirect("administration:plan", pk=plan.pk)
+
+
+@console
+class PlanEditView(View):
+    template_name = "administration/plans/form.html"
+
+    def _render(self, request, plan, form, status=200):
+        return render(request, self.template_name, {
+            "form": form, "plan": plan, "versions": plan.versions.order_by("-version")[:20],
+            "counts": _plan_queryset().get(pk=plan.pk), "statuses": plan.Status,
+            "history": AuditEvent.objects.filter(target_model="membershipplan", target_id=str(plan.pk))
+                                         .order_by("-occurred_at")[:30],
+            "can": console_links(request.user), "nav": "plans"}, status=status)
+
+    def _form(self, plan, data=None):
+        from apps.memberships.forms import ConsolePlanEditForm
+
+        return ConsolePlanEditForm(data, instance=plan, initial={"expected_version": plan.version})
+
+    def get(self, request, pk):
+        from apps.memberships.models import MembershipPlan
+
+        _require_plan_admin(request.user)
+        plan = get_object_or_404(MembershipPlan, pk=pk)
+        return self._render(request, plan, self._form(plan))
+
+    def post(self, request, pk):
+        from apps.memberships.models import MembershipPlan
+
+        _require_plan_admin(request.user)
+        plan = get_object_or_404(MembershipPlan, pk=pk)
+        action = request.POST.get("action", "save")
+        try:
+            if action == "status":
+                status = request.POST.get("status", "")
+                memberships.set_plan_status(request.user, plan, status)
+                messages.success(request, _("Plan status changed."))
+                return redirect("administration:plan", pk=pk)
+            if action != "save":
+                raise PermissionDenied
+            original = MembershipPlan.objects.get(pk=pk)
+            form = self._form(MembershipPlan.objects.get(pk=pk), request.POST)
+            if not form.is_valid():
+                return self._render(request, original, form, status=400)
+            values = form.plan_values()
+            changes = {name: value for name, value in values.items() if getattr(original, name) != value}
+            memberships.update_plan(request.user, original, changes,
+                                    expected_version=form.cleaned_data["expected_version"])
+        except memberships.NotAuthorized:
+            raise PermissionDenied from None
+        except ValidationError as error:
+            if action == "status":
+                messages.error(request, _error_text(error))
+                return redirect("administration:plan", pk=pk)
+            _form_errors(form, error)
+            return self._render(request, MembershipPlan.objects.get(pk=pk), form, status=400)
+        except memberships.MembershipError as error:
+            messages.error(request, PLAN_ERRORS.get(error.code, str(error)))
+            if error.code == "stale_edit" or action == "status":
+                return redirect("administration:plan", pk=pk)
+            return self._render(request, MembershipPlan.objects.get(pk=pk), form, status=400)
+        messages.success(request, _("Plan saved. New choices use these terms; existing choices, payments and "
+                                    "memberships keep the price and duration they were quoted."))
+        return redirect("administration:plan", pk=pk)
+
+
+# --- PAY-01: manual membership payments (Airtel Lipa), REAL money ------------------------------
+
+
+def _require_manual_payments(user):
+    if not manual_payments.manual_payments_enabled() or not manual_payments.can_view(user):
+        raise PermissionDenied
+
+
+@console
+class MembershipPaymentQueueView(View):
+    """Payments waiting for verification (oldest first), and decided ones."""
+
+    def get(self, request):
+        _require_manual_payments(request.user)
+        status = request.GET.get("status", ManualMembershipPayment.Status.PENDING_VERIFICATION)
+        if status not in ManualMembershipPayment.Status.values and status != "all":
+            status = ManualMembershipPayment.Status.PENDING_VERIFICATION
+        qs = manual_payments.queue(None if status == "all" else status)
+        query = request.GET.get("q", "").strip()[:60]
+        if query:
+            key = "".join(ch for ch in query.upper() if ch.isalnum())
+            match = Q(reference__iexact=query) | Q(member__email__icontains=query)
+            if key:
+                match |= Q(reference_key__contains=key)
+            qs = qs.filter(match)
+        page = Paginator(qs, 25).get_page(request.GET.get("page"))
+        params = request.GET.copy()
+        params.pop("page", None)
+        return render(request, "administration/membership_payments/list.html", {
+            "page": page, "status": status, "q": query, "statuses": ManualMembershipPayment.Status.choices,
+            "page_query": params.urlencode(), "instruction": manual_payments.active_instruction(),
+            "pending_count": ManualMembershipPayment.objects.filter(
+                status=ManualMembershipPayment.Status.PENDING_VERIFICATION).count(),
+            "can": console_links(request.user), "nav": "membership_payments"})
+
+
+@console
+class MembershipPaymentDetailView(View):
+    template_name = "administration/membership_payments/detail.html"
+
+    def _render(self, request, claim, approve_form=None, reject_form=None, status=200):
+        from apps.payments.forms import ApproveManualPaymentForm, RejectManualPaymentForm
+        from apps.wallets.models import JournalEntry
+
+        same_reference = (ManualMembershipPayment.objects.filter(reference_key=claim.reference_key)
+                          .exclude(pk=claim.pk).select_related("member").order_by("-created_at")[:10])
+        return render(request, self.template_name, {
+            "claim": claim, "subscription": claim.subscription, "member": claim.member,
+            "approve_form": approve_form or ApproveManualPaymentForm(),
+            "reject_form": reject_form or RejectManualPaymentForm(),
+            "can_verify": manual_payments.can_verify(request.user) and claim.member_id != request.user.pk,
+            "same_reference": same_reference,
+            "member_claims": (ManualMembershipPayment.objects.filter(member=claim.member).exclude(pk=claim.pk)
+                              .order_by("-created_at")[:10]),
+            "ledger_entry": (JournalEntry.objects.filter(pk=claim.ledger_entry_id).first()
+                             if claim.ledger_entry_id else None),
+            "history": AuditEvent.objects.filter(target_model="manualmembershippayment", target_id=str(claim.pk))
+                                         .order_by("occurred_at")[:100],
+            "can": console_links(request.user), "nav": "membership_payments",
+        }, status=status)
+
+    def _claim(self, pk):
+        return get_object_or_404(ManualMembershipPayment.objects.select_related(
+            "member", "subscription", "subscription__plan", "instruction", "reviewed_by"), pk=pk)
+
+    def get(self, request, pk):
+        _require_manual_payments(request.user)
+        return self._render(request, self._claim(pk))
+
+    def post(self, request, pk):
+        from apps.payments.forms import ApproveManualPaymentForm, RejectManualPaymentForm
+
+        _require_manual_payments(request.user)
+        claim = self._claim(pk)
+        action = request.POST.get("action", "")
+        if action == "approve":
+            form = ApproveManualPaymentForm(request.POST)
+            if not form.is_valid():
+                return self._render(request, claim, approve_form=form, status=400)
+            try:
+                _claim, changed = manual_payments.approve(request.user, claim, **form.cleaned_data)
+            except manual_payments.NotAuthorized:
+                raise PermissionDenied from None
+            except ValidationError as error:
+                _form_errors(form, error)
+                return self._render(request, claim, approve_form=form, status=400)
+            except manual_payments.ManualPaymentError as error:
+                messages.error(request, str(error))
+                return redirect("administration:membership_payment", pk=pk)
+            messages.success(request, _("Payment approved and membership activated.") if changed
+                             else _("This payment was already approved. Nothing changed."))
+        elif action == "reject":
+            form = RejectManualPaymentForm(request.POST)
+            if not form.is_valid():
+                return self._render(request, claim, reject_form=form, status=400)
+            try:
+                _claim, changed = manual_payments.reject(request.user, claim, **form.cleaned_data)
+            except manual_payments.NotAuthorized:
+                raise PermissionDenied from None
+            except ValidationError as error:
+                _form_errors(form, error)
+                return self._render(request, claim, reject_form=form, status=400)
+            except manual_payments.ManualPaymentError as error:
+                messages.error(request, str(error))
+                return redirect("administration:membership_payment", pk=pk)
+            messages.success(request, _("Payment rejected. The member was notified.") if changed
+                             else _("This payment was already rejected. Nothing changed."))
+        else:
+            raise PermissionDenied
+        return redirect("administration:membership_payment", pk=pk)
+
+
+@console
+class PaymentInstructionsView(View):
+    """Super Administrators publish the Airtel Lipa details members pay to."""
+
+    def _render(self, request, form, status=200):
+        from apps.payments.models import ManualPaymentInstruction
+
+        return render(request, "administration/membership_payments/instructions.html", {
+            "form": form, "instruction": manual_payments.active_instruction(),
+            "history": ManualPaymentInstruction.objects.select_related("created_by", "retired_by")
+                                                   .order_by("-created_at")[:20],
+            "enabled": manual_payments.manual_payments_enabled(),
+            "can": console_links(request.user), "nav": "membership_payments"}, status=status)
+
+    def get(self, request):
+        from apps.payments.forms import PaymentInstructionForm
+
+        if not manual_payments.can_manage_instructions(request.user):
+            raise PermissionDenied
+        current = manual_payments.active_instruction()
+        initial = ({"business_number": current.business_number, "recipient_name": current.recipient_name,
+                    "instructions": current.instructions} if current else None)
+        return self._render(request, PaymentInstructionForm(initial=initial))
+
+    def post(self, request):
+        from apps.payments.forms import PaymentInstructionForm
+
+        if not manual_payments.can_manage_instructions(request.user):
+            raise PermissionDenied
+        if request.POST.get("action") == "retire":
+            if manual_payments.retire_instruction(request.user):
+                messages.success(request, _("Payment details retired. Members cannot submit new payments until "
+                                            "new details are published."))
+            return redirect("administration:payment_instructions")
+        form = PaymentInstructionForm(request.POST)
+        if not form.is_valid():
+            return self._render(request, form, status=400)
+        try:
+            manual_payments.publish_instruction(request.user, **form.cleaned_data)
+        except manual_payments.NotAuthorized:
+            raise PermissionDenied from None
+        except ValidationError as error:
+            _form_errors(form, error)
+            return self._render(request, form, status=400)
+        messages.success(request, _("Payment details published. Members now see them on the payment page."))
+        return redirect("administration:payment_instructions")
 
 
 # --- Member wallets (Phase 09) ----------------------------------------------------------------

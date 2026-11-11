@@ -1,0 +1,29 @@
+/* PAY-01: pages / payments / manual membership payment (Airtel Lipa). */
+.manual-payment__summary,
+.manual-payment__instructions {
+  margin-bottom: var(--space-4);
+}
+
+.manual-payment__amount {
+  font-size: 1.35rem;
+}
+
+.manual-payment__number {
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.manual-payment__steps {
+  margin: var(--space-3) 0;
+}
+
+.manual-payment__withdraw {
+  margin: var(--space-4) 0;
+}
+
+.manual-payment__withdraw .form-help {
+  margin-top: var(--space-2);
+  color: var(--muted);
+}

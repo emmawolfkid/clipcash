@@ -1,0 +1,21 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Membership payments" %}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><h1 class="page-title">{% translate "Membership payments" %} <span class="badge badge--active">{% translate "Real money" %}</span></h1>
+<span>{% blocktranslate count n=pending_count %}{{ n }} waiting for verification{% plural %}{{ n }} waiting for verification{% endblocktranslate %}{% if can.payment_instructions %} · <a href="{% url 'administration:payment_instructions' %}">{% translate "Airtel Lipa details" %}</a>{% endif %}</span></div>
+<p class="notice" role="note">{% translate "Members' submissions are claims, not proof. Approve a payment only after finding it in the official Airtel business records (statement or business portal): same reference, exact amount, received into ClipCash's Lipa account, not used before." %}</p>
+{% if not instruction %}<p class="notice notice--warning" role="status">{% translate "No Airtel Lipa details are published, so members cannot submit new payments. Waiting submissions can still be reviewed." %}</p>{% endif %}
+<form class="toolbar" method="get">
+  <label class="visually-hidden" for="q">{% translate "Search" %}</label><input id="q" type="search" name="q" value="{{ q }}" placeholder="{% translate 'Claim or transaction reference, email' %}">
+  <label class="visually-hidden" for="f-status">{% translate "Status" %}</label><select id="f-status" name="status">{% for v, l in statuses %}<option value="{{ v }}"{% if status == v %} selected{% endif %}>{{ l }}</option>{% endfor %}<option value="all"{% if status == "all" %} selected{% endif %}>{% translate "Any status" %}</option></select>
+  <button class="button button--secondary" type="submit">{% translate "Filter" %}</button></form>
+{% if page.object_list %}<table class="table workspace-table hide-narrow-2 hide-narrow-4"><caption class="visually-hidden">{% translate "Membership payments" %}</caption>
+  <thead><tr><th scope="col">{% translate "Submitted" %}</th><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Plan / amount" %}</th><th scope="col">{% translate "Transaction reference" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
+  <tbody>{% for c in page.object_list %}<tr>
+    <td><a href="{% url 'administration:membership_payment' c.pk %}">{{ c.created_at|date:"SHORT_DATETIME_FORMAT" }}</a><br><small>{{ c.reference }}</small></td>
+    <td>{{ c.member.email }}</td>
+    <td>{{ c.plan_name }} · <span class="financial-amount">{{ c.amount|tzs }}</span></td>
+    <td><code>{{ c.transaction_reference }}</code></td>
+    <td><span class="badge badge--{{ c.status|lower }}">{{ c.get_status_display }}</span></td></tr>{% endfor %}</tbody>
+</table>{% include "components/pagination.html" %}{% else %}<p class="empty-state">{% translate "No membership payments match." %}</p>{% endif %}
+{% endblock %}

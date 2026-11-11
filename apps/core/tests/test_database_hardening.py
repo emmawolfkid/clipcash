@@ -48,7 +48,10 @@ class FunctionSearchPathTests(TestCase):
     def test_the_migration_covers_every_function(self):
         from importlib import import_module
 
+        # core.0004 pinned every function that existed then; later migrations create
+        # their functions already pinned and list them in their own FUNCTIONS.
         listed = set(import_module("apps.core.migrations.0004_pin_function_search_path").FUNCTIONS)
+        listed |= set(import_module("apps.payments.migrations.0005_manual_payment_integrity").FUNCTIONS)
         self.assertEqual(listed, {name for name, _, _ in public_functions()})
 
 

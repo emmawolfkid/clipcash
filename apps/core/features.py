@@ -33,16 +33,21 @@ class Feature:
     config_field: str | None = None
     financial: bool = False
     demo_restricted: bool = False
+    # Environment-owned switch (a settings name) instead of a SiteConfiguration field.
+    setting: str | None = None
+    # Settings name that must also be True (an explicit, reviewed approval).
+    requires_setting: str | None = None
 
     @property
     def locked(self):
-        return self.config_field is None
+        return self.config_field is None and self.setting is None
 
 
 FEATURES = {
     feature.key: feature
     for feature in (
-        Feature("registration", _("Public registration"), True, "registration_enabled", demo_restricted=True),
+        Feature("registration", _("Public registration"), True, "registration_enabled", demo_restricted=True,
+                requires_setting="PUBLIC_REGISTRATION_APPROVED"),
         Feature("memberships", _("Membership features"), False, "memberships_enabled"),
         Feature("videos", _("Video features"), False, "videos_enabled"),
         Feature("advertisers", _("Advertiser features"), False, "advertisers_enabled"),
@@ -50,6 +55,12 @@ FEATURES = {
         Feature("real_money_rewards", _("Real-money rewards"), False, financial=True),
         Feature("live_payments", _("Live payments"), False, financial=True),
         Feature("withdrawals", _("Withdrawals and payouts"), False, financial=True),
+        # PAY-01: real membership fees paid manually (Airtel Lipa) and verified by staff.
+        # Environment-owned, off by default and never on in a restricted demonstration.
+        # Not one of the locked FINANCIAL_FEATURES: it moves no money out of ClipCash and
+        # funds nothing but membership revenue. See apps.payments.manual.
+        Feature("manual_membership_payments", _("Manual membership payments (Airtel Lipa)"), False,
+                demo_restricted=True, setting="MANUAL_MEMBERSHIP_PAYMENTS_ENABLED"),
     )
 }
 
@@ -69,6 +80,10 @@ def is_enabled(key, config=None):
         return False
     if feature.demo_restricted and settings.RESTRICTED_DEMO_MODE:
         return False  # Before the configuration lookup: no stored value can override it.
+    if feature.requires_setting and getattr(settings, feature.requires_setting, False) is not True:
+        return False
+    if feature.setting is not None:
+        return getattr(settings, feature.setting, False) is True
     config = config if config is not None else get_site_configuration()
     value = getattr(config, feature.config_field, feature.default)
     return value if isinstance(value, bool) else feature.default

@@ -116,6 +116,11 @@ class DeployCommandTests(SimpleTestCase):
             "core.E007": {"DJANGO_RESTRICTED_DEMO": "False"},
             "notifications.E001": {"DJANGO_EMAIL_BACKEND": "django.core.mail.backends.console.EmailBackend"},
             "payments.E001": {"DJANGO_PAYMENTS_MODE": "live"},
+            # PAY-01: real manual payments never run inside the demo or beside sandbox payments.
+            "payments.E003": {"DJANGO_MANUAL_MEMBERSHIP_PAYMENTS": "True"},
+            "payments.E004": {"DJANGO_MANUAL_MEMBERSHIP_PAYMENTS": "True", "DJANGO_RESTRICTED_DEMO": "False",
+                              "DJANGO_PUBLIC_REGISTRATION_APPROVED": "True", "DJANGO_PAYMENTS_MODE": "sandbox",
+                              "DJANGO_PAYMENTS_SANDBOX_ALLOWED": "True"},
             "accounts.E007": {**NETPOA_ENV, "DJANGO_TRUSTED_PROXY_NETWORKS": None},
             "accounts.E005": {**NETPOA_ENV, "DJANGO_CLIENT_IP_HEADER": "CF-Connecting-IP",
                               "DJANGO_TRUSTED_PROXY_NETWORKS": None, "DJANGO_PROXY_ORIGIN_RESTRICTED": "True"},
@@ -123,6 +128,17 @@ class DeployCommandTests(SimpleTestCase):
         for check_id, overrides in cases.items():
             with self.subTest(check_id):
                 self.assert_fails_with(check_id, **overrides)
+
+    def test_reviewed_production_launch_with_manual_payments_passes(self):
+        """PAY-01: the production profile for real registration and Airtel Lipa payments."""
+        result = self.run_check(**NETPOA_ENV, DJANGO_RESTRICTED_DEMO="False",
+                                DJANGO_PUBLIC_REGISTRATION_APPROVED="True", DJANGO_MANUAL_MEMBERSHIP_PAYMENTS="True",
+                                DJANGO_PAYMENTS_MODE="disabled",
+                                DJANGO_EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
+                                DJANGO_EMAIL_HOST="smtp.example.invalid", DJANGO_EMAIL_PORT="587",
+                                DJANGO_EMAIL_USE_TLS="True")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("payments.E00", result.stderr + result.stdout)
 
     def test_intentional_demo_settings_still_pass(self):
         """Explicit, documented opt-ins for an isolated demo are not refused."""

@@ -27,7 +27,17 @@
         {% blocktranslate with date=m.subscription.expires_at|date:"DATE_FORMAT" %}Valid until {{ date }}{% endblocktranslate %}{% if m.subscription.activation_source == "COMPLIMENTARY" %} · {% translate "Complimentary (no payment)" %}{% endif %}</p>
     {% elif m.pending %}
       <p class="summary-card__value">{{ m.pending.plan_name }}</p>
+      {% if m.pending_payment.status == "PENDING_VERIFICATION" %}
+      <p class="summary-card__status"><span class="badge badge--pending_verification">{{ m.pending_payment.get_status_display }}</span> {% translate "Your payment is being verified." %}</p>
+      {% elif m.pending_payment.status == "REJECTED" %}
+      <p class="summary-card__status"><span class="badge badge--rejected">{% translate "Payment not confirmed" %}</span> {% translate "Check the details and submit them again." %}</p>
+      {% elif m.manual_payments_ready %}
+      <p class="summary-card__status"><span class="badge badge--pending">{{ m.pending.get_status_display }}</span> {% translate "Pay with Airtel Money (Lipa) to start this membership." %}</p>
+      {% elif m.manual_payments %}
+      <p class="summary-card__status"><span class="badge badge--pending">{{ m.pending.get_status_display }}</span> {% translate "Waiting for payment. Payments are temporarily unavailable." %}</p>
+      {% else %}
       <p class="summary-card__status"><span class="badge badge--pending">{{ m.pending.get_status_display }}</span> {% translate "Waiting for payment. Online payment is not available yet." %}</p>
+      {% endif %}
     {% else %}<p class="summary-card__status">{% translate "You do not have an active membership." %}</p>{% endif %}
     {% if m.enabled %}<a class="summary-card__action" href="{% url 'memberships:mine' %}">{% if m.subscription %}{% translate "Manage membership" %}{% else %}{% translate "Choose a plan" %}{% endif %}</a>{% endif %}
   </section>

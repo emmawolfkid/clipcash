@@ -3,8 +3,9 @@ Controlled posting types: the only kinds of journal entry the service accepts.
 
 Each type fixes which account types may be debited and credited, which
 financial feature must be enabled, and extra rules. Every type here requires a
-financial feature that is locked off in code (apps.core.features), so in this
-phase nothing can be posted outside tests. The database independently enforces
+financial feature that is locked off in code (apps.core.features), except
+membership.manual_payment_received (PAY-01), which needs the environment-owned
+manual_membership_payments feature and is posted only after staff verification. The database independently enforces
 balance, overdraft and funding-separation rules (migration 0002).
 """
 
@@ -44,6 +45,13 @@ POSTING_TYPES = {
               ["MEMBERSHIP_DEFERRED_REVENUE"], ["MEMBERSHIP_REVENUE"], "live_payments"),
         _type("membership.refund_approved", "Membership refund approved",
               ["MEMBERSHIP_DEFERRED_REVENUE"], ["REFUNDS_PAYABLE"], "live_payments"),
+        # PAY-01: a membership fee paid to ClipCash's Airtel Lipa business number and
+        # verified by staff in the official Airtel records. The money is already in the
+        # mobile-money float (CASH), so there is no provider clearing step. Posted only by
+        # apps.payments.manual, once per Airtel transaction (external reference).
+        _type("membership.manual_payment_received", "Membership fee received (Airtel Lipa, staff-verified)",
+              ["CASH"], ["MEMBERSHIP_DEFERRED_REVENUE"], "manual_membership_payments",
+              requires_external_reference=True),
         # Advertiser funding
         _type("advertiser.funding_received", "Advertiser payment received (unverified)",
               ["PAYMENT_CLEARING"], ["ADVERTISER_FUNDING_PENDING"], "live_payments",

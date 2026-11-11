@@ -31,6 +31,7 @@ class FeatureFlagTests(TestCase):
                 "real_money_rewards": False,
                 "live_payments": False,
                 "withdrawals": False,
+                "manual_membership_payments": False,  # PAY-01: environment-owned, off by default.
             },
         )
         for key, feature in features.FEATURES.items():

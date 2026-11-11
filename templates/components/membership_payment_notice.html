@@ -1,0 +1,5 @@
+{% load i18n %}{# PAY-01: how a membership is paid in this deployment. Context: payment_context(). #}
+{% if manual_payments and manual_payments_ready %}<p class="notice" role="status">{% translate "Pay with Airtel Money (Lipa) after choosing a plan, then submit the transaction details. Your membership starts once our team confirms the payment in our Airtel business records." %}</p>
+{% elif manual_payments %}<p class="notice notice--warning" role="status">{% translate "Payments are temporarily unavailable. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
+{% elif not payments_available %}<p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
+{% endif %}

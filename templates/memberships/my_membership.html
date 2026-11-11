@@ -17,7 +17,7 @@
     {% if current.status == "SUSPENDED" %}<p class="notice notice--warning" role="status">{% translate "Your membership is suspended. Please contact support." %}</p>{% endif %}
   </div>
 {% elif pending %}
-  <p class="status-panel">{% translate "You do not have an active membership." %} {% translate "Your choice below is waiting for payment." %}</p>
+  <p class="status-panel">{% translate "You do not have an active membership." %} {% if pending_payment.status == "PENDING_VERIFICATION" %}{% translate "Your payment below is being verified." %}{% else %}{% translate "Your choice below is waiting for payment." %}{% endif %}</p>
 {% else %}
   <div class="empty-state"><p>{% translate "You do not have an active membership." %}{% if history %} {% translate "Your earlier records are listed below." %}{% endif %}</p><a class="button" href="{% url 'memberships:plans' %}">{% translate "See plans" %}</a></div>
 {% endif %}
@@ -39,13 +39,16 @@
 {% if pending %}
 <section class="panel section"><h2 class="panel__title">{% translate "Waiting for payment" %}</h2>
   <p>{% blocktranslate with plan=pending.plan_name price=pending.price_amount|tzs until=pending.pending_until|date:"DATE_FORMAT" %}{{ plan }} for {{ price }}. This choice is kept until {{ until }}.{% endblocktranslate %}</p>
-  {% if not payments_available %}
-  <p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
+  {% if pending_payment %}{% include "components/manual_payment_status.html" with claim=pending_payment %}
+  {% else %}{% include "components/membership_payment_notice.html" %}
+  {% if manual_payments_ready %}<p><a class="button" href="{% url 'payments:manual_pay' pending.pk %}">{% translate "Pay now" %}</a></p>{% endif %}
   {% endif %}
   {% if sandbox_payments %}<p class="notice notice--sandbox">{% translate "Sandbox: you can try a simulated payment for this choice. It shows what would happen and never activates your membership." %} <a href="{% url 'payments:history' %}">{% translate "Sandbox payments" %}</a></p>{% endif %}
+  {% if pending_payment.status != "PENDING_VERIFICATION" %}
   <form method="post" action="{% url 'memberships:cancel_pending' pending.pk %}">{% csrf_token %}
     <button type="submit" class="button button--secondary">{% translate "Cancel this choice" %}</button>
   </form>
+  {% endif %}
 </section>
 {% endif %}
 

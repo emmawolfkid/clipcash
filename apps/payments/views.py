@@ -1,7 +1,9 @@
 """
-Member and advertiser payment pages (SANDBOX). Every lookup is scoped to the
-signed-in user (own membership payments; own advertiser's deposits). Browser
-forms never carry a payment status, and members cannot simulate payments.
+Member and advertiser payment pages (SANDBOX), plus the PAY-01 manual membership
+payment pages (REAL Airtel Lipa payments, verified by staff; apps.payments.manual).
+Every lookup is scoped to the signed-in user (own membership payments; own
+advertiser's deposits). Browser forms never carry a payment status, and members
+cannot simulate, approve or activate anything.
 """
 
 import uuid
@@ -19,8 +21,9 @@ from apps.accounts.access import VerifiedAccountRequiredMixin
 from apps.advertising import services as advertising
 from apps.memberships.models import Subscription
 
-from . import services
-from .models import MembershipActivationPreview, PaymentIntent, SandboxCampaignAllocation
+from . import manual, services
+from .forms import ManualPaymentForm
+from .models import ManualMembershipPayment, MembershipActivationPreview, PaymentIntent, SandboxCampaignAllocation
 from .providers import PaymentsDisabled, sandbox_active
 
 
@@ -134,6 +137,119 @@ def _whole(raw):
     if not raw.isdigit():
         raise ValidationError({"amount": "Enter a whole number of shillings."})
     return int(raw)
+
+
+# --- PAY-01: manual membership payments (Airtel Lipa), REAL money -------------------------
+
+
+class ManualPaymentsRequiredMixin:
+    """404 unless manual membership payments are enabled in this deployment."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if not manual.manual_payments_enabled():
+            raise Http404
+        return super().dispatch(request, *args, **kwargs)
+
+
+MANUAL_STATE_MESSAGES = {
+    "already_submitted": _("A payment for this membership is already waiting for verification."),
+    "not_pending": _("This membership is not waiting for payment."),
+    "choice_expired": _("This membership choice has expired. Choose the plan again to pay."),
+    "plan_unavailable": _("This plan is no longer available. Choose another plan."),
+    "no_instructions": _("Payments are temporarily unavailable. Please try again later."),
+    "payments_disabled": _("Payments are temporarily unavailable. Please try again later."),
+    "rate_limited": _("Too many payment submissions. Please wait an hour and try again."),
+}
+
+
+class ManualPayView(VerifiedAccountRequiredMixin, ManualPaymentsRequiredMixin, View):
+    """Plan, exact amount, Airtel Lipa details and the form to submit payment details."""
+
+    template_name = "payments/manual_pay.html"
+
+    def _subscription(self, request, subscription_id):
+        return get_object_or_404(Subscription.objects.select_related("plan"), pk=subscription_id,
+                                 member=request.user)
+
+    def _render(self, request, subscription, form, status=200):
+        return render(request, self.template_name, {
+            "nav": "membership", "subscription": subscription, "form": form,
+            "instruction": manual.active_instruction(),
+            "previous": subscription.manual_payments.exclude(status=ManualMembershipPayment.Status.PENDING_VERIFICATION)
+                                                    .order_by("-created_at")[:10],
+            "breadcrumbs": [("My membership", "memberships:mine")]}, status=status)
+
+    def get(self, request, subscription_id):
+        subscription = self._subscription(request, subscription_id)
+        claim = manual.open_claim(subscription)
+        if claim is not None:
+            return redirect("payments:manual_claim", pk=claim.pk)
+        if subscription.status != Subscription.Status.PENDING:
+            messages.info(request, MANUAL_STATE_MESSAGES["not_pending"])
+            return redirect("memberships:mine")
+        return self._render(request, subscription, ManualPaymentForm())
+
+    def post(self, request, subscription_id):
+        subscription = self._subscription(request, subscription_id)
+        form = ManualPaymentForm(request.POST)
+        if not form.is_valid():
+            return self._render(request, subscription, form, status=400)
+        try:
+            claim, _created = manual.submit_claim(request.user, subscription, **form.cleaned_data)
+        except ValidationError as error:
+            _form_errors(form, error)
+            return self._render(request, subscription, form, status=400)
+        except manual.NotAuthorized:
+            raise PermissionDenied from None
+        except manual.ManualPaymentError as error:
+            messages.error(request, MANUAL_STATE_MESSAGES.get(error.code, _("The payment could not be submitted.")))
+            if error.code == "already_submitted":
+                return redirect("payments:manual_pay", subscription_id=subscription.pk)
+            if error.code in ("no_instructions", "rate_limited"):
+                return self._render(request, subscription, form, status=429 if error.code == "rate_limited" else 503)
+            return redirect("memberships:mine")
+        messages.success(request, _("Thank you. Your payment details were submitted and are waiting for verification."))
+        return redirect("payments:manual_claim", pk=claim.pk)
+
+
+class ManualClaimView(VerifiedAccountRequiredMixin, ManualPaymentsRequiredMixin, View):
+    """Status of one of the member's own payment submissions."""
+
+    def _claim(self, request, pk):
+        return get_object_or_404(ManualMembershipPayment.objects.select_related("subscription", "instruction"),
+                                 pk=pk, member=request.user)
+
+    def get(self, request, pk):
+        claim = self._claim(request, pk)
+        subscription = claim.subscription
+        can_resubmit = (claim.status in (ManualMembershipPayment.Status.REJECTED,
+                                         ManualMembershipPayment.Status.CANCELLED)
+                        and subscription.status == Subscription.Status.PENDING
+                        and manual.open_claim(subscription) is None)
+        return render(request, "payments/manual_claim.html", {
+            "nav": "membership", "claim": claim, "subscription": subscription, "can_resubmit": can_resubmit,
+            "breadcrumbs": [("My membership", "memberships:mine")]})
+
+    def post(self, request, pk):
+        claim = self._claim(request, pk)
+        if request.POST.get("action") != "cancel":
+            raise Http404
+        try:
+            manual.cancel_claim(request.user, claim)
+            messages.success(request, _("Your payment details were withdrawn."))
+        except manual.NotAuthorized:
+            raise PermissionDenied from None
+        except manual.ManualPaymentError:
+            messages.error(request, _("These payment details can no longer be withdrawn."))
+        return redirect("payments:manual_claim", pk=claim.pk)
+
+
+def _form_errors(form, error):
+    if hasattr(error, "error_dict"):
+        for field, field_messages in error.message_dict.items():
+            form.add_error(field if field in form.fields else None, field_messages)
+    else:
+        form.add_error(None, error.messages)
 
 
 @method_decorator(csrf_exempt, name="dispatch")

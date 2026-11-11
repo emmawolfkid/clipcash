@@ -56,8 +56,12 @@ def _membership(user):
     pending = (Subscription.objects.filter(member=user, status=Subscription.Status.PENDING)
                .order_by("-created_at").first())
     subscription = decision.subscription
+    from apps.memberships.views import manual_payment_state, payment_context
+
     return {"enabled": True, "reason": decision.reason, "subscription": subscription, "pending": pending,
-            "active": bool(decision), "email_verified": user.email_verified}
+            "active": bool(decision), "email_verified": user.email_verified,
+            # PAY-01: manual (Airtel Lipa) payment status for the pending choice.
+            "pending_payment": manual_payment_state(pending), **payment_context()}
 
 
 def _sponsored(user):

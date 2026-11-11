@@ -1,0 +1,12 @@
+{% load i18n money %}{# PAY-01: status of the latest manual payment for a pending choice. Context: claim, pending, manual_payments_ready. #}
+{% if claim.status == "PENDING_VERIFICATION" %}
+<p class="notice" role="status"><span class="badge badge--pending_verification">{{ claim.get_status_display }}</span>
+  {% blocktranslate with amount=claim.amount|tzs ref=claim.transaction_reference %}We received your payment details ({{ amount }}, reference {{ ref }}) and are checking them against our Airtel business records. Your membership starts once the payment is confirmed.{% endblocktranslate %}
+  <a href="{% url 'payments:manual_claim' claim.pk %}">{% translate "View submission" %}</a></p>
+{% elif claim.status == "REJECTED" %}
+<p class="notice notice--warning" role="status"><span class="badge badge--rejected">{{ claim.get_status_display }}</span>
+  {% translate "We could not confirm your last payment:" %} {{ claim.get_rejection_reason_display }}.
+  <a href="{% url 'payments:manual_claim' claim.pk %}">{% translate "Details" %}</a>{% if manual_payments_ready %} · <a href="{% url 'payments:manual_pay' pending.pk %}">{% translate "Submit corrected details" %}</a>{% endif %}</p>
+{% elif claim.status == "CANCELLED" %}
+<p class="notice" role="status">{% translate "You withdrew your last payment details." %}{% if manual_payments_ready %} <a href="{% url 'payments:manual_pay' pending.pk %}">{% translate "Pay and submit details" %}</a>{% endif %}</p>
+{% endif %}

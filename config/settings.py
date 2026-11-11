@@ -213,7 +213,10 @@ ACCOUNTS_REAUTHENTICATION_SECONDS = 5 * 60
 RESTRICTED_DEMO_MODE = env.bool("DJANGO_RESTRICTED_DEMO", default=not DEBUG)
 # RG-03: turning restricted demo mode off outside DEBUG fails `check --deploy`
 # (core.E007) unless a reviewed public launch also sets this.
-PUBLIC_REGISTRATION_APPROVED = env.bool("DJANGO_PUBLIC_REGISTRATION_APPROVED", default=False)
+# PAY-01: also a runtime gate. Self-registration opens only when this is True, restricted
+# demo mode is off and the site configuration allows it (apps.core.features). Off by
+# default outside DEBUG.
+PUBLIC_REGISTRATION_APPROVED = env.bool("DJANGO_PUBLIC_REGISTRATION_APPROVED", default=DEBUG)
 # Restricted demonstration only: the accounts listed in DJANGO_DEMO_ACCOUNTS
 # (comma-separated emails) may use pages that otherwise require a verified
 # email. Ignored unless RESTRICTED_DEMO_MODE is on and no payments (live or
@@ -312,6 +315,9 @@ SUPPORT_REOPEN_DAYS = 14
 MEMBERSHIPS_PENDING_DAYS = env.int("DJANGO_MEMBERSHIPS_PENDING_DAYS", default=7)
 MEMBERSHIPS_RENEWAL_WINDOW_DAYS = env.int("DJANGO_MEMBERSHIPS_RENEWAL_WINDOW_DAYS", default=14)
 MEMBERSHIPS_EXPIRING_SOON_DAYS = 7
+# PAY-01B: upper limit for an administrator-set plan price (whole TZS). Prices themselves
+# are set by Super Administrators in the console; nothing here fixes a price or duration.
+MEMBERSHIPS_MAX_PLAN_PRICE = env.int("DJANGO_MEMBERSHIPS_MAX_PLAN_PRICE", default=100_000_000)
 # Videos (apps.videos). "demo" works without Bunny (local/demo only); "bunny"
 # needs the four BUNNY_STREAM_* values. See docs/architecture/videos.md.
 VIDEO_PROVIDER = env("VIDEO_PROVIDER", default="demo" if DEBUG else "bunny")
@@ -365,6 +371,16 @@ PAYMENTS_DEPOSIT_MIN = 1_000
 PAYMENTS_DEPOSIT_MAX = 100_000_000
 PAYMENTS_CALLBACK_MAX_BYTES = 4096
 PAYMENTS_CALLBACKS_PER_MINUTE = 120
+
+# PAY-01: REAL membership payments made manually to an Airtel Lipa business number
+# and verified by authorized staff against official Airtel business records
+# (apps.payments.manual). Off by default. Refused while restricted demo mode or
+# sandbox payments are on (runtime gate and check --deploy payments.E003/E004).
+# The business number and recipient name are entered by a Super Administrator in
+# the console, never here. No Airtel API is called.
+MANUAL_MEMBERSHIP_PAYMENTS_ENABLED = env.bool("DJANGO_MANUAL_MEMBERSHIP_PAYMENTS", default=False)
+# Members: payment claims per account per hour (repeated or abusive submissions).
+MANUAL_PAYMENTS_CLAIMS_PER_HOUR = 5
 
 # Withdrawals (apps.withdrawals). Real withdrawals are LOCKED (financial feature
 # "withdrawals" plus database triggers); these limits apply to the eligibility

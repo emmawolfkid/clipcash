@@ -1,0 +1,16 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Membership plans" %}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><h1 class="page-title">{% translate "Membership plans" %}</h1><a class="button" href="{% url 'administration:plan_create' %}">{% translate "New plan" %}</a></div>
+<p class="lead">{% blocktranslate with max=max_price|tzs %}Set each plan's price (whole TZS, up to {{ max }}) and length in days. Changes apply to new choices immediately; existing choices, submitted payments and memberships keep the price and length they were quoted.{% endblocktranslate %}</p>
+{% if plans %}<table class="table workspace-table hide-narrow-4 hide-narrow-5"><caption class="visually-hidden">{% translate "Membership plans" %}</caption>
+  <thead><tr><th scope="col">{% translate "Plan" %}</th><th scope="col">{% translate "Price" %}</th><th scope="col">{% translate "Length" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Current members" %}</th><th scope="col">{% translate "Awaiting payment / verification" %}</th></tr></thead>
+  <tbody>{% for p in plans %}<tr>
+    <td><a href="{% url 'administration:plan' p.pk %}">{{ p.name }}</a><br><small>{{ p.code }} · v{{ p.version }}{% if not p.is_public %} · {% translate "not listed" %}{% endif %}</small></td>
+    <td class="financial-amount">{{ p.price_amount|tzs }}</td>
+    <td>{% blocktranslate count days=p.duration_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</td>
+    <td><span class="badge badge--{{ p.status|lower }}">{{ p.get_status_display }}</span></td>
+    <td>{{ p.current_members }}</td>
+    <td>{{ p.pending_choices }} / {{ p.open_payments }}</td></tr>{% endfor %}</tbody>
+</table>{% else %}<p class="empty-state">{% translate "No plans yet. Create the first one." %}</p>{% endif %}
+{% endblock %}

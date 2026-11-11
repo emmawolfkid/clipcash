@@ -18,7 +18,12 @@
       <ul class="app-nav__list" aria-labelledby="console-members">
         {% if can.members %}<li><a class="app-nav__link{% if nav == 'members' %} is-current{% endif %}"{% if nav == 'members' %} aria-current="page"{% endif %} href="{% url 'administration:members' %}">{% translate "Member directory" %}</a></li>{% endif %}
         {% if can.members %}<li><a class="app-nav__link" href="{% url 'admin:accounts_user_changelist' %}">{% translate "User accounts (admin)" %}</a></li>{% endif %}
-        {% if can.plans %}<li><a class="app-nav__link" href="{% url 'admin:memberships_membershipplan_changelist' %}">{% translate "Membership plans" %}</a></li>{% endif %}
+        {% if can.plans %}<li><a class="app-nav__link{% if nav == 'plans' %} is-current{% endif %}"{% if nav == 'plans' %} aria-current="page"{% endif %} href="{% url 'administration:plans' %}">{% translate "Membership plans" %}</a></li>{% endif %}
+      </ul>{% endif %}
+      {% if can.membership_payments or can.payment_instructions %}<p class="app-nav__group" id="console-membership-payments">{% translate "Membership payments" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-membership-payments">
+        {% if can.membership_payments %}<li><a class="app-nav__link{% if nav == 'membership_payments' %} is-current{% endif %}"{% if nav == 'membership_payments' %} aria-current="page"{% endif %} href="{% url 'administration:membership_payments' %}">{% translate "Verification queue" %}</a></li>{% endif %}
+        {% if can.payment_instructions %}<li><a class="app-nav__link" href="{% url 'administration:payment_instructions' %}">{% translate "Airtel Lipa details" %}</a></li>{% endif %}
       </ul>{% endif %}
       {% if can.support %}<p class="app-nav__group" id="console-support">{% translate "Customer support" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-support">

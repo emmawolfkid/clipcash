@@ -12,8 +12,8 @@ from django.utils.translation import gettext_lazy as _
 
 def demo_verification_optional():
     """True only when the restricted demo waives email verification: the flag is
-    on, restricted demo mode is on, and no payment of any kind (live or sandbox)
-    is possible."""
+    on, restricted demo mode is on, and no payment of any kind (live, manual or
+    sandbox) is possible."""
     from apps.core import features
     from apps.payments.providers import sandbox_active
 
@@ -21,6 +21,7 @@ def demo_verification_optional():
         settings.DEMO_EMAIL_VERIFICATION_OPTIONAL
         and settings.RESTRICTED_DEMO_MODE
         and not sandbox_active()
+        and not settings.MANUAL_MEMBERSHIP_PAYMENTS_ENABLED
         and not any(features.is_enabled(key) for key in features.FINANCIAL_FEATURES)
     )
 

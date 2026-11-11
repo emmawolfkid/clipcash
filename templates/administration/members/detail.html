@@ -1,4 +1,4 @@
-{% extends "administration/layout.html" %}{% load i18n %}
+{% extends "administration/layout.html" %}{% load i18n money %}
 {% block title %}{{ member.email }}{% endblock %}
 {% block crumb %}{{ member.email }}{% endblock %}
 {% block console_content %}
@@ -15,7 +15,9 @@
 {% if can_grant %}<p><a class="button button--secondary" href="{% url 'administration:member_complimentary' member.pk %}">{% translate "Grant complimentary demo membership" %}</a></p>{% endif %}
 <p class="lead">{% translate "Account status and membership changes use the existing reviewed workflows; this page changes nothing." %}</p></section>
 <section><h2 class="workspace-section__title">{% translate "Recent memberships" %}</h2>
-  {% if subscriptions %}<ul class="list-plain">{% for s in subscriptions %}<li>{{ s.plan_name }} · {{ s.get_status_display }}{% if s.activation_source == "COMPLIMENTARY" %} · {% translate "Complimentary" %}{% endif %} · {{ s.created_at|date:"SHORT_DATE_FORMAT" }}</li>{% endfor %}</ul>{% else %}<p class="lead">{% translate "None." %}</p>{% endif %}</section>
+  {% if subscriptions %}<ul class="list-plain">{% for s in subscriptions %}<li>{{ s.plan_name }} · {{ s.get_status_display }}{% if s.activation_source == "COMPLIMENTARY" %} · {% translate "Complimentary" %}{% endif %} · {{ s.created_at|date:"SHORT_DATE_FORMAT" }}{% if s.expires_at %} · {% blocktranslate with d=s.expires_at|date:"SHORT_DATE_FORMAT" %}ends {{ d }}{% endblocktranslate %}{% endif %}</li>{% endfor %}</ul>{% else %}<p class="lead">{% translate "None." %}</p>{% endif %}
+  {% if manual_claims is not None %}<h3>{% translate "Membership payments" %}</h3>
+  {% if manual_claims %}<ul class="list-plain">{% for c in manual_claims %}<li><a href="{% url 'administration:membership_payment' c.pk %}">{{ c.reference }}</a> · {{ c.plan_name }} · {{ c.amount|tzs }} · {{ c.get_status_display }} · {{ c.created_at|date:"SHORT_DATE_FORMAT" }}</li>{% endfor %}</ul>{% else %}<p class="lead">{% translate "None." %}</p>{% endif %}{% endif %}</section>
 </div>
 <section class="workspace-section"><h2 class="workspace-section__title">{% translate "Recent activity (safe summaries)" %}</h2>{% include "members/_activity_list.html" %}</section>
 {% endblock %}

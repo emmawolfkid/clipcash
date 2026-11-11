@@ -141,6 +141,17 @@ EVENT_TYPES = {
                ["member", "plan_code", "starts_at", "expires_at", "reason", "operation"]),
         _event("membership.action.denied", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
         _event("membership.activation.rejected", Category.MEMBERSHIP, SECURITY, ["reason", "subscription"]),
+        # PAY-01: manual (Airtel Lipa) membership payments. Phone numbers are never recorded.
+        _event("membership.manual_payment.submitted", Category.MEMBERSHIP, BUSINESS,
+               ["reference", "amount", "plan_code", "resubmission"]),
+        _event("membership.manual_payment.cancelled", Category.MEMBERSHIP, BUSINESS, ["reference"]),
+        _event("membership.manual_payment.approved", Category.MEMBERSHIP, BUSINESS,
+               ["reference", "amount", "plan_code", "ledger_entry", "subscription"]),
+        _event("membership.manual_payment.rejected", Category.MEMBERSHIP, BUSINESS, ["reference", "reason"]),
+        _event("membership.manual_payment.refused", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
+        _event("membership.payment_instructions.published", Category.MEMBERSHIP, BUSINESS,
+               ["method", "business_number", "recipient_name", "replaced"]),
+        _event("membership.payment_instructions.retired", Category.MEMBERSHIP, BUSINESS, ["method"]),
         # Video content (routine playback is not audited)
         _event("video.category.created", Category.CONTENT, BUSINESS, ["slug"]),
         _event("video.category.updated", Category.CONTENT, BUSINESS, ["slug", "fields"]),

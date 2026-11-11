@@ -25,7 +25,8 @@
   background: var(--warning-bg);
 }
 
-.messages .messages__item--success {
+.messages .messages__item--success,
+.notice--success {
   color: var(--success);
   background: var(--success-bg);
   border-left-color: var(--success);

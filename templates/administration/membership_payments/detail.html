@@ -1,0 +1,63 @@
+{% extends "administration/layout.html" %}{% load i18n console_labels money %}
+{% block title %}{{ claim.reference }}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><h1 class="page-title">{{ claim.reference }} <span class="badge badge--{{ claim.status|lower }}">{{ claim.get_status_display }}</span></h1><a href="{% url 'administration:membership_payments' %}">{% translate "Verification queue" %}</a></div>
+<div class="console-split">
+<section><h2 class="workspace-section__title">{% translate "Member's claim (unverified)" %}</h2><dl class="details">
+  <dt>{% translate "Member" %}</dt><dd>{{ member.email }}{% if member.get_full_name %} · {{ member.get_full_name }}{% endif %}{% if can.members %} · <a href="{% url 'administration:member' member.pk %}">{% translate "Profile" %}</a>{% endif %}</dd>
+  <dt>{% translate "Account" %}</dt><dd>{{ member.get_status_display }} · {% if member.email_verified %}{% translate "email confirmed" %}{% else %}{% translate "email not confirmed" %}{% endif %}</dd>
+  <dt>{% translate "Plan" %}</dt><dd>{{ claim.plan_name }} ({{ subscription.get_status_display }})</dd>
+  <dt>{% translate "Amount due" %}</dt><dd><strong class="financial-amount">{{ claim.amount|tzs }}</strong></dd>
+  <dt>{% translate "Transaction reference" %}</dt><dd><code>{{ claim.transaction_reference }}</code></dd>
+  <dt>{% translate "Paid from" %}</dt><dd>{{ claim.payer_phone }}</dd>
+  <dt>{% translate "Payment date (stated)" %}</dt><dd>{{ claim.paid_on|date:"DATE_FORMAT"|default:"—" }}</dd>
+  <dt>{% translate "Paid to (shown to member)" %}</dt><dd>{{ claim.instruction.get_method_display }} {{ claim.instruction.business_number }} · {{ claim.instruction.recipient_name }}</dd>
+  <dt>{% translate "Submitted" %}</dt><dd>{{ claim.created_at|date:"DATETIME_FORMAT" }}</dd>
+  {% if claim.reviewed_at %}<dt>{% translate "Reviewed" %}</dt><dd>{{ claim.reviewed_at|date:"DATETIME_FORMAT" }} · {{ claim.reviewed_by.email }}</dd>{% endif %}
+  {% if claim.rejection_reason %}<dt>{% translate "Rejection reason" %}</dt><dd>{{ claim.get_rejection_reason_display }}</dd>{% endif %}
+  {% if claim.review_note %}<dt>{% translate "Note" %}</dt><dd>{{ claim.review_note }}</dd>{% endif %}
+  {% if ledger_entry %}<dt>{% translate "Ledger entry" %}</dt><dd>{{ ledger_entry.posting_type|code_label }} · {{ ledger_entry.total_amount|tzs }} · {{ ledger_entry.posted_at|date:"SHORT_DATETIME_FORMAT" }}</dd>{% endif %}
+  {% if subscription.activated_at %}<dt>{% translate "Membership period" %}</dt><dd>{{ subscription.starts_at|date:"SHORT_DATETIME_FORMAT" }} – {{ subscription.expires_at|date:"SHORT_DATETIME_FORMAT" }}</dd>{% endif %}
+</dl></section>
+<section><h2 class="workspace-section__title">{% translate "Checks" %}</h2>
+  {% if same_reference %}<p class="notice notice--warning" role="status">{% translate "The same transaction reference appears in other submissions:" %}</p>
+  <ul class="list">{% for other in same_reference %}<li class="list__item"><span><a href="{% url 'administration:membership_payment' other.pk %}">{{ other.reference }}</a> · {{ other.member.email }}</span><span class="badge badge--{{ other.status|lower }}">{{ other.get_status_display }}</span></li>{% endfor %}</ul>
+  {% else %}<p>{% translate "No other submission uses this transaction reference." %}</p>{% endif %}
+  {% if member_claims %}<h3>{% translate "This member's other submissions" %}</h3>
+  <ul class="list">{% for other in member_claims %}<li class="list__item"><span><a href="{% url 'administration:membership_payment' other.pk %}">{{ other.reference }}</a> · {{ other.created_at|date:"SHORT_DATE_FORMAT" }}</span><span class="badge badge--{{ other.status|lower }}">{{ other.get_status_display }}</span></li>{% endfor %}</ul>{% endif %}
+</section>
+</div>
+
+<details class="workspace-section"><summary>{% translate "How to handle problem payments" %}</summary>
+<ul>
+  <li><strong>{% translate "Not in the Airtel records yet:" %}</strong> {% translate "wait and check again later the same day. If it never appears, reject with “No matching transaction”; the member can resubmit the same reference if it appears later." %}</li>
+  <li><strong>{% translate "Partial or larger amount received:" %}</strong> {% translate "do not approve. Reject with “The amount received does not match” and write the amount actually received in the note. Then follow the refund procedure (return the money received, or ask the member to pay the full price as a new payment after the refund)." %}</li>
+  <li><strong>{% translate "Different paying number:" %}</strong> {% translate "if the reference and amount match but the phone differs, confirm with the member through support before approving; if the payment is someone else's, reject with “different phone number”." %}</li>
+  <li><strong>{% translate "Same reference on another submission:" %}</strong> {% translate "only one submission per Airtel transaction can be approved. Reject the others with “already used”." %}</li>
+  <li><strong>{% translate "Member paid twice:" %}</strong> {% translate "approve the submission that matches; record the second Airtel transaction in a support ticket and follow the refund procedure. Nothing is refunded automatically." %}</li>
+</ul>
+<p>{% translate "Refunds are paid outside ClipCash by the account owner from the Airtel business account, recorded in a support ticket, and reversed in the ledger only by a Super Administrator. See the PAY-01 procedure document." %}</p>
+</details>
+{% if claim.status == "PENDING_VERIFICATION" %}
+{% if can_verify %}
+<section class="workspace-section" aria-labelledby="verify-title"><h2 class="workspace-section__title" id="verify-title">{% translate "Approve after verifying in Airtel records" %}</h2>
+  <p class="lead">{% translate "Open the official Airtel business statement or portal yourself. Type the amount and reference exactly as Airtel shows them; do not copy them from the claim above. Approval posts the fee to the ledger and activates the membership immediately." %}</p>
+  <form class="form" method="post" novalidate>{% csrf_token %}<input type="hidden" name="action" value="approve">
+    {% if approve_form.errors %}<div class="error-summary" role="alert"><ul>{% for error in approve_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}{% for field in approve_form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}</ul></div>{% endif %}
+    {% for field in approve_form %}<div class="form-field">{{ field.as_field_group }}</div>{% endfor %}
+    <button class="button" type="submit">{% translate "Approve payment and activate membership" %}</button>
+  </form>
+</section>
+<section class="workspace-section" aria-labelledby="reject-title"><h2 class="workspace-section__title" id="reject-title">{% translate "Reject" %}</h2>
+  <p class="lead">{% translate "The member sees the reason and can submit corrected details. If money was received but cannot be matched, record it in the note and follow the refund procedure; nothing is refunded automatically." %}</p>
+  <form class="form" method="post" novalidate>{% csrf_token %}<input type="hidden" name="action" value="reject">
+    {% if reject_form.errors %}<div class="error-summary" role="alert"><ul>{% for field in reject_form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}</ul></div>{% endif %}
+    {% for field in reject_form %}<div class="form-field">{{ field.as_field_group }}</div>{% endfor %}
+    <button class="button button--secondary" type="submit">{% translate "Reject payment" %}</button>
+  </form>
+</section>
+{% else %}<p class="notice" role="status">{% translate "You can view this payment but not approve or reject it." %}</p>{% endif %}
+{% endif %}
+
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Audit history" %}</h2><ul class="list">{% for event in history %}<li class="list__item"><span>{{ event.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ event.action|code_label }}<code class="audit-code">{{ event.action }}</code></span><span>{{ event.actor_email|default:"system" }}</span></li>{% empty %}<li>—</li>{% endfor %}</ul></section>
+{% endblock %}

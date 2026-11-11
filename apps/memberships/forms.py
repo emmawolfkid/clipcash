@@ -48,6 +48,26 @@ class MembershipPlanForm(forms.ModelForm):
         return values
 
 
+class ConsolePlanForm(MembershipPlanForm):
+    """PAY-01B: the administration console's plan form (create). Same fields and rules as
+    the Django admin form; every rule is enforced again by services.create_plan."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["price_amount"].help_text = _("Whole Tanzanian shillings. Members pay exactly this amount.")
+        self.fields["duration_days"].help_text = _("How long a paid membership lasts, in days (1 to 3660).")
+        self.fields["is_public"].help_text = _("Listed for members. Only active, listed plans can be bought.")
+
+
+class ConsolePlanEditForm(ConsolePlanForm):
+    """Edit: the code is fixed; ``expected_version`` detects a concurrent edit of the terms."""
+
+    expected_version = forms.IntegerField(widget=forms.HiddenInput, min_value=1)
+
+    class Meta(MembershipPlanForm.Meta):
+        fields = ["name", "description", "price_amount", "duration_days", "display_order", "is_public"]
+
+
 class ComplimentaryGrantForm(forms.Form):
     """Console form for a time-limited complimentary demo membership. Validation of
     the expiry, reason and eligibility is repeated by services.grant_complimentary."""

@@ -1,5 +1,6 @@
 """Phase 17-A: profile editing, the email-change workflow and security information."""
 
+import time
 from datetime import timedelta
 from unittest import mock
 from urllib.parse import urlsplit
@@ -9,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth import get_user
 from django.core import mail
 from django.db import IntegrityError, transaction
-from django.test import Client, override_settings
+from django.test import Client, RequestFactory, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -609,12 +610,41 @@ class EmailChangeHardeningTests(SelfServiceTestCase):
         self.member.refresh_from_db()
         self.assertEqual(self.member.email, NEW_EMAIL)
 
+    def set_confirmed_ago(self, seconds):
+        """Place this session's password confirmation ``seconds`` before the real clock now."""
+        session = self.client.session
+        session[reauth.SESSION_KEY]["at"] = int(time.time()) - seconds
+        session.save()
+
     def test_freshness_boundary(self):
+        # Through the real pages. The stored time has whole-second precision and the request
+        # itself takes time, so the inside case keeps a margin of a few seconds (timing-proof
+        # under load); the outside case is past the window whatever the request takes.
+        window = settings.ACCOUNTS_REAUTHENTICATION_SECONDS
         link = self.link()
-        self.make_stale(seconds=settings.ACCOUNTS_REAUTHENTICATION_SECONDS - 2)  # Just inside the window.
+        self.set_confirmed_ago(window - 5)  # Inside the window.
         self.assertNotContains(self.client.get(link, follow=True), 'name="current_password"')
-        self.make_stale(seconds=2)  # Now just past it.
+        self.set_confirmed_ago(window + 1)  # Past it.
         self.assertContains(self.client.get(link, follow=True), 'name="current_password"')
+
+    def test_freshness_boundary_is_exact(self):
+        """The policy itself, on a frozen clock: fresh up to and including the window, never after."""
+        window = settings.ACCOUNTS_REAUTHENTICATION_SECONDS
+        # A whole second: mark() stores whole seconds, so a confirmation made part-way through a
+        # second counts as up to 1 s older (the window can only get shorter, never longer).
+        now = timezone.now().replace(microsecond=0)
+        request = RequestFactory().get("/")
+        request.session = {reauth.SESSION_KEY: {"user": str(self.member.pk), "at": int(now.timestamp())}}
+        clock = mock.Mock(now=mock.Mock())
+        with mock.patch("apps.accounts.reauth.timezone", clock):
+            for age, fresh in ((0, True), (window - 1, True), (window, True), (window + 1, False),
+                               (-1, False)):
+                with self.subTest(age=age):
+                    clock.now.return_value = now + timedelta(seconds=age)
+                    self.assertIs(reauth.is_fresh(request, self.member), fresh)
+            other = make_user("other@example.com")
+            clock.now.return_value = now
+            self.assertFalse(reauth.is_fresh(request, other))  # Bound to the account that confirmed.
 
     def test_signing_in_alone_is_not_a_recent_confirmation(self):
         link = self.link()

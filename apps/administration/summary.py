@@ -81,6 +81,8 @@ def overview(user):
         sections["rewards"] = _rewards()
     if can["payments"]:
         sections["payments"] = _payments()
+    if can["membership_payments"]:
+        sections["membership_payments"] = _membership_payments()
     if can["wallets"]:
         sections["wallets"] = _wallets()
     if can["withdrawals"]:
@@ -97,7 +99,10 @@ def attention_items(sections):
     videos, viewing = sections.get("videos") or {}, sections.get("viewing") or {}
     rewards, payments = sections.get("rewards") or {}, sections.get("payments") or {}
     wallets, withdrawals = sections.get("wallets") or {}, sections.get("withdrawals") or {}
+    membership_payments = sections.get("membership_payments") or {}
     rows = (
+        (_("Membership payments awaiting verification"), membership_payments.get("PENDING_VERIFICATION"),
+         "administration:membership_payments", ""),
         (_("Advertisers awaiting review"), advertising.get("organizations", {}).get("PENDING"), "administration:advertisers", ""),
         (_("Campaigns awaiting review"), advertising.get("campaigns", {}).get("SUBMITTED"), "administration:campaigns", ""),
         (_("Stuck video uploads"), videos.get("stuck"), "administration:videos", ""),
@@ -130,6 +135,13 @@ def _members():
     current = Subscription.objects.filter(status=Subscription.Status.ACTIVE, starts_at__lte=now,
                                           expires_at__gt=now).count()
     return {**totals, "memberships": statuses, "current_memberships": current}
+
+
+def _membership_payments():
+    """PAY-01: real (manual Airtel Lipa) membership payments by status."""
+    from apps.payments.models import ManualMembershipPayment
+
+    return _counts(ManualMembershipPayment.objects.all(), "status")
 
 
 def _advertising(can):

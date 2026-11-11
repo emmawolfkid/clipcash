@@ -12,7 +12,11 @@ Policies (see docs/architecture/memberships.md):
 * Paid activation happens ONLY in activate_with_verified_payment(), which
   requires the live_payments feature (locked off), a registered payment
   verifier that independently confirms the payment, an exact amount match and
-  a unique reference. Nothing else can mark a subscription paid.
+  a unique reference. The one other paid path (PAY-01) is
+  activate_with_manual_payment(), used only by apps.payments.manual.approve()
+  after an authorized staff member verified a manual Airtel Lipa payment in the
+  official Airtel records; it needs the manual_membership_payments feature.
+  Nothing else can mark a subscription paid, and members never can.
 * Complimentary grants are a separate, explicitly labelled policy: Super
   Administrator only, a reason, a fixed expiry, amount paid 0, and only when
   MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED is set in a restricted demonstration.
@@ -35,7 +39,7 @@ from django.utils import timezone
 from apps.audit.services import DENIED, FAILURE, record_business_event, record_security_event
 from apps.core import features
 
-from .models import MembershipPlan, MembershipPlanVersion, Subscription
+from .models import MAX_DURATION_DAYS, MembershipPlan, MembershipPlanVersion, Subscription
 
 S = Subscription.Status
 R = Subscription.Reason
@@ -130,6 +134,19 @@ def member_eligibility(member, *, demo_waiver=False):
 
 def _clean_plan_values(values):
     values = dict(values)
+    # PAY-01B: sensible commercial limits on top of the database's own checks
+    # (price > 0, duration 1-3660 days). Prices are whole TZS.
+    if "price_amount" in values:
+        price = values["price_amount"]
+        if isinstance(price, bool) or not isinstance(price, int) or price <= 0:
+            raise ValidationError({"price_amount": "Enter a price of at least TZS 1 in whole shillings."})
+        if price > settings.MEMBERSHIPS_MAX_PLAN_PRICE:
+            raise ValidationError({"price_amount": f"The price cannot exceed TZS "
+                                                   f"{settings.MEMBERSHIPS_MAX_PLAN_PRICE:,}."})
+    if "duration_days" in values:
+        days = values["duration_days"]
+        if isinstance(days, bool) or not isinstance(days, int) or not 1 <= days <= MAX_DURATION_DAYS:
+            raise ValidationError({"duration_days": f"Enter a duration between 1 and {MAX_DURATION_DAYS} days."})
     for key in ("name", "description"):
         if key in values:
             values[key] = (values[key] or "").strip()
@@ -168,9 +185,11 @@ def create_plan(actor, *, code, **values):
     return plan
 
 
-def update_plan(actor, plan, changes):
+def update_plan(actor, plan, changes, *, expected_version=None):
     """Edit a plan. Commercial terms create a new immutable version; existing
-    subscriptions keep their own snapshots."""
+    subscriptions (including pending choices and payment claims) keep their own
+    snapshots. ``expected_version`` (the version the editor saw) refuses an edit of
+    terms that another administrator changed in the meantime."""
     if not is_super_admin(actor):
         error = NotAuthorized("Only Super Administrators manage membership plans.")
         _deny("plan.update", error, actor, plan)
@@ -182,6 +201,9 @@ def update_plan(actor, plan, changes):
         plan = MembershipPlan.objects.select_for_update().get(pk=plan.pk)
         if plan.status == MembershipPlan.Status.ARCHIVED:
             raise PlanUnavailable("Archived plans cannot be edited.")
+        if expected_version is not None and plan.version != expected_version:
+            raise PlanUnavailable("Another administrator changed this plan's terms. Reload it and try again.",
+                                  code="stale_edit")
         changes = _clean_plan_values(changes)
         before = {name: getattr(plan, name) for name in changes}
         for name, value in changes.items():
@@ -268,6 +290,8 @@ def _prepare_pending(member, plan, now, *, enforce_window):
     if existing is not None:
         if existing.plan_version_id == plan.versions.get(version=plan.version).pk and existing.pending_until > now:
             return existing, False
+        if has_open_manual_payment(existing):
+            raise NotEligible("A payment for your current choice is being verified.", code="payment_under_review")
         _transition(existing, S.CANCELLED, actor=None, now=now, reason=R.REPLACED, audit_actor=member)
     return _new_pending(member, plan, now, renewal_of=current), True
 
@@ -314,6 +338,13 @@ ALLOWED = {
 }
 
 
+def has_open_manual_payment(subscription):
+    """PAY-01: a manual payment claim for this choice awaits staff verification. Such a
+    choice is never replaced, cancelled or expired underneath the claim: the member
+    may have paid, and only the reviewer's decision may close it."""
+    return subscription.manual_payments.filter(status="PENDING_VERIFICATION").exists()
+
+
 def _transition(subscription, new_status, *, actor, now, reason="", audit_actor=None, metadata=None,
                 extra_fields=()):
     """Apply one state change (one UPDATE, with any ``extra_fields`` already set on
@@ -321,6 +352,9 @@ def _transition(subscription, new_status, *, actor, now, reason="", audit_actor=
     old = subscription.status
     if new_status not in ALLOWED.get(old, set()):
         raise InvalidTransition(f"A {old.lower()} subscription cannot become {new_status.lower()}.")
+    if old == S.PENDING and new_status == S.CANCELLED and has_open_manual_payment(subscription):
+        raise InvalidTransition("A payment for this membership choice is awaiting verification. Approve or "
+                                "reject it first.", code="payment_under_review")
     subscription.status = new_status
     fields = ["status", "updated_at", *extra_fields]
     if new_status == S.CANCELLED:
@@ -413,13 +447,18 @@ def send_expiry_reminders(now=None, limit=500):
     return sent
 
 
-def _activate(subscription, *, source, payment_reference, amount_paid, actor, now, period=None, note=None):
-    """PENDING -> ACTIVE. Caller holds the member and subscription locks."""
+def _activate(subscription, *, source, payment_reference, amount_paid, actor, now, period=None, note=None,
+              honour_quote=False):
+    """PENDING -> ACTIVE. Caller holds the member and subscription locks.
+
+    ``honour_quote`` (manual payments only): the member paid the quoted price while the
+    choice was still open and the plan available, so the snapshot terms are honoured even
+    if verification finishes after ``pending_until`` or after the plan was withdrawn."""
     if subscription.status != S.PENDING:
         raise InvalidTransition("Only pending subscriptions can be activated.", code="not_pending")
-    if subscription.pending_until <= now:
+    if subscription.pending_until <= now and not honour_quote:
         raise InvalidTransition("This membership choice has expired.", code="choice_expired")
-    if subscription.plan.status != MembershipPlan.Status.ACTIVE:
+    if subscription.plan.status != MembershipPlan.Status.ACTIVE and not honour_quote:
         raise PlanUnavailable("The plan is no longer available.")
     eligible, reason = member_eligibility(subscription.member)
     if not eligible:
@@ -508,6 +547,30 @@ def activate_with_verified_payment(subscription_id, payment):
     except MembershipError as error:
         _record_activation_rejection(subscription_id, error)
         raise
+
+
+MANUAL_REFERENCE_PREFIX = "AIRTEL-LIPA:"
+
+
+def activate_with_manual_payment(subscription, *, reference_key, amount, actor, submitted_at, now):
+    """PAY-01: activate a PENDING subscription after staff verified a manual Airtel Lipa
+    payment in the official Airtel business records.
+
+    Called ONLY by apps.payments.manual.approve(), inside its transaction, with the member,
+    the claim and ``subscription`` locked, after the reviewer's permission, the exact
+    amount and the reference were checked and the fee was posted to the real ledger.
+    Requires the manual_membership_payments feature. The activation's payment reference
+    is unique in the database, so one Airtel transaction can activate one membership."""
+    if not _feature_enabled("manual_membership_payments"):
+        raise PaymentVerificationError("Manual membership payments are not enabled.", code="payments_disabled")
+    if amount != subscription.price_amount or subscription.currency != "TZS":
+        raise PaymentVerificationError("The payment amount does not match the quoted price.", code="amount_mismatch")
+    payment_reference = MANUAL_REFERENCE_PREFIX + reference_key
+    if Subscription.objects.filter(payment_reference=payment_reference).exists():
+        raise PaymentVerificationError("This payment reference was already used.", code="duplicate_reference")
+    return _activate(subscription, source=Subscription.Source.PAYMENT, payment_reference=payment_reference,
+                     amount_paid=amount, actor=actor, now=now,
+                     honour_quote=submitted_at < subscription.pending_until)
 
 
 def _record_activation_rejection(subscription_id, error):
@@ -766,8 +829,11 @@ def process_expiry(now=None, limit=500):
         for subscription in due:
             _transition(subscription, S.EXPIRED, actor=None, now=now)
             counts["expired"] += 1
+        # Choices with a payment awaiting verification stay open until the reviewer decides.
         stale = (Subscription.objects.select_for_update(skip_locked=True).select_related("plan")
-                 .filter(status=S.PENDING, pending_until__lte=now).order_by("pending_until")[:limit])
+                 .filter(status=S.PENDING, pending_until__lte=now)
+                 .exclude(manual_payments__status="PENDING_VERIFICATION")
+                 .order_by("pending_until")[:limit])
         for subscription in stale:
             _transition(subscription, S.CANCELLED, actor=None, now=now, reason=R.UNPAID_TIMEOUT)
             counts["cancelled"] += 1

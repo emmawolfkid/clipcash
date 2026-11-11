@@ -1,0 +1,41 @@
+{% extends "administration/layout.html" %}{% load i18n money console_labels %}
+{% block title %}{% if plan %}{{ plan.name }}{% else %}{% translate "New plan" %}{% endif %}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><h1 class="page-title">{% if plan %}{{ plan.name }} <span class="badge badge--{{ plan.status|lower }}">{{ plan.get_status_display }}</span>{% else %}{% translate "New membership plan" %}{% endif %}</h1><a href="{% url 'administration:plans' %}">{% translate "All plans" %}</a></div>
+{% if plan %}
+<div class="console-split">
+<section><h2 class="workspace-section__title">{% translate "Current terms" %}</h2><dl class="details">
+  <dt>{% translate "Code" %}</dt><dd>{{ plan.code }} · {% translate "version" %} {{ plan.version }}</dd>
+  <dt>{% translate "Price" %}</dt><dd class="financial-amount">{{ plan.price_amount|tzs }}</dd>
+  <dt>{% translate "Length" %}</dt><dd>{% blocktranslate count days=plan.duration_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</dd>
+  <dt>{% translate "Can be bought" %}</dt><dd>{% if plan.purchasable %}{% translate "Yes" %}{% else %}{% translate "No (inactive, archived or not listed)" %}{% endif %}</dd>
+  <dt>{% translate "Current members" %}</dt><dd>{{ counts.current_members }}</dd>
+  <dt>{% translate "Choices awaiting payment" %}</dt><dd>{{ counts.pending_choices }}{% if counts.open_payments %} · {% blocktranslate count n=counts.open_payments %}{{ n }} payment awaiting verification{% plural %}{{ n }} payments awaiting verification{% endblocktranslate %}{% endif %}</dd>
+</dl>
+{% if counts.pending_choices %}<p class="notice" role="note">{% translate "Members who already chose this plan keep the price and length they were quoted, even if you change them now. Their payments are verified against that quoted amount." %}</p>{% endif %}
+</section>
+<section><h2 class="workspace-section__title">{% translate "Availability" %}</h2>
+  {% if plan.status == "ARCHIVED" %}<p>{% translate "Archived plans cannot be changed or reactivated." %}</p>{% else %}
+  <form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="status">
+    {% if plan.status != "ACTIVE" %}<button class="button" name="status" value="ACTIVE" type="submit">{% translate "Activate (can be bought)" %}</button>{% endif %}
+    {% if plan.status != "INACTIVE" %}<button class="button button--secondary" name="status" value="INACTIVE" type="submit">{% translate "Deactivate (cannot be bought)" %}</button>{% endif %}
+    <button class="button button--secondary" name="status" value="ARCHIVED" type="submit">{% translate "Archive permanently" %}</button>
+  </form>
+  <p class="lead">{% translate "Deactivating stops new purchases only. Current memberships continue until they end, and payments already submitted can still be verified." %}</p>{% endif %}
+</section>
+</div>
+{% endif %}
+{% if not plan or plan.status != "ARCHIVED" %}
+<section class="workspace-section"><h2 class="workspace-section__title">{% if plan %}{% translate "Edit plan" %}{% else %}{% translate "Plan details" %}{% endif %}</h2>
+  {% include "components/form.html" with form=form button=_("Save plan") %}
+</section>
+{% endif %}
+{% if plan %}
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Price and length history" %}</h2>
+<table class="table workspace-table"><caption class="visually-hidden">{% translate "Plan versions" %}</caption>
+<thead><tr><th scope="col">{% translate "Version" %}</th><th scope="col">{% translate "Price" %}</th><th scope="col">{% translate "Length" %}</th><th scope="col">{% translate "From" %}</th></tr></thead>
+<tbody>{% for v in versions %}<tr><td>v{{ v.version }}</td><td class="financial-amount">{{ v.price_amount|tzs }}</td><td>{{ v.duration_days }}</td><td>{{ v.created_at|date:"SHORT_DATETIME_FORMAT" }}</td></tr>{% endfor %}</tbody></table>
+</section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Audit history" %}</h2><ul class="list">{% for event in history %}<li class="list__item"><span>{{ event.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ event.action|code_label }}<code class="audit-code">{{ event.action }}</code></span><span>{{ event.actor_email|default:"system" }}</span></li>{% empty %}<li>—</li>{% endfor %}</ul></section>
+{% endif %}
+{% endblock %}

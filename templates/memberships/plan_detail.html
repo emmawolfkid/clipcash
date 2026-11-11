@@ -9,9 +9,7 @@
 {% if plan.benefits %}<h2>{% translate "Benefits" %}</h2><ul>{% for benefit in plan.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
 {% if entitlement_labels %}<h2>{% translate "Includes" %}</h2><ul>{% for item in entitlement_labels %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
 <p class="lead">{% translate "A membership gives access to content. It is not an investment and does not promise any earnings." %}</p>
-{% if not payments_available %}
-<p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
-{% endif %}
+{% include "components/membership_payment_notice.html" %}
 {% if demo_unconfirmed_account %}
 {% include "components/demo_unconfirmed_notice.html" %}
 {% elif user.is_authenticated %}
