@@ -34,8 +34,10 @@
   <p>{% translate "Submitting these details does not activate your membership by itself. We check every payment against the official Airtel records first." %}</p>
   {% include "components/form.html" with form=form button=_("Submit payment details") %}
 </section>
+{% elif not payments_enabled %}
+<p class="notice notice--warning" role="status">{% translate "Membership payments are not available at the moment, so payment details cannot be submitted. Do not send money now. Your plan choice is saved until the date above." %}</p>
 {% else %}
-<p class="notice notice--warning" role="status">{% translate "Payments are temporarily unavailable. Your plan choice is saved; please try again later." %}</p>
+<p class="notice notice--warning" role="status">{% translate "ClipCash has not published its Airtel Lipa payment details yet, so payment details cannot be submitted. Do not send money now. Your plan choice is saved until the date above." %}</p>
 {% endif %}
 
 {% if previous %}

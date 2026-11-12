@@ -39,7 +39,7 @@
     {% elif m.pending %}
       <p class="summary-card__value">{{ m.pending.plan_name }}</p>
       {% if m.pending_payment.status == "PENDING_VERIFICATION" %}
-      <p class="summary-card__status"><span class="badge badge--pending_verification">{{ m.pending_payment.get_status_display }}</span> {% translate "Your payment is being verified." %}</p>
+      <p class="summary-card__status"><span class="badge badge--pending_verification">{% translate "Awaiting payment verification" %}</span> {% translate "Your payment is being verified." %}</p>
       {% elif m.pending_payment.status == "REJECTED" %}
       <p class="summary-card__status"><span class="badge badge--rejected">{% translate "Payment not confirmed" %}</span> {% translate "Check the details and submit them again." %}</p>
       {% elif m.manual_payments_ready %}

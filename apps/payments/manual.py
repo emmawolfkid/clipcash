@@ -317,18 +317,28 @@ def _lock_claim(claim_id):
     return Claim.objects.select_for_update().get(pk=claim_id)
 
 
-def approve(actor, claim, *, verified_amount, verified_reference, receipt_confirmed, note=""):
+def approve(actor, claim, *, verified_amount, verified_reference, receipt_confirmed, recipient_confirmed=None,
+            note=""):
     """Approve after independently confirming the payment in the official Airtel business
-    records. Atomic and idempotent: approving an approved claim again changes nothing and
-    returns (claim, False). Returns (claim, True) when this call approved it."""
+    records: the reviewer re-enters the amount and reference Airtel shows, confirms the
+    transaction is in those records (receipt_confirmed) and that it was received into the
+    Lipa account the member was shown (recipient_confirmed). The member's own statement
+    is never enough. Atomic and idempotent: approving an approved claim again changes
+    nothing and returns (claim, False). Returns (claim, True) when this call approved it."""
     try:
         if not manual_payments_enabled():
             raise Unavailable("Manual membership payments are not enabled.")
         if not can_verify(actor):
             raise NotAuthorized("You are not allowed to verify membership payments.")
+        errors = {}
         if receipt_confirmed is not True:
-            raise ValidationError({"receipt_confirmed": _("Confirm that you found this transaction in the "
-                                                          "official Airtel business records.")})
+            errors["receipt_confirmed"] = _("Confirm that you found this transaction in the official Airtel "
+                                            "business records.")
+        if recipient_confirmed is not True:
+            errors["recipient_confirmed"] = _("Confirm that the payment was received into the Lipa account "
+                                              "shown to the member.")
+        if errors:
+            raise ValidationError(errors)
         verified_amount = normalize_amount(verified_amount, field="verified_amount")
         _text, verified_key = normalize_reference(verified_reference, field="verified_reference")
         note = " ".join(str(note or "").split())[:300]
@@ -362,9 +372,12 @@ def approve(actor, claim, *, verified_amount, verified_reference, receipt_confir
                 description=f"Membership fee {claim.reference}, verified by staff ({claim.plan_name})",
                 actor=None,  # Posted by this verification process; the reviewer is recorded on the claim.
             )
+            # The shared activation rule (apps.memberships.services._activate), as a future
+            # verified provider payment would use it: the exact plan chosen, once.
             memberships.activate_with_manual_payment(subscription, reference_key=claim.reference_key,
                                                      amount=claim.amount, actor=actor,
                                                      submitted_at=claim.created_at, now=now)
+            subscription.refresh_from_db()
             claim.status, claim.reviewed_by, claim.reviewed_at = C.APPROVED, actor, now
             claim.verified_amount, claim.verified_reference_key = verified_amount, verified_key
             claim.receipt_confirmed, claim.review_note, claim.ledger_entry_id = True, note, entry.pk
@@ -374,10 +387,16 @@ def approve(actor, claim, *, verified_amount, verified_reference, receipt_confir
             record_business_event("membership.manual_payment.approved", actor=actor, target=claim,
                                   metadata={"reference": claim.reference, "amount": claim.amount,
                                             "plan_code": subscription.plan.code, "ledger_entry": str(entry.pk),
-                                            "subscription": str(subscription.pk)})
-            _notify(claim, "approved", _("Payment confirmed"),
-                    _("Your payment of %(amount)s (reference %(ref)s) was confirmed.")
-                    % {"amount": format_tzs(claim.amount), "ref": claim.transaction_reference}, email=False)
+                                            "subscription": str(subscription.pk),
+                                            "transaction_reference_key": claim.reference_key,
+                                            "recipient": claim.instruction.business_number,
+                                            "expires_at": subscription.expires_at.isoformat()})
+            _notify(claim, "approved", _("Payment confirmed: membership active"),
+                    _("Your payment of %(amount)s (reference %(ref)s) was confirmed. Your %(plan)s membership is "
+                      "active until %(expires)s.")
+                    % {"amount": format_tzs(claim.amount), "ref": claim.transaction_reference,
+                       "plan": claim.plan_name,
+                       "expires": timezone.localtime(subscription.expires_at).strftime("%d %b %Y")}, email=True)
             return claim, True
     except IntegrityError as error:
         conflict = InvalidState("The approval conflicted with another record. Nothing was changed.",

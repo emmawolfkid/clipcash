@@ -280,7 +280,7 @@ class ApprovalTests(ManualPaymentTestCase):
                 with self.assertRaises(manual.NotAuthorized):
                     self.approve(claim, actor=actor) if actor else manual.approve(
                         None, claim, verified_amount=5_000, verified_reference=claim.transaction_reference,
-                        receipt_confirmed=True)
+                        receipt_confirmed=True, recipient_confirmed=True)
                 with self.assertRaises(manual.NotAuthorized):
                     manual.reject(actor, claim, reason="NOT_FOUND")
         self.assertTrue(manual.can_view(viewer))

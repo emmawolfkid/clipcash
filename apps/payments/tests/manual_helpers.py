@@ -55,4 +55,4 @@ class ManualPaymentTestCase(MembershipTestCase):
         return manual.approve(actor or self.verifier, claim,
                               verified_amount=claim.amount if amount is None else amount,
                               verified_reference=reference or claim.transaction_reference,
-                              receipt_confirmed=confirmed)
+                              receipt_confirmed=confirmed, recipient_confirmed=confirmed)

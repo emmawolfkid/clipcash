@@ -3,12 +3,26 @@
 {% block title %}{% translate "Membership payment" %} {{ claim.reference }}{% endblock %}
 {% block crumb %}{{ claim.reference }}{% endblock %}
 {% block member_content %}
-<div class="page-heading"><h1 class="page-title">{% translate "Membership payment" %}</h1><span class="badge badge--{{ claim.status|lower }}">{{ claim.get_status_display }}</span></div>
+<div class="page-heading"><h1 class="page-title">{% translate "Membership payment" %}</h1><span class="badge badge--{{ claim.status|lower }}">{% if claim.status == "PENDING_VERIFICATION" %}{% translate "Awaiting payment verification" %}{% else %}{{ claim.get_status_display }}{% endif %}</span></div>
 
 {% if claim.status == "PENDING_VERIFICATION" %}
-<p class="notice" role="status">{% translate "We are checking this payment against our Airtel business records. Your membership starts as soon as it is confirmed; you will get a notification. Nothing else is needed from you." %}</p>
+<section class="notice manual-payment__next" role="status" aria-labelledby="claim-next">
+  <h2 id="claim-next">{% translate "Awaiting payment verification" %}</h2>
+  <p>{% translate "Your membership is not active yet. Submitting a reference does not activate it by itself." %}</p>
+  <ol>
+    <li>{% translate "Our team finds your payment in ClipCash's Airtel business records and checks the reference, the exact amount and that it reached our Lipa account. This usually takes up to one working day." %}</li>
+    <li>{% translate "You get a notification and an email when the payment is confirmed or if it cannot be matched." %}</li>
+    <li>{% blocktranslate with plan=claim.plan_name %}Once confirmed, your {{ plan }} membership starts immediately and its end date appears on your membership page.{% endblocktranslate %}</li>
+  </ol>
+  <p>{% translate "Nothing else is needed from you. Never share your Airtel PIN with anyone." %}</p>
+</section>
 {% elif claim.status == "APPROVED" %}
-<p class="notice notice--success" role="status">{% translate "Payment confirmed. Your membership is active." %} <a href="{% url 'memberships:subscription_detail' subscription.pk %}">{% translate "View membership" %}</a></p>
+<section class="notice notice--success manual-payment__next" role="status" aria-labelledby="claim-active">
+  <h2 id="claim-active">{% translate "Payment confirmed: your membership is active" %}</h2>
+  <p>{% blocktranslate with plan=subscription.plan_name start=subscription.starts_at|date:"DATE_FORMAT" end=subscription.expires_at|date:"DATE_FORMAT" %}{{ plan }}: from {{ start }} until {{ end }}.{% endblocktranslate %}</p>
+  {% if entitlement_labels %}<p>{% translate "It gives you access to:" %}</p><ul>{% for item in entitlement_labels %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+  <p>{% if features.videos %}<a class="button" href="{% url 'videos:library' %}">{% translate "Open included videos" %}</a> {% endif %}<a href="{% url 'memberships:subscription_detail' subscription.pk %}">{% translate "View membership" %}</a></p>
+</section>
 {% elif claim.status == "REJECTED" %}
 <div class="notice notice--warning" role="status">
   <p>{% translate "We could not confirm this payment." %} <strong>{{ claim.get_rejection_reason_display }}.</strong>{% if claim.review_note %} {{ claim.review_note }}{% endif %}</p>

@@ -49,7 +49,8 @@ class ManualPaymentConcurrencyTests(TransactionTestCase):
         claim = self.submit(self.member, "MP80808080")
         actors = self.verifiers + [self.root, self.verifiers[0]]
         results = run_threads(len(actors), lambda i: manual.approve(
-            actors[i], claim, verified_amount=5_000, verified_reference="MP80808080", receipt_confirmed=True))
+            actors[i], claim, verified_amount=5_000, verified_reference="MP80808080", receipt_confirmed=True,
+            recipient_confirmed=True))
         self.assertTrue(all(isinstance(result, tuple) for result in results), results)
         self.assertEqual(sum(1 for _claim, changed in results if changed), 1)
         self.assertEqual(JournalEntry.objects.count(), 1)
@@ -63,7 +64,7 @@ class ManualPaymentConcurrencyTests(TransactionTestCase):
             if index % 2:
                 return manual.reject(self.verifiers[1], claim, reason="NOT_FOUND")
             return manual.approve(self.verifiers[0], claim, verified_amount=5_000, verified_reference="MP81818181",
-                                  receipt_confirmed=True)
+                                  receipt_confirmed=True, recipient_confirmed=True)
 
         results = run_threads(4, act)
         claim.refresh_from_db()

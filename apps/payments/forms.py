@@ -34,9 +34,17 @@ class ApproveManualPaymentForm(forms.Form):
         label=_("Transaction reference you found in the Airtel business records"), max_length=60,
         widget=forms.TextInput(attrs={"autocomplete": "off", "spellcheck": "false"}))
     receipt_confirmed = forms.BooleanField(
-        label=_("I found this payment in the official Airtel business records, it was received into ClipCash's "
-                "Lipa account, and it has not been used for another membership."))
+        label=_("I found this payment in the official Airtel business records, and it has not been used for "
+                "another membership."))
+    recipient_confirmed = forms.BooleanField(label=_("It was received into ClipCash's Lipa account."))
     note = forms.CharField(label=_("Note (optional)"), max_length=300, required=False)
+
+    def __init__(self, *args, instruction=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if instruction is not None:  # Name the exact account the member was shown.
+            self.fields["recipient_confirmed"].label = _(
+                "It was received into Lipa %(number)s (%(name)s), the account shown to the member.") % {
+                "number": instruction.business_number, "name": instruction.recipient_name}
 
 
 class RejectManualPaymentForm(forms.Form):

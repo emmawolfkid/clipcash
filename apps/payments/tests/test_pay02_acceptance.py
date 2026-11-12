@@ -123,7 +123,7 @@ class EndToEndAcceptanceTests(ManualPaymentTestCase):
         # --- Unauthorized staff and the member cannot decide -------------------------------------
         review = reverse("administration:membership_payment", args=[first.pk])
         approve = {"action": "approve", "verified_amount": "25000", "verified_reference": FICTIONAL_REFERENCE,
-                   "receipt_confirmed": "on"}
+                   "receipt_confirmed": "on", "recipient_confirmed": "on"}
         for user, expected in ((self.plain_staff, 403), (self.viewer, 403), (member, 302)):
             self.client.force_login(user)
             self.assertEqual(self.client.post(review, approve).status_code, expected, user.email)

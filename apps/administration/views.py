@@ -1120,7 +1120,7 @@ class MembershipPaymentDetailView(View):
                           .exclude(pk=claim.pk).select_related("member").order_by("-created_at")[:10])
         return render(request, self.template_name, {
             "claim": claim, "subscription": claim.subscription, "member": claim.member,
-            "approve_form": approve_form or ApproveManualPaymentForm(),
+            "approve_form": approve_form or ApproveManualPaymentForm(instruction=claim.instruction),
             "reject_form": reject_form or RejectManualPaymentForm(),
             "can_verify": manual_payments.can_verify(request.user) and claim.member_id != request.user.pk,
             "same_reference": same_reference,
@@ -1148,7 +1148,7 @@ class MembershipPaymentDetailView(View):
         claim = self._claim(pk)
         action = request.POST.get("action", "")
         if action == "approve":
-            form = ApproveManualPaymentForm(request.POST)
+            form = ApproveManualPaymentForm(request.POST, instruction=claim.instruction)
             if not form.is_valid():
                 return self._render(request, claim, approve_form=form, status=400)
             try:

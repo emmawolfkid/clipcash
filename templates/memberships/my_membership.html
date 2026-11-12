@@ -14,7 +14,8 @@
       <dt>{% translate "Ends" %}</dt><dd>{{ current.expires_at|date:"DATETIME_FORMAT" }}</dd>
     </dl>
     {% if current.benefits %}<ul>{% for benefit in current.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
-    {% if current.status == "SUSPENDED" %}<p class="notice notice--warning" role="status">{% translate "Your membership is suspended. Please contact support." %}</p>{% endif %}
+    {% if current.status == "SUSPENDED" %}<p class="notice notice--warning" role="status">{% translate "Your membership is suspended. Please contact support." %}</p>
+    {% elif features.videos %}<p><a class="button" href="{% url 'videos:library' %}">{% translate "Open included videos" %}</a> <a href="{% url 'memberships:subscription_detail' current.pk %}">{% translate "What this plan includes" %}</a></p>{% endif %}
   </div>
 {% elif pending %}
   <p class="status-panel">{% translate "You do not have an active membership." %} {% if pending_payment.status == "PENDING_VERIFICATION" %}{% translate "Your payment below is being verified." %}{% else %}{% translate "Your choice below is waiting for payment." %}{% endif %}</p>

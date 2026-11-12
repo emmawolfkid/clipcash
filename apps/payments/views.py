@@ -19,6 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from apps.accounts.access import VerifiedAccountRequiredMixin
 from apps.advertising import services as advertising
+from apps.core import features
 from apps.memberships.models import Subscription
 
 from . import manual, services
@@ -162,19 +163,29 @@ MANUAL_STATE_MESSAGES = {
 }
 
 
-class ManualPayView(VerifiedAccountRequiredMixin, ManualPaymentsRequiredMixin, View):
-    """Plan, exact amount, Airtel Lipa details and the form to submit payment details."""
+class ManualPayView(VerifiedAccountRequiredMixin, View):
+    """Plan, exact amount, Airtel Lipa details and the form to submit payment details.
+
+    When manual payments are switched off, or no Lipa details are published, the member's
+    own pending choice still shows, with a clear message and no form; a POST records
+    nothing (and the service refuses it too)."""
 
     template_name = "payments/manual_pay.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not features.is_enabled("memberships"):
+            raise Http404
+        return super().dispatch(request, *args, **kwargs)
 
     def _subscription(self, request, subscription_id):
         return get_object_or_404(Subscription.objects.select_related("plan"), pk=subscription_id,
                                  member=request.user)
 
     def _render(self, request, subscription, form, status=200):
+        enabled = manual.manual_payments_enabled()
         return render(request, self.template_name, {
-            "nav": "membership", "subscription": subscription, "form": form,
-            "instruction": manual.active_instruction(),
+            "nav": "membership", "subscription": subscription, "form": form, "payments_enabled": enabled,
+            "instruction": manual.active_instruction() if enabled else None,
             "previous": subscription.manual_payments.exclude(status=ManualMembershipPayment.Status.PENDING_VERIFICATION)
                                                     .order_by("-created_at")[:10],
             "breadcrumbs": [("My membership", "memberships:mine")]}, status=status)
@@ -187,11 +198,14 @@ class ManualPayView(VerifiedAccountRequiredMixin, ManualPaymentsRequiredMixin, V
         if subscription.status != Subscription.Status.PENDING:
             messages.info(request, MANUAL_STATE_MESSAGES["not_pending"])
             return redirect("memberships:mine")
-        return self._render(request, subscription, ManualPaymentForm())
+        status = 200 if manual.manual_payments_ready() else 503
+        return self._render(request, subscription, ManualPaymentForm(), status=status)
 
     def post(self, request, subscription_id):
         subscription = self._subscription(request, subscription_id)
         form = ManualPaymentForm(request.POST)
+        if not manual.manual_payments_ready():  # Disabled or no Lipa details: nothing is recorded.
+            return self._render(request, subscription, form, status=503)
         if not form.is_valid():
             return self._render(request, subscription, form, status=400)
         try:
@@ -208,7 +222,7 @@ class ManualPayView(VerifiedAccountRequiredMixin, ManualPaymentsRequiredMixin, V
             if error.code in ("no_instructions", "rate_limited"):
                 return self._render(request, subscription, form, status=429 if error.code == "rate_limited" else 503)
             return redirect("memberships:mine")
-        messages.success(request, _("Thank you. Your payment details were submitted and are waiting for verification."))
+        messages.success(request, _("Thank you. Your payment details were submitted. Awaiting payment verification."))
         return redirect("payments:manual_claim", pk=claim.pk)
 
 
@@ -226,8 +240,11 @@ class ManualClaimView(VerifiedAccountRequiredMixin, ManualPaymentsRequiredMixin,
                                          ManualMembershipPayment.Status.CANCELLED)
                         and subscription.status == Subscription.Status.PENDING
                         and manual.open_claim(subscription) is None)
+        from apps.memberships.entitlements import label
+
         return render(request, "payments/manual_claim.html", {
             "nav": "membership", "claim": claim, "subscription": subscription, "can_resubmit": can_resubmit,
+            "entitlement_labels": [label(code) for code in subscription.entitlements],
             "breadcrumbs": [("My membership", "memberships:mine")]})
 
     def post(self, request, pk):
