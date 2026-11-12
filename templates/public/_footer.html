@@ -8,5 +8,6 @@
     <a href="{% url 'home' %}#questions">{% translate "Questions and answers" %}</a>
     {% if user.is_authenticated %}<a href="{% url 'accounts:profile' %}">{% translate "My account" %}</a>{% else %}<a href="{% url 'accounts:password_reset' %}">{% translate "Account recovery" %}</a>{% endif %}
   </nav>
-  <p class="public-footer__notice">{% translate "Demonstration rewards are not wallet money. Live payments and withdrawals are not available." %}</p>
+  {% if restricted_demo %}<p class="public-footer__notice">{% translate "Restricted demonstration. Demonstration rewards are not wallet money. Live payments and withdrawals are not available." %}</p>
+  {% elif financial_locked %}<p class="public-footer__notice">{% if features.manual_membership_payments %}{% translate "Membership fees are paid with Airtel Money (Lipa) and checked by the ClipCash team." %} {% endif %}{% translate "Cash rewards and withdrawals are not available." %}</p>{% endif %}
 </div>

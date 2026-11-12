@@ -160,6 +160,7 @@ Stage 1 values (full list and comments in the template):
 | `DJANGO_DEBUG` | `False` | | |
 | `DJANGO_SECRET_KEY` | new 64-byte key | | |
 | `DJANGO_ALLOWED_HOSTS` / `DJANGO_CSRF_TRUSTED_ORIGINS` | `<domain>.co.tz` / `https://<domain>.co.tz` | | |
+| `DJANGO_PUBLIC_BASE_URL` | `https://<domain>.co.tz` (origin of emailed account links; missing → `core.E009`) | | |
 | `DATABASE_URL` | **runtime** login URL | | |
 | `DJANGO_CACHE_URL` | `dbcache://clipcash_cache` | | |
 | `DJANGO_SECURE_SSL_REDIRECT` | `True` | | |

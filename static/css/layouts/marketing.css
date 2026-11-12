@@ -1,6 +1,7 @@
 /* Public website and authentication chrome; portal chrome remains unchanged. */
 .site-nav [aria-current="page"] { text-decoration-color: var(--brand-yellow); text-decoration-thickness: 2px; }
-.site-nav .public-register { border: 1px solid var(--brand-yellow); border-radius: var(--radius-sm); padding-inline: var(--space-3); color: var(--brand-yellow); text-decoration: none; }
+.site-nav .public-register { border: 1px solid var(--brand-yellow); border-radius: var(--radius-sm); padding-inline: var(--space-4); color: var(--brand-navy); background: var(--brand-yellow); font-weight: 650; text-decoration: none; justify-content: center; }
+.site-nav .public-register:hover { color: var(--brand-navy); background: var(--nav-text); }
 .public-footer { max-width: var(--layout-max); margin-inline: auto; text-align: left; display: grid; gap: var(--space-5); }
 .public-footer strong { color: var(--text); font-size: 1.5rem; }
 .public-footer p { margin-block: var(--space-2); }

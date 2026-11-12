@@ -3,6 +3,7 @@
 {% block auth_content %}
 <h1>{% translate "Registration closed" %}</h1>
 <p>{% translate "New accounts cannot be created at the moment. Please try again later." %}</p>
+{% if restricted_demo %}<p>{% translate "This is a restricted demonstration: only accounts provided by the ClipCash team can sign in." %}</p>{% endif %}
 <ul class="links">
   <li><a href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a></li>
 </ul>

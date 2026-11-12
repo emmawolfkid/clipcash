@@ -51,7 +51,7 @@
           {% if features.videos %}<a href="{% url 'videos:library' %}">{% translate "Videos" %}</a>{% endif %}
           {% if features.memberships %}<a href="{% url 'memberships:plans' %}">{% translate "Plans" %}</a>{% endif %}
           <a href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a>
-          {% if features.registration %}<a href="{% url 'accounts:register' %}">{% translate "Register" %}</a>{% endif %}
+          {% if features.registration %}<a href="{% url 'accounts:register' %}">{% translate "Create account" %}</a>{% endif %}
         {% endif %}
         {% include "components/language_form.html" %}
         {% endblock %}

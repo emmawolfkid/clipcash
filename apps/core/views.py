@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.views.generic import TemplateView
 
 from apps.accounts.access import VerifiedAccountRequiredMixin
@@ -10,17 +9,10 @@ from .dashboard import member_activity, member_summary
 class HomeView(TemplateView):
     """Public homepage. Read-only: links only, no forms beyond the site header.
     Registration links follow features.is_enabled("registration"), which the
-    register view also enforces server-side."""
+    register view also enforces server-side. ``restricted_demo`` and
+    ``financial_locked`` come from apps.core.context_processors.site."""
 
     template_name = "public/home.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update({
-            "restricted_demo": settings.RESTRICTED_DEMO_MODE,
-            "financial_locked": not any(features.is_enabled(key) for key in features.FINANCIAL_FEATURES),
-        })
-        return context
 
 
 class MemberDashboardView(VerifiedAccountRequiredMixin, TemplateView):

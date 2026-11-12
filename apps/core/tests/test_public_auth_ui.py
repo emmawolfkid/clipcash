@@ -26,7 +26,8 @@ class Elements(HTMLParser):
 class PublicAuthUITests(SimpleTestCase):
     def context(self, path="/", authenticated=False):
         context = DesignSystemTests().context(path, authenticated)
-        context.update(financial_locked=True, csrf_token="test-token", next="/videos/")
+        # The restricted demo copy; public-mode copy is covered by accounts.tests.test_public_onboarding.
+        context.update(financial_locked=True, restricted_demo=True, csrf_token="test-token", next="/videos/")
         return context
 
     def test_landing_links_resolve_and_fragment_targets_exist(self):

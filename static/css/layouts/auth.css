@@ -12,6 +12,8 @@
 .auth-card .form { margin-top: var(--space-5); }
 .auth-card .links { border-top: 1px solid var(--border); padding-top: var(--space-4); }
 .auth-card .links a { display: inline-flex; min-height: var(--touch-target); align-items: center; }
+.auth-alternative { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-4); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.auth-alternative p { margin: 0; font-weight: 650; }
 .auth-footnote { color: var(--muted); font-size: var(--text-sm); padding-inline: var(--space-2); }
 .auth-password-toggle { margin-top: var(--space-2); }
 .auth-card [aria-busy="true"] { cursor: progress; }

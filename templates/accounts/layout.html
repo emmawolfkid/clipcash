@@ -7,7 +7,8 @@
     <p class="auth-eyebrow">{{ site_config.platform_name|default:"ClipCash" }}</p>
     <p class="auth-introduction__title" id="auth-intro-title">{% translate "A clear path to your next clip." %}</p>
     <p>{% translate "Your account brings video discovery, membership access and viewing records together." %}</p>
-    <ol><li>{% translate "Confirm your email address." %}</li><li>{% translate "Check your membership eligibility." %}</li><li>{% translate "Explore videos and understand what counts." %}</li></ol>
+    {% if restricted_demo %}<ol><li>{% translate "Confirm your email address." %}</li><li>{% translate "Check your membership eligibility." %}</li><li>{% translate "Explore videos and understand what counts." %}</li></ol>
+    {% else %}<ol><li>{% translate "Confirm your email address and choose your password." %}</li><li>{% translate "Sign in and choose a membership plan. It stays pending until it is activated." %}</li><li>{% translate "Explore videos and understand what counts." %}</li></ol>{% endif %}
     <p class="auth-introduction__note">{% translate "Keep your password private. ClipCash staff will never ask for your mobile-money PIN or one-time codes." %}</p>
   </aside>
   <div class="auth-content">
@@ -15,7 +16,7 @@
     <section class="card auth-card">{% with password_controls=True %}{% block auth_content %}{% endblock %}{% endwith %}
       <p id="auth-submit-status" role="status" hidden>{% translate "Submitting your request…" %}</p>
     </section>
-    <p class="auth-footnote"><a href="{% url 'home' %}">{% translate "Back to ClipCash" %}</a> · {% translate "Demo rewards have no cash value." %}</p>
+    <p class="auth-footnote"><a href="{% url 'home' %}">{% translate "Back to ClipCash" %}</a> · {% if restricted_demo %}{% translate "Demo rewards have no cash value." %}{% else %}{% translate "Cash rewards and withdrawals are not available." %}{% endif %}</p>
   </div>
 </main>
 <script src="{% static 'js/auth.js' %}" defer></script>

@@ -17,3 +17,6 @@
 .dashboard-welcome .actions > a:not(.button) { color: var(--nav-text); }
 .dashboard-welcome .button--secondary { background: var(--surface); color: var(--brand-navy); }
 .dashboard-welcome a:focus-visible { outline-color: var(--brand-yellow); }
+.dashboard-next-step { margin-bottom: var(--space-5); display: grid; gap: var(--space-3); justify-items: start; }
+.dashboard-next-step h2 { margin: 0; font-size: 1.25rem; }
+.dashboard-next-step p { margin: 0; }

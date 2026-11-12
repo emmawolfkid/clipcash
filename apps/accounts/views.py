@@ -61,12 +61,17 @@ INVALID_LINK_TEMPLATE = "accounts/link_invalid.html"
 
 def no_referrer(view):
     """RG-03: a page served at a token-bearing URL must not send that URL as the Referer of
-    its own stylesheet, script or image requests (web-server logs record Referer)."""
+    its own stylesheet, script or image requests (web-server logs record Referer).
+
+    REG-01: "strict-origin", not "no-referrer". Browsers send at most the origin
+    (https://host/), never the path holding the token. Under "no-referrer" they also send
+    ``Origin: null`` with the page's own form POST, which Django's CSRF check rightly
+    refuses, so activation, email confirmation and password reset failed in real browsers."""
 
     @wraps(view)
     def wrapped(request, *args, **kwargs):
         response = view(request, *args, **kwargs)
-        response["Referrer-Policy"] = "no-referrer"
+        response["Referrer-Policy"] = "strict-origin"
         return response
 
     return wrapped

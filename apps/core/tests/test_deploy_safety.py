@@ -73,6 +73,25 @@ class DeployCheckUnitTests(SimpleTestCase):
         with override_settings(RESTRICTED_DEMO_MODE=True):
             self.assertEqual(checks.check_restricted_demo(None), [])
 
+    @override_settings(DEBUG=False, ALLOWED_HOSTS=["clipcash.example", ".clipcash.org"])
+    def test_public_base_url_for_emailed_links(self):
+        """REG-01: activation and reset links use the configured HTTPS origin in public production."""
+        with override_settings(RESTRICTED_DEMO_MODE=False, PUBLIC_BASE_URL=""):
+            self.assertEqual(ids(checks.check_public_base_url(None)), ["core.E009"])
+        with override_settings(RESTRICTED_DEMO_MODE=True, PUBLIC_BASE_URL=""):
+            self.assertEqual(checks.check_public_base_url(None), [])  # The demo keeps request-based links.
+        for bad in ("http://clipcash.example", "https://other.example", "https://clipcash.example/path",
+                    "https://user@clipcash.example", "clipcash.example", "https://clipcash.example?x=1"):
+            for demo in (False, True):
+                with self.subTest(value=bad, demo=demo), override_settings(RESTRICTED_DEMO_MODE=demo,
+                                                                          PUBLIC_BASE_URL=bad):
+                    self.assertEqual(ids(checks.check_public_base_url(None)), ["core.E009"])
+        for good in ("https://clipcash.example", "https://www.clipcash.org", "https://clipcash.example:8443"):
+            with self.subTest(value=good), override_settings(RESTRICTED_DEMO_MODE=False, PUBLIC_BASE_URL=good):
+                self.assertEqual(checks.check_public_base_url(None), [])
+        with override_settings(DEBUG=True, RESTRICTED_DEMO_MODE=False, PUBLIC_BASE_URL=""):
+            self.assertEqual(checks.check_public_base_url(None), [])
+
     def test_financial_features_stay_locked(self):
         self.assertEqual(checks.check_financial_locks(None), [])
         from apps.core import features
@@ -125,6 +144,8 @@ class DeployCommandTests(SimpleTestCase):
                               "DJANGO_PUBLIC_REGISTRATION_APPROVED": "True", "DJANGO_PAYMENTS_MODE": "sandbox",
                               "DJANGO_PAYMENTS_SANDBOX_ALLOWED": "True"},
             "accounts.E007": {**NETPOA_ENV, "DJANGO_TRUSTED_PROXY_NETWORKS": None},
+            # REG-01: public production must put its own HTTPS host in emailed account links.
+            "core.E009": {**NETPOA_ENV, "DJANGO_RESTRICTED_DEMO": "False", "DJANGO_PUBLIC_BASE_URL": None},
             "accounts.E005": {**NETPOA_ENV, "DJANGO_CLIENT_IP_HEADER": "CF-Connecting-IP",
                               "DJANGO_TRUSTED_PROXY_NETWORKS": None, "DJANGO_PROXY_ORIGIN_RESTRICTED": "True"},
         }
@@ -135,6 +156,7 @@ class DeployCommandTests(SimpleTestCase):
     def test_production_stage_one_with_registration_closed_passes(self):
         """NET-02 Stage 1: production mode, registration not yet approved, payments off."""
         result = self.run_check(**NETPOA_ENV, DJANGO_RESTRICTED_DEMO="False", DJANGO_PAYMENTS_MODE="disabled",
+                                DJANGO_PUBLIC_BASE_URL="https://demo.clipcash.example",
                                 DJANGO_EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
                                 DJANGO_EMAIL_HOST="smtp.example.invalid", DJANGO_EMAIL_PORT="587",
                                 DJANGO_EMAIL_USE_TLS="True")
@@ -145,7 +167,7 @@ class DeployCommandTests(SimpleTestCase):
         """PAY-01: the production profile for real registration and Airtel Lipa payments."""
         result = self.run_check(**NETPOA_ENV, DJANGO_RESTRICTED_DEMO="False",
                                 DJANGO_PUBLIC_REGISTRATION_APPROVED="True", DJANGO_MANUAL_MEMBERSHIP_PAYMENTS="True",
-                                DJANGO_PAYMENTS_MODE="disabled",
+                                DJANGO_PAYMENTS_MODE="disabled", DJANGO_PUBLIC_BASE_URL="https://demo.clipcash.example",
                                 DJANGO_EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
                                 DJANGO_EMAIL_HOST="smtp.example.invalid", DJANGO_EMAIL_PORT="587",
                                 DJANGO_EMAIL_USE_TLS="True")

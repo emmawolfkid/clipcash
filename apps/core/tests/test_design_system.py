@@ -75,7 +75,7 @@ class DesignSystemTests(SimpleTestCase):
         for language in ("en", "sw"):
             with self.subTest(language=language), translation.override(language):
                 context = self.context()
-                context.update(financial_locked=True)
+                context.update(financial_locked=True, restricted_demo=True)
                 html = render_to_string("public/home.html", context)
                 self.assertIn(f'<html lang="{language}">', html)
                 self.assertIn('lang="sw">Tazama Video · Kusanya Zawadi', html)

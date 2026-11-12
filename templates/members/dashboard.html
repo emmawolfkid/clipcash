@@ -12,7 +12,18 @@
 <a href="{% url 'notifications:inbox' %}">{% translate "Notifications" %}{% if unread_notifications %} ({{ unread_notifications }}){% endif %}</a>
 </nav>
 </header>
-<p class="lead">{% translate "Real rewards are not available yet. Demo rewards and sandbox payments are simulations; your real wallet holds only ledger-backed money." %}</p>
+<p class="lead">{% if restricted_demo %}{% translate "Real rewards are not available yet. Demo rewards and sandbox payments are simulations; your real wallet holds only ledger-backed money." %}{% else %}{% translate "Real rewards are not available yet. Cash rewards and withdrawals are not available; any reward record shown here has no cash value." %}{% endif %}</p>
+{% with m=summary.membership %}{% if m.enabled and not m.subscription %}
+<section class="notice dashboard-next-step" aria-labelledby="next-step-title">
+  {% if m.pending %}<h2 id="next-step-title">{% translate "Next step: complete your membership" %}</h2>
+  <p>{% blocktranslate with plan=m.pending.plan_name %}You chose {{ plan }}. It stays pending until it is activated.{% endblocktranslate %}{% if m.manual_payments_ready and not m.pending_payment %} {% translate "Pay with Airtel Money (Lipa) and submit your transaction reference; the ClipCash team activates the membership after checking the payment." %}{% endif %}</p>
+  <a class="button" href="{% url 'memberships:subscription_detail' m.pending.pk %}">{% translate "View your pending plan" %}</a>
+  {% else %}<h2 id="next-step-title">{% translate "Next step: choose a membership" %}</h2>
+  <p>{% translate "Your plan controls which videos you can play. A plan you choose stays pending until it is activated." %}{% if m.manual_payments_ready %} {% translate "You pay with Airtel Money (Lipa) and the ClipCash team checks the payment." %}{% elif not restricted_demo %} {% translate "Membership payments are not open yet." %}{% endif %}</p>
+  <a class="button" href="{% url 'memberships:plans' %}">{% translate "See membership plans" %}</a>
+  {% endif %}
+</section>
+{% endif %}{% endwith %}
 {% if demo_unconfirmed_account %}{% include "components/demo_unconfirmed_notice.html" %}{% endif %}
 
 <div class="summary-grid">

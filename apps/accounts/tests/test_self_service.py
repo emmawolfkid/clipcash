@@ -688,11 +688,11 @@ class EmailChangeHardeningTests(SelfServiceTestCase):
         opened = self.client.get(link)
         self.assertEqual(opened.status_code, 302)
         self.assertNotIn(token, opened.url)
-        self.assertEqual(opened["Referrer-Policy"], "no-referrer")
+        self.assertEqual(opened["Referrer-Policy"], "strict-origin")  # Origin only, never the token.
         self.assertIn("no-store", opened["Cache-Control"])
         review = self.client.get(opened.url)
         self.assertNotContains(review, token)
-        self.assertEqual(review["Referrer-Policy"], "no-referrer")
+        self.assertEqual(review["Referrer-Policy"], "strict-origin")  # Origin only, never the token.
         done = self.client.post(opened.url, {"current_password": PASSWORD})
         self.assertNotContains(done, token)
         self.assertNotIn(views.EMAIL_CHANGE_SESSION_KEY, self.client.session)
@@ -701,9 +701,9 @@ class EmailChangeHardeningTests(SelfServiceTestCase):
         self.client.logout()
         self.client.post(reverse("accounts:password_reset"), {"email": "member@example.com"})
         reset = self.client.get(link_sent_to("member@example.com"))
-        self.assertEqual(reset["Referrer-Policy"], "no-referrer")
+        self.assertEqual(reset["Referrer-Policy"], "strict-origin")  # Origin only, never the token.
         invalid = self.client.get(reverse("accounts:confirm_email", kwargs={"uidb64": "MTIz", "token": "x-y"}))
-        self.assertEqual(invalid["Referrer-Policy"], "no-referrer")
+        self.assertEqual(invalid["Referrer-Policy"], "strict-origin")  # Origin only, never the token.
 
     def test_a_link_opened_for_one_change_cannot_complete_another(self):
         self.link()

@@ -63,7 +63,7 @@ class HomepageTests(HomeTestCase):
     def test_no_earnings_promises_and_financial_notice_shown(self):
         response = self.client.get(HOME)
         self.assertTrue(response.context["financial_locked"])
-        self.assertContains(response, "No money is paid out on this site.")
+        self.assertContains(response, "ClipCash does not pay out money.")  # REG-01: public-mode wording.
         text = response.content.decode().lower()
         for phrase in EARNINGS_CLAIMS:
             self.assertNotIn(phrase, text, phrase)
@@ -146,6 +146,7 @@ class RestrictedDemoTests(HomeTestCase):
     def test_homepage_and_login_hide_registration(self):
         response = self.client.get(HOME)
         self.assertContains(response, "Restricted demonstration")
+        self.assertContains(response, "No money is paid out on this site.")  # Demo disclosure kept.
         self.assertContains(response, "New accounts are not open to the public")
         self.assertContains(response, f'href="{LOGIN}"')
         self.assertNotContains(response, REGISTER)
@@ -164,7 +165,7 @@ class RestrictedDemoTests(HomeTestCase):
     def test_existing_accounts_can_still_sign_in(self):
         make_user()
         response = self.client.post(LOGIN, {"username": "member@example.com", "password": PASSWORD})
-        self.assertRedirects(response, PROFILE)
+        self.assertRedirects(response, DASHBOARD)
         self.assertTrue(AuditEvent.objects.filter(action="auth.login.succeeded").exists())
 
     def test_admin_explains_the_override(self):
@@ -195,7 +196,7 @@ class AuthenticationRedirectTests(HomeTestCase):
 
     def test_signed_in_users_skip_the_login_page(self):
         self.client.force_login(make_user())
-        self.assertRedirects(self.client.get(LOGIN), PROFILE)
+        self.assertRedirects(self.client.get(LOGIN), DASHBOARD)
 
     def test_unverified_member_sees_homepage_but_not_dashboard(self):
         self.client.force_login(make_user(verified=False))

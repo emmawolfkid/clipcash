@@ -6,6 +6,6 @@
 <ul class="links">
   <li><a href="{% url 'accounts:password_reset' %}">{% translate "Forgot your password?" %}</a></li>
   <li><a href="{% url 'accounts:resend_verification' %}">{% translate "Need a new verification link?" %}</a></li>
-  {% if features.registration %}<li><a href="{% url 'accounts:register' %}">{% translate "Create an account" %}</a></li>{% endif %}
 </ul>
+{% if features.registration %}<div class="auth-alternative"><p>{% translate "New to ClipCash?" %}</p><a class="button button--secondary" href="{% url 'accounts:register' %}">{% translate "Create account" %}</a></div>{% endif %}
 {% endblock %}

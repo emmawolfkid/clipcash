@@ -90,7 +90,11 @@ def _clean_context(kind, context):
 
 
 def base_url(request):
-    """Scheme and host of a validated request (ALLOWED_HOSTS already applied)."""
+    """Scheme and host for emailed links: the configured PUBLIC_BASE_URL (public
+    production, checked by core.E009), else the validated request (ALLOWED_HOSTS
+    already applied)."""
+    if settings.PUBLIC_BASE_URL:
+        return settings.PUBLIC_BASE_URL
     return f"{request.scheme}://{request.get_host()}"
 
 

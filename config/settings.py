@@ -195,7 +195,7 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTHENTICATION_BACKENDS = ["apps.accounts.backends.AccountStatusBackend"]
 
 LOGIN_URL = "accounts:login"
-LOGIN_REDIRECT_URL = "accounts:profile"
+LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "accounts:login"
 
 # Token lifetimes. PASSWORD_RESET_TIMEOUT is Django's outer limit for every
@@ -255,6 +255,11 @@ EMAIL_USE_TLS = env.bool("DJANGO_EMAIL_USE_TLS", default=False)
 EMAIL_USE_SSL = env.bool("DJANGO_EMAIL_USE_SSL", default=False)
 # Bounded, so a stalled SMTP server cannot hold a delivery job past its lease.
 EMAIL_TIMEOUT = env.int("DJANGO_EMAIL_TIMEOUT", default=20)
+# The scheme and host put in emailed account links (activation, confirmation, password
+# reset), e.g. https://clipcash.co.tz. When set, links never depend on the Host header or
+# on how the proxy reports the scheme. Required in public production (core.E009);
+# empty means "use the validated request" (development and the restricted demo).
+PUBLIC_BASE_URL = env("DJANGO_PUBLIC_BASE_URL", default="").strip().rstrip("/")
 
 
 # Cache. Rate limiting needs a cache shared by every worker in production, e.g.

@@ -6,6 +6,8 @@ from .helpers import PASSWORD, AccountsTestCase, User, make_user
 LOGIN_URL = reverse("accounts:login")
 LOGOUT_URL = reverse("accounts:logout")
 PROFILE_URL = reverse("accounts:profile")
+# REG-01: signing in lands on the member dashboard (its next step is choosing a plan).
+DASHBOARD_URL = reverse("dashboard")
 
 
 class LoginTests(AccountsTestCase):
@@ -20,7 +22,7 @@ class LoginTests(AccountsTestCase):
     def test_active_user_logs_in_case_insensitively(self):
         make_user()
         response = self.login(email="MEMBER@Example.com")
-        self.assertRedirects(response, PROFILE_URL)
+        self.assertRedirects(response, DASHBOARD_URL)
         self.assertTrue(get_user(self.client).is_authenticated)
 
     def test_session_key_rotated_on_login(self):
@@ -56,11 +58,11 @@ class LoginTests(AccountsTestCase):
         make_user()
         for _ in range(4):
             self.login(password="wrong-password")
-        self.assertRedirects(self.login(), PROFILE_URL)
+        self.assertRedirects(self.login(), DASHBOARD_URL)
         self.client.post(LOGOUT_URL)
         for _ in range(4):
             self.login(password="wrong-password")
-        self.assertRedirects(self.login(), PROFILE_URL)
+        self.assertRedirects(self.login(), DASHBOARD_URL)
 
     def test_throttle_applies_to_unknown_accounts_too(self):
         for _ in range(5):
@@ -80,7 +82,7 @@ class LoginTests(AccountsTestCase):
             attacker.post(LOGIN_URL, {"username": "member@example.com", "password": "wrong"})
         victim = self.client_class(REMOTE_ADDR="198.51.100.20")
         response = victim.post(LOGIN_URL, {"username": "member@example.com", "password": PASSWORD})
-        self.assertRedirects(response, PROFILE_URL)
+        self.assertRedirects(response, DASHBOARD_URL)
 
     def test_distributed_guessing_hits_account_ceiling(self):
         make_user()
@@ -103,7 +105,7 @@ class LoginTests(AccountsTestCase):
     def test_external_next_url_ignored(self):
         make_user()
         response = self.login(next="https://evil.example.net/")
-        self.assertRedirects(response, PROFILE_URL)
+        self.assertRedirects(response, DASHBOARD_URL)
 
     def test_local_next_url_honoured(self):
         make_user()
@@ -115,7 +117,7 @@ class LoginTests(AccountsTestCase):
 
     def test_authenticated_user_redirected_from_login(self):
         self.client.force_login(make_user())
-        self.assertRedirects(self.client.get(LOGIN_URL), PROFILE_URL)
+        self.assertRedirects(self.client.get(LOGIN_URL), DASHBOARD_URL)
 
 
 class LogoutTests(AccountsTestCase):

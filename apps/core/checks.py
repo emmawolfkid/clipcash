@@ -113,6 +113,34 @@ def check_restricted_demo(app_configs, **kwargs):
 
 
 @register(Tags.security, deploy=True)
+def check_public_base_url(app_configs, **kwargs):
+    """Emailed account links (activation, reset) must point at the site's own HTTPS host.
+    Public production requires DJANGO_PUBLIC_BASE_URL; anywhere outside DEBUG a value that
+    is set must be an https:// origin whose host is in ALLOWED_HOSTS."""
+    if settings.DEBUG:
+        return []
+    from urllib.parse import urlsplit
+
+    value = settings.PUBLIC_BASE_URL
+    hint = ("Set DJANGO_PUBLIC_BASE_URL to the site's HTTPS origin, e.g. https://clipcash.co.tz "
+            "(scheme and host only, a host listed in DJANGO_ALLOWED_HOSTS).")
+    if not value:
+        if settings.RESTRICTED_DEMO_MODE:
+            return []  # The demo builds links from the validated request, as before.
+        return [Error("DJANGO_PUBLIC_BASE_URL is not set: emailed account links would follow the request.",
+                      hint=hint, id="core.E009")]
+    parts = urlsplit(value)
+    host = (parts.hostname or "").lower()
+    allowed = [entry.strip().lower() for entry in settings.ALLOWED_HOSTS]
+    host_allowed = any(host == entry or (entry.startswith(".") and host.endswith(entry)) for entry in allowed)
+    if (parts.scheme != "https" or not host or parts.path or parts.query or parts.fragment
+            or parts.username or not host_allowed):
+        return [Error("DJANGO_PUBLIC_BASE_URL is not an https:// origin for an allowed host.", hint=hint,
+                      id="core.E009")]
+    return []
+
+
+@register(Tags.security, deploy=True)
 def check_financial_locks(app_configs, **kwargs):
     """Real money stays locked in code (apps.core.features); this trips if that ever changes."""
     from apps.core.features import FINANCIAL_FEATURES, is_enabled

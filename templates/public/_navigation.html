@@ -9,6 +9,6 @@
 {% if user.is_staff %}<a href="{% url 'administration:overview' %}">{% translate "Operations console" %}</a>{% endif %}
 {% else %}
 <a href="{% url 'accounts:login' %}"{% if request.resolver_match.view_name == 'accounts:login' %} aria-current="page"{% endif %}>{% translate "Sign in" %}</a>
-{% if features.registration %}<a class="public-register" href="{% url 'accounts:register' %}"{% if request.resolver_match.view_name == 'accounts:register' %} aria-current="page"{% endif %}>{% translate "Register" %}</a>{% endif %}
+{% if features.registration %}<a class="public-register" href="{% url 'accounts:register' %}"{% if request.resolver_match.view_name == 'accounts:register' %} aria-current="page"{% endif %}>{% translate "Create account" %}</a>{% endif %}
 {% endif %}
 {% include "components/language_form.html" %}

@@ -55,7 +55,7 @@ class DemoTestCase(AccountsTestCase):
 @DEMO
 class ApprovedDemoAccountTests(DemoTestCase):
     def test_signs_in_and_uses_member_pages_without_verified_email(self):  # 1
-        self.assertRedirects(self.sign_in(), PROFILE)
+        self.assertRedirects(self.sign_in(), DASHBOARD)  # REG-01: sign-in lands on the dashboard.
         self.assert_member_pages(allowed=True)
 
     def test_email_stays_unverified(self):  # Never marked verified.
