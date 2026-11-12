@@ -5,7 +5,7 @@
 <p class="lead">{% translate "Inspection is recorded in the audit log. There are no balance controls: wallets hold no money in this phase." %}</p>
 <div class="console-split">
 <section><h2 class="workspace-section__title">{% translate "Wallet" %}</h2><dl class="details">
-  <dt>{% translate "Member" %}</dt><dd>{{ wallet.member.email }}</dd>
+  <dt>{% translate "Member" %}</dt><dd>{{ wallet.member.sign_in_identifier }}</dd>
   <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ wallet.status|lower }}">{{ wallet.get_status_display }}</span></dd>
   <dt>{% translate "Available / pending / reserved" %}</dt><dd>{{ balances.available|tzs }} / {{ balances.pending|tzs }} / {{ balances.reserved|tzs }}</dd>
   <dt>{% translate "Ledger accounts" %}</dt><dd>{{ wallet.available_account.code }}<br>{{ wallet.pending_account.code }}<br>{{ wallet.reserved_account.code }}</dd>

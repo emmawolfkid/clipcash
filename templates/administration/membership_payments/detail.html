@@ -4,7 +4,7 @@
 <div class="page-heading"><h1 class="page-title">{{ claim.reference }} <span class="badge badge--{{ claim.status|lower }}">{{ claim.get_status_display }}</span></h1><a href="{% url 'administration:membership_payments' %}">{% translate "Verification queue" %}</a></div>
 <div class="console-split">
 <section><h2 class="workspace-section__title">{% translate "Member's claim (unverified)" %}</h2><dl class="details">
-  <dt>{% translate "Member" %}</dt><dd>{{ member.email }}{% if member.get_full_name %} · {{ member.get_full_name }}{% endif %}{% if can.members %} · <a href="{% url 'administration:member' member.pk %}">{% translate "Profile" %}</a>{% endif %}</dd>
+  <dt>{% translate "Member" %}</dt><dd>{{ member.sign_in_identifier }}{% if member.get_full_name %} · {{ member.get_full_name }}{% endif %}{% if can.members %} · <a href="{% url 'administration:member' member.pk %}">{% translate "Profile" %}</a>{% endif %}</dd>
   <dt>{% translate "Account" %}</dt><dd>{{ member.get_status_display }} · {% if member.email_verified %}{% translate "email confirmed" %}{% else %}{% translate "email not confirmed" %}{% endif %}</dd>
   <dt>{% translate "Plan" %}</dt><dd>{{ claim.plan_name }} ({{ subscription.get_status_display }})</dd>
   <dt>{% translate "Amount due" %}</dt><dd><strong class="financial-amount">{{ claim.amount|tzs }}</strong></dd>
@@ -21,7 +21,7 @@
 </dl></section>
 <section><h2 class="workspace-section__title">{% translate "Checks" %}</h2>
   {% if same_reference %}<p class="notice notice--warning" role="status">{% translate "The same transaction reference appears in other submissions:" %}</p>
-  <ul class="list">{% for other in same_reference %}<li class="list__item"><span><a href="{% url 'administration:membership_payment' other.pk %}">{{ other.reference }}</a> · {{ other.member.email }}</span><span class="badge badge--{{ other.status|lower }}">{{ other.get_status_display }}</span></li>{% endfor %}</ul>
+  <ul class="list">{% for other in same_reference %}<li class="list__item"><span><a href="{% url 'administration:membership_payment' other.pk %}">{{ other.reference }}</a> · {{ other.member.sign_in_identifier }}</span><span class="badge badge--{{ other.status|lower }}">{{ other.get_status_display }}</span></li>{% endfor %}</ul>
   {% else %}<p>{% translate "No other submission uses this transaction reference." %}</p>{% endif %}
   {% if member_claims %}<h3>{% translate "This member's other submissions" %}</h3>
   <ul class="list">{% for other in member_claims %}<li class="list__item"><span><a href="{% url 'administration:membership_payment' other.pk %}">{{ other.reference }}</a> · {{ other.created_at|date:"SHORT_DATE_FORMAT" }}</span><span class="badge badge--{{ other.status|lower }}">{{ other.get_status_display }}</span></li>{% endfor %}</ul>{% endif %}

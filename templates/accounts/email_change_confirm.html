@@ -2,7 +2,7 @@
 {% block title %}{% translate "Confirm your new email address" %}{% endblock %}
 {% block auth_content %}
 <h1>{% translate "Confirm your new email address" %}</h1>
-<p>{% blocktranslate with email=user.email %}You are signed in as <strong>{{ email }}</strong>.{% endblocktranslate %}
+<p>{% blocktranslate with email=user.sign_in_identifier %}You are signed in as <strong>{{ email }}</strong>.{% endblocktranslate %}
    {% blocktranslate %}Use <strong>{{ new_email }}</strong> to sign in to your ClipCash account from now on?{% endblocktranslate %}</p>
 <p>{% translate "Only continue if you asked for this change. If you did not, close this page and nothing will change." %}</p>
 <p>{% translate "When you confirm, you stay signed in here and every other device is signed out." %}</p>

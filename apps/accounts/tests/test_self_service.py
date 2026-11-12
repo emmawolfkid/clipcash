@@ -72,7 +72,41 @@ class SelfServiceTestCase(AccountsTestCase):
 
 class ProfileEditTests(SelfServiceTestCase):
     def save(self, **data):
-        return self.client.post(EDIT, {"first_name": "Asha", "last_name": "Juma", "phone_number": "", **data})
+        # REG-02: the current password is sent too; it is only checked when the number changes.
+        return self.client.post(EDIT, {"first_name": "Asha", "last_name": "Juma", "phone_number": "",
+                                       "current_password": PASSWORD, **data})
+
+    def test_changing_the_sign_in_number_needs_the_current_password(self):
+        for password in ("", "wrong-password"):
+            with self.subTest(password=password):
+                response = self.save(phone_number="0712 345 678", current_password=password)
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(response.context["form"].errors["current_password"])
+        self.member.refresh_from_db()
+        self.assertIsNone(self.member.phone_number)
+        self.assertRedirects(self.save(first_name="Only", current_password=""), PROFILE)  # Names need none.
+
+    def test_new_number_must_be_a_tanzanian_mobile(self):
+        for bad in ("+254712345678", "0222 123 456"):
+            with self.subTest(phone=bad):
+                self.assertEqual(self.save(phone_number=bad).status_code, 200)
+
+    def test_new_number_resets_phone_verification_and_keeps_this_session(self):
+        User.objects.filter(pk=self.member.pk).update(phone_number="+255712345678", phone_verified=True)
+        other = self.client_class()
+        other.force_login(User.objects.get(pk=self.member.pk))
+        self.assertRedirects(self.save(phone_number="0755 000 111"), PROFILE)
+        self.member.refresh_from_db()
+        self.assertEqual((self.member.phone_number, self.member.phone_verified), ("+255755000111", False))
+        self.assertTrue(get_user(self.client).is_authenticated)
+
+    def test_phone_only_member_cannot_remove_their_number(self):
+        phone_only = User.objects.create_user(None, PASSWORD, phone_number="+255713000222", status=User.Status.ACTIVE)
+        self.client.force_login(phone_only)
+        response = self.save(phone_number="")
+        self.assertContains(response, "Add an email address before removing it")
+        phone_only.refresh_from_db()
+        self.assertEqual(phone_only.phone_number, "+255713000222")
 
     def test_owner_edits_name_and_phone_in_any_accepted_format(self):
         self.assertRedirects(self.save(phone_number="0712 345 678"), PROFILE)

@@ -1,10 +1,10 @@
-{% extends "members/layout.html" %}{% load i18n static %}
+{% extends "members/layout.html" %}{% load i18n static money %}
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/members/dashboard.css' %}">{% endblock %}
 {% block title %}{% translate "Dashboard" %}{% endblock %}
 {% block member_content %}
 <header class="dashboard-welcome">
 <p class="dashboard-welcome__eyebrow">{% translate "Your ClipCash" %}</p>
-<h1 class="page-title">{% blocktranslate with name=user.first_name|default:user.email %}Welcome, {{ name }}{% endblocktranslate %}</h1>
+<h1 class="page-title">{% blocktranslate with name=user.first_name|default:user.sign_in_identifier %}Welcome, {{ name }}{% endblocktranslate %}</h1>
 <p>{% translate "Discover something new. Keep track of what ClipCash has verified." %}</p>
 <nav class="actions" aria-label="{% translate 'Dashboard shortcuts' %}">
 {% if features.videos %}<a class="button" href="{% url 'videos:library' %}">{% translate "Explore videos" %}</a>{% endif %}
@@ -13,6 +13,16 @@
 </nav>
 </header>
 <p class="lead">{% if restricted_demo %}{% translate "Real rewards are not available yet. Demo rewards and sandbox payments are simulations; your real wallet holds only ledger-backed money." %}{% else %}{% translate "Real rewards are not available yet. Cash rewards and withdrawals are not available; any reward record shown here has no cash value." %}{% endif %}</p>
+{% with d=summary.membership.payment_decision %}{% if d %}
+<section class="notice dashboard-payment-update{% if d.status == "APPROVED" %} notice--success{% else %} notice--warning{% endif %}" role="status" aria-labelledby="payment-update-title">
+  {% if d.status == "APPROVED" %}<h2 id="payment-update-title">{% translate "Payment update: confirmed" %}</h2>
+  <p>{% blocktranslate with plan=d.plan_name amount=d.amount|tzs ref=d.transaction_reference date=d.reviewed_at|date:"DATE_FORMAT" end=d.subscription.expires_at|date:"DATE_FORMAT" %}Your payment of {{ amount }} (reference {{ ref }}) was confirmed on {{ date }}. {{ plan }} is active until {{ end }}.{% endblocktranslate %}</p>
+  {% else %}<h2 id="payment-update-title">{% translate "Payment update: not confirmed" %}</h2>
+  <p>{% blocktranslate with ref=d.transaction_reference date=d.reviewed_at|date:"DATE_FORMAT" %}We could not confirm your payment (reference {{ ref }}) on {{ date }}:{% endblocktranslate %} {{ d.get_rejection_reason_display }}.{% if d.review_note %} {{ d.review_note }}{% endif %}</p>
+  {% endif %}
+  <a href="{% url 'payments:manual_claim' d.pk %}">{% translate "View payment" %}</a>
+</section>
+{% endif %}{% endwith %}
 {% with m=summary.membership %}{% if m.enabled and not m.subscription %}
 <section class="notice dashboard-next-step" aria-labelledby="next-step-title">
   {% if m.pending %}<h2 id="next-step-title">{% translate "Next step: complete your membership" %}</h2>

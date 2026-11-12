@@ -2,6 +2,7 @@
 {% block title %}{% translate "Sign in" %}{% endblock %}
 {% block auth_content %}
 <h1>{% translate "Sign in" %}</h1>
+<p class="lead">{% translate "Use your mobile number (for example 0712 345 678) or your email address." %}</p>
 {% include "components/form.html" with button=_("Sign in") %}
 <ul class="links">
   <li><a href="{% url 'accounts:password_reset' %}">{% translate "Forgot your password?" %}</a></li>

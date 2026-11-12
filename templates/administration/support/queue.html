@@ -22,7 +22,7 @@
   <tbody>{% for ticket in page.object_list %}<tr>
     <td><a href="{% url 'administration:support_ticket' ticket.reference %}">{{ ticket.reference }}</a></td>
     <td>{{ ticket.subject }}</td>
-    <td>{{ ticket.requester.email }}{% if ticket.organization %}<br><small>{{ ticket.organization.display_name }}</small>{% endif %}</td>
+    <td>{{ ticket.requester.sign_in_identifier }}{% if ticket.organization %}<br><small>{{ ticket.organization.display_name }}</small>{% endif %}</td>
     <td>{{ ticket.get_category_display }}</td>
     <td>{{ ticket.get_priority_display }}</td>
     <td>{% include "support/_status_badge.html" with staff=True %}</td>

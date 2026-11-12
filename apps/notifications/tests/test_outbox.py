@@ -22,6 +22,15 @@ S = OutboundEmail.Status
 SMTP_SECRET_MARKER = "SMTP_SERVER_TEXT_Qz7Kx"
 
 
+def register(email):
+    """A PENDING email account and its activation email, in one transaction (as the
+    pre-REG-02 sign-up did; REG-02 sign-up is phone-first and sends no email)."""
+    with transaction.atomic():
+        user = User.objects.create_user(email, None, status=User.Status.PENDING)
+        account_services.send_verification_email(user, request())
+    return user
+
+
 def request():
     return RequestFactory().post("/accounts/register/", HTTP_HOST="testserver")
 
@@ -39,7 +48,7 @@ def everything_stored():
 class TransactionalEnqueueTests(AccountsTestCase):
     def test_rolled_back_registration_sends_nothing(self):
         with self.assertRaises(RuntimeError), transaction.atomic():
-            account_services.register(email="new@example.com", request=request())
+            register("new@example.com")
             raise RuntimeError("later step failed")
         run_worker()
         self.assertFalse(User.objects.exists())
@@ -48,7 +57,7 @@ class TransactionalEnqueueTests(AccountsTestCase):
         self.assertEqual(mail.outbox, [])
 
     def test_registration_queues_one_email_and_one_job(self):
-        account_services.register(email="new@example.com", request=request())
+        register("new@example.com")
         email = OutboundEmail.objects.get()
         self.assertEqual((email.kind, email.status, email.recipient), ("accounts.activation", S.PENDING, "new@example.com"))
         self.assertEqual(Job.objects.get().payload, {"email_id": str(email.pk)})
@@ -61,7 +70,7 @@ class TransactionalEnqueueTests(AccountsTestCase):
 
 class TokenConfidentialityTests(AccountsTestCase):
     def test_tokens_exist_only_in_the_delivered_email(self):
-        account_services.register(email="new@example.com", request=request())
+        register("new@example.com")
         stored_before = everything_stored()
         run_worker()
         token = token_from(mail.outbox[0].body)
@@ -70,7 +79,7 @@ class TokenConfidentialityTests(AccountsTestCase):
         self.assertEqual(OutboundEmail.objects.get().context, {"base_url": "http://testserver"})
 
     def test_admin_listing_shows_no_content(self):
-        account_services.register(email="new@example.com", request=request())
+        register("new@example.com")
         run_worker()
         token = token_from(mail.outbox[0].body)
         root = make_user("root@example.com", role=User.Role.SUPER_ADMIN)
@@ -90,7 +99,7 @@ class TokenConfidentialityTests(AccountsTestCase):
 
 class ExpiryTests(AccountsTestCase):
     def test_delayed_delivery_does_not_extend_token_validity(self):
-        account_services.register(email="new@example.com", request=request())
+        register("new@example.com")
         two_hours_ago = timezone.now() - timedelta(hours=2)
         OutboundEmail.objects.update(token_issued_at=two_hours_ago)
         run_worker()  # Delivered two hours "late".
@@ -102,7 +111,7 @@ class ExpiryTests(AccountsTestCase):
             self.assertFalse(verification_token_generator.check_token(user, token))
 
     def test_expired_message_is_not_sent(self):
-        account_services.register(email="new@example.com", request=request())
+        register("new@example.com")
         OutboundEmail.objects.update(token_issued_at=timezone.now() - timedelta(days=2),
                                      expires_at=timezone.now() - timedelta(seconds=1))
         run_worker()
@@ -110,8 +119,8 @@ class ExpiryTests(AccountsTestCase):
         self.assertEqual(mail.outbox, [])
 
     def test_stale_messages_are_skipped(self):
-        account_services.register(email="first@example.com", request=request())
-        account_services.register(email="second@example.com", request=request())
+        register("first@example.com")
+        register("second@example.com")
         first = User.objects.get(email="first@example.com")
         first.status = User.Status.DISABLED
         first.save()
@@ -126,7 +135,7 @@ class ExpiryTests(AccountsTestCase):
 
 class DeliveryFailureTests(AccountsTestCase):
     def queue(self):
-        account_services.register(email="new@example.com", request=request())
+        register("new@example.com")
         return OutboundEmail.objects.get(), Job.objects.get()
 
     def retry_now(self):

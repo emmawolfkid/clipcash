@@ -5,6 +5,7 @@ import json
 from django.contrib.auth.models import Permission
 from django.core import mail
 from django.core.cache import cache
+from django.test import override_settings
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -32,17 +33,19 @@ class AuthenticationAuditTests(AccountsTestCase):
     def test_login_failure_never_stores_typed_values(self):
         user = make_user()
         typed_password = "My-Secret-Password-9"
-        # A password typed into the email field is not a valid address: the form
-        # rejects it before any authentication attempt, so nothing is recorded.
+        # REG-02: the field takes a mobile number or an email, so a password typed into it
+        # is a failed attempt. It is recorded as a keyed hash only, never as typed.
         self.client.post(LOGIN_URL, {"username": typed_password, "password": "x"})
-        self.assertFalse(AuditEvent.objects.exists())
+        first = events("auth.login.failed").get()
+        self.assertNotIn(typed_password.lower(), json.dumps(
+            AuditEvent.objects.filter(pk=first.pk).values().get(), default=str).lower())
 
         # A password-shaped address and a wrong password: only a keyed hash is kept.
         typed_address = "my-secret-password-9@example.com"
         self.client.post(LOGIN_URL, {"username": typed_address, "password": typed_password})
         self.client.post(LOGIN_URL, {"username": "member@example.com", "password": typed_password})
 
-        failed = list(events("auth.login.failed").order_by("occurred_at"))
+        failed = list(events("auth.login.failed").order_by("occurred_at"))[1:]
         self.assertEqual(len(failed), 2)
         dump = json.dumps([AuditEvent.objects.filter(pk=e.pk).values().get() for e in failed], default=str)
         self.assertNotIn(typed_password.lower(), dump.lower())
@@ -78,10 +81,19 @@ class AuthenticationAuditTests(AccountsTestCase):
 
 
 class AccountLifecycleAuditTests(AccountsTestCase):
-    def test_registration_and_activation(self):
-        self.client.post(reverse("accounts:register"), {"email": "new@example.com"})
-        user = User.objects.get(email="new@example.com")
-        self.assertEqual(events("account.registration.started").get().target_id, str(user.pk))
+    @override_settings(RESTRICTED_DEMO_MODE=False, PUBLIC_REGISTRATION_APPROVED=True)
+    def test_phone_registration_is_recorded_without_the_password(self):
+        self.client.post(reverse("accounts:register"), {"phone_number": "0712345678", "password1": NEW_PASSWORD,
+                                                        "password2": NEW_PASSWORD})
+        user = User.objects.get(phone_number="+255712345678")
+        event = events("account.registered").get()
+        self.assertEqual((event.actor_id, event.target_id, event.metadata), (user.pk, str(user.pk), {"method": "phone"}))
+        self.assertEqual(event.actor_email, "+255712345678")
+        self.assertNotIn(NEW_PASSWORD, json.dumps(event.metadata))
+
+    def test_legacy_activation(self):
+        user = User.objects.create_user("new@example.com", None, status=User.Status.PENDING)
+        self.client.post(reverse("accounts:resend_verification"), {"email": "new@example.com"})
 
         link = next(word for word in mail.outbox[0].body.split() if "/accounts/activate/" in word)
         response = self.client.get(link, follow=True)
@@ -91,11 +103,13 @@ class AccountLifecycleAuditTests(AccountsTestCase):
         self.assertEqual((event.actor_id, event.target_id), (user.pk, str(user.pk)))
         self.assertNotIn(NEW_PASSWORD, json.dumps(event.metadata))
 
-    def test_repeated_registration_is_recorded_once(self):
-        make_user("taken@example.com")
-        self.client.post(reverse("accounts:register"), {"email": "taken@example.com"})
-        self.assertEqual(events("account.registration.repeated").get().metadata, {"account_status": "ACTIVE"})
-        self.assertFalse(events("account.registration.started").exists())
+    @override_settings(RESTRICTED_DEMO_MODE=False, PUBLIC_REGISTRATION_APPROVED=True)
+    def test_duplicate_registration_is_recorded_once(self):
+        User.objects.create_user(None, PASSWORD, phone_number="+255712345678", status=User.Status.ACTIVE)
+        self.client.post(reverse("accounts:register"), {"phone_number": "+255 712 345 678",
+                                                        "password1": NEW_PASSWORD, "password2": NEW_PASSWORD})
+        self.assertEqual(events("account.registration.duplicate").get().metadata, {"method": "phone"})
+        self.assertFalse(events("account.registered").exists())
 
     def test_password_change(self):
         user = make_user()

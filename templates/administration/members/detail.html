@@ -1,8 +1,8 @@
 {% extends "administration/layout.html" %}{% load i18n money %}
-{% block title %}{{ member.email }}{% endblock %}
-{% block crumb %}{{ member.email }}{% endblock %}
+{% block title %}{{ member.sign_in_identifier }}{% endblock %}
+{% block crumb %}{{ member.sign_in_identifier }}{% endblock %}
 {% block console_content %}
-<h1 class="page-title">{{ member.email }}</h1>
+<h1 class="page-title">{{ member.sign_in_identifier }}</h1>
 <div class="console-split">
 <section><h2 class="workspace-section__title">{% translate "Account" %}</h2><dl class="details">
   <dt>{% translate "Status" %}</dt><dd>{{ member.get_status_display }}</dd>

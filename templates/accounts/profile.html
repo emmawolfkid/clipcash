@@ -13,10 +13,10 @@
 <div class="card-grid">
   <section class="panel"><h2 class="panel__title">{% translate "Profile" %}</h2>
     <dl class="details">
-      <dt>{% translate "Email address" %}</dt><dd>{{ user.email }}</dd>
-      <dt>{% translate "Email confirmed" %}</dt><dd>{% if user.email_verified %}{% translate "Yes" %}{% else %}{% translate "No" %} · <a href="{% url 'accounts:verification_required' %}">{% translate "Confirm now" %}</a>{% endif %}</dd>
+      <dt>{% translate "Mobile number" %}</dt><dd>{% if user.phone_number %}{{ user.phone_number }} · {% if user.phone_verified %}{% translate "verified" %}{% else %}{% translate "not verified (SMS verification is not available yet)" %}{% endif %}{% else %}—{% endif %}</dd>
+      <dt>{% translate "Email address" %}</dt><dd>{% if user.email %}{{ user.email }}{% else %}{% translate "None added" %}{% endif %}</dd>
+      {% if user.email %}<dt>{% translate "Email confirmed" %}</dt><dd>{% if user.email_verified %}{% translate "Yes" %}{% else %}{% translate "No" %} · <a href="{% url 'accounts:verification_required' %}">{% translate "Confirm now" %}</a>{% endif %}</dd>{% endif %}
       <dt>{% translate "Name" %}</dt><dd>{{ user.get_full_name|default:"—" }}</dd>
-      <dt>{% translate "Phone number" %}</dt><dd>{{ user.phone_number|default:"—" }}</dd>
       <dt>{% translate "Account type" %}</dt><dd>{{ user.get_role_display }}</dd>
       <dt>{% translate "Status" %}</dt><dd>{{ user.get_status_display }}</dd>
       <dt>{% translate "Member since" %}</dt><dd>{{ user.date_joined|date:"DATE_FORMAT" }}</dd>
@@ -24,8 +24,9 @@
     </dl>
     <ul class="links">
       <li><a href="{% url 'accounts:profile_edit' %}">{% translate "Edit name and phone number" %}</a></li>
-      {% if email_change_available %}<li><a href="{% url 'accounts:email_change' %}">{% translate "Change email address" %}</a></li>{% endif %}
+      {% if email_change_available %}<li><a href="{% url 'accounts:email_change' %}">{% if user.email %}{% translate "Change email address" %}{% else %}{% translate "Add an email address" %}{% endif %}</a></li>{% endif %}
     </ul>
+    {% if not user.has_verified_email %}<p class="notice account-note" role="note">{% translate "Add and confirm an email address so you can reset your password if you forget it. Password reset by SMS is not available." %}</p>{% endif %}
     <p class="account-note">{% translate "Your payout details are managed separately and do not change here." %}</p>
   </section>
   <section class="panel"><h2 class="panel__title">{% translate "Security" %}</h2>
@@ -34,7 +35,7 @@
     </dl>
     <ul class="links">
       <li><a href="{% url 'accounts:password_change' %}">{% translate "Change password" %}</a></li>
-      <li><a href="{% url 'accounts:password_reset' %}">{% translate "Forgotten password? Reset by email" %}</a></li>
+      {% if user.has_verified_email %}<li><a href="{% url 'accounts:password_reset' %}">{% translate "Forgotten password? Reset by email" %}</a></li>{% endif %}
     </ul>
     <ul>
       <li>{% translate "ClipCash staff will never ask for your password, mobile-money PIN or one-time codes." %}</li>

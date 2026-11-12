@@ -25,3 +25,5 @@
   .auth-introduction__title { font-size: 1.5rem; }
   .auth-introduction ol { margin-block: var(--space-4); }
 }
+.auth-recovery-note { margin-top: var(--space-4); }
+.auth-recovery-note p { margin: 0 0 var(--space-2); }

@@ -5,7 +5,7 @@
 {% include "components/demo_withdrawal_notice.html" %}
 <div class="console-split">
 <section><h2 class="workspace-section__title">{% translate "Request" %}</h2><dl class="details">
-  <dt>{% translate "Member" %}</dt><dd>{{ demo.member.email }}</dd>
+  <dt>{% translate "Member" %}</dt><dd>{{ demo.member.sign_in_identifier }}</dd>
   <dt>{% translate "Simulated amount" %}</dt><dd>{{ demo.simulated_amount|tzs }}</dd>
   <dt>{% translate "Destination (snapshot)" %}</dt><dd>{{ demo.destination_provider }} •••• {{ demo.destination_last4 }} · {{ demo.destination_holder }}</dd>
   <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ demo.status|lower }}">{{ demo.get_status_display }}</span>{% if demo.reason_code %} · {{ demo.reason_code|code_label }}{% endif %}</dd>

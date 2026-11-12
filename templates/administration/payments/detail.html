@@ -6,7 +6,7 @@
 <section><h2 class="workspace-section__title">{% translate "Payment" %}</h2><dl class="details">
   <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ intent.status|lower }}">{{ intent.get_status_display }}</span> {{ intent.status_reason }}</dd>
   <dt>{% translate "Purpose / domain" %}</dt><dd>{{ intent.get_purpose_display }} · {{ intent.get_funds_domain_display }}</dd>
-  <dt>{% translate "Payer" %}</dt><dd>{{ intent.payer.email }}{% if intent.organization %} · {{ intent.organization.display_name }}{% endif %}</dd>
+  <dt>{% translate "Payer" %}</dt><dd>{{ intent.payer.sign_in_identifier }}{% if intent.organization %} · {{ intent.organization.display_name }}{% endif %}</dd>
   <dt>{% translate "Amount" %}</dt><dd>{{ intent.amount|tzs }}{% if intent.provider_amount is not None %} ({% translate "provider reported" %} {{ intent.provider_currency }} {{ intent.provider_amount }}){% endif %}</dd>
   <dt>{% translate "Provider ref." %}</dt><dd>{{ intent.provider }} · {{ intent.provider_reference|default:"—" }}</dd>
   <dt>{% translate "Confirmed / reconciled / settled" %}</dt><dd>{{ intent.confirmed_at|date:"SHORT_DATETIME_FORMAT"|default:"—" }} / {{ intent.reconciled_at|date:"SHORT_DATETIME_FORMAT"|default:"—" }} / {{ intent.settled_at|date:"SHORT_DATETIME_FORMAT"|default:"—" }}</dd>

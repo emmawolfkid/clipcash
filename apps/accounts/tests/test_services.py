@@ -235,11 +235,14 @@ class ConcurrencyTests(TransactionTestCase):
         self.assertEqual(remaining, 1, results)
 
     def test_concurrent_duplicate_registration_creates_one_account(self):
-        from django.test import RequestFactory
-
-        request = RequestFactory().post("/accounts/register/")
+        # REG-02: four simultaneous sign-ups with one mobile number: one account, the
+        # others are told the number is taken (the unique constraint decides).
         results = self.run_concurrently(
-            *[lambda: services.register(email="dup@example.com", request=request)] * 4
+            *[lambda: services.register_with_phone(phone_number="+255712345678",
+                                                   password="Another-Strong-Phrase-42")] * 4
         )
-        self.assertFalse([r for r in results if isinstance(r, Exception)], results)
-        self.assertEqual(User.objects.filter(email="dup@example.com").count(), 1)
+        unexpected = [r for r in results if isinstance(r, Exception)
+                      and not isinstance(r, services.DuplicatePhoneNumber)]
+        self.assertFalse(unexpected, results)
+        self.assertEqual(sum(isinstance(r, services.DuplicatePhoneNumber) for r in results), 3)
+        self.assertEqual(User.objects.filter(phone_number="+255712345678").count(), 1)

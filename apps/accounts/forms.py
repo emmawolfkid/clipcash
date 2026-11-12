@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.admin.forms import AdminAuthenticationForm
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, password_validation
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.audit.services import DENIED, FAILURE, SUCCESS, hash_identifier, record_security_event
 
 from . import services
-from .phone_numbers import normalize_phone_number
+from .phone_numbers import looks_like_phone, normalize_phone_number, normalize_tz_mobile
 from .throttling import (
     CURRENT_PASSWORD_FAILURES,
     LOGIN_FAILURES_PER_ACCOUNT,
@@ -31,15 +31,60 @@ def _email_field(**attrs):
 
 class RegistrationForm(forms.Form):
     """
-    Public sign-up takes only an email address. The password is chosen after the
-    owner follows the emailed link, so nobody can pre-set another person's
-    password. There are no role, status or permission fields.
+    REG-02: public sign-up takes an active Tanzanian mobile number and a password, and the
+    account is usable at once. Email is optional and is added (and confirmed) later from
+    the account page. There are no role, status or permission fields.
     """
 
-    email = _email_field(autofocus=True)
+    phone_number = forms.CharField(
+        label=_("Mobile number"), max_length=24,
+        help_text=_("Your Tanzanian mobile number, for example 0712 345 678. You will sign in with it."),
+        widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel", "inputmode": "tel", "autofocus": True}),
+    )
+    password1 = forms.CharField(
+        label=_("Password"), strip=False,
+        help_text=password_validation.password_validators_help_text_html(),
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+    )
+    password2 = forms.CharField(
+        label=_("Confirm password"), strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+    )
 
-    def clean_email(self):
-        return User.objects.normalize_email(self.cleaned_data["email"])
+    def clean_phone_number(self):
+        return normalize_tz_mobile(self.cleaned_data["phone_number"])
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1, password2 = cleaned_data.get("password1"), cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            self.add_error("password2", ValidationError(_("The two passwords do not match."), code="password_mismatch"))
+        elif password1:
+            try:  # Similarity checks see the number the member will sign in with.
+                password_validation.validate_password(
+                    password1, User(phone_number=cleaned_data.get("phone_number"), role=User.Role.MEMBER))
+            except ValidationError as error:
+                self.add_error("password1", error)
+        return cleaned_data
+
+
+def sign_in_key(value):
+    """The normalized identifier a sign-in attempt is about: an E.164 number for anything
+    that is not an email address (when it parses), else the lowercased email."""
+    if value and looks_like_phone(value):
+        try:
+            return normalize_phone_number(value) or ""
+        except ValidationError:
+            return " ".join(str(value).split()).lower()
+    return User.objects.normalize_email(value)
+
+
+def _account_for(key):
+    if not key:
+        return None
+    if key.startswith("+"):
+        return User.objects.filter(phone_number=key).first()
+    return User.objects.filter(email=key).first()
 
 
 class ThrottledLoginMixin:
@@ -47,7 +92,7 @@ class ThrottledLoginMixin:
     interface = "web"
 
     def clean(self):
-        account = User.objects.normalize_email(self.cleaned_data.get("username"))
+        account = sign_in_key(self.cleaned_data.get("username"))
         # None when the client cannot be told apart from other visitors (proxy
         # misconfiguration): per-IP limits are then skipped instead of becoming one
         # shared, site-wide limit; the per-account ceiling still applies.
@@ -72,7 +117,7 @@ class ThrottledLoginMixin:
                 LOGIN_FAILURES_PER_ACCOUNT.hit(account)
             if ip:
                 LOGIN_FAILURES_PER_IP.hit(ip)
-            target = User.objects.filter(email=account).first() if account else None
+            target = _account_for(account)
             record_security_event(
                 "auth.login.failed",
                 outcome=FAILURE,
@@ -96,7 +141,18 @@ class ThrottledLoginMixin:
 
 
 class LoginForm(ThrottledLoginMixin, AuthenticationForm):
-    username = _email_field(autofocus=True)
+    """REG-02: members sign in with their mobile number (any accepted format) or, if they
+    have one, their email address; staff keep signing in with their email address."""
+
+    username = forms.CharField(
+        label=_("Mobile number or email"), max_length=254,
+        widget=forms.TextInput(attrs={"autocomplete": "username", "autofocus": True, "autocapitalize": "none",
+                                      "spellcheck": "false"}),
+    )
+    error_messages = {
+        **AuthenticationForm.error_messages,
+        "invalid_login": _("Enter a correct mobile number or email and password. Both may be case-sensitive."),
+    }
 
 
 class AdminLoginForm(ThrottledLoginMixin, AdminAuthenticationForm):
@@ -114,8 +170,9 @@ class AccountPasswordResetForm(PasswordResetForm):
         PENDING accounts recover by requesting a new activation link; SUSPENDED
         and DISABLED accounts cannot regain access through self-service.
         """
+        # REG-02: only a VERIFIED address recovers an account. A phone number never does.
         users = User._default_manager.filter(
-            email=User.objects.normalize_email(email), status=User.Status.ACTIVE
+            email=User.objects.normalize_email(email), email_verified=True, status=User.Status.ACTIVE
         )
         return (user for user in users if user.has_usable_password())
 
@@ -159,7 +216,7 @@ class AccountPasswordChangeForm(CurrentPasswordMixin, PasswordChangeForm):
 class EmailChangeForm(CurrentPasswordMixin, forms.Form):
     new_email = forms.EmailField(
         label=_("New email address"), max_length=254,
-        help_text=_("We will send a confirmation link there. Your sign-in address stays the same until you use it."),
+        help_text=_("We will send a confirmation link there. Nothing changes until you use it."),
         widget=forms.EmailInput(attrs={"autocomplete": "email", "autofocus": True}),
     )
     current_password = forms.CharField(
@@ -203,8 +260,18 @@ class EmailChangeConfirmForm(CurrentPasswordMixin, forms.Form):
                                             operation="email_change_confirm")
 
 
-class ProfileForm(forms.ModelForm):
-    """Only these fields can be changed here: never role, status, email or verification."""
+class ProfileForm(CurrentPasswordMixin, forms.ModelForm):
+    """Only these fields can be changed here: never role, status, email or verification.
+
+    REG-02: the mobile number is a sign-in identifier, so changing it needs the current
+    password (like an email change), a new number must be a Tanzanian mobile number, and an
+    account without an email address cannot remove it. The change resets phone_verified."""
+
+    current_password = forms.CharField(
+        label=_("Current password"), strip=False, required=False,
+        help_text=_("Needed only when you change your mobile number."),
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
 
     class Meta:
         model = User
@@ -217,12 +284,36 @@ class ProfileForm(forms.ModelForm):
         error_messages = {"phone_number": {"unique": _("This phone number cannot be used. Please check it or contact support.")}}
 
     def clean_phone_number(self):
-        phone = normalize_phone_number(self.cleaned_data.get("phone_number"))
-        if phone is not None and phone != self.instance.phone_number:
-            if PHONE_CHANGE_ATTEMPTS.is_limited(self.instance.pk):
-                raise ValidationError(_("Too many phone number changes. Please try again later."), code="throttled")
-            PHONE_CHANGE_ATTEMPTS.hit(self.instance.pk)
+        raw = self.cleaned_data.get("phone_number")
+        phone = normalize_phone_number(raw)
+        if phone == self.instance.phone_number:
+            return phone
+        if phone is None:
+            if not self.instance.email:
+                raise ValidationError(_("You sign in with this mobile number. Add an email address before removing "
+                                        "it."), code="required_identifier")
+            return None
+        phone = normalize_tz_mobile(raw)
+        if PHONE_CHANGE_ATTEMPTS.is_limited(self.instance.pk):
+            raise ValidationError(_("Too many phone number changes. Please try again later."), code="throttled")
+        PHONE_CHANGE_ATTEMPTS.hit(self.instance.pk)
         return phone
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if "phone_number" in cleaned_data and cleaned_data["phone_number"] != self._stored_phone:
+            try:
+                self.verify_current_password(self._stored_account, cleaned_data.get("current_password") or "",
+                                             operation="phone_change")
+            except ValidationError as error:
+                self.add_error("current_password", error)
+        return cleaned_data
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # The instance is updated during validation; keep what is stored for the checks.
+        self._stored_phone = self.instance.phone_number
+        self._stored_account = self.instance
 
 
 class AccessChangeFormMixin:

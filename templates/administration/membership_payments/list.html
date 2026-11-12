@@ -13,7 +13,7 @@
   <thead><tr><th scope="col">{% translate "Submitted" %}</th><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Plan / amount" %}</th><th scope="col">{% translate "Transaction reference" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
   <tbody>{% for c in page.object_list %}<tr>
     <td><a href="{% url 'administration:membership_payment' c.pk %}">{{ c.created_at|date:"SHORT_DATETIME_FORMAT" }}</a><br><small>{{ c.reference }}</small></td>
-    <td>{{ c.member.email }}</td>
+    <td>{{ c.member.sign_in_identifier }}</td>
     <td>{{ c.plan_name }} · <span class="financial-amount">{{ c.amount|tzs }}</span></td>
     <td><code>{{ c.transaction_reference }}</code></td>
     <td><span class="badge badge--{{ c.status|lower }}">{{ c.get_status_display }}</span></td></tr>{% endfor %}</tbody>

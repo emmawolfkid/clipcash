@@ -1,4 +1,5 @@
 from django.contrib.auth.models import BaseUserManager
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 # Flags derived from role and status; callers must never set them directly.
@@ -15,14 +16,29 @@ class UserManager(BaseUserManager):
             return ""
         return str(email).strip().lower()
 
-    def get_by_natural_key(self, email):
-        """Case-insensitive lookup used by authentication and createsuperuser."""
-        return self.get(email=self.normalize_email(email))
+    def get_by_natural_key(self, identifier):
+        """Lookup used by authentication and createsuperuser. REG-02: a sign-in identifier
+        is an email address (case-insensitive) or a mobile number in any accepted format
+        (0712..., 255712..., +255712...), which resolves to the one stored E.164 value."""
+        from .phone_numbers import looks_like_phone, normalize_phone_number
+
+        if identifier and looks_like_phone(identifier):
+            try:
+                phone = normalize_phone_number(identifier)
+            except ValidationError:
+                phone = None
+            if not phone:
+                raise self.model.DoesNotExist
+            return self.get(phone_number=phone)
+        email = self.normalize_email(identifier)
+        if not email:
+            raise self.model.DoesNotExist
+        return self.get(email=email)
 
     def _create_user(self, email, password, **extra_fields):
-        email = self.normalize_email(email)
-        if not email:
-            raise ValueError(_("An email address is required."))
+        email = self.normalize_email(email) or None
+        if not email and not extra_fields.get("phone_number"):
+            raise ValueError(_("An email address or a mobile number is required."))
 
         supplied_flags = sorted(set(extra_fields) & set(DERIVED_ACCESS_FIELDS))
         if supplied_flags:

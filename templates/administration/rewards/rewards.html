@@ -25,7 +25,7 @@
 <table class="table workspace-table"><caption class="visually-hidden">{% translate "Demo reward decisions" %}</caption>
   <thead><tr><th scope="col">{% translate "Decided" %}</th><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Simulated amount" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
   <tbody>{% for r in page.object_list %}
-    <tr><td>{{ r.decided_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ r.member.email }}</td><td>{{ r.campaign.name }}</td><td>{% if r.amount %}{{ r.amount|tzs }}{% else %}—{% endif %}</td>
+    <tr><td>{{ r.decided_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ r.member.sign_in_identifier }}</td><td>{{ r.campaign.name }}</td><td>{% if r.amount %}{{ r.amount|tzs }}{% else %}—{% endif %}</td>
       <td><span class="badge badge--{{ r.status|lower }}">{{ r.get_status_display }}</span> <span class="lead">{{ r.reasons|code_labels }}{% if r.reversal_reason %} · {{ r.reversal_reason }}{% endif %}</span></td>
       <td>{% if can_manage and r.status == "DEMO_QUALIFIED" %}<form method="post" class="confirm-form">{% csrf_token %}<input type="hidden" name="action" value="reverse"><input type="hidden" name="reward" value="{{ r.pk }}">
         <label class="visually-hidden" for="rev-{{ r.pk }}">{% translate "Reason" %}</label><input id="rev-{{ r.pk }}" name="reason" type="text" maxlength="300" required placeholder="{% translate 'Reason' %}">

@@ -15,6 +15,7 @@ class MemberViewingUITests(SimpleTestCase):
     def context(self, path="/dashboard/"):
         context = DesignSystemTests.context(self, path, authenticated=True)
         context["user"].email = "member@example.test"
+        context["user"].sign_in_identifier = "member@example.test"
         context["user"].first_name = "Member"
         return context
 

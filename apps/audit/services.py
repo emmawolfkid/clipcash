@@ -128,7 +128,9 @@ def hash_identifier(value):
 def _actor_snapshot(actor):
     if actor is None or not getattr(actor, "is_authenticated", False):
         return None, "", ""
-    return actor.pk, getattr(actor, "email", "")[:254], str(getattr(actor, "role", ""))[:20]
+    # REG-02: phone-only members are recorded by their sign-in number.
+    identifier = getattr(actor, "email", None) or getattr(actor, "phone_number", None) or ""
+    return actor.pk, identifier[:254], str(getattr(actor, "role", ""))[:20]
 
 
 def _target_snapshot(target):

@@ -2,9 +2,9 @@
 {% block title %}{% translate "Create an account" %}{% endblock %}
 {% block auth_content %}
 <h1>{% translate "Create an account" %}</h1>
-<p class="lead">{% translate "Enter your email address. We will send you a link to confirm it and choose your password." %}</p>
-<p>{% translate "Creating an account is free. After you sign in, your dashboard shows how to choose a membership plan." %}</p>
-{% include "components/form.html" with button=_("Continue") %}
+<p class="lead">{% translate "Enter your mobile number and choose a password. You can use your account straight away." %}</p>
+<p>{% translate "Creating an account is free. An email address is optional: add and confirm one later from your account so you can reset your password by email." %}</p>
+{% include "components/form.html" with button=_("Create account") %}
 <ul class="links">
   <li><a href="{% url 'accounts:login' %}">{% translate "Already registered? Sign in" %}</a></li>
 </ul>

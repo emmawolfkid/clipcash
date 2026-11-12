@@ -2,8 +2,9 @@
 Account lifecycle and access-control services.
 
 Lifecycle:
-    register (email only) -> PENDING, unusable password
-    activate (emailed link, owner chooses password) -> ACTIVE, email verified
+    REG-02: register_with_phone (mobile number + password) -> ACTIVE member, no email
+    Accounts created PENDING before REG-02 (or by staff) still activate through the
+    emailed link: activate (owner chooses password) -> ACTIVE, email verified
     ACTIVE <-> SUSPENDED, ACTIVE/SUSPENDED/PENDING -> DISABLED,
     DISABLED -> ACTIVE (Super Administrators only). Nothing returns to PENDING.
 
@@ -59,6 +60,8 @@ CREATION_STATUSES = {Status.PENDING, Status.ACTIVE}
 def send_verification_email(user, request):
     """Queue the right verification email for the account's state, if any.
     Delivery happens after commit; nothing is sent if the caller rolls back."""
+    if not user.email:  # REG-02: phone-only accounts have no address to verify.
+        return
     if user.status == Status.PENDING:
         enqueue_email(emails.ACTIVATION, recipient=user.email, user=user,
                       context={"base_url": base_url(request)})
@@ -70,46 +73,30 @@ def send_verification_email(user, request):
 # --- Registration and verification ---------------------------------------------
 
 
-def register(*, email, request):
-    """
-    Start registration for ``email``. The caller must give the same response in
-    every case so the form cannot reveal which addresses are registered.
+class DuplicatePhoneNumber(Exception):
+    """The mobile number already belongs to an account (in any format)."""
 
-    * new address: create a PENDING MEMBER with an unusable password and email
-      an activation link; the address owner chooses the password;
-    * PENDING account: send a fresh activation link (registration retry);
-    * ACTIVE account: tell the owner someone tried to register;
-    * SUSPENDED/DISABLED: send nothing.
-    """
-    email = User.objects.normalize_email(email)
-    user = User.objects.filter(email=email).first()
-    if user is None:
-        try:
-            with transaction.atomic():
-                user = User.objects.create_user(email, password=None, role=Role.MEMBER)
-                record_business_event("account.registration.started", actor=None, target=user)
-                # Same transaction: no account, no email (and vice versa).
-                send_verification_email(user, request)
-        except (IntegrityError, ValidationError):
-            # A concurrent request registered the same address first.
-            user = User.objects.filter(email=email).first()
-            if user is None:
-                raise
-        else:
-            return
 
-    record_security_event(
-        "account.registration.repeated",
-        outcome=SUCCESS,
-        actor=None,
-        target=user,
-        metadata={"account_status": user.status},
-    )
-    if user.status == Status.PENDING:
-        send_verification_email(user, request)
-    elif user.status == Status.ACTIVE:
-        enqueue_email(emails.ALREADY_REGISTERED, recipient=user.email, user=user,
-                      context={"base_url": base_url(request)})
+def register_with_phone(*, phone_number, password):
+    """
+    REG-02: create an ACTIVE member that signs in with ``phone_number`` (already normalized
+    to +2556/7XXXXXXXX) and ``password``. No email; phone ownership is not yet verified.
+    Raises DuplicatePhoneNumber when the number is taken, including by a concurrent
+    request (the unique constraint decides).
+    """
+    try:
+        with transaction.atomic():
+            user = User.objects.create_user(None, password, phone_number=phone_number, role=Role.MEMBER,
+                                            status=Status.ACTIVE)
+            record_business_event("account.registered", actor=user, target=user, metadata={"method": "phone"})
+    except (IntegrityError, ValidationError):
+        existing = User.objects.filter(phone_number=phone_number).first()
+        if existing is None:
+            raise
+        record_security_event("account.registration.duplicate", outcome=DENIED, actor=None, target=existing,
+                              metadata={"method": "phone"})
+        raise DuplicatePhoneNumber from None
+    return user
 
 
 def request_verification_email(email, request):
@@ -227,8 +214,9 @@ def request_email_change(user, new_email, request):
         if available:
             enqueue_email(emails.EMAIL_CHANGE_CONFIRM, recipient=new_email, user=account,
                           context={"base_url": site, "change": str(change.pk)})
-        enqueue_email(emails.EMAIL_CHANGE_REQUESTED, recipient=account.email, user=account,
-                      context={"base_url": site})
+        if account.email:  # REG-02: a phone-only member adding a first address has no old one to warn.
+            enqueue_email(emails.EMAIL_CHANGE_REQUESTED, recipient=account.email, user=account,
+                          context={"base_url": site})
         notify_account(account, "email_change_requested", "An email address change was requested",
                        "Nothing changes until the new address is confirmed. If this was not you, "
                        "cancel it from your account and change your password.",
@@ -288,7 +276,8 @@ def confirm_email_change(change_pk, token, user):
             record_business_event("account.email_changed", actor=account, target=account,
                                   metadata={"previous_address_hash": hash_identifier(old_email),
                                             "new_address_hash": hash_identifier(new_email)})
-            enqueue_email(emails.EMAIL_CHANGED, recipient=old_email, user=account, context={})
+            if old_email:
+                enqueue_email(emails.EMAIL_CHANGED, recipient=old_email, user=account, context={})
             notify_account(account, "email_changed", "Your email address was changed",
                            "Use the new address to sign in. If this was not you, contact ClipCash now.",
                            key=f"email_changed:{change_pk}")

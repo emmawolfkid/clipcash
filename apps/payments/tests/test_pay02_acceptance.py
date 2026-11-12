@@ -12,7 +12,7 @@ from django.core import mail
 from django.test import override_settings
 from django.urls import reverse
 
-from apps.accounts.tests.helpers import NEW_PASSWORD, User, links_in_last_email, make_user
+from apps.accounts.tests.helpers import NEW_PASSWORD, User, make_user
 from apps.audit.models import AuditEvent
 from apps.memberships import services as memberships
 from apps.memberships.models import MembershipPlan, Subscription
@@ -69,23 +69,18 @@ class EndToEndAcceptanceTests(ManualPaymentTestCase):
         self.client.logout()
 
         # --- Registration, activation, login, logout, password reset -----------------------------
+        # REG-02: phone-first sign-up (active at once); email recovery is covered by
+        # apps.accounts.tests.test_reg02_phone_first.
         mail.outbox.clear()
-        self.assertRedirects(self.client.post(reverse("accounts:register"), {"email": "asha@example.com"}),
-                             reverse("accounts:register_done"))
-        (link,) = [link for link in links_in_last_email() if "/accounts/activate/" in link]
-        response = self.client.get(link, follow=True)
-        self.client.post(response.redirect_chain[-1][0], {"new_password1": NEW_PASSWORD,
-                                                          "new_password2": NEW_PASSWORD})
-        member = User.objects.get(email="asha@example.com")
-        self.assertEqual((member.status, member.email_verified), (User.Status.ACTIVE, True))
-        login = {"username": "asha@example.com", "password": NEW_PASSWORD}
-        self.assertEqual(self.client.post(reverse("accounts:login"), login).status_code, 302)
+        self.assertRedirects(self.client.post(reverse("accounts:register"), {
+            "phone_number": "0712 345 678", "password1": NEW_PASSWORD, "password2": NEW_PASSWORD}),
+            reverse("dashboard"))
+        member = User.objects.get(phone_number="+255712345678")
+        self.assertEqual((member.status, member.email), (User.Status.ACTIVE, None))
+        login = {"username": "+255712345678", "password": NEW_PASSWORD}
         self.client.post(reverse("accounts:logout"))
         self.assertEqual(self.client.get(reverse("dashboard")).status_code, 302)  # Signed out.
-        mail.outbox.clear()
-        self.client.post(reverse("accounts:password_reset"), {"email": "asha@example.com"})
-        self.assertTrue(any("/accounts/reset/" in link for link in links_in_last_email()))
-        self.client.post(reverse("accounts:login"), login)
+        self.assertEqual(self.client.post(reverse("accounts:login"), login).status_code, 302)
 
         # --- Unpaid member: no paid content -------------------------------------------------------
         self.assertEqual(self.playback(member), "no_membership")
@@ -172,7 +167,7 @@ class EndToEndAcceptanceTests(ManualPaymentTestCase):
                      "membership.payment_approved", "membership.activated"):
             self.assertIn(kind, kinds)
         actions = set(AuditEvent.objects.values_list("action", flat=True))
-        for action in ("account.registration.started", "account.activated", "membership.payment_instructions."
+        for action in ("account.registered", "membership.payment_instructions."
                        "published", "membership.plan.created", "membership.subscription.created",
                        "membership.manual_payment.submitted", "membership.manual_payment.rejected",
                        "membership.manual_payment.approved", "membership.subscription.activated",

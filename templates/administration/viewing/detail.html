@@ -5,7 +5,7 @@
 <div class="console-split">
   <section><h2 class="workspace-section__title">{% translate "Summary" %}</h2>
     <dl class="details">
-      <dt>{% translate "Member" %}</dt><dd>{{ session.member.email }}</dd>
+      <dt>{% translate "Member" %}</dt><dd>{{ session.member.sign_in_identifier }}</dd>
       <dt>{% translate "Campaign" %}</dt><dd><a href="{% url 'administration:campaign_review' session.campaign.pk %}">{{ session.campaign.name }}</a> ({% translate "revision" %} {{ session.campaign_revision }})</dd>
       <dt>{% translate "State" %}</dt><dd>{{ session.get_state_display }}</dd>
       <dt>{% translate "Outcome" %}</dt><dd><span class="badge badge--{{ session.outcome|lower }}">{{ session.get_outcome_display }}</span> {{ session.reasons|code_labels }}</dd>

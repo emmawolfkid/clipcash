@@ -88,6 +88,9 @@ EVENT_TYPES = {
         _event("auth.current_password.failed", Category.AUTHENTICATION, SECURITY, ["operation", "throttled"]),
         # Account lifecycle
         _event("account.registration.started", Category.ACCOUNT, BUSINESS),
+        # REG-02: phone-first sign-up creates an ACTIVE member at once.
+        _event("account.registered", Category.ACCOUNT, BUSINESS, ["method"]),
+        _event("account.registration.duplicate", Category.ACCOUNT, SECURITY, ["method"]),
         _event("account.registration.repeated", Category.ACCOUNT, SECURITY, ["account_status"]),
         _event("account.activated", Category.ACCOUNT, BUSINESS),
         _event("account.email_confirmed", Category.ACCOUNT, BUSINESS),

@@ -106,6 +106,8 @@ LOGIN_FAILURES_PER_ACCOUNT = Throttle("login-account", limit=50, window_seconds=
 LOGIN_FAILURES_PER_IP = Throttle("login-ip", limit=50, window_seconds=15 * 60)
 
 REGISTRATIONS_PER_IP = Throttle("register-ip", limit=10, window_seconds=60 * 60)
+# REG-02: attempts per mobile number (a taken number is reported, so probing is limited).
+REGISTRATIONS_PER_PHONE = Throttle("register-phone", limit=5, window_seconds=60 * 60)
 EMAIL_REQUESTS_PER_IP = Throttle("email-request-ip", limit=20, window_seconds=60 * 60)
 EMAIL_REQUESTS_PER_ACCOUNT = Throttle("email-request-account", limit=3, window_seconds=60 * 60)
 

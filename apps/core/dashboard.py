@@ -61,7 +61,23 @@ def _membership(user):
     return {"enabled": True, "reason": decision.reason, "subscription": subscription, "pending": pending,
             "active": bool(decision), "email_verified": user.email_verified,
             # PAY-01: manual (Airtel Lipa) payment status for the pending choice.
-            "pending_payment": manual_payment_state(pending), **payment_context()}
+            "pending_payment": manual_payment_state(pending),
+            # REG-02: the latest staff decision on a payment (also in the inbox).
+            "payment_decision": _latest_payment_decision(user), **payment_context()}
+
+
+def _latest_payment_decision(user, days=30):
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.payments.models import ManualMembershipPayment
+
+    Status = ManualMembershipPayment.Status
+    return (ManualMembershipPayment.objects.select_related("subscription")
+            .filter(member=user, status__in=[Status.APPROVED, Status.REJECTED],
+                    reviewed_at__gte=timezone.now() - timedelta(days=days))
+            .order_by("-reviewed_at").first())
 
 
 def _sponsored(user):
@@ -182,6 +198,8 @@ def member_activity(user, limit=ACTIVITY_LIMIT):
                               reverse("withdrawals:demo", args=[demo.pk]), simulated=True))
     if user.email_verified:
         items.append(Activity(user.date_joined, "account", "Account created and email confirmed"))
+    elif user.phone_number:
+        items.append(Activity(user.date_joined, "account", "Account created with your mobile number"))
     items = [item for item in items if item.when]
     items.sort(key=lambda item: item.when, reverse=True)
     return items[:limit]

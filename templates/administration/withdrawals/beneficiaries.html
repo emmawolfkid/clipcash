@@ -5,6 +5,6 @@
 <p class="lead">{% translate "Masked view. ClipCash does not store full account or phone numbers." %}</p>
 <form class="toolbar" method="get"><label class="visually-hidden" for="q">{% translate "Exact member email" %}</label><input id="q" type="email" name="q" value="{{ query }}" placeholder="{% translate 'Exact member email' %}"><button class="button button--secondary" type="submit">{% translate "Find" %}</button></form>
 {% if page.object_list %}<table class="table workspace-table hide-narrow-3 hide-narrow-4"><caption class="visually-hidden">{% translate "Payout beneficiaries" %}</caption><thead><tr><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Destination" %}</th><th scope="col">{% translate "Holder" %}</th><th scope="col">{% translate "Check" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
-<tbody>{% for b in page.object_list %}<tr><td>{{ b.member.email }}</td><td>{{ b.destination_label }}</td><td>{{ b.holder_name }}</td><td>{{ b.get_verification_display }}</td><td>{{ b.get_status_display }}</td></tr>{% endfor %}</tbody></table>
+<tbody>{% for b in page.object_list %}<tr><td>{{ b.member.sign_in_identifier }}</td><td>{{ b.destination_label }}</td><td>{{ b.holder_name }}</td><td>{{ b.get_verification_display }}</td><td>{{ b.get_status_display }}</td></tr>{% endfor %}</tbody></table>
 {% include "components/pagination.html" %}{% else %}<p class="empty-state">{% translate "No beneficiaries." %}</p>{% endif %}
 {% endblock %}

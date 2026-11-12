@@ -21,6 +21,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 
+from apps.accounts.lookup import identifier_q
 from apps.administration import summary as admin_summary
 from apps.advertising import services as advertising
 from apps.advertising.models import Campaign, Organization
@@ -634,7 +635,7 @@ class ViewingListView(View):
         filters = {key: request.GET.get(key, "").strip()[:100] for key in ("member", "campaign", "outcome", "state",
                                                                            "flag", "review")}
         if filters["member"]:
-            qs = qs.filter(member__email__icontains=filters["member"])
+            qs = qs.filter(identifier_q(filters["member"], "member__"))
         if filters["campaign"]:
             qs = qs.filter(campaign__name__icontains=filters["campaign"])
         if filters["outcome"] in WatchSession.Outcome.values:
@@ -773,7 +774,7 @@ class DemoRewardListView(View):
         qs = DemoReward.objects.select_related("member", "campaign").order_by("-decided_at")
         filters = {key: request.GET.get(key, "").strip()[:100] for key in ("member", "status", "campaign")}
         if filters["member"]:
-            qs = qs.filter(member__email__icontains=filters["member"])
+            qs = qs.filter(identifier_q(filters["member"], "member__"))
         if filters["status"] in DemoReward.Status.values:
             qs = qs.filter(status=filters["status"])
         campaign_filter = None
@@ -1093,7 +1094,7 @@ class MembershipPaymentQueueView(View):
         query = request.GET.get("q", "").strip()[:60]
         if query:
             key = "".join(ch for ch in query.upper() if ch.isalnum())
-            match = Q(reference__iexact=query) | Q(member__email__icontains=query)
+            match = Q(reference__iexact=query) | identifier_q(query, "member__")
             if key:
                 match |= Q(reference_key__contains=key)
             qs = qs.filter(match)
@@ -1465,7 +1466,7 @@ class BeneficiaryListView(View):
         query = request.GET.get("q", "").strip()[:254]
         qs = PayoutBeneficiary.objects.select_related("member").order_by("-created_at")
         if query:
-            qs = qs.filter(member__email__iexact=query)
+            qs = qs.filter(identifier_q(query, "member__", exact_email=True))
         return render(request, "administration/withdrawals/beneficiaries.html", {
             "page": Paginator(qs, 25).get_page(request.GET.get("page")), "query": query,
             "can": console_links(request.user), "nav": "withdrawals"})

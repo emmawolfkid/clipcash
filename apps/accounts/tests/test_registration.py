@@ -1,239 +1,134 @@
-import re
+"""
+REG-02: phone-first registration. Create account asks for an active Tanzanian mobile
+number and a password; the account is ACTIVE at once, signed in, and lands on the
+dashboard. Email is optional. One number, written any way, is one account.
+"""
 
 from django.contrib.auth import get_user
-from django.core import mail
+from django.core.cache import cache
 from django.test import override_settings
 from django.urls import reverse
 
-from .helpers import NEW_PASSWORD, PASSWORD, AccountsTestCase, User, links_in_last_email, make_user
+from apps.audit.models import AuditEvent
+
+from .helpers import NEW_PASSWORD, PASSWORD, AccountsTestCase, User, make_user
 
 REGISTER_URL = reverse("accounts:register")
-DONE_URL = reverse("accounts:register_done")
 LOGIN_URL = reverse("accounts:login")
+DASHBOARD = reverse("dashboard")
+OPEN = override_settings(RESTRICTED_DEMO_MODE=False, PUBLIC_REGISTRATION_APPROVED=True)
 
 
-def activation_link():
-    (link,) = [link for link in links_in_last_email() if "/accounts/activate/" in link]
-    return link
+@OPEN
+class PhoneRegistrationTests(AccountsTestCase):
+    def register(self, phone="0712 345 678", password=NEW_PASSWORD, confirm=None, client=None, **extra):
+        return (client or self.client).post(REGISTER_URL, {
+            "phone_number": phone, "password1": password,
+            "password2": password if confirm is None else confirm, **extra})
 
-
-class RegistrationTests(AccountsTestCase):
-    def register(self, email="new@example.com", **extra):
-        return self.client.post(REGISTER_URL, {"email": email, **extra})
-
-    def activate(self, link, password=NEW_PASSWORD, client=None):
-        client = client or self.client
-        response = client.get(link, follow=True)
-        set_password_url = response.redirect_chain[-1][0] if response.redirect_chain else link
-        return client.post(
-            set_password_url, {"new_password1": password, "new_password2": password}
-        )
-
-    def test_page_has_no_password_or_privilege_fields(self):
+    def test_form_asks_for_mobile_number_and_password_only(self):
         response = self.client.get(REGISTER_URL)
-        self.assertEqual(response.status_code, 200)
-        for name in ("password", "password1", "role", "status", "is_staff"):
+        for name in ("phone_number", "password1", "password2"):
+            self.assertContains(response, f'name="{name}"')
+        for name in ("email", "role", "status", "is_staff"):
             self.assertNotContains(response, f'name="{name}"')
 
-    def test_creates_pending_member_without_usable_password(self):
-        self.assertRedirects(self.register(email="  New@Example.COM "), DONE_URL)
-        user = User.objects.get()
-        self.assertEqual(user.email, "new@example.com")
-        self.assertEqual((user.role, user.status), (User.Role.MEMBER, User.Status.PENDING))
-        self.assertFalse(user.has_usable_password())
-        self.assertFalse(user.email_verified or user.is_active or user.is_staff or user.is_superuser)
-        self.assertEqual(mail.outbox[0].to, ["new@example.com"])
-        activation_link()  # Exactly one activation link.
+    def test_creates_active_member_signed_in_on_the_dashboard(self):
+        from apps.memberships.tests.helpers import enable_memberships
 
-    def test_injected_password_and_privilege_fields_ignored(self):
-        self.register(
-            password=PASSWORD,
-            password1=PASSWORD,
-            password2=PASSWORD,
-            role=User.Role.SUPER_ADMIN,
-            status=User.Status.ACTIVE,
-            is_superuser="on",
-            email_verified="on",
-        )
+        enable_memberships()
+        response = self.register("0712 345 678")
+        self.assertRedirects(response, DASHBOARD)
         user = User.objects.get()
-        self.assertFalse(user.has_usable_password())
-        self.assertEqual((user.role, user.status), (User.Role.MEMBER, User.Status.PENDING))
-        self.assertFalse(user.is_superuser or user.email_verified)
-
-    def test_owner_activates_by_choosing_password(self):
-        self.register()
-        response = self.activate(activation_link())
-        self.assertRedirects(response, reverse("accounts:activation_complete"))
-
-        user = User.objects.get()
-        self.assertEqual(user.status, User.Status.ACTIVE)
-        self.assertTrue(user.email_verified)
+        self.assertEqual((user.phone_number, user.email, user.role, user.status),
+                         ("+255712345678", None, User.Role.MEMBER, User.Status.ACTIVE))
+        self.assertFalse(user.phone_verified or user.email_verified or user.is_staff or user.is_superuser)
         self.assertTrue(user.check_password(NEW_PASSWORD))
-        self.assertFalse(get_user(self.client).is_authenticated)  # No auto-login.
+        self.assertEqual(get_user(self.client).pk, user.pk)
+        self.assertContains(self.client.get(DASHBOARD), "Next step: choose a membership")
+        self.assertTrue(AuditEvent.objects.filter(action="account.registered", target_id=str(user.pk)).exists())
 
-        self.client.post(LOGIN_URL, {"username": "new@example.com", "password": NEW_PASSWORD})
-        self.assertTrue(get_user(self.client).is_authenticated)
+    def test_every_accepted_format_is_one_number(self):
+        self.register("0712345678")
+        for variant in ("+255712345678", "255712345678", "+255 712-345-678", "00255712345678", "0712 345 678"):
+            with self.subTest(variant=variant):
+                cache.clear()  # Each attempt within the per-number limit.
+                response = self.register(variant, client=self.client_class())
+                self.assertContains(response, "An account already uses this mobile number")
+        self.assertEqual(User.objects.count(), 1)
+        self.assertTrue(AuditEvent.objects.filter(action="account.registration.duplicate").exists())
 
-    def test_token_not_left_in_url_after_first_visit(self):
-        self.register()
-        response = self.client.get(activation_link())
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("/set-password/", response["Location"])
+    def test_number_of_an_existing_email_account_is_refused(self):
+        make_user("member@example.com")
+        User.objects.filter(email="member@example.com").update(phone_number="+255754000111")
+        self.assertContains(self.register("0754 000 111"), "An account already uses this mobile number")
+        self.assertEqual(User.objects.count(), 1)
 
-    def test_activation_link_single_use(self):
-        self.register()
-        link = activation_link()
-        self.activate(link)
-        response = self.client_class().get(link, follow=True)
-        self.assertFalse(response.context["validlink"])
-        self.assertTrue(User.objects.get().check_password(NEW_PASSWORD))
+    def test_only_tanzanian_mobile_numbers(self):
+        for bad in ("0222 123 456", "+254712345678", "0812345678", "12345", "", "not a number"):
+            with self.subTest(phone=bad):
+                self.assertEqual(self.register(bad).status_code, 200)
+        self.assertFalse(User.objects.exists())
 
-    def test_weak_password_rejected_and_account_stays_pending(self):
-        self.register()
-        for weak in ("password123", "short1!", "new@example.com", "83749201384"):
-            with self.subTest(weak=weak):
-                response = self.activate(activation_link(), password=weak)
+    def test_password_rules_apply(self):
+        cases = {"mismatch": ("Strong-Pass-8812", "Other-Pass-8812"), "short": ("ab1!", None),
+                 "common": ("password123", None), "numeric": ("83749201384", None),
+                 "like the number": ("0712345678", None)}
+        for name, (password, confirm) in cases.items():
+            with self.subTest(name):
+                response = self.register(password=password, confirm=confirm)
                 self.assertEqual(response.status_code, 200)
                 self.assertTrue(response.context["form"].errors)
-        user = User.objects.get()
-        self.assertEqual(user.status, User.Status.PENDING)
-        self.assertFalse(user.has_usable_password())
-
-    @override_settings(ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT=-1)
-    def test_expired_link_rejected(self):
-        self.register()
-        response = self.client.get(activation_link(), follow=True)
-        self.assertFalse(response.context["validlink"])
-
-    def test_tampered_link_rejected(self):
-        self.register()
-        link = re.sub(r"/[^/]+/$", "/bogus-token/", activation_link())
-        response = self.client.get(link, follow=True)
-        self.assertFalse(response.context["validlink"])
-
-    def test_link_invalid_after_email_change(self):
-        self.register()
-        link = activation_link()
-        user = User.objects.get()
-        user.email = "changed@example.com"
-        user.save()
-        response = self.client.get(link, follow=True)
-        self.assertFalse(response.context["validlink"])
-
-    def test_link_invalid_after_account_disabled(self):
-        self.register()
-        link = activation_link()
-        user = User.objects.get()
-        user.status = User.Status.DISABLED
-        user.save()
-        response = self.client.get(link, follow=True)
-        self.assertFalse(response.context["validlink"])
-        self.assertEqual(User.objects.get().status, User.Status.DISABLED)
-
-    def test_not_logged_in_after_registration(self):
-        self.register()
-        self.assertNotIn("_auth_user_id", self.client.session)
-
-    def test_invalid_email_rejected(self):
-        for email in ("not-an-email", "   ", "a@b", "x" * 250 + "@example.com"):
-            with self.subTest(email=email):
-                self.assertEqual(self.register(email=email).status_code, 200)
         self.assertFalse(User.objects.exists())
-        self.assertEqual(mail.outbox, [])
+
+    def test_injected_privilege_fields_are_ignored(self):
+        self.register(role=User.Role.SUPER_ADMIN, status=User.Status.SUSPENDED, is_superuser="on",
+                      email_verified="on", phone_verified="on", email="planted@example.com")
+        user = User.objects.get()
+        self.assertEqual((user.role, user.status, user.email), (User.Role.MEMBER, User.Status.ACTIVE, None))
+        self.assertFalse(user.is_superuser or user.email_verified or user.phone_verified)
+
+    def test_signs_in_again_with_any_format_of_the_number(self):
+        self.register("0712 345 678")
+        for identifier in ("0712345678", "+255712345678", "255 712 345 678"):
+            with self.subTest(identifier=identifier):
+                client = self.client_class()
+                self.assertRedirects(client.post(LOGIN_URL, {"username": identifier, "password": NEW_PASSWORD}),
+                                     DASHBOARD)
+        client = self.client_class()
+        self.assertEqual(client.post(LOGIN_URL, {"username": "0712345678", "password": PASSWORD}).status_code, 200)
+        self.assertFalse(get_user(client).is_authenticated)
 
     def test_authenticated_user_redirected(self):
         self.client.force_login(make_user())
         self.assertRedirects(self.client.get(REGISTER_URL), reverse("accounts:profile"))
 
-    def test_rate_limited_per_ip(self):
-        for index in range(10):
-            self.register(email=f"user{index}@example.com")
-        response = self.register(email="blocked@example.com")
-        self.assertContains(response, "Too many requests")
-        self.assertFalse(User.objects.filter(email="blocked@example.com").exists())
-
-
-class DuplicateRegistrationTests(AccountsTestCase):
-    def register(self, email):
-        return self.client.post(REGISTER_URL, {"email": email})
-
-    def test_active_account_owner_notified_with_identical_response(self):
-        existing = make_user("taken@example.com")
-        self.assertRedirects(self.register("TAKEN@example.com"), DONE_URL)
-        self.assertEqual(User.objects.count(), 1)
-        existing.refresh_from_db()
-        self.assertTrue(existing.check_password(PASSWORD))
-        self.assertIn("already has an account", mail.outbox[0].body)
-        self.assertNotIn("/accounts/activate/", mail.outbox[0].body)
-
-    def test_pending_account_receives_fresh_activation_link(self):
-        self.register("pending@example.com")
-        self.register("pending@example.com")
-        self.assertEqual(User.objects.count(), 1)
-        self.assertEqual(len(mail.outbox), 2)
-        self.assertIn("/accounts/activate/", mail.outbox[1].body)
-
-    def test_suspended_and_disabled_accounts_get_nothing(self):
-        make_user("suspended@example.com", status=User.Status.SUSPENDED)
-        make_user("disabled@example.com", status=User.Status.DISABLED)
-        for email in ("suspended@example.com", "disabled@example.com"):
-            with self.subTest(email=email):
-                self.assertRedirects(self.register(email), DONE_URL)
-        self.assertEqual(mail.outbox, [])
-        self.assertEqual(User.objects.count(), 2)
-
-    def test_per_address_email_limit_gives_identical_response(self):
+    def test_rate_limited_per_ip_and_per_number(self):
+        for index in range(10):  # Fresh clients: a successful sign-up signs the browser in.
+            self.register(f"07120000{index:02d}", client=self.client_class())
+        self.assertContains(self.register("0712999999", client=self.client_class()), "Too many requests")
+        self.assertFalse(User.objects.filter(phone_number="+255712999999").exists())
+        cache.clear()
         for _ in range(5):
-            self.assertRedirects(self.register("flood@example.com"), DONE_URL)
-        self.assertEqual(len(mail.outbox), 3)
+            self.register("0755111222", client=self.client_class(REMOTE_ADDR=f"198.51.100.{_ + 1}"))
+        response = self.register("0755111222", client=self.client_class(REMOTE_ADDR="198.51.100.99"))
+        self.assertContains(response, "Too many requests")
 
 
-class PasswordPlantingTests(AccountsTestCase):
-    """An attacker registering a victim's address can never set or learn its password."""
+@override_settings(RESTRICTED_DEMO_MODE=True, PUBLIC_REGISTRATION_APPROVED=True)
+class ClosedRegistrationTests(AccountsTestCase):
+    def test_restricted_demo_refuses_registration(self):
+        response = self.client.post(REGISTER_URL, {"phone_number": "0712345678", "password1": NEW_PASSWORD,
+                                                   "password2": NEW_PASSWORD})
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(User.objects.exists())
 
-    def test_attacker_cannot_supply_a_password(self):
-        attacker = self.client_class()
-        attacker.post(REGISTER_URL, {"email": "victim@example.com", "password1": PASSWORD, "password2": PASSWORD})
-        victim = User.objects.get(email="victim@example.com")
-        self.assertFalse(victim.has_usable_password())
-        attacker.post(LOGIN_URL, {"username": "victim@example.com", "password": PASSWORD})
-        self.assertFalse(get_user(attacker).is_authenticated)
 
-    def test_victim_activation_uses_only_victims_password(self):
-        attacker = self.client_class()
-        attacker.post(REGISTER_URL, {"email": "victim@example.com", "password1": PASSWORD, "password2": PASSWORD})
+class ConcurrentPhoneRegistrationTests(AccountsTestCase):
+    def test_service_reports_a_taken_number(self):
+        from apps.accounts import services
 
-        # Only the inbox owner receives the link; they choose the password.
-        (link,) = [link for link in links_in_last_email() if "/accounts/activate/" in link]
-        response = self.client.get(link, follow=True)
-        self.client.post(
-            response.redirect_chain[-1][0],
-            {"new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD},
-        )
-
-        victim = User.objects.get(email="victim@example.com")
-        self.assertEqual(victim.status, User.Status.ACTIVE)
-        self.assertTrue(victim.check_password(NEW_PASSWORD))
-        self.assertFalse(victim.check_password(PASSWORD))
-        attacker.post(LOGIN_URL, {"username": "victim@example.com", "password": PASSWORD})
-        self.assertFalse(get_user(attacker).is_authenticated)
-
-    def test_admin_created_pending_password_replaced_on_activation(self):
-        # Even a PENDING account that somehow has a password gets the owner's.
-        user = User.objects.create_user("p@example.com", PASSWORD)
-        self.client.post(REGISTER_URL, {"email": "p@example.com"})
-        (link,) = [link for link in links_in_last_email() if "/accounts/activate/" in link]
-        response = self.client.get(link, follow=True)
-        self.client.post(
-            response.redirect_chain[-1][0],
-            {"new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD},
-        )
-        user.refresh_from_db()
-        self.assertTrue(user.check_password(NEW_PASSWORD))
-        self.assertFalse(user.check_password(PASSWORD))
-
-    def test_pending_account_cannot_use_password_reset(self):
-        self.client.post(REGISTER_URL, {"email": "victim@example.com"})
-        mail.outbox.clear()
-        self.client.post(reverse("accounts:password_reset"), {"email": "victim@example.com"})
-        self.assertEqual(mail.outbox, [])
+        services.register_with_phone(phone_number="+255712345678", password=NEW_PASSWORD)
+        with self.assertRaises(services.DuplicatePhoneNumber):
+            services.register_with_phone(phone_number="+255712345678", password=NEW_PASSWORD)
+        self.assertEqual(User.objects.count(), 1)

@@ -37,8 +37,15 @@ class User(AbstractUser):
     """
     Identity invariants:
 
-    * ``email`` is stored trimmed and lowercased, and is unique case-insensitively.
-    * ``phone_number`` is optional, stored in E.164 format or NULL, and unique when set.
+    * REG-02: an account signs in with its mobile number or its email address; it has
+      at least one of them (database check). Members register with a mobile number;
+      email is optional and is added (and verified) from the account page.
+    * ``email`` is NULL or stored trimmed and lowercased, unique case-insensitively.
+    * ``phone_number`` is NULL or stored in E.164 format, and unique when set, so
+      0712345678 and +255712345678 can never belong to two accounts.
+    * ``phone_verified`` records proven ownership of the number (by SMS, when that
+      exists). It is separate from sign-in: an unverified number signs in, but it is
+      never accepted as proof for recovering an account.
     * ``role`` and ``status`` are the only writable access fields. ``is_staff``,
       ``is_superuser`` and ``is_active`` are derived from them on clean() and save(),
       and database constraints reject any other combination.
@@ -66,7 +73,10 @@ class User(AbstractUser):
         _("email address"),
         max_length=254,
         unique=True,
+        null=True,
+        blank=True,
         error_messages={"unique": DUPLICATE_EMAIL_MESSAGE},
+        help_text=_("Optional for members. Used for password recovery once verified."),
     )
 
     phone_number = models.CharField(
@@ -77,6 +87,11 @@ class User(AbstractUser):
         validators=[validate_e164],
         error_messages={"unique": DUPLICATE_PHONE_MESSAGE},
         help_text=_("Optional. Stored in international format, for example +255712345678."),
+    )
+    phone_verified = models.BooleanField(
+        _("phone verified"), default=False,
+        help_text=_("Ownership of the number was proven (by SMS). Not required to sign in; "
+                    "an unverified number is never used to recover an account."),
     )
 
     role = models.CharField(
@@ -145,8 +160,14 @@ class User(AbstractUser):
                 name="accounts_user_phone_unique",
             ),
             models.CheckConstraint(
-                condition=~Q(email=""),
+                condition=Q(email__isnull=True) | ~Q(email=""),
                 name="accounts_user_email_not_blank",
+            ),
+            # REG-02: every account can sign in with something.
+            models.CheckConstraint(
+                condition=Q(email__isnull=False) | Q(phone_number__isnull=False),
+                name="accounts_user_has_sign_in_identifier",
+                violation_error_message=_("An account needs a mobile number or an email address."),
             ),
             models.CheckConstraint(
                 condition=Q(phone_number__isnull=True) | Q(phone_number__regex=E164_PATTERN),
@@ -180,7 +201,16 @@ class User(AbstractUser):
         ]
 
     def __str__(self):
-        return self.email
+        return self.email or self.phone_number or str(self.pk)
+
+    @property
+    def sign_in_identifier(self):
+        """What the member signs in with, for display: the email if set, else the phone."""
+        return self.email or self.phone_number or ""
+
+    @property
+    def has_verified_email(self):
+        return bool(self.email and self.email_verified)
 
     def _get_session_auth_hash(self, secret=None):
         """
@@ -192,7 +222,9 @@ class User(AbstractUser):
         """
         from django.utils.crypto import salted_hmac
 
-        return salted_hmac("apps.accounts.models.User.session_auth_hash", f"{self.password}\x1f{self.email}",
+        # REG-02: phone-only accounts bind to their number instead (unchanged for email accounts).
+        identifier = self.email if self.email else f"phone:{self.phone_number}"
+        return salted_hmac("apps.accounts.models.User.session_auth_hash", f"{self.password}\x1f{identifier}",
                            secret=secret, algorithm="sha256").hexdigest()
 
     def sync_access_flags(self):
@@ -204,7 +236,7 @@ class User(AbstractUser):
         exclude = set(exclude or ())
         errors = {}
 
-        self.email = type(self).objects.normalize_email(self.email)
+        self.email = type(self).objects.normalize_email(self.email) or None
         if "phone_number" not in exclude:
             try:
                 self.phone_number = normalize_phone_number(self.phone_number)
@@ -224,6 +256,7 @@ class User(AbstractUser):
     def from_db(cls, db, field_names, values):
         instance = super().from_db(db, field_names, values)
         instance._loaded_email = instance.__dict__.get("email")
+        instance._loaded_phone = instance.__dict__.get("phone_number")
         instance._loaded_role = instance.__dict__.get("role")
         instance._loaded_status = instance.__dict__.get("status")
         return instance
@@ -267,14 +300,20 @@ class User(AbstractUser):
         super().validate_constraints(exclude=exclude)
 
     def save(self, *args, **kwargs):
-        self.email = type(self).objects.normalize_email(self.email)
-        if not self.email:
-            raise ValueError(_("An email address is required."))
+        self.email = type(self).objects.normalize_email(self.email) or None
         self.phone_number = normalize_phone_number(self.phone_number)
+        if not self.email and not self.phone_number:
+            raise ValueError(_("An account needs a mobile number or an email address."))
         self.sync_access_flags()
 
         update_fields = kwargs.get("update_fields")
         saves_email = update_fields is None or "email" in update_fields
+        saves_phone = update_fields is None or "phone_number" in update_fields
+        loaded_phone = getattr(self, "_loaded_phone", None)
+        phone_changed = saves_phone and not self._state.adding and self.phone_number != loaded_phone
+        if phone_changed:
+            # Ownership proof belongs to a number, not to the account (as for email).
+            self.phone_verified = False
 
         loaded_email = getattr(self, "_loaded_email", None)
         email_changed = saves_email and loaded_email is not None and self.email != loaded_email
@@ -288,6 +327,8 @@ class User(AbstractUser):
                 update_fields |= set(DERIVED_ACCESS_FIELDS)
             if email_changed:
                 update_fields.add("email_verified")
+            if phone_changed:
+                update_fields.add("phone_verified")
             kwargs["update_fields"] = update_fields
 
         role_changed = self._state.adding or self.role != getattr(self, "_loaded_role", None)
@@ -297,6 +338,8 @@ class User(AbstractUser):
                 sync_role_group(self)
         if saves_email:
             self._loaded_email = self.email
+        if saves_phone:
+            self._loaded_phone = self.phone_number
         self._loaded_role = self.role
         self._loaded_status = self.status
 

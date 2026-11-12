@@ -5,7 +5,7 @@
   <li class="list__item{% if staff %}{% if item.internal %} support-note--internal{% endif %}{% else %} panel{% endif %}">
     <div>
       <p class="notification__meta">
-        <strong>{% if item.from_staff %}{% if staff %}{{ item.author.email }}{% else %}{% translate "ClipCash support" %}{% endif %}{% elif staff %}{{ item.author.email }} ({% translate "customer" %}){% else %}{% if item.author_id == user.pk %}{% translate "You" %}{% else %}{{ item.author.email }}{% endif %}{% endif %}</strong>
+        <strong>{% if item.from_staff %}{% if staff %}{{ item.author.sign_in_identifier }}{% else %}{% translate "ClipCash support" %}{% endif %}{% elif staff %}{{ item.author.sign_in_identifier }} ({% translate "customer" %}){% else %}{% if item.author_id == user.pk %}{% translate "You" %}{% else %}{{ item.author.sign_in_identifier }}{% endif %}{% endif %}</strong>
         <time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:"SHORT_DATETIME_FORMAT" }}</time>
         {% if item.internal %}<span class="badge badge--sandbox">{% translate "Internal note" %}</span>{% endif %}
       </p>

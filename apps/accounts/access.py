@@ -10,6 +10,18 @@ from django.shortcuts import redirect
 from django.utils.translation import gettext_lazy as _
 
 
+def identity_ready(user):
+    """REG-02: may this ACTIVE account use member pages, choose a plan and pay?
+
+    Members register with a mobile number and a password and use the account at once;
+    the number is their sign-in identifier (unique, Tanzanian mobile format). Accounts
+    that sign in with an email address only still need that address confirmed (the
+    pre-REG-02 rule). Phone *ownership* (``phone_verified``) is tracked separately and is
+    not required here; it is never accepted as proof for account recovery. Real-money
+    steps stay protected by staff verification of every payment."""
+    return bool(getattr(user, "email_verified", False) or getattr(user, "phone_number", None))
+
+
 def demo_verification_optional():
     """True only when the restricted demo waives email verification: the flag is
     on, restricted demo mode is on, and no payment of any kind (live, manual or
@@ -50,7 +62,7 @@ def demo_unconfirmed(user):
     """An approved demo account using the waiver: its email is still unconfirmed.
     Memberships, wallets, payout destinations, payments and advertiser actions keep
     requiring a confirmed email (apps.memberships.services.member_eligibility)."""
-    return not getattr(user, "email_verified", True) and email_verification_waived(user)
+    return not identity_ready(user) and email_verification_waived(user)
 
 
 def _deny_or_redirect(request, *, require_verified_email, roles=None):
@@ -62,7 +74,7 @@ def _deny_or_redirect(request, *, require_verified_email, roles=None):
         # Defensive: the authentication backend already rejects these sessions.
         logout(request)
         return redirect_to_login(request.get_full_path())
-    if require_verified_email and not user.email_verified and not email_verification_waived(user):
+    if require_verified_email and not identity_ready(user) and not email_verification_waived(user):
         return redirect("accounts:verification_required")
     if roles is not None and user.role not in roles:
         raise PermissionDenied

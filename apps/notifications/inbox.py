@@ -88,7 +88,9 @@ def notify(recipients, kind, *, category, title, message="", link="", dedupe_key
         except IntegrityError:
             continue  # A concurrent writer stored this event for this account first.
         created += 1
-        if email:  # Only the writer that created the notice queues its email.
+        # Only the writer that created the notice queues its email, and only to a verified
+        # address (REG-02: phone-only members, and unconfirmed addresses, get the inbox notice only).
+        if email and user.email and user.email_verified:
             enqueue_email(NOTICE_EMAIL, recipient=user.email, user=user, context={"notification": str(notice.pk)})
     return created
 
@@ -148,6 +150,9 @@ def _build_notice_email(email):
         raise SkipEmail("notification_removed")
     if not notice.recipient.is_active:
         raise SkipEmail("account_inactive")
+    recipient = notice.recipient
+    if recipient.email != email.recipient or not recipient.email_verified:
+        raise SkipEmail("address_changed")  # REG-02: only the verified address it was queued for.
     body = (f"{notice.title}\n\n{notice.message}\n\n"
             "Sign in to ClipCash to see the details in your notifications.\n")
     return f"ClipCash: {notice.title}", body

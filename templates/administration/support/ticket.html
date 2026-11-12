@@ -7,7 +7,7 @@
   <section>
     <h2 class="workspace-section__title">{% translate "Ticket" %}</h2>
     <dl class="details">
-      <dt>{% translate "Customer" %}</dt><dd>{{ ticket.requester.email }}</dd>
+      <dt>{% translate "Customer" %}</dt><dd>{{ ticket.requester.sign_in_identifier }}</dd>
       {% if ticket.organization %}<dt>{% translate "Advertiser" %}</dt><dd>{{ ticket.organization.display_name }}</dd>{% endif %}
       <dt>{% translate "Category" %}</dt><dd>{{ ticket.get_category_display }}</dd>
       <dt>{% translate "Priority" %}</dt><dd>{{ ticket.get_priority_display }}</dd>

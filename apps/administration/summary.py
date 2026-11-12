@@ -429,7 +429,9 @@ def member_directory(query=""):
           .order_by("-date_joined"))
     query = (query or "").strip()[:254]
     if query:
-        qs = qs.filter(email__icontains=query)
+        from apps.accounts.lookup import identifier_q
+
+        qs = qs.filter(identifier_q(query))  # REG-02: email or mobile number.
     return qs
 
 

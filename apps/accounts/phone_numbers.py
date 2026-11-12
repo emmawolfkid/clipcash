@@ -86,3 +86,28 @@ def validate_e164(value):
     """Validate a stored value that must already be normalized."""
     if value and not E164_RE.match(value):
         raise _invalid()
+
+
+# REG-02: Tanzanian mobile numbers (national numbers 6xxxxxxxx / 7xxxxxxxx). Sign-up and
+# phone sign-in use this; "0712 345 678", "255712345678" and "+255 712 345 678" are one
+# number, so the unique constraint on the stored E.164 value blocks duplicates across formats.
+TZ_MOBILE_RE = re.compile(r"^\+255[67][0-9]{8}$")
+
+
+def normalize_tz_mobile(value):
+    """Return a Tanzanian mobile number as +2556XXXXXXXX / +2557XXXXXXXX, or raise."""
+    try:
+        phone = normalize_phone_number(value)
+    except ValidationError:
+        phone = None
+    if not phone or not TZ_MOBILE_RE.match(phone):
+        raise ValidationError(
+            _("Enter a Tanzanian mobile number, for example 0712 345 678 or +255 712 345 678."),
+            code="invalid_mobile_number",
+        )
+    return phone
+
+
+def looks_like_phone(value):
+    """True when a sign-in identifier is a phone number rather than an email address."""
+    return "@" not in str(value or "")

@@ -7,7 +7,7 @@
   <input id="q" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search by email' %}"><button class="button button--secondary" type="submit">{% translate "Search" %}</button></form>
 {% if page.object_list %}<table class="table workspace-table hide-narrow-3 hide-narrow-4 hide-narrow-5 hide-narrow-6"><caption class="visually-hidden">{% translate "Members" %}</caption>
   <thead><tr><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Account" %}</th><th scope="col">{% translate "Email confirmed" %}</th><th scope="col">{% translate "Latest membership" %}</th>{% if can.wallets %}<th scope="col">{% translate "Wallet" %}</th>{% endif %}<th scope="col">{% translate "Joined" %}</th></tr></thead>
-  <tbody>{% for m in page.object_list %}<tr><td><a href="{% url 'administration:member' m.pk %}">{{ m.email }}</a></td><td>{{ m.get_status_display }}</td><td>{{ m.email_verified|yesno:_("Yes,No") }}</td>
+  <tbody>{% for m in page.object_list %}<tr><td><a href="{% url 'administration:member' m.pk %}">{{ m.sign_in_identifier }}</a></td><td>{{ m.get_status_display }}</td><td>{{ m.email_verified|yesno:_("Yes,No") }}</td>
     <td>{% if m.membership_status %}{{ m.membership_plan }} · {{ m.membership_status|lower|capfirst }}{% else %}—{% endif %}</td>{% if can.wallets %}<td>{{ m.wallet_status|default:"—"|lower|capfirst }}</td>{% endif %}<td>{{ m.date_joined|date:"SHORT_DATE_FORMAT" }}</td></tr>{% endfor %}</tbody>
 </table>{% include "components/pagination.html" %}{% else %}<p class="empty-state">{% translate "No members found." %}</p>{% endif %}
 {% endblock %}

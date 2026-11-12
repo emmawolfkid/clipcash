@@ -10,7 +10,7 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.accounts.tests.helpers import AccountsTestCase, run_worker
+from apps.accounts.tests.helpers import AccountsTestCase, User, run_worker
 from apps.advertising import services as advertising
 from apps.core.jobs.services import enqueue, process_jobs
 from apps.memberships import services as memberships
@@ -44,10 +44,15 @@ class AccountEventTests(AccountsTestCase):
         self.assertEqual(kinds(member), ["account.password_changed"])
         self.assertEqual(len(mail.outbox), 0)  # In-app only: no new email behaviour.
 
-    def test_registration_still_sends_exactly_the_activation_email(self):
-        self.client.post(reverse("accounts:register"), {"email": "new@example.com"})
-        self.assertEqual([OutboundEmail.objects.get().kind], ["accounts.activation"])
-        self.assertEqual(len(mail.outbox), 1)
+    @override_settings(RESTRICTED_DEMO_MODE=False, PUBLIC_REGISTRATION_APPROVED=True)
+    def test_phone_registration_sends_no_email_or_notice(self):
+        # REG-02: phone-first sign-up has no address to write to.
+        self.client.post(reverse("accounts:register"), {"phone_number": "0712345678",
+                                                        "password1": "Another-Strong-Phrase-42",
+                                                        "password2": "Another-Strong-Phrase-42"})
+        self.assertTrue(User.objects.filter(phone_number="+255712345678").exists())
+        self.assertFalse(OutboundEmail.objects.exists())
+        self.assertEqual(len(mail.outbox), 0)
         self.assertFalse(Notification.objects.exists())
 
 

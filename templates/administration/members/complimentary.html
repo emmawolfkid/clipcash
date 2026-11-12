@@ -1,12 +1,12 @@
 {% extends "administration/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Complimentary demo membership" %}{% endblock %}
-{% block crumb %}{{ member.email }}{% endblock %}
+{% block crumb %}{{ member.sign_in_identifier }}{% endblock %}
 {% block console_content %}
 <div class="page-heading"><h1 class="page-title">{% translate "Complimentary demo membership" %}</h1><a href="{% url 'administration:member' member.pk %}">{% translate "Back to member" %}</a></div>
 <p class="notice notice--warning" role="note">{% translate "This grants membership access without any payment. It is not a payment, records no money, creates no payment, ledger, wallet, reward-funding or withdrawal entry, and ends automatically at the expiry you set." %}</p>
 
 <section><h2 class="workspace-section__title">{% translate "Member" %}</h2><dl class="details">
-  <dt>{% translate "Account" %}</dt><dd>{{ member.email }}</dd>
+  <dt>{% translate "Account" %}</dt><dd>{{ member.sign_in_identifier }}</dd>
   <dt>{% translate "Status" %}</dt><dd>{{ member.get_status_display }}</dd>
   <dt>{% translate "Email confirmed" %}</dt><dd>{{ member.email_verified|yesno:_("Yes,No") }}</dd>
   <dt>{% translate "Current membership" %}</dt><dd>{% if current %}{{ current.plan_name }} · {{ current.get_status_display }} · {{ current.expires_at|date:"DATETIME_FORMAT" }}{% else %}{% translate "None" %}{% endif %}</dd>

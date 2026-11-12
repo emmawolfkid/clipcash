@@ -66,7 +66,7 @@ class EntryPointTests(AccountsTestCase):
         form = self.client.get(REGISTER)
         self.assertEqual(form.status_code, 200)
         self.assertTemplateUsed(form, "accounts/register.html")
-        self.assertContains(form, 'name="email"')
+        self.assertContains(form, 'name="phone_number"')
 
     def test_closed_or_demo_registration_hides_links_and_refuses_the_form(self):
         for name, mode in (("closed", CLOSED), ("demo", DEMO)):
@@ -74,8 +74,10 @@ class EntryPointTests(AccountsTestCase):
                 self.assertEqual(self.register_links(self.client.get(HOME)), [])
                 self.assertEqual(self.register_links(self.client.get(LOGIN)), [])
                 self.assertEqual(self.client.get(REGISTER).status_code, 403)
-                self.assertEqual(self.client.post(REGISTER, {"email": f"{name}@example.com"}).status_code, 403)
-                self.assertFalse(User.objects.filter(email=f"{name}@example.com").exists())
+                response = self.client.post(REGISTER, {"phone_number": "0712345678", "password1": NEW_PASSWORD,
+                                                       "password2": NEW_PASSWORD})
+                self.assertEqual(response.status_code, 403)
+                self.assertFalse(User.objects.filter(phone_number="+255712345678").exists())
 
 
 @PUBLIC
@@ -85,9 +87,12 @@ class NewMemberJourneyTests(AccountsTestCase):
         enable_memberships()
 
     def register(self, email="asha@example.com", **extra):
+        """REG-02: sign-up is phone-first; an email account still pending (from before, or
+        made by staff) gets its activation link from the resend form."""
         mail.outbox.clear()
-        response = self.client.post(REGISTER, {"email": email}, **extra)
-        self.assertRedirects(response, reverse("accounts:register_done"))
+        User.objects.create_user(email, None, status=User.Status.PENDING)
+        response = self.client.post(RESEND, {"email": email}, **extra)
+        self.assertRedirects(response, reverse("accounts:resend_verification_done"))
         return response
 
     def activate(self, link, password=NEW_PASSWORD):
@@ -158,14 +163,6 @@ class NewMemberJourneyTests(AccountsTestCase):
             self.assertFalse(self.client.get(path_of(link), follow=True).context["validlink"])
         self.assertEqual(User.objects.get(email="asha@example.com").status, User.Status.PENDING)
 
-    def test_duplicate_registration_gives_the_same_response(self):
-        make_user("taken@example.com")
-        fresh = self.register("fresh@example.com")
-        duplicate = self.register("TAKEN@example.com")
-        self.assertEqual(fresh["Location"], duplicate["Location"])
-        self.assertEqual(User.objects.filter(email="taken@example.com").count(), 1)
-        self.assertIn(ORIGIN + reverse("accounts:password_reset"), mail.outbox[-1].body)  # Owner is told.
-
     def test_password_recovery_through_the_browser(self):
         make_user("member@example.com")
         mail.outbox.clear()
@@ -211,7 +208,8 @@ class BrowserOriginTests(AccountsTestCase):
 
     def test_emailed_link_pages_send_only_the_origin(self):
         browser = self.browser()
-        self.post_form(browser, REGISTER, {"email": "asha@example.com"})
+        User.objects.create_user("asha@example.com", None, status=User.Status.PENDING)
+        self.post_form(browser, RESEND, {"email": "asha@example.com"})
         opened = browser.get(path_of(emailed_link("/accounts/activate/")))
         self.assertEqual(opened["Referrer-Policy"], "strict-origin")
         self.assertNotEqual(opened["Referrer-Policy"], "no-referrer")  # Would make browsers send Origin: null.
@@ -228,7 +226,9 @@ class BrowserOriginTests(AccountsTestCase):
         browser = self.browser()
         page = browser.get(REGISTER)
         token = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', page.content.decode()).group(1)
-        response = browser.post(REGISTER, {"email": "x@example.com", "csrfmiddlewaretoken": token}, HTTP_ORIGIN="null")
+        response = browser.post(REGISTER, {"phone_number": "0712345678", "password1": NEW_PASSWORD,
+                                           "password2": NEW_PASSWORD, "csrfmiddlewaretoken": token},
+                                HTTP_ORIGIN="null")
         self.assertEqual(response.status_code, 403)
 
 

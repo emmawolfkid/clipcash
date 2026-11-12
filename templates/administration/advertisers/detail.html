@@ -18,7 +18,7 @@
       <dt>{% translate "Submitted" %}</dt><dd>{{ organization.submitted_at|date:"DATETIME_FORMAT"|default:"—" }}</dd>
       {% if organization.reviewed_at %}<dt>{% translate "Last decision" %}</dt><dd>{{ organization.reviewed_at|date:"DATETIME_FORMAT" }}{% if organization.review_reason %} · {{ organization.review_reason }}{% endif %}</dd>{% endif %}
     </dl>
-    {% if can_review %}<h3 class="workspace-subtitle">{% translate "Team" %}</h3><ul class="list-plain">{% for m in members %}<li>{{ m.user.email }} · {{ m.get_role_display }}</li>{% empty %}<li>—</li>{% endfor %}</ul>{% endif %}
+    {% if can_review %}<h3 class="workspace-subtitle">{% translate "Team" %}</h3><ul class="list-plain">{% for m in members %}<li>{{ m.user.sign_in_identifier }} · {{ m.get_role_display }}</li>{% empty %}<li>—</li>{% endfor %}</ul>{% endif %}
   </section>
   {% if can_review %}
   <section>

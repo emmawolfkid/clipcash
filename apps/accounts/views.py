@@ -2,10 +2,11 @@ import logging
 from functools import wraps
 
 from django.contrib import messages
-from django.contrib.auth import get_user_model, update_session_auth_hash
+from django.contrib.auth import get_user_model, login, update_session_auth_hash
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import INTERNAL_RESET_SESSION_TOKEN
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
@@ -29,7 +30,7 @@ from apps.audit.services import (
 from apps.core import features
 
 from . import reauth, services
-from .access import VerifiedAccountRequiredMixin
+from .access import VerifiedAccountRequiredMixin, identity_ready
 from .forms import (
     AccountPasswordChangeForm,
     AccountPasswordResetForm,
@@ -47,6 +48,7 @@ from .throttling import (
     EMAIL_REQUESTS_PER_ACCOUNT,
     EMAIL_REQUESTS_PER_IP,
     REGISTRATIONS_PER_IP,
+    REGISTRATIONS_PER_PHONE,
     client_ip_for_limits,
 )
 from .tokens import email_change_token_generator, password_reset_token_generator, verification_token_generator
@@ -57,6 +59,8 @@ User = get_user_model()
 
 TOO_MANY_REQUESTS = _("Too many requests. Please wait a while and try again.")
 INVALID_LINK_TEMPLATE = "accounts/link_invalid.html"
+DUPLICATE_PHONE_REGISTRATION = _("An account already uses this mobile number. Sign in instead, or contact "
+                                 "support if it is yours and you cannot sign in.")
 
 
 def no_referrer(view):
@@ -154,19 +158,26 @@ class RegisterView(AnonymousOnlyMixin, FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        ip = client_ip_for_limits(self.request)  # None: unknown client; the per-address limit still applies.
-        if ip and REGISTRATIONS_PER_IP.is_limited(ip):
-            security_log.warning("registration_throttled ip=%s", ip)
+        ip = client_ip_for_limits(self.request)  # None: unknown client; the per-number limit still applies.
+        phone = form.cleaned_data["phone_number"]
+        if (ip and REGISTRATIONS_PER_IP.is_limited(ip)) or REGISTRATIONS_PER_PHONE.is_limited(phone):
+            security_log.warning("registration_throttled ip=%s", ip or "-")
             form.add_error(None, TOO_MANY_REQUESTS)
             return self.form_invalid(form)
         if ip:
             REGISTRATIONS_PER_IP.hit(ip)
-        email = form.cleaned_data["email"]
-        # Same response whether or not mail is sent, so the per-address limit
-        # cannot reveal registered addresses either.
-        if _email_request_allowed(self.request, email):
-            services.register(email=email, request=self.request)
-        return super().form_valid(form)
+        REGISTRATIONS_PER_PHONE.hit(phone)
+        try:
+            user = services.register_with_phone(phone_number=phone, password=form.cleaned_data["password1"])
+        except services.DuplicatePhoneNumber:
+            # Unavoidable for instant sign-up: the number is taken. Attempts are rate-limited.
+            form.add_error("phone_number", ValidationError(DUPLICATE_PHONE_REGISTRATION, code="duplicate"))
+            return self.form_invalid(form)
+        login(self.request, user, backend="apps.accounts.backends.AccountStatusBackend")
+        record_security_event("auth.login.succeeded", outcome=SUCCESS, actor=user, target=user,
+                              metadata={"interface": "registration"})
+        messages.success(self.request, _("Welcome to ClipCash. Your account is ready."))
+        return redirect("dashboard")
 
 
 class RegisterDoneView(TemplateView):
@@ -263,7 +274,7 @@ class VerificationRequiredView(LoginRequiredMixin, TemplateView):
     template_name = "accounts/verification_required.html"
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.email_verified:
+        if request.user.is_authenticated and identity_ready(request.user):
             return redirect("accounts:profile")
         return super().dispatch(request, *args, **kwargs)
 
@@ -426,6 +437,8 @@ class ProfileEditView(AccountPageMixin, FormView):
         except IntegrityError:  # Another account took the phone number after validation.
             form.add_error("phone_number", ProfileForm.Meta.error_messages["phone_number"]["unique"])
             return self.form_invalid(form)
+        if "phone_number" in changed:  # A new sign-in number: keep this session, end the others.
+            update_session_auth_hash(self.request, User.objects.get(pk=self.request.user.pk))
         messages.success(self.request, _("Your profile was updated.") if changed else _("Nothing to change."))
         return super().form_valid(form)
 

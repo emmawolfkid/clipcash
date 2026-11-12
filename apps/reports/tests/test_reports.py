@@ -420,7 +420,8 @@ class SupportAuditOperationsReportTests(AccountsTestCase):
     def test_operations_report_counts_emails(self):
         from apps.notifications.models import OutboundEmail
 
-        self.client.post(reverse("accounts:register"), {"email": "new@example.com"})
+        User.objects.create_user("new@example.com", None, status=User.Status.PENDING)
+        self.client.post(reverse("accounts:resend_verification"), {"email": "new@example.com"})
         report = services.build("operations", services.period_from())
         emails = rows_of(report, "Emails, by kind")
         self.assertEqual(emails["accounts.activation"], [OutboundEmail.objects.filter(kind="accounts.activation").count()])

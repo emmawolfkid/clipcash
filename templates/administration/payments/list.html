@@ -11,6 +11,6 @@
   <button class="button button--secondary" type="submit">{% translate "Filter" %}</button></form>
 {% if page.object_list %}<table class="table workspace-table hide-narrow-2 hide-narrow-3"><caption class="visually-hidden">{% translate "Sandbox payments" %}</caption>
   <thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Payer" %}</th><th scope="col">{% translate "Purpose" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
-  <tbody>{% for i in page.object_list %}<tr><td><a href="{% url 'administration:payment' i.pk %}">{{ i.reference }}</a></td><td>{{ i.payer.email }}{% if i.organization %} · {{ i.organization.display_name }}{% endif %}</td><td>{{ i.get_purpose_display }}</td><td>{{ i.amount|tzs }}</td><td><span class="badge badge--{{ i.status|lower }}">{{ i.get_status_display }}</span></td></tr>{% endfor %}</tbody>
+  <tbody>{% for i in page.object_list %}<tr><td><a href="{% url 'administration:payment' i.pk %}">{{ i.reference }}</a></td><td>{{ i.payer.sign_in_identifier }}{% if i.organization %} · {{ i.organization.display_name }}{% endif %}</td><td>{{ i.get_purpose_display }}</td><td>{{ i.amount|tzs }}</td><td><span class="badge badge--{{ i.status|lower }}">{{ i.get_status_display }}</span></td></tr>{% endfor %}</tbody>
 </table>{% include "components/pagination.html" %}{% else %}<p class="empty-state">{% translate "No payments match." %}</p>{% endif %}
 {% endblock %}
