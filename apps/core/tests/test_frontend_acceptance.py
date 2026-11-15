@@ -43,7 +43,12 @@ class LanguageSwitcherTests(SimpleTestCase):
 
 class SharedFrontendTests(SimpleTestCase):
     def test_favicon_is_linked_and_uses_the_brand_colours(self):
-        self.assertIn("images/favicon.svg", (TEMPLATES / "base.html").read_text(encoding="utf-8"))
+        # FAV-01: base.html (and the admin) include one shared set of icon links.
+        self.assertIn('{% include "components/favicon_links.html" %}',
+                      (TEMPLATES / "base.html").read_text(encoding="utf-8"))
+        links = (TEMPLATES / "components/favicon_links.html").read_text(encoding="utf-8")
+        for name in ("images/favicon.svg", "images/favicon.ico", "images/apple-touch-icon.png"):
+            self.assertIn(name, links)
         icon = (STATIC / "images/favicon.svg").read_text(encoding="utf-8")
         self.assertIn("#FFCF19", icon)
         self.assertIn("#111B46", icon)

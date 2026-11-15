@@ -15,7 +15,8 @@ class ManualPaymentForm(forms.Form):
         widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}))
     payer_phone = forms.CharField(
         label=_("Phone number you paid from"), max_length=24,
-        help_text=_("For example 0781234567 or +255781234567."),
+        help_text=_("The mobile-money number the payment came from, for example 0781234567 or +255781234567. "
+                    "It does not have to be the number on your account."),
         widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel", "inputmode": "tel"}))
     transaction_reference = forms.CharField(
         label=_("Provider transaction reference"), max_length=60,

@@ -34,6 +34,7 @@ from .access import VerifiedAccountRequiredMixin, identity_ready
 from .forms import (
     AccountPasswordChangeForm,
     AccountPasswordResetForm,
+    AccountSetPasswordForm,
     EmailChangeConfirmForm,
     EmailChangeForm,
     EmailRequestForm,
@@ -47,6 +48,7 @@ from .throttling import (
     EMAIL_CHANGE_REQUESTS_PER_ADDRESS,
     EMAIL_REQUESTS_PER_ACCOUNT,
     EMAIL_REQUESTS_PER_IP,
+    REGISTRATIONS_PER_IDENTIFIER,
     REGISTRATIONS_PER_IP,
     REGISTRATIONS_PER_PHONE,
     client_ip_for_limits,
@@ -61,6 +63,13 @@ TOO_MANY_REQUESTS = _("Too many requests. Please wait a while and try again.")
 INVALID_LINK_TEMPLATE = "accounts/link_invalid.html"
 DUPLICATE_PHONE_REGISTRATION = _("An account already uses this mobile number. Sign in instead, or contact "
                                  "support if it is yours and you cannot sign in.")
+# REG-03: unavoidable for instant sign-up, as for numbers; attempts are rate-limited.
+DUPLICATE_REGISTRATION = {
+    "phone": DUPLICATE_PHONE_REGISTRATION,
+    "email": _("An account already uses this email address. Sign in instead, or reset your password if the "
+               "address is confirmed."),
+    "username": _("This username is already taken. Please choose another one."),
+}
 
 
 def no_referrer(view):
@@ -158,25 +167,34 @@ class RegisterView(AnonymousOnlyMixin, FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        ip = client_ip_for_limits(self.request)  # None: unknown client; the per-number limit still applies.
-        phone = form.cleaned_data["phone_number"]
-        if (ip and REGISTRATIONS_PER_IP.is_limited(ip)) or REGISTRATIONS_PER_PHONE.is_limited(phone):
+        ip = client_ip_for_limits(self.request)  # None: unknown client; the per-identifier limit still applies.
+        method, identifier = form.identifier
+        # Numbers keep their own limit (REG-02); usernames and emails share one (REG-03).
+        per_identifier = REGISTRATIONS_PER_PHONE if method == "phone" else REGISTRATIONS_PER_IDENTIFIER
+        if (ip and REGISTRATIONS_PER_IP.is_limited(ip)) or per_identifier.is_limited(identifier):
             security_log.warning("registration_throttled ip=%s", ip or "-")
             form.add_error(None, TOO_MANY_REQUESTS)
             return self.form_invalid(form)
         if ip:
             REGISTRATIONS_PER_IP.hit(ip)
-        REGISTRATIONS_PER_PHONE.hit(phone)
+        per_identifier.hit(identifier)
         try:
-            user = services.register_with_phone(phone_number=phone, password=form.cleaned_data["password1"])
-        except services.DuplicatePhoneNumber:
-            # Unavoidable for instant sign-up: the number is taken. Attempts are rate-limited.
-            form.add_error("phone_number", ValidationError(DUPLICATE_PHONE_REGISTRATION, code="duplicate"))
+            user = services.register_member(
+                method=method, identifier=identifier, password=form.cleaned_data["password1"],
+                first_name=form.cleaned_data["first_name"], last_name=form.cleaned_data["last_name"],
+                request=self.request)
+        except services.DuplicateIdentifier as duplicate:
+            form.add_error(services.REGISTRATION_FIELDS[duplicate.method],
+                           ValidationError(DUPLICATE_REGISTRATION[duplicate.method], code="duplicate"))
             return self.form_invalid(form)
         login(self.request, user, backend="apps.accounts.backends.AccountStatusBackend")
         record_security_event("auth.login.succeeded", outcome=SUCCESS, actor=user, target=user,
                               metadata={"interface": "registration"})
-        messages.success(self.request, _("Welcome to ClipCash. Your account is ready."))
+        if method == "email":
+            messages.success(self.request, _("Welcome to ClipCash. We sent a confirmation link to %(email)s: open it "
+                                             "to finish setting up your account.") % {"email": identifier})
+        else:
+            messages.success(self.request, _("Welcome to ClipCash. Your account is ready."))
         return redirect("dashboard")
 
 
@@ -193,6 +211,7 @@ class ActivateAccountView(auth_views.PasswordResetConfirmView):
     """
 
     template_name = "accounts/activate_account.html"
+    form_class = AccountSetPasswordForm
     token_generator = verification_token_generator
     success_url = reverse_lazy("accounts:activation_complete")
     post_reset_login = False
@@ -340,6 +359,7 @@ class PasswordResetDoneView(auth_views.PasswordResetDoneView):
 @method_decorator([never_cache, no_referrer], name="dispatch")
 class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
     template_name = "accounts/password_reset_confirm.html"
+    form_class = AccountSetPasswordForm
     token_generator = password_reset_token_generator
     success_url = reverse_lazy("accounts:password_reset_complete")
     post_reset_login = False

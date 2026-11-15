@@ -1,9 +1,22 @@
+from django.http import HttpResponseRedirect
+from django.templatetags.static import static
+from django.views.decorators.http import require_safe
 from django.views.generic import TemplateView
 
 from apps.accounts.access import VerifiedAccountRequiredMixin
 from apps.core import features
 
 from .dashboard import member_activity, member_summary
+
+
+@require_safe
+def favicon(request):
+    """FAV-01: /favicon.ico, which browsers and other clients request by convention (and for
+    pages without icon links), answered with the collected, content-hashed ICO. A temporary
+    redirect, cached for a day, because the hashed name changes when the icon does."""
+    response = HttpResponseRedirect(static("images/favicon.ico"))
+    response["Cache-Control"] = "public, max-age=86400"
+    return response
 
 
 class HomeView(TemplateView):

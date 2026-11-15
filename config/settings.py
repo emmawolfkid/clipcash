@@ -224,17 +224,24 @@ TEST_RUNNER = "config.test_runner.PostgreSQLTestRunner"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
+        # REG-03: also compared with the username and the mobile number people sign in with.
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'OPTIONS': {'user_attributes': ('username', 'first_name', 'last_name', 'email', 'phone_number')},
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {'min_length': 10},
+        # REG-03: members at least 8 characters; staff (and unknown accounts) keep 10.
+        'NAME': 'apps.accounts.password_validation.RoleMinimumLengthValidator',
+        'OPTIONS': {'member_min_length': 8, 'staff_min_length': 10},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+    {
+        # REG-03: members need a letter and a number (spaces allowed, so passphrases work).
+        'NAME': 'apps.accounts.password_validation.LetterAndNumberValidator',
     },
 ]
 

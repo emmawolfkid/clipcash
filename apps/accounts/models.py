@@ -15,9 +15,12 @@ from apps.core.models import BaseModel
 from .managers import DERIVED_ACCESS_FIELDS, UserManager
 from .phone_numbers import E164_PATTERN, normalize_phone_number, validate_e164
 from .roles import sync_role_group
+from .usernames import USERNAME_HELP_TEXT, USERNAME_MAX_LENGTH, USERNAME_PATTERN, normalize_username, validate_username
 
 DUPLICATE_EMAIL_MESSAGE = _("A user with this email address already exists.")
 DUPLICATE_PHONE_MESSAGE = _("A user with this phone number already exists.")
+DUPLICATE_USERNAME_MESSAGE = _("A user with this username already exists.")
+NEEDS_IDENTIFIER_MESSAGE = _("An account needs a mobile number, an email address or a username.")
 
 
 class Role(models.TextChoices):
@@ -37,9 +40,12 @@ class User(AbstractUser):
     """
     Identity invariants:
 
-    * REG-02: an account signs in with its mobile number or its email address; it has
-      at least one of them (database check). Members register with a mobile number;
-      email is optional and is added (and verified) from the account page.
+    * REG-02/REG-03: an account signs in with its mobile number, its email address or its
+      username; it has at least one of them (database check). Members choose one when they
+      register; the others are optional. Email is added (and verified) from the account page.
+    * ``username`` is NULL or stored lowercased in the shape apps.accounts.usernames allows
+      (database check), unique case-insensitively. It starts with a letter and has no @, so it
+      can never be mistaken for a mobile number or an email address.
     * ``email`` is NULL or stored trimmed and lowercased, unique case-insensitively.
     * ``phone_number`` is NULL or stored in E.164 format, and unique when set, so
       0712345678 and +255712345678 can never belong to two accounts.
@@ -87,6 +93,11 @@ class User(AbstractUser):
         validators=[validate_e164],
         error_messages={"unique": DUPLICATE_PHONE_MESSAGE},
         help_text=_("Optional. Stored in international format, for example +255712345678."),
+    )
+    username = models.CharField(
+        _("username"), max_length=USERNAME_MAX_LENGTH, unique=True, null=True, blank=True,
+        validators=[validate_username], error_messages={"unique": DUPLICATE_USERNAME_MESSAGE},
+        help_text=USERNAME_HELP_TEXT,
     )
     phone_verified = models.BooleanField(
         _("phone verified"), default=False,
@@ -163,11 +174,21 @@ class User(AbstractUser):
                 condition=Q(email__isnull=True) | ~Q(email=""),
                 name="accounts_user_email_not_blank",
             ),
-            # REG-02: every account can sign in with something.
+            # REG-03: as for email, a backstop for writes that bypass normalization.
+            models.UniqueConstraint(
+                Lower("username"),
+                name="accounts_user_username_ci_unique",
+                violation_error_message=DUPLICATE_USERNAME_MESSAGE,
+            ),
             models.CheckConstraint(
-                condition=Q(email__isnull=False) | Q(phone_number__isnull=False),
+                condition=Q(username__isnull=True) | Q(username__regex=USERNAME_PATTERN),
+                name="accounts_user_username_format",
+            ),
+            # REG-02/REG-03: every account can sign in with something.
+            models.CheckConstraint(
+                condition=Q(email__isnull=False) | Q(phone_number__isnull=False) | Q(username__isnull=False),
                 name="accounts_user_has_sign_in_identifier",
-                violation_error_message=_("An account needs a mobile number or an email address."),
+                violation_error_message=NEEDS_IDENTIFIER_MESSAGE,
             ),
             models.CheckConstraint(
                 condition=Q(phone_number__isnull=True) | Q(phone_number__regex=E164_PATTERN),
@@ -201,12 +222,13 @@ class User(AbstractUser):
         ]
 
     def __str__(self):
-        return self.email or self.phone_number or str(self.pk)
+        return self.email or self.phone_number or self.username or str(self.pk)
 
     @property
     def sign_in_identifier(self):
-        """What the member signs in with, for display: the email if set, else the phone."""
-        return self.email or self.phone_number or ""
+        """What the member signs in with, for display: the email if set, else the phone,
+        else the username."""
+        return self.email or self.phone_number or self.username or ""
 
     @property
     def has_verified_email(self):
@@ -223,7 +245,13 @@ class User(AbstractUser):
         from django.utils.crypto import salted_hmac
 
         # REG-02: phone-only accounts bind to their number instead (unchanged for email accounts).
-        identifier = self.email if self.email else f"phone:{self.phone_number}"
+        # REG-03: accounts with neither bind to their username (unchanged for all others).
+        if self.email:
+            identifier = self.email
+        elif self.phone_number:
+            identifier = f"phone:{self.phone_number}"
+        else:
+            identifier = f"username:{self.username}"
         return salted_hmac("apps.accounts.models.User.session_auth_hash", f"{self.password}\x1f{identifier}",
                            secret=secret, algorithm="sha256").hexdigest()
 
@@ -237,6 +265,7 @@ class User(AbstractUser):
         errors = {}
 
         self.email = type(self).objects.normalize_email(self.email) or None
+        self.username = normalize_username(self.username)
         if "phone_number" not in exclude:
             try:
                 self.phone_number = normalize_phone_number(self.phone_number)
@@ -293,17 +322,18 @@ class User(AbstractUser):
             )
 
     def validate_constraints(self, exclude=None):
-        # Email uniqueness is reported once, as a field error, by validate_unique() on
-        # the normalized address. The case-insensitive index still enforces it in the
-        # database, and blank emails are rejected by field validation.
-        exclude = set(exclude or ()) | {"email"}
+        # Email and username uniqueness are reported once, as field errors, by
+        # validate_unique() on the normalized (lowercased) values. The case-insensitive
+        # indexes still enforce them in the database.
+        exclude = set(exclude or ()) | {"email", "username"}
         super().validate_constraints(exclude=exclude)
 
     def save(self, *args, **kwargs):
         self.email = type(self).objects.normalize_email(self.email) or None
         self.phone_number = normalize_phone_number(self.phone_number)
-        if not self.email and not self.phone_number:
-            raise ValueError(_("An account needs a mobile number or an email address."))
+        self.username = normalize_username(self.username)
+        if not self.email and not self.phone_number and not self.username:
+            raise ValueError(NEEDS_IDENTIFIER_MESSAGE)
         self.sync_access_flags()
 
         update_fields = kwargs.get("update_fields")

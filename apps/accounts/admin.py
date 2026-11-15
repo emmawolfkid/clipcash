@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.forms import AdminUserCreationForm, UserChangeForm
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 
@@ -17,6 +18,23 @@ admin.site.login_form = AdminLoginForm
 PRIVILEGE_FIELDS = ("role", "groups", "user_permissions", "email_verified")
 
 
+# REG-03: Django's user forms turn a field named "username" into its UsernameField, which
+# assumes the value is never empty. ClipCash usernames are optional (NULL), so these forms keep
+# the model's own field; the model normalizes and validates it.
+class UserAddForm(AdminUserCreationForm):
+    class Meta(AdminUserCreationForm.Meta):
+        model = User
+        fields = ("email",)
+        field_classes = {}
+
+
+class UserEditForm(UserChangeForm):
+    class Meta(UserChangeForm.Meta):
+        model = User
+        fields = "__all__"
+        field_classes = {}
+
+
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     """
@@ -31,9 +49,12 @@ class UserAdmin(BaseUserAdmin):
     """
 
     ordering = ("-date_joined",)
+    add_form = UserAddForm
+    form = UserEditForm
 
     list_display = (
         "email",
+        "username",
         "role",
         "status",
         "email_verified",
@@ -50,7 +71,7 @@ class UserAdmin(BaseUserAdmin):
         "is_active",
     )
 
-    search_fields = ("email", "phone_number", "first_name", "last_name")
+    search_fields = ("email", "username", "phone_number", "first_name", "last_name")
 
     # Access flags are derived from role and status by the model.
     readonly_fields = (
@@ -67,7 +88,7 @@ class UserAdmin(BaseUserAdmin):
         (None, {"fields": ("email", "password")}),
         (
             "Personal Information",
-            {"fields": ("first_name", "last_name", "phone_number")},
+            {"fields": ("first_name", "last_name", "username", "phone_number")},
         ),
         (
             "ClipCash Account",
@@ -104,6 +125,7 @@ class UserAdmin(BaseUserAdmin):
                 "classes": ("wide",),
                 "fields": (
                     "email",
+                    "username",
                     "phone_number",
                     "password1",
                     "password2",

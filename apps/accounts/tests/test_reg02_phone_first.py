@@ -49,7 +49,7 @@ class PhoneFirstJourneyTests(ManualPaymentTestCase):
         self.staff.force_login(self.verifier)
 
     def sign_up(self, phone="0712 345 678"):
-        response = self.client.post(REGISTER, {"phone_number": phone, "password1": NEW_PASSWORD,
+        response = self.client.post(REGISTER, {"first_name": "Amina", "last_name": "Juma", "sign_in_method": "phone", "phone_number": phone, "password1": NEW_PASSWORD,
                                                "password2": NEW_PASSWORD})
         self.assertRedirects(response, DASHBOARD)
         return User.objects.get(phone_number=PHONE)

@@ -47,7 +47,7 @@ class AccountEventTests(AccountsTestCase):
     @override_settings(RESTRICTED_DEMO_MODE=False, PUBLIC_REGISTRATION_APPROVED=True)
     def test_phone_registration_sends_no_email_or_notice(self):
         # REG-02: phone-first sign-up has no address to write to.
-        self.client.post(reverse("accounts:register"), {"phone_number": "0712345678",
+        self.client.post(reverse("accounts:register"), {"first_name": "Amina", "last_name": "Juma", "sign_in_method": "phone", "phone_number": "0712345678",
                                                         "password1": "Another-Strong-Phrase-42",
                                                         "password2": "Another-Strong-Phrase-42"})
         self.assertTrue(User.objects.filter(phone_number="+255712345678").exists())

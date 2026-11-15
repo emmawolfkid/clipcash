@@ -3,6 +3,25 @@
   "use strict";
   var shell = document.querySelector(".auth-shell");
   if (!shell) { return; }
+  // REG-03 registration: show only the input for the chosen way to sign in. Without
+  // JavaScript all three stay visible; the server uses only the chosen one either way.
+  var identifierFields = { phone: "id_phone_number", email: "id_email", username: "id_username" };
+  var methodInputs = shell.querySelectorAll('input[name="sign_in_method"]');
+  function syncIdentifierFields() {
+    var chosen = shell.querySelector('input[name="sign_in_method"]:checked');
+    Object.keys(identifierFields).forEach(function (method) {
+      var input = document.getElementById(identifierFields[method]);
+      var group = input && input.closest(".form-field");
+      if (!group) { return; }
+      group.hidden = Boolean(chosen) && chosen.value !== method;
+    });
+  }
+  if (methodInputs.length) {
+    Array.prototype.forEach.call(methodInputs, function (radio) {
+      radio.addEventListener("change", syncIdentifierFields);
+    });
+    syncIdentifierFields();
+  }
   Array.prototype.forEach.call(shell.querySelectorAll("[data-password-target]"), function (toggle) {
     var input = document.getElementById(toggle.dataset.passwordTarget);
     if (!input || input.type !== "password") { return; }
@@ -44,5 +63,6 @@
     });
     var status = document.getElementById("auth-submit-status");
     if (status) { status.hidden = true; }
+    if (methodInputs.length) { syncIdentifierFields(); }
   });
 }());

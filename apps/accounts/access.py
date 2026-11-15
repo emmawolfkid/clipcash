@@ -11,15 +11,17 @@ from django.utils.translation import gettext_lazy as _
 
 
 def identity_ready(user):
-    """REG-02: may this ACTIVE account use member pages, choose a plan and pay?
+    """REG-02/REG-03: may this ACTIVE account use member pages, choose a plan and pay?
 
-    Members register with a mobile number and a password and use the account at once;
-    the number is their sign-in identifier (unique, Tanzanian mobile format). Accounts
+    Members who register with a mobile number or a username and a password use the
+    account at once; that identifier is unique and is what they sign in with. Accounts
     that sign in with an email address only still need that address confirmed (the
-    pre-REG-02 rule). Phone *ownership* (``phone_verified``) is tracked separately and is
-    not required here; it is never accepted as proof for account recovery. Real-money
-    steps stay protected by staff verification of every payment."""
-    return bool(getattr(user, "email_verified", False) or getattr(user, "phone_number", None))
+    pre-REG-02 rule), because an unconfirmed address may belong to someone else. Phone
+    *ownership* (``phone_verified``) is tracked separately and is not required here; it is
+    never accepted as proof for account recovery. Real-money steps stay protected by staff
+    verification of every payment."""
+    return bool(getattr(user, "email_verified", False) or getattr(user, "phone_number", None)
+                or getattr(user, "username", None))
 
 
 def demo_verification_optional():
@@ -48,7 +50,7 @@ def email_verification_waived(user):
     if not (user.is_authenticated and user.status == user.Status.ACTIVE and demo_verification_optional()):
         return False
     approved = {email.strip().lower() for email in settings.DEMO_ACCOUNTS if email.strip()}
-    return user.email.lower() in approved
+    return (user.email or "").lower() in approved  # Phone- and username-only accounts have no email.
 
 
 # Shown where a workflow stays closed to waived accounts (see demo_unconfirmed).

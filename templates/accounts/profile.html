@@ -13,6 +13,7 @@
 <div class="card-grid">
   <section class="panel"><h2 class="panel__title">{% translate "Profile" %}</h2>
     <dl class="details">
+      <dt>{% translate "Username" %}</dt><dd>{{ user.username|default:"—" }}</dd>
       <dt>{% translate "Mobile number" %}</dt><dd>{% if user.phone_number %}{{ user.phone_number }} · {% if user.phone_verified %}{% translate "verified" %}{% else %}{% translate "not verified (SMS verification is not available yet)" %}{% endif %}{% else %}—{% endif %}</dd>
       <dt>{% translate "Email address" %}</dt><dd>{% if user.email %}{{ user.email }}{% else %}{% translate "None added" %}{% endif %}</dd>
       {% if user.email %}<dt>{% translate "Email confirmed" %}</dt><dd>{% if user.email_verified %}{% translate "Yes" %}{% else %}{% translate "No" %} · <a href="{% url 'accounts:verification_required' %}">{% translate "Confirm now" %}</a>{% endif %}</dd>{% endif %}
@@ -26,7 +27,11 @@
       <li><a href="{% url 'accounts:profile_edit' %}">{% translate "Edit name and phone number" %}</a></li>
       {% if email_change_available %}<li><a href="{% url 'accounts:email_change' %}">{% if user.email %}{% translate "Change email address" %}{% else %}{% translate "Add an email address" %}{% endif %}</a></li>{% endif %}
     </ul>
-    {% if not user.has_verified_email %}<p class="notice account-note" role="note">{% translate "Add and confirm an email address so you can reset your password if you forget it. Password reset by SMS is not available." %}</p>{% endif %}
+    <div class="notice account-note" role="note">
+      <p><strong>{% translate "Resetting a forgotten password" %}</strong></p>
+      <p>{% if user.has_verified_email %}{% blocktranslate with email=user.email %}A reset link can be sent to your confirmed email address, {{ email }}.{% endblocktranslate %}{% else %}{% translate "Only a confirmed email address can receive a password-reset link. Add an email address and open the confirmation link we send, so you can reset your password if you forget it." %}{% endif %}</p>
+      <p>{% translate "A username or a mobile number is never enough to reset a password. Your mobile number stays unverified until you confirm you own it (SMS confirmation is not available yet)." %}</p>
+    </div>
     <p class="account-note">{% translate "Your payout details are managed separately and do not change here." %}</p>
   </section>
   <section class="panel"><h2 class="panel__title">{% translate "Security" %}</h2>

@@ -112,7 +112,8 @@ def _deny(action, error, actor, target=None):
 
 def member_eligibility(member, *, demo_waiver=False):
     """(eligible, reason). Only ACTIVE accounts that are identity-ready qualify: a sign-in
-    mobile number or a verified email (REG-02, apps.accounts.access.identity_ready).
+    mobile number, a username or a verified email (REG-02/REG-03,
+    apps.accounts.access.identity_ready).
 
     ``demo_waiver=True`` also accepts an approved restricted-demo account
     (apps.accounts.access.email_verification_waived). Only read-only access

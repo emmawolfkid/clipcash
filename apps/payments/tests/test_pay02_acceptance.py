@@ -73,7 +73,7 @@ class EndToEndAcceptanceTests(ManualPaymentTestCase):
         # apps.accounts.tests.test_reg02_phone_first.
         mail.outbox.clear()
         self.assertRedirects(self.client.post(reverse("accounts:register"), {
-            "phone_number": "0712 345 678", "password1": NEW_PASSWORD, "password2": NEW_PASSWORD}),
+            "first_name": "Amina", "last_name": "Juma", "sign_in_method": "phone", "phone_number": "0712 345 678", "password1": NEW_PASSWORD, "password2": NEW_PASSWORD}),
             reverse("dashboard"))
         member = User.objects.get(phone_number="+255712345678")
         self.assertEqual((member.status, member.email), (User.Status.ACTIVE, None))

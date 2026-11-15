@@ -203,6 +203,11 @@ class ManualPayView(VerifiedAccountRequiredMixin, View):
                 pass
         if quote is not None and not form.is_bound:
             form.initial["quote"] = quote.pk
+        if not form.is_bound and request.user.phone_number:
+            # REG-03: a convenience only. Every current method is mobile money, so the number paid
+            # from is asked here, at checkout; accounts without a number (username or email only)
+            # simply type it, and members who paid from another number change it.
+            form.initial.setdefault("payer_phone", request.user.phone_number)
         return render(request, self.template_name, {
             "nav": "membership", "subscription": subscription, "form": form, "payments_enabled": enabled,
             "instruction": quote.instruction if quote else None, "quote": quote, "methods": methods,

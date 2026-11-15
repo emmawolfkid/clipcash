@@ -109,5 +109,16 @@ def normalize_tz_mobile(value):
 
 
 def looks_like_phone(value):
-    """True when a sign-in identifier is a phone number rather than an email address."""
-    return "@" not in str(value or "")
+    """True when a sign-in identifier is a phone number rather than an email address or a
+    username (REG-03): it has no @ and no letter (usernames always start with a letter)."""
+    text = str(value or "")
+    return "@" not in text and not any(char.isalpha() for char in text)
+
+
+def identifier_kind(value):
+    """REG-03: which sign-in identifier ``value`` is: "email" (has @), "phone" (no letters) or
+    "username" (letters, no @). The three shapes never overlap."""
+    text = str(value or "")
+    if "@" in text:
+        return "email"
+    return "phone" if looks_like_phone(text) else "username"

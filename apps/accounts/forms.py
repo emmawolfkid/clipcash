@@ -1,14 +1,17 @@
 from django import forms
 from django.contrib.admin.forms import AdminAuthenticationForm
 from django.contrib.auth import get_user_model, password_validation
-from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, SetPasswordForm
 from django.core.exceptions import ValidationError
+from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
 
 from apps.audit.services import DENIED, FAILURE, SUCCESS, hash_identifier, record_security_event
 
 from . import services
-from .phone_numbers import looks_like_phone, normalize_phone_number, normalize_tz_mobile
+from .password_validation import member_password_guidance_html, password_guidance_html
+from .phone_numbers import identifier_kind, normalize_phone_number, normalize_tz_mobile
+from .usernames import USERNAME_HELP_TEXT, normalize_username, validate_username
 from .throttling import (
     CURRENT_PASSWORD_FAILURES,
     LOGIN_FAILURES_PER_ACCOUNT,
@@ -29,21 +32,54 @@ def _email_field(**attrs):
     )
 
 
+SIGN_IN_METHODS = (
+    ("phone", _("Mobile number")),
+    ("email", _("Email address")),
+    ("username", _("Username")),
+)
+IDENTIFIER_FIELDS = {"phone": "phone_number", "email": "email", "username": "username"}
+
+
 class RegistrationForm(forms.Form):
     """
-    REG-02: public sign-up takes an active Tanzanian mobile number and a password, and the
-    account is usable at once. Email is optional and is added (and confirmed) later from
-    the account page. There are no role, status or permission fields.
+    REG-03: public sign-up asks for a first and last name, ONE sign-in identifier of the
+    member's choice (a Tanzanian mobile number, an email address or a username) and a
+    password. Only the chosen identifier is required; the other two fields are ignored.
+    Mobile and username accounts are usable at once; an email account is usable once its
+    address is confirmed (the link is sent at sign-up). There are no role, status or
+    permission fields.
     """
 
+    first_name = forms.CharField(
+        label=_("First name"), max_length=150,
+        widget=forms.TextInput(attrs={"autocomplete": "given-name", "autofocus": True}),
+    )
+    last_name = forms.CharField(
+        label=_("Last name"), max_length=150,
+        widget=forms.TextInput(attrs={"autocomplete": "family-name"}),
+    )
+    sign_in_method = forms.ChoiceField(
+        label=_("How do you want to sign in?"), choices=SIGN_IN_METHODS, initial="phone",
+        help_text=_("Choose one. Fill in only the matching box below; you can add the others later."),
+        widget=forms.RadioSelect,
+    )
     phone_number = forms.CharField(
-        label=_("Mobile number"), max_length=24,
-        help_text=_("Your Tanzanian mobile number, for example 0712 345 678. You will sign in with it."),
-        widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel", "inputmode": "tel", "autofocus": True}),
+        label=_("Mobile number"), max_length=24, required=False,
+        help_text=_("A Tanzanian mobile number, for example 0712 345 678. It stays unverified until you "
+                    "confirm you own it, and it is never used to reset your password."),
+        widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel", "inputmode": "tel"}),
+    )
+    email = forms.CharField(
+        label=_("Email address"), max_length=254, required=False,
+        help_text=_("We will send you a link to confirm it. Once confirmed, it can also reset your password."),
+        widget=forms.EmailInput(attrs={"autocomplete": "email", "autocapitalize": "none", "spellcheck": "false"}),
+    )
+    username = forms.CharField(
+        label=_("Username"), max_length=40, required=False, help_text=USERNAME_HELP_TEXT,
+        widget=forms.TextInput(attrs={"autocomplete": "username", "autocapitalize": "none", "spellcheck": "false"}),
     )
     password1 = forms.CharField(
-        label=_("Password"), strip=False,
-        help_text=password_validation.password_validators_help_text_html(),
+        label=_("Password"), strip=False, help_text=lazy(member_password_guidance_html, str)(),
         widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
     )
     password2 = forms.CharField(
@@ -51,31 +87,65 @@ class RegistrationForm(forms.Form):
         widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
     )
 
-    def clean_phone_number(self):
-        return normalize_tz_mobile(self.cleaned_data["phone_number"])
+    def _clean_identifier(self, method, raw):
+        if method == "phone":
+            return normalize_tz_mobile(raw)
+        if method == "email":
+            email = User.objects.normalize_email(raw)
+            forms.EmailField().clean(email)  # Same format rule as every other email field.
+            return email
+        validate_username(raw)
+        return normalize_username(raw)
 
     def clean(self):
         cleaned_data = super().clean()
+        method = cleaned_data.get("sign_in_method")
+        if method:
+            field = IDENTIFIER_FIELDS[method]
+            raw = (self.data.get(self.add_prefix(field)) or "").strip()
+            for other in IDENTIFIER_FIELDS.values():  # Only the chosen identifier is used.
+                cleaned_data[other] = None
+            if not raw:
+                self.add_error(field, ValidationError(_("Enter your %(identifier)s, or choose another way to sign "
+                                                        "in.") % {"identifier": dict(SIGN_IN_METHODS)[method].lower()},
+                                                      code="required"))
+            else:
+                try:
+                    cleaned_data[field] = self._clean_identifier(method, raw)
+                except ValidationError as error:
+                    self.add_error(field, error)
         password1, password2 = cleaned_data.get("password1"), cleaned_data.get("password2")
         if password1 and password2 and password1 != password2:
             self.add_error("password2", ValidationError(_("The two passwords do not match."), code="password_mismatch"))
         elif password1:
-            try:  # Similarity checks see the number the member will sign in with.
-                password_validation.validate_password(
-                    password1, User(phone_number=cleaned_data.get("phone_number"), role=User.Role.MEMBER))
+            try:  # Similarity checks see the name and the identifier the member will sign in with.
+                password_validation.validate_password(password1, User(
+                    first_name=cleaned_data.get("first_name") or "", last_name=cleaned_data.get("last_name") or "",
+                    phone_number=cleaned_data.get("phone_number"), email=cleaned_data.get("email"),
+                    username=cleaned_data.get("username"), role=User.Role.MEMBER))
             except ValidationError as error:
                 self.add_error("password1", error)
         return cleaned_data
 
+    @property
+    def identifier(self):
+        """(method, normalized identifier) after a successful is_valid()."""
+        method = self.cleaned_data["sign_in_method"]
+        return method, self.cleaned_data[IDENTIFIER_FIELDS[method]]
+
 
 def sign_in_key(value):
-    """The normalized identifier a sign-in attempt is about: an E.164 number for anything
-    that is not an email address (when it parses), else the lowercased email."""
-    if value and looks_like_phone(value):
+    """The normalized identifier a sign-in attempt is about (rate limits and audit): an E.164
+    number for a phone-shaped value (when it parses), the lowercased username for a username,
+    else the lowercased email. The three shapes never collide (apps.accounts.usernames)."""
+    kind = identifier_kind(value)
+    if value and kind == "phone":
         try:
             return normalize_phone_number(value) or ""
         except ValidationError:
             return " ".join(str(value).split()).lower()
+    if kind == "username":
+        return normalize_username(value) or ""
     return User.objects.normalize_email(value)
 
 
@@ -84,6 +154,8 @@ def _account_for(key):
         return None
     if key.startswith("+"):
         return User.objects.filter(phone_number=key).first()
+    if identifier_kind(key) == "username":
+        return User.objects.filter(username=key).first()
     return User.objects.filter(email=key).first()
 
 
@@ -141,17 +213,19 @@ class ThrottledLoginMixin:
 
 
 class LoginForm(ThrottledLoginMixin, AuthenticationForm):
-    """REG-02: members sign in with their mobile number (any accepted format) or, if they
-    have one, their email address; staff keep signing in with their email address."""
+    """REG-02/REG-03: members sign in with their mobile number (any accepted format), their
+    username (any letter case) or their email address (any letter case); staff keep signing
+    in with their email address."""
 
     username = forms.CharField(
-        label=_("Mobile number or email"), max_length=254,
+        label=_("Username, email or mobile number"), max_length=254,
         widget=forms.TextInput(attrs={"autocomplete": "username", "autofocus": True, "autocapitalize": "none",
                                       "spellcheck": "false"}),
     )
     error_messages = {
         **AuthenticationForm.error_messages,
-        "invalid_login": _("Enter a correct mobile number or email and password. Both may be case-sensitive."),
+        "invalid_login": _("Enter a correct username, email or mobile number and password. The password is "
+                           "case-sensitive."),
     }
 
 
@@ -207,7 +281,21 @@ class CurrentPasswordMixin:
         return password
 
 
-class AccountPasswordChangeForm(CurrentPasswordMixin, PasswordChangeForm):
+class AccountPasswordGuidanceMixin:
+    """REG-03: the new-password guidance describes the policy of THIS account (members: 8+
+    characters with a letter and a number; staff: 10+). Validation itself is account-aware
+    in apps.accounts.password_validation, whatever form sets the password."""
+
+    def __init__(self, user, *args, **kwargs):
+        super().__init__(user, *args, **kwargs)
+        self.fields["new_password1"].help_text = password_guidance_html(user)
+
+
+class AccountSetPasswordForm(AccountPasswordGuidanceMixin, SetPasswordForm):
+    """Password reset and account activation."""
+
+
+class AccountPasswordChangeForm(AccountPasswordGuidanceMixin, CurrentPasswordMixin, PasswordChangeForm):
     def clean_old_password(self):
         return self.verify_current_password(self.user, self.cleaned_data["old_password"],
                                             operation="password_change")
@@ -289,7 +377,7 @@ class ProfileForm(CurrentPasswordMixin, forms.ModelForm):
         if phone == self.instance.phone_number:
             return phone
         if phone is None:
-            if not self.instance.email:
+            if not self.instance.email and not self.instance.username:
                 raise ValidationError(_("You sign in with this mobile number. Add an email address before removing "
                                         "it."), code="required_identifier")
             return None

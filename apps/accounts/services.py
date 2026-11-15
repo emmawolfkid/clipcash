@@ -3,6 +3,8 @@ Account lifecycle and access-control services.
 
 Lifecycle:
     REG-02: register_with_phone (mobile number + password) -> ACTIVE member, no email
+    REG-03: register_member (name + ONE of mobile number, username or email + password)
+        -> ACTIVE member; an email account is identity-ready once its address is confirmed
     Accounts created PENDING before REG-02 (or by staff) still activate through the
     emailed link: activate (owner chooses password) -> ACTIVE, email verified
     ACTIVE <-> SUSPENDED, ACTIVE/SUSPENDED/PENDING -> DISABLED,
@@ -60,7 +62,7 @@ CREATION_STATUSES = {Status.PENDING, Status.ACTIVE}
 def send_verification_email(user, request):
     """Queue the right verification email for the account's state, if any.
     Delivery happens after commit; nothing is sent if the caller rolls back."""
-    if not user.email:  # REG-02: phone-only accounts have no address to verify.
+    if not user.email:  # REG-02/REG-03: phone- and username-only accounts have no address to verify.
         return
     if user.status == Status.PENDING:
         enqueue_email(emails.ACTIVATION, recipient=user.email, user=user,
@@ -73,30 +75,59 @@ def send_verification_email(user, request):
 # --- Registration and verification ---------------------------------------------
 
 
-class DuplicatePhoneNumber(Exception):
+class DuplicateIdentifier(Exception):
+    """REG-03: the chosen sign-in identifier already belongs to an account."""
+
+    def __init__(self, method):
+        super().__init__(method)
+        self.method = method
+
+
+class DuplicatePhoneNumber(DuplicateIdentifier):
     """The mobile number already belongs to an account (in any format)."""
 
+    def __init__(self, method="phone"):
+        super().__init__(method)
 
-def register_with_phone(*, phone_number, password):
+
+# method -> the User field holding that (already normalized) identifier.
+REGISTRATION_FIELDS = {"phone": "phone_number", "email": "email", "username": "username"}
+
+
+def register_member(*, method, identifier, password, first_name="", last_name="", request=None):
     """
-    REG-02: create an ACTIVE member that signs in with ``phone_number`` (already normalized
-    to +2556/7XXXXXXXX) and ``password``. No email; phone ownership is not yet verified.
-    Raises DuplicatePhoneNumber when the number is taken, including by a concurrent
-    request (the unique constraint decides).
+    REG-03: create an ACTIVE member that signs in with ONE identifier of their choice:
+    ``method`` "phone" (a normalized +2556/7XXXXXXXX number; ownership not yet verified),
+    "username" (normalized, lowercased) or "email" (normalized). Mobile and username accounts
+    are usable at once. An email account is usable once its address is confirmed: the
+    confirmation link is queued here, in the same transaction (apps.accounts.access).
+    Raises DuplicateIdentifier (DuplicatePhoneNumber for numbers) when the identifier is
+    taken in any letter case or number format, including by a concurrent request (the
+    unique constraints decide).
     """
+    field = REGISTRATION_FIELDS[method]
+    values = {field: identifier} if method != "email" else {}
     try:
         with transaction.atomic():
-            user = User.objects.create_user(None, password, phone_number=phone_number, role=Role.MEMBER,
-                                            status=Status.ACTIVE)
-            record_business_event("account.registered", actor=user, target=user, metadata={"method": "phone"})
+            user = User.objects.create_user(identifier if method == "email" else None, password,
+                                            first_name=first_name, last_name=last_name, role=Role.MEMBER,
+                                            status=Status.ACTIVE, **values)
+            record_business_event("account.registered", actor=user, target=user, metadata={"method": method})
+            if method == "email":
+                send_verification_email(user, request)
     except (IntegrityError, ValidationError):
-        existing = User.objects.filter(phone_number=phone_number).first()
+        existing = User.objects.filter(**{field: identifier}).first()
         if existing is None:
             raise
         record_security_event("account.registration.duplicate", outcome=DENIED, actor=None, target=existing,
-                              metadata={"method": "phone"})
-        raise DuplicatePhoneNumber from None
+                              metadata={"method": method})
+        raise (DuplicatePhoneNumber() if method == "phone" else DuplicateIdentifier(method)) from None
     return user
+
+
+def register_with_phone(*, phone_number, password):
+    """REG-02 entry point, kept for existing callers: register_member() with a mobile number."""
+    return register_member(method="phone", identifier=phone_number, password=password)
 
 
 def request_verification_email(email, request):
