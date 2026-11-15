@@ -156,6 +156,8 @@ EVENT_TYPES = {
                 "recipient", "expires_at"]),
         _event("membership.manual_payment.rejected", Category.MEMBERSHIP, BUSINESS, ["reference", "reason"]),
         _event("membership.manual_payment.refused", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
+        # PRD-04: a staff member opened a member's receipt evidence (personal and financial data).
+        _event("membership.manual_payment.evidence_viewed", Category.MEMBERSHIP, BUSINESS, ["reference"]),
         _event("membership.payment_instructions.published", Category.MEMBERSHIP, BUSINESS,
                ["method", "provider_label", "business_number", "recipient_name", "replaced"]),
         _event("membership.payment_instructions.retired", Category.MEMBERSHIP, BUSINESS, ["method"]),

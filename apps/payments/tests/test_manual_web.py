@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from apps.accounts.tests.helpers import PASSWORD, make_user
 from apps.audit.models import AuditEvent
+from apps.memberships import services as memberships
 from apps.memberships.models import Subscription
 from apps.payments import manual
 from apps.payments.models import ManualMembershipPayment, ManualPaymentInstruction
@@ -134,8 +135,11 @@ class MemberJourneyTests(ManualPaymentTestCase):
         unverified = make_user("unverified@example.com", verified=False)
         self.client.force_login(unverified)
         pending_url = reverse("payments:manual_pay", args=["00000000-0000-0000-0000-000000000001"])
-        self.assertRedirects(self.client.get(pending_url), reverse("accounts:verification_required"),
-                             fetch_redirect_response=False)
+        # PRD-03A: no redirect to "Confirm your email"; without a confirmed address the member
+        # cannot choose a plan, so there is never a payable choice of theirs to open.
+        self.assertEqual(self.client.get(pending_url).status_code, 404)
+        with self.assertRaises(memberships.NotEligible):
+            memberships.choose_plan(unverified, self.plan)
 
     def test_csrf_is_enforced(self):
         pending = self.choose()

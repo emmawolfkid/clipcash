@@ -442,6 +442,12 @@ PAYMENTS_CALLBACKS_PER_MINUTE = 120
 MANUAL_MEMBERSHIP_PAYMENTS_ENABLED = env.bool("DJANGO_MANUAL_MEMBERSHIP_PAYMENTS", default=False)
 # Members: payment claims per account per hour (repeated or abusive submissions).
 MANUAL_PAYMENTS_CLAIMS_PER_HOUR = 5
+# PRD-04: optional receipt evidence for a payment claim (JPEG, PNG or PDF, recognised by content).
+# Stored PRIVATELY: never under STATIC_ROOT or MEDIA_ROOT, served only through an authorized view.
+# In production (manual payments on) it must be outside the application directory, which every
+# release replaces (check --deploy payments.E005); e.g. /home/<account>/clipcash/private/payment_evidence.
+PAYMENTS_EVIDENCE_ROOT = env("DJANGO_PAYMENTS_EVIDENCE_ROOT", default=str(BASE_DIR / "private" / "payment_evidence"))
+PAYMENTS_EVIDENCE_MAX_BYTES = 5 * 1024 * 1024
 
 # Withdrawals (apps.withdrawals). Real withdrawals are LOCKED (financial feature
 # "withdrawals" plus database triggers); these limits apply to the eligibility

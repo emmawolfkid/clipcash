@@ -29,6 +29,8 @@ MESSAGES = {
                           "confirmation link and open it. Do not pay anything until then."),
     "payment_under_review": _("A payment for your current choice is being verified. You can change plans after "
                               "it is approved or rejected."),
+    "purchase_closed": _("Membership payments are not open yet. You can look at the plans; buying opens as soon as "
+                         "ClipCash starts accepting payments. Do not send any money now."),
     # PRD-01: a mobile number cannot be verified while SMS is unavailable.
     "contact_unverified": _("Before you buy a membership, add an email address in My account and open the "
                             "confirmation link we send. Do not pay anything until then."),
@@ -39,9 +41,24 @@ def payment_context():
     from apps.payments import manual
 
     enabled = manual.manual_payments_enabled()
+    ready = enabled and manual.manual_payments_ready()
     return {"payments_available": features.is_enabled("live_payments"),
             # PAY-01: real membership payments via Airtel Lipa, verified by staff.
-            "manual_payments": enabled, "manual_payments_ready": enabled and manual.manual_payments_ready()}
+            "manual_payments": enabled, "manual_payments_ready": ready,
+            "purchase_open": purchase_open(ready)}
+
+
+def purchase_open(manual_ready=None):
+    """PRD-04: may members choose (buy or renew) a plan? Only when a way to pay exists: approved manual
+    payments with published payment details (DJANGO_MANUAL_MEMBERSHIP_PAYMENTS on, not a restricted
+    demo, no sandbox), or the sandbox simulation of an isolated test deployment. Otherwise plans can
+    be browsed but not chosen, so nobody is left with a choice they cannot pay for."""
+    from apps.payments import manual
+    from apps.payments.providers import sandbox_active
+
+    if manual_ready is None:
+        manual_ready = manual.manual_payments_enabled() and manual.manual_payments_ready()
+    return bool(manual_ready or sandbox_active())
 
 
 def manual_payment_state(subscription):
@@ -91,6 +108,9 @@ class ChoosePlanView(VerifiedAccountRequiredMixin, View):
 
     def post(self, request, code):
         plan = get_object_or_404(MembershipPlan, code=code, status=MembershipPlan.Status.ACTIVE, is_public=True)
+        if not purchase_open():  # PRD-04: no choice is recorded while no way to pay is open.
+            messages.error(request, MESSAGES["purchase_closed"])
+            return redirect("memberships:plan_detail", code=plan.code)
         try:
             subscription = services.choose_plan(request.user, plan)
         except services.MembershipError as error:

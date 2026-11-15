@@ -69,21 +69,21 @@ class EndToEndAcceptanceTests(ManualPaymentTestCase):
         self.client.logout()
 
         # --- Registration, activation, login, logout, password reset -----------------------------
-        # PRD-01: email sign-up, activated by the emailed link (phone sign-up and its
-        # restrictions are covered by apps.accounts.tests.test_prd01_email_first).
+        # PRD-03A: email sign-up is signed in at once; nothing is emailed. Paying needs a confirmed
+        # address, which the member asks for (phone/username sign-ups: test_prd01_email_first).
         mail.outbox.clear()
         self.assertRedirects(self.client.post(reverse("accounts:register"), {
             "first_name": "Amina", "last_name": "Juma", "contact_method": "email", "email": "amina@example.com",
-            "password1": NEW_PASSWORD, "password2": NEW_PASSWORD}), reverse("accounts:register_done"))
+            "password1": NEW_PASSWORD, "password2": NEW_PASSWORD}), reverse("dashboard"), fetch_redirect_response=False)
         member = User.objects.get(email="amina@example.com")
-        self.assertEqual(member.status, User.Status.PENDING)
-        login = {"username": "amina@example.com", "password": NEW_PASSWORD}
-        self.assertEqual(self.client.post(reverse("accounts:login"), login).status_code, 200)  # Not before the link.
+        self.assertEqual((member.status, member.email_verified), (User.Status.ACTIVE, False))
+        self.assertEqual(mail.outbox, [])
+        self.client.post(reverse("accounts:resend_verification"))
         link = next(word for message in mail.outbox for word in message.body.split() if "/accounts/confirm-email/" in word)
         self.client.post("/" + link.split("://", 1)[1].split("/", 1)[1])
         member.refresh_from_db()
         self.assertEqual((member.status, member.email_verified), (User.Status.ACTIVE, True))
-        self.assertEqual(self.client.post(reverse("accounts:login"), login).status_code, 302)
+        login = {"username": "amina@example.com", "password": NEW_PASSWORD}
         self.client.post(reverse("accounts:logout"))
         self.assertEqual(self.client.get(reverse("dashboard")).status_code, 302)  # Signed out.
         self.assertEqual(self.client.post(reverse("accounts:login"), login).status_code, 302)

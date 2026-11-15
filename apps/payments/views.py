@@ -8,6 +8,7 @@ cannot simulate, approve or activate anything.
 
 import uuid
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import Http404, JsonResponse
@@ -203,6 +204,10 @@ class ManualPayView(VerifiedAccountRequiredMixin, View):
                 pass
         if quote is not None and not form.is_bound:
             form.initial["quote"] = quote.pk
+        if quote is not None and quote.instruction.is_bank:  # PRD-04: a bank transfer has no paying phone.
+            form.fields["payer_phone"].label = _("Your phone number")
+            form.fields["payer_phone"].help_text = _("So our team can contact you about this bank transfer. The "
+                                                     "transfer itself is checked in the bank's records.")
         if not form.is_bound and request.user.phone_number:
             # REG-03: a convenience only. Every current method is mobile money, so the number paid
             # from is asked here, at checkout; accounts without a number (username or email only)
@@ -242,7 +247,16 @@ class ManualPayView(VerifiedAccountRequiredMixin, View):
                 return redirect("payments:manual_pay", subscription_id=subscription.pk)
             from django.urls import reverse
             return redirect(reverse("payments:manual_pay", args=[subscription.pk]) + "?quote=" + str(quote.pk))
-        form = ManualPaymentForm(request.POST)
+        # PRD-04: refuse an oversized upload before reading it (the form fields are small; 64 KB margin).
+        try:
+            declared = int(request.META.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            declared = 0
+        if declared > settings.PAYMENTS_EVIDENCE_MAX_BYTES + 64 * 1024:
+            messages.error(request, _("The receipt is too large. The limit is %(mb)s MB. Nothing was submitted.")
+                           % {"mb": max(1, settings.PAYMENTS_EVIDENCE_MAX_BYTES // (1024 * 1024))})
+            return self._render(request, subscription, ManualPaymentForm(), status=413)
+        form = ManualPaymentForm(request.POST, request.FILES)
         quote = self._quote(request, subscription)
         if not manual.manual_payments_enabled() or (quote is None and not manual.manual_payments_ready()):  # Disabled or no Lipa details: nothing is recorded.
             return self._render(request, subscription, form, status=503)
@@ -299,6 +313,36 @@ class ManualClaimView(VerifiedAccountRequiredMixin, ManualPaymentsRequiredMixin,
         except manual.ManualPaymentError:
             messages.error(request, _("These payment details can no longer be withdrawn."))
         return redirect("payments:manual_claim", pk=claim.pk)
+
+
+class ManualEvidenceView(VerifiedAccountRequiredMixin, View):
+    """PRD-04: download a claim's receipt evidence. Only the claim's own member and staff who may
+    view manual payments; anyone else gets 404 (the claim's existence is not revealed). Always a
+    download with a fixed name and type, never rendered inline by the site, never cached. Staff
+    downloads are audited."""
+
+    def get(self, request, pk):
+        from django.http import FileResponse
+
+        from apps.audit.services import record_business_event
+
+        claim = ManualMembershipPayment.objects.select_related("evidence").filter(pk=pk).first()
+        evidence = getattr(claim, "evidence", None) if claim is not None else None
+        if evidence is None or not manual.can_download_evidence(request.user, claim):
+            raise Http404
+        if claim.member_id != request.user.pk:
+            record_business_event("membership.manual_payment.evidence_viewed", actor=request.user, target=claim,
+                                  metadata={"reference": claim.reference})
+        try:
+            handle = manual.payment_evidence.open_file(evidence)
+        except OSError:
+            raise Http404 from None
+        response = FileResponse(handle, as_attachment=True, content_type=evidence.content_type,
+                                filename=f"payment-evidence-{claim.reference}.{evidence.extension}")
+        response["X-Content-Type-Options"] = "nosniff"
+        response["Cache-Control"] = "private, no-store"
+        response["Content-Security-Policy"] = "sandbox; default-src 'none'"
+        return response
 
 
 def _form_errors(form, error):

@@ -496,6 +496,12 @@ class ManualPaymentInstruction(BaseModel):
     def __str__(self):
         return f"{self.provider_label} {self.business_number} ({self.recipient_name})"
 
+    @property
+    def is_bank(self):
+        """PRD-04: a bank-transfer channel (code BANK...): the receiving number is an account number and
+        the member's phone is a contact number, not the paying account."""
+        return self.method.startswith("BANK")
+
 
 class ManualPaymentQuote(BaseModel):
     """Issued instructions: immutable instruction version and subscription price."""
@@ -627,3 +633,42 @@ class ManualMembershipPayment(BaseModel):
     @property
     def is_pending(self):
         return self.status == self.Status.PENDING_VERIFICATION
+
+
+EVIDENCE_TYPES = {"image/jpeg": "jpg", "image/png": "png", "application/pdf": "pdf"}
+
+
+class ManualPaymentEvidence(BaseModel):
+    """PRD-04: an optional receipt the member attached to their claim (a screenshot or PDF of
+    the provider's confirmation). Supporting material for the reviewer, NEVER proof of payment:
+    approval still needs the transaction found in the official provider records.
+
+    The file lives in private storage (settings.PAYMENTS_EVIDENCE_ROOT) under a random name and is
+    served only to the member and authorized payment staff. The row is immutable and cannot be
+    deleted (database guards, migration 0008); it can only be added while the claim is pending,
+    by the claim's own member."""
+
+    claim = models.OneToOneField(ManualMembershipPayment, on_delete=models.PROTECT, related_name="evidence")
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    storage_name = models.CharField(_("stored file"), max_length=100, unique=True, editable=False)
+    content_type = models.CharField(_("file type"), max_length=20,
+                                    choices=[(key, key) for key in EVIDENCE_TYPES])
+    size = models.PositiveIntegerField(_("size (bytes)"))
+    sha256 = models.CharField(_("SHA-256"), max_length=64, db_index=True)
+
+    class Meta:
+        verbose_name = _("manual payment evidence")
+        constraints = [
+            models.CheckConstraint(condition=Q(content_type__in=list(EVIDENCE_TYPES)), name="manual_evidence_type"),
+            models.CheckConstraint(condition=Q(size__gt=0), name="manual_evidence_size"),
+            models.CheckConstraint(condition=Q(sha256__regex=r"^[0-9a-f]{64}$"), name="manual_evidence_sha256"),
+            models.CheckConstraint(condition=Q(storage_name__regex=r"^[0-9a-f]{32}/[0-9a-f]{32}\.(jpg|png|pdf)$"),
+                                   name="manual_evidence_storage_name"),
+        ]
+
+    def __str__(self):
+        return f"{self.claim_id} {self.content_type}"
+
+    @property
+    def extension(self):
+        return EVIDENCE_TYPES[self.content_type]

@@ -12,6 +12,8 @@
 {% include "components/membership_payment_notice.html" %}
 {% if demo_unconfirmed_account %}
 {% include "components/demo_unconfirmed_notice.html" %}
+{% elif not purchase_open %}
+<p class="notice" role="status">{% translate "Membership payments are not open yet. You can look at the plans; buying opens as soon as ClipCash starts accepting payments. Do not send any money now." %}</p>
 {% elif user.is_authenticated and not user.has_verified_contact and user.role == "MEMBER" %}
 {% include "components/contact_verification_notice.html" %}
 {% elif user.is_authenticated %}

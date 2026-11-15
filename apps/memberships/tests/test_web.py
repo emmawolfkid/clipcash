@@ -1,3 +1,5 @@
+from unittest import mock
+
 from django.contrib.auth.models import Permission
 from django.test import Client
 from django.urls import reverse
@@ -33,7 +35,10 @@ class MemberPagesTests(MembershipTestCase):
             with self.subTest(url=url):
                 self.assertEqual(self.client.get(url).status_code, 404)
 
-    def test_choosing_requires_verified_sign_in_and_post(self):
+    # PRD-04: these tests are about the choice itself; the purchase gate is tested in
+    # apps.payments.tests.test_prd04_manual_workflow.PurchaseGateTests.
+    @mock.patch("apps.memberships.views.purchase_open", return_value=True)
+    def test_choosing_requires_verified_sign_in_and_post(self, _open):
         choose = reverse("memberships:choose", args=["monthly"])
         self.assertEqual(self.client.post(choose).status_code, 302)  # To login.
         self.assertFalse(Subscription.objects.exists())
@@ -161,7 +166,8 @@ class MembershipAdminTests(MembershipTestCase):
 
 
 class SignInFlowTests(MembershipTestCase):
-    def test_signed_in_member_reaches_plans_and_membership_pages(self):
+    @mock.patch("apps.memberships.views.purchase_open", return_value=True)
+    def test_signed_in_member_reaches_plans_and_membership_pages(self, _open):
         self.client.post(reverse("accounts:login"), {"username": "member@example.com", "password": PASSWORD})
         self.assertContains(self.client.get(reverse("memberships:plan_detail", args=["monthly"])), "Choose this plan")
         self.assertEqual(self.client.get(MINE).status_code, 200)

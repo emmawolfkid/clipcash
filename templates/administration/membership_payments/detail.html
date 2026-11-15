@@ -9,9 +9,10 @@
   <dt>{% translate "Plan" %}</dt><dd>{{ claim.plan_name }} ({{ subscription.get_status_display }})</dd>
   <dt>{% translate "Amount due" %}</dt><dd><strong class="financial-amount">{{ claim.amount|tzs }}</strong></dd>
   <dt>{% translate "Transaction reference" %}</dt><dd><code>{{ claim.transaction_reference }}</code></dd>
-  <dt>{% translate "Paid from" %}</dt><dd>{{ claim.payer_phone }}</dd>
+  <dt>{% if claim.instruction.is_bank %}{% translate "Contact phone" %}{% else %}{% translate "Paid from" %}{% endif %}</dt><dd>{{ claim.payer_phone }}</dd>
   <dt>{% translate "Payment date (stated)" %}</dt><dd>{{ claim.paid_on|date:"DATE_FORMAT"|default:"—" }}</dd>
   <dt>{% translate "Paid to (shown to member)" %}</dt><dd>{{ claim.instruction.provider_label }} {{ claim.instruction.business_number }} · {{ claim.instruction.recipient_name }}</dd>
+  <dt>{% translate "Receipt (member's evidence, not proof)" %}</dt><dd>{% if evidence %}<a href="{% url 'payments:manual_evidence' claim.pk %}">{% translate "Download" %}</a> · {{ evidence.get_content_type_display }} · {{ evidence.size|filesizeformat }} · <code class="audit-code">{{ evidence.sha256|truncatechars:13 }}</code>{% else %}{% translate "None attached" %}{% endif %}</dd>
   <dt>{% translate "Submitted" %}</dt><dd>{{ claim.created_at|date:"DATETIME_FORMAT" }}</dd>
   {% if claim.reviewed_at %}<dt>{% translate "Reviewed" %}</dt><dd>{{ claim.reviewed_at|date:"DATETIME_FORMAT" }} · {{ claim.reviewed_by.email }}</dd>{% endif %}
   {% if claim.rejection_reason %}<dt>{% translate "Rejection reason" %}</dt><dd>{{ claim.get_rejection_reason_display }}</dd>{% endif %}
@@ -23,6 +24,8 @@
   {% if same_reference %}<p class="notice notice--warning" role="status">{% translate "The same transaction reference appears in other submissions:" %}</p>
   <ul class="list">{% for other in same_reference %}<li class="list__item"><span><a href="{% url 'administration:membership_payment' other.pk %}">{{ other.reference }}</a> · {{ other.member.sign_in_identifier }}</span><span class="badge badge--{{ other.status|lower }}">{{ other.get_status_display }}</span></li>{% endfor %}</ul>
   {% else %}<p>{% translate "No other submission uses this transaction reference." %}</p>{% endif %}
+  {% if evidence_duplicates %}<p class="notice notice--warning" role="status">{% translate "The same receipt file was attached to other submissions. A reused screenshot is a warning sign: check the provider records carefully." %}</p>
+  <ul class="list">{% for other in evidence_duplicates %}<li class="list__item"><span><a href="{% url 'administration:membership_payment' other.claim.pk %}">{{ other.claim.reference }}</a></span><span class="badge badge--{{ other.claim.status|lower }}">{{ other.claim.get_status_display }}</span></li>{% endfor %}</ul>{% endif %}
   {% if member_claims %}<h3>{% translate "This member's other submissions" %}</h3>
   <ul class="list">{% for other in member_claims %}<li class="list__item"><span><a href="{% url 'administration:membership_payment' other.pk %}">{{ other.reference }}</a> · {{ other.created_at|date:"SHORT_DATE_FORMAT" }}</span><span class="badge badge--{{ other.status|lower }}">{{ other.get_status_display }}</span></li>{% endfor %}</ul>{% endif %}
 </section>

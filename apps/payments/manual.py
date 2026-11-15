@@ -34,6 +34,7 @@ from apps.memberships.models import MembershipPlan, Subscription
 from apps.wallets import services as ledger
 from apps.wallets.exceptions import LedgerError
 
+from . import evidence as payment_evidence
 from .models import MANUAL_METHOD_AIRTEL_LIPA, MANUAL_OPEN_OR_FINAL
 from .models import ManualMembershipPayment as Claim
 from .models import ManualPaymentInstruction as Instruction
@@ -228,12 +229,17 @@ def open_claim(subscription):
     return subscription.manual_payments.filter(status=C.PENDING_VERIFICATION).first()
 
 
-def submit_claim(member, subscription, *, amount, payer_phone, transaction_reference, paid_on=None, quote=None):
+def submit_claim(member, subscription, *, amount, payer_phone, transaction_reference, paid_on=None, quote=None,
+                 evidence=None):
     """Record the member's statement that they paid. Returns (claim, created).
 
+    PRD-04: ``evidence`` is an optional uploaded receipt (JPEG, PNG or PDF, checked by content and
+    size by apps.payments.evidence). It is stored privately and attached to the NEW claim only;
+    it is never proof of payment.
+
     Repeating the same submission (double click, retried request) returns the open
-    claim unchanged. Raises ValidationError (field errors for the form), NotAuthorized,
-    Unavailable, InvalidState or RateLimited."""
+    claim unchanged (any new evidence is ignored). Raises ValidationError (field errors for the
+    form), NotAuthorized, Unavailable, InvalidState or RateLimited."""
     try:
         if not manual_payments_enabled():
             raise Unavailable("Manual membership payments are not available.")
@@ -247,6 +253,7 @@ def submit_claim(member, subscription, *, amount, payer_phone, transaction_refer
         amount = normalize_amount(amount)
         payer_phone = _normalize_phone(payer_phone)
         reference_text, reference_key = normalize_reference(transaction_reference)
+        evidence_info = payment_evidence.inspect(evidence) if evidence else None  # Before any lock is taken.
         now = timezone.now()
         with transaction.atomic():
             member = memberships._lock_member(member)  # Same lock order as every membership change.
@@ -309,6 +316,8 @@ def submit_claim(member, subscription, *, amount, payer_phone, transaction_refer
                       "membership starts after our team confirms the payment in the provider business records.")
                     % {"plan": claim.plan_name, "amount": format_tzs(amount), "ref": claim.transaction_reference},
                     email=True)
+            if evidence_info is not None:
+                _attach_evidence(claim, member, evidence, *evidence_info)
             return claim, True
     except ValidationError as error:
         codes = {e.code for e in error.error_list} if not hasattr(error, "error_dict") else {
@@ -319,6 +328,38 @@ def submit_claim(member, subscription, *, amount, payer_phone, transaction_refer
     except ManualPaymentError as error:
         _refuse("submit", member, error, subscription)
         raise
+
+
+def _attach_evidence(claim, member, upload, content_type, size, sha256):
+    """Store the file privately, then record it, inside the claim's transaction (the last step,
+    so nothing after it can roll the row back and orphan the file). If recording fails, the
+    stored file is removed and the whole submission rolls back."""
+    from .models import ManualPaymentEvidence
+
+    stored = payment_evidence.save(claim, upload, content_type)
+    try:
+        with transaction.atomic():
+            ManualPaymentEvidence.objects.create(claim=claim, uploaded_by=member, storage_name=stored,
+                                                 content_type=content_type, size=size, sha256=sha256)
+    except BaseException:
+        payment_evidence.delete_quietly(stored)
+        raise
+
+
+def can_download_evidence(user, claim):
+    """PRD-04: the claim's own member, or staff who may view manual payments."""
+    if not getattr(user, "is_authenticated", False):
+        return False
+    return claim.member_id == user.pk or can_view(user)
+
+
+def evidence_duplicates(evidence):
+    """Other claims with byte-identical evidence (a reused screenshot is a fraud signal for the
+    reviewer; it is not refused, because evidence is never proof either way)."""
+    from .models import ManualPaymentEvidence
+
+    return (ManualPaymentEvidence.objects.filter(sha256=evidence.sha256).exclude(pk=evidence.pk)
+            .select_related("claim"))
 
 
 def cancel_claim(member, claim):

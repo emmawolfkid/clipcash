@@ -56,3 +56,6 @@ Thumbs.db
 *.tmp
 *.bak
 *.swp
+
+# PRD-04: private payment evidence (member uploads); never committed, never web-served
+private/
