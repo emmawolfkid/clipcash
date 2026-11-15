@@ -196,10 +196,11 @@ def member_activity(user, limit=ACTIVITY_LIMIT):
     for demo in DemoWithdrawal.objects.filter(member=user).order_by("-updated_at")[:limit]:
         items.append(Activity(demo.updated_at, "withdrawal", f"{demo.reference}: {demo.get_status_display()}",
                               reverse("withdrawals:demo", args=[demo.pk]), simulated=True))
+    # PRD-03B: every sign-up method gets the same entry (email, mobile number or username).
     if user.email_verified:
         items.append(Activity(user.date_joined, "account", "Account created and email confirmed"))
-    elif user.phone_number:
-        items.append(Activity(user.date_joined, "account", "Account created with your mobile number"))
+    else:
+        items.append(Activity(user.date_joined, "account", "Account created"))
     items = [item for item in items if item.when]
     items.sort(key=lambda item: item.when, reverse=True)
     return items[:limit]

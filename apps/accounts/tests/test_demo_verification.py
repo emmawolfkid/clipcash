@@ -71,7 +71,7 @@ class ApprovedDemoAccountTests(DemoTestCase):
 
     def test_verification_flow_still_available(self):
         self.client.force_login(self.demo)
-        self.assertRedirects(self.client.get(VERIFY), PROFILE)  # PRD-03A: members are not held there.
+        self.assertRedirects(self.client.get(VERIFY), DASHBOARD)  # PRD-03A/03B: members are not held there.
         self.assertRedirects(self.client.post(reverse("accounts:resend_verification")), PROFILE)
 
     def test_notice_shown(self):  # Task 4

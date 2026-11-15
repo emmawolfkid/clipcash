@@ -1,5 +1,11 @@
 # PRD-01: email-first authentication
 
+> **Partly superseded by [PRD-03A](prd_03a_no_mandatory_verification.md):** sign-up (email, mobile number or
+> username) is now ACTIVE and signed in at once, with no confirmation email; unconfirmed members use member pages.
+> Still valid here: payment needs a confirmed address, phone numbers are never verified (no SMS), production SMTP,
+> cron and the email acceptance checklist below (use a password reset and an on-request confirmation instead of the
+> sign-up email in steps 4–5).
+
 Local and uncommitted on `port/mariadb-schema` (base `038267a`), adapting the uncommitted REG-04 work.
 A copy of REG-04 as found is kept outside the repository in `ClipCash-releases/reg04-backup-2026-11-15/`.
 Owner decision (15 Nov 2026): email delivery only; SMS is postponed. Test records are fictional.

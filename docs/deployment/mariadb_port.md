@@ -1,7 +1,10 @@
 # DB-01: porting ClipCash to MariaDB 10.11 (NetPoa)
 
 For the owner and the developers doing the port. Branch `port/mariadb-schema`, based on `aed1585`.
-Status: **schema, ledger, guard triggers and application SQL ported; operations pending (section 5). Not deployable.**
+Status: **schema, ledger, guard triggers and application SQL ported; PRD-00B added MariaDB backup/restore scripts
+(`scripts/database/mariadb/`), drilled locally, and the NetPoa runbook ([netpoa_mariadb_runbook.md](netpoa_mariadb_runbook.md)).
+Not deployable until the server facts in that runbook's §1 are verified on NetPoa.** MariaDB TLS stays refused (local
+socket/localhost only). MariaDB is the owner's chosen production database (15 Nov 2026).
 PostgreSQL stays the default and is unchanged: `DB_ENGINE` defaults to `postgresql`.
 
 ## 1. Running on MariaDB
@@ -44,7 +47,7 @@ Only the migration login may create triggers; the runtime login must not (§4a).
 | `LOCK TABLE ... IN SHARE ROW EXCLUSIVE MODE` | `provision_staff_permissions` | **Done**: transaction mutex shared with permission-link write triggers |
 | `pg_roles`, `pg_tables`, `pg_proc`, `has_table_privilege`, `pg_trigger`, `pg_constraint` | `administration/summary.py`, `demo_readiness` | **Done**: information_schema, SHOW GRANTS and a definer guard-inventory view |
 | `DJANGO_DB_SSLMODE`, `DATABASE_URL` | settings | PostgreSQL only; MariaDB TLS refused for now (**pending**) |
-| `scripts/database/*.sql`, `backup.sh`, `restore_check.sh`, `scripts/database/roles`, `cpanel` | scripts | **Pending** (PostgreSQL tools: `psql`, `pg_dump`, roles) |
+| `scripts/database/*.sql`, `backup.sh`, `restore_check.sh`, `scripts/database/roles`, `cpanel` | scripts | PostgreSQL only. **MariaDB: `scripts/database/mariadb/backup.sh` and `restore_check.sh` (PRD-00B)**; logins via cPanel + `check_mariadb_logins` |
 | Tests using `pg_*` catalogs, `pg_temp`, `SET CONSTRAINTS`, PostgreSQL-gated concurrency suites | `apps/*/tests` | Phase 1 adds `apps/core/tests/test_mariadb_port.py`; the rest are pending |
 
 ## 3. Guard triggers
@@ -160,7 +163,7 @@ case-only or trailing-space edit is still a change.
 
 1. Application SQL completed: complimentary retry-key mutexes; provisioning write mutex; health/readiness catalogs.
 2. Full-suite verification and runtime-login checks are recorded below. PostgreSQL-specific mechanisms stay gated.
-3. Operations: backups (`mariadb-dump`), restore drill, the two logins on NetPoa (§4a), TLS.
+3. Operations: backups and restore drill **done locally (PRD-00B)**; the two logins and every server fact on NetPoa still to verify (netpoa_mariadb_runbook.md §1); TLS not needed for a local socket.
 4. Data transfer (§6) and cutover rehearsal.
 
 ## 6. Application data to transfer later

@@ -3,9 +3,9 @@
   "use strict";
   var shell = document.querySelector(".auth-shell");
   if (!shell) { return; }
-  // REG-04 registration: show only the box for the chosen contact (email or mobile number).
-  // Without JavaScript both stay visible; the server uses only the chosen one either way.
-  var identifierFields = { email: "id_email", phone: "id_phone_number" };
+  // PRD-03A registration: show only the box for the chosen identifier (email, mobile number or
+  // username). Without JavaScript all stay visible; the server uses only the chosen one either way.
+  var identifierFields = { email: "id_email", phone: "id_phone_number", username: "id_username" };
   var methodInputs = shell.querySelectorAll('input[name="contact_method"]');
   function syncIdentifierFields() {
     var chosen = shell.querySelector('input[name="contact_method"]:checked');

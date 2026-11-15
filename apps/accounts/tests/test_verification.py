@@ -125,11 +125,11 @@ class VerificationRequiredTests(AccountsTestCase):
         page = self.client.get(PROFILE_URL)
         self.assertEqual(page.status_code, 200)
         self.assertContains(page, "Send confirmation link")
-        self.assertRedirects(self.client.get(REQUIRED_URL), PROFILE_URL)
+        self.assertRedirects(self.client.get(REQUIRED_URL), reverse("dashboard"))  # PRD-03B
 
     def test_verified_user_skips_page(self):
         self.client.force_login(make_user())
-        self.assertRedirects(self.client.get(REQUIRED_URL), PROFILE_URL)
+        self.assertRedirects(self.client.get(REQUIRED_URL), reverse("dashboard"))  # PRD-03B
 
     def test_anonymous_redirected_to_login(self):
         self.assertRedirects(

@@ -129,6 +129,24 @@ class TeamTests(AdvertisingTestCase):
         event = AuditEvent.objects.get(action="advertiser.member.invited")
         self.assertNotIn("teammate", str(event.metadata) + event.target_repr)  # Invitee address not audited.
 
+    def test_only_a_confirmed_address_can_claim_an_invitation(self):
+        """PRD-03A: sign-up no longer confirms addresses, so an account that merely typed the invited
+        address (here a username account with an unconfirmed email) neither sees, accepts nor hears
+        about the invitation until it confirms that address."""
+        from apps.notifications.models import Notification
+
+        squatter = User.objects.create_user("invitee@brand.example", "Correct-Horse-Battery-9", username="squatter",
+                                            status=User.Status.ACTIVE)
+        services.invite_member(self.owner, self.org, "invitee@brand.example")
+        invitation = AdvertiserInvitation.objects.get(email="invitee@brand.example")
+        self.assertFalse(services.pending_invitations_for(squatter).exists())
+        with self.assertRaises(services.NotFound):
+            services.accept_invitation(squatter, invitation.pk)
+        self.assertFalse(Notification.objects.filter(recipient=squatter, kind="advertiser.invitation").exists())
+        User.objects.filter(pk=squatter.pk).update(email_verified=True)
+        owner_of_inbox = User.objects.get(pk=squatter.pk)
+        self.assertEqual(services.pending_invitations_for(owner_of_inbox).get().pk, invitation.pk)
+
     def test_expired_and_staff_invitations(self):
         services.invite_member(self.owner, self.org, self.manager.email)
         invitation = AdvertiserInvitation.objects.get(email=self.manager.email)

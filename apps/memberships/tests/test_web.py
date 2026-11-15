@@ -38,7 +38,10 @@ class MemberPagesTests(MembershipTestCase):
         self.assertEqual(self.client.post(choose).status_code, 302)  # To login.
         self.assertFalse(Subscription.objects.exists())
         self.client.force_login(make_user("unverified@example.com", verified=False))
-        self.assertRedirects(self.client.post(choose), reverse("accounts:verification_required"))
+        # PRD-03A: the member reaches plans, but a choice (a payment) needs a confirmed address.
+        refused = self.client.post(choose, follow=True)
+        self.assertContains(refused, "confirm your email address")
+        self.assertFalse(Subscription.objects.exists())
         self.client.force_login(self.member)
         self.assertEqual(self.client.get(choose).status_code, 405)
         self.assertRedirects(self.client.post(choose), MINE)

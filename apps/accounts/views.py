@@ -323,12 +323,17 @@ class ResendVerificationDoneView(TemplateView):
     template_name = "accounts/resend_verification_done.html"
 
 
+@method_decorator(never_cache, name="dispatch")
 class VerificationRequiredView(LoginRequiredMixin, TemplateView):
+    """PRD-03A/03B: only staff without a confirmed address (or mobile number) are held here.
+    Everyone who may use the site (every member) is sent straight to the dashboard, so an old
+    bookmark, a stale ?next= or a cached link to this URL can never trap them. Never cached."""
+
     template_name = "accounts/verification_required.html"
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and account_ready(request.user):  # PRD-03A: staff only reach it.
-            return redirect("accounts:profile")
+        if request.user.is_authenticated and account_ready(request.user):
+            return redirect("dashboard")
         return super().dispatch(request, *args, **kwargs)
 
 

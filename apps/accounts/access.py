@@ -7,6 +7,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
+from django.utils.cache import add_never_cache_headers
 from django.utils.translation import gettext_lazy as _
 
 
@@ -102,7 +103,11 @@ def _deny_or_redirect(request, *, require_verified_email, roles=None):
         return redirect_to_login(request.get_full_path())
     # PRD-03A: members are never sent to "Confirm your email" to use the site; staff still are.
     if require_verified_email and not account_ready(user) and not email_verification_waived(user):
-        return redirect("accounts:verification_required")
+        # PRD-03B: this decision depends on the account's current state, so no browser or proxy may
+        # keep the redirect: once the rule or the account changes, the next request decides afresh.
+        response = redirect("accounts:verification_required")
+        add_never_cache_headers(response)
+        return response
     if roles is not None and user.role not in roles:
         raise PermissionDenied
     return None
