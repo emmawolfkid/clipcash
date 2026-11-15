@@ -2,12 +2,14 @@
 Account lifecycle and access-control services.
 
 Lifecycle:
-    PRD-01: register_member (name + password + ONE of email or Tanzanian mobile number)
-        email -> PENDING; the emailed link (confirm_email) -> ACTIVE, email verified
-        phone -> ACTIVE at once, number unverified (no SMS in this phase)
+    PRD-03A: register_member (name + password + ONE of email, Tanzanian mobile number or
+        username) -> ACTIVE at once, identifier unconfirmed, no email sent
+    Confirming an email address is optional and on request (confirm_email), or happens when a
+    password reset is completed from that address (confirm_email_by_reset).
     REG-02: register_with_phone (mobile number + password) -> ACTIVE member, no email
-    Accounts created PENDING before PRD-01 (or by staff) still activate through the
-    emailed link: activate (owner chooses password) -> ACTIVE, email verified
+    Email sign-ups left PENDING by PRD-01 still activate through their link (confirm_email).
+    Accounts created PENDING by staff still activate through the emailed link:
+    activate (owner chooses password) -> ACTIVE, email verified
     ACTIVE <-> SUSPENDED, ACTIVE/SUSPENDED/PENDING -> DISABLED,
     DISABLED -> ACTIVE (Super Administrators only). Nothing returns to PENDING.
 
@@ -97,72 +99,53 @@ class DuplicatePhoneNumber(DuplicateIdentifier):
 
 # method -> the User field holding that (already normalized) identifier.
 REGISTRATION_FIELDS = {"phone": "phone_number", "email": "email", "username": "username"}
-CONTACT_METHODS = ("email", "phone")
+CONTACT_METHODS = ("email", "phone", "username")
 
 
 def is_awaiting_email_confirmation(user):
-    """PRD-01: an email sign-up whose address is not confirmed yet. It cannot sign in (only
-    ACTIVE accounts can) and becomes ACTIVE only through the emailed link."""
+    """PRD-01 legacy: an email sign-up made while PRD-01 required confirmation (PENDING until its
+    link is opened). PRD-03A creates no new ones; existing ones still activate through the link."""
     return bool(user.status == Status.PENDING and user.email_ownership_required and user.email
                 and not user.email_verified)
 
 
 def register_member(*, contact_method, contact, password, first_name, last_name, request=None):
     """
-    PRD-01: create ONE member from the public sign-up form: a first and last name, a password
-    and the sign-in identifier the member chose, ``contact_method`` "email" (a normalized
-    address) or "phone" (a normalized +2556/7XXXXXXXX number). No username.
+    PRD-03A: create ONE ACTIVE member from the public sign-up form: a first and last name, a
+    password and the sign-in identifier the member chose, ``contact_method`` "email" (a
+    normalized address), "phone" (a normalized +2556/7XXXXXXXX number) or "username" (a
+    validated, lowercased username). The member can sign in at once.
 
-    * Email: the account is created PENDING with its password, and the confirmation link is
-      queued in the same transaction. Opening the link confirms the address and activates
-      the account (confirm_email); until then it cannot sign in or reset a password. Returns
-      the new account, or None when the address already belongs to an account: nothing is
-      created, the address's owner is emailed instead (a fresh link if that account is still
-      awaiting confirmation, otherwise an "already registered" notice), and the caller shows
-      the same page either way, so the form does not reveal which addresses are registered.
-    * Phone: the account is ACTIVE at once and signs in with the number, which stays
-      unverified (no SMS in this phase). It cannot start a paid membership or recover a
-      password until the member adds and confirms an email address. A number already in
-      use raises DuplicatePhoneNumber (instant sign-up cannot hide it; attempts are
-      rate-limited by the view).
+    * No email is sent: nothing has to be confirmed to use the account. The identifier is
+      stored unconfirmed (``email_verified`` / ``phone_verified`` stay False). An email
+      sign-up may still confirm its address later, on request, from the account page.
+    * ``email_ownership_required`` is set, so an unconfirmed address never signs in or
+      recovers an account that also has another identifier (User.email_signs_in,
+      User.email_recovers_account).
 
-    The unique constraints decide duplicates, including concurrent requests, in any letter
-    case or number format.
+    Raises DuplicateIdentifier (DuplicatePhoneNumber for numbers) naming the identifier already
+    in use, in any letter case or number format, including by a concurrent request (the unique
+    constraints decide). Instant sign-up cannot hide that an identifier is taken; the view
+    rate-limits attempts.
     """
     if contact_method not in CONTACT_METHODS:
         raise ValueError(f"Unknown contact method {contact_method!r}.")
-    by_email = contact_method == "email"
     field = REGISTRATION_FIELDS[contact_method]
+    values = {} if contact_method == "email" else {field: contact}
     try:
         with transaction.atomic():
             user = User.objects.create_user(
-                contact if by_email else None, password, first_name=first_name, last_name=last_name,
-                role=Role.MEMBER, status=Status.PENDING if by_email else Status.ACTIVE,
-                email_ownership_required=True, **({} if by_email else {"phone_number": contact}))
+                contact if contact_method == "email" else None, password, first_name=first_name, last_name=last_name,
+                role=Role.MEMBER, status=Status.ACTIVE, email_ownership_required=True, **values)
             record_business_event("account.registered", actor=user, target=user, metadata={"method": contact_method})
-            if by_email:
-                send_verification_email(user, request)
     except (IntegrityError, ValidationError):
         existing = User.objects.filter(**{field: contact}).first()
         if existing is None:
             raise
         record_security_event("account.registration.duplicate", outcome=DENIED, actor=None, target=existing,
                               metadata={"method": contact_method})
-        if not by_email:
-            raise DuplicatePhoneNumber from None
-        _email_existing_owner(existing, request)
-        return None
+        raise (DuplicatePhoneNumber() if contact_method == "phone" else DuplicateIdentifier(contact_method)) from None
     return user
-
-
-def _email_existing_owner(existing, request):
-    """Someone signed up with an address that already has an account: tell its inbox, never
-    the visitor. Suspended or disabled accounts get nothing (the builders skip them)."""
-    if is_awaiting_email_confirmation(existing):
-        send_verification_email(existing, request)
-    elif existing.status == Status.ACTIVE:
-        enqueue_email(emails.ALREADY_REGISTERED, recipient=existing.email, user=existing,
-                      context={"base_url": base_url(request)})
 
 
 def register_with_phone(*, phone_number, password):
@@ -181,6 +164,20 @@ def register_with_phone(*, phone_number, password):
                               metadata={"method": "phone"})
         raise DuplicatePhoneNumber from None
     return user
+
+
+def confirm_email_by_reset(user):
+    """PRD-03A: a password reset was just completed from a link that could only be read in this
+    account's inbox, which proves ownership of the address: record it as confirmed (once). Call
+    inside the reset's transaction. Returns True when the address became confirmed now."""
+    account = User.objects.select_for_update().get(pk=user.pk)
+    if not account.email or account.email_verified:
+        return False
+    account.email_verified = True
+    account.save(update_fields=["email_verified", "updated_at"])
+    record_business_event("account.email_confirmed", actor=account, target=account)
+    user.email_verified = True
+    return True
 
 
 def email_password_changed(user, request):

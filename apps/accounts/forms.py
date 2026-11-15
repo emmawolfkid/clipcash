@@ -11,7 +11,7 @@ from apps.audit.services import DENIED, FAILURE, SUCCESS, hash_identifier, recor
 from . import services
 from .password_validation import member_password_guidance_html, password_guidance_html
 from .phone_numbers import identifier_kind, normalize_phone_number, normalize_tz_mobile
-from .usernames import normalize_username
+from .usernames import USERNAME_HELP_TEXT, normalize_username, validate_username
 from .throttling import (
     CURRENT_PASSWORD_FAILURES,
     LOGIN_FAILURES_PER_ACCOUNT,
@@ -35,16 +35,17 @@ def _email_field(**attrs):
 CONTACT_METHODS = (
     ("email", _("Email address")),
     ("phone", _("Mobile number")),
+    ("username", _("Username")),
 )
-CONTACT_FIELDS = {"email": "email", "phone": "phone_number"}
+CONTACT_FIELDS = {"email": "email", "phone": "phone_number", "username": "username"}
 
 
 class RegistrationForm(forms.Form):
     """
-    PRD-01 (adapted from REG-04): public member sign-up. First name, last name and password,
-    and ONE sign-in identifier of the member's choice: an email address or a Tanzanian
-    mobile number. Only the chosen one is required and used; the other box is ignored. No
-    username is asked for (existing username accounts keep signing in). There are no role,
+    PRD-03A: public member sign-up. First name, last name and password, and ONE sign-in
+    identifier of the member's choice: an email address, a Tanzanian mobile number or a
+    username. Only the chosen one is required and used; the other boxes are ignored. The
+    member is signed in at once; nothing has to be confirmed first. There are no role,
     status or permission fields.
     """
 
@@ -63,16 +64,19 @@ class RegistrationForm(forms.Form):
     )
     email = forms.CharField(
         label=_("Email address"), max_length=254, required=False,
-        help_text=_("We will email you a link. Your account is activated when you open it, and you can then sign "
-                    "in and reset a forgotten password with this address."),
+        help_text=_("You sign in with it, and a forgotten password can be reset by email to this address. Type it "
+                    "carefully: whoever owns the address can reset the password."),
         widget=forms.EmailInput(attrs={"autocomplete": "email", "autocapitalize": "none", "spellcheck": "false"}),
     )
     phone_number = forms.CharField(
         label=_("Mobile number"), max_length=24, required=False,
-        help_text=_("A Tanzanian mobile number, for example 0712 345 678. You can sign in with it at once, but it "
-                    "stays unverified: to buy a membership or reset a forgotten password, you must first add and "
-                    "confirm an email address on your account."),
+        help_text=_("A Tanzanian mobile number, for example 0712 345 678. A mobile number cannot reset a forgotten "
+                    "password: add and confirm an email address in My account for that."),
         widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel", "inputmode": "tel"}),
+    )
+    username = forms.CharField(
+        label=_("Username"), max_length=40, required=False, help_text=USERNAME_HELP_TEXT,
+        widget=forms.TextInput(attrs={"autocomplete": "username", "autocapitalize": "none", "spellcheck": "false"}),
     )
     password1 = forms.CharField(
         label=_("Password"), strip=False, help_text=lazy(member_password_guidance_html, str)(),
@@ -86,6 +90,9 @@ class RegistrationForm(forms.Form):
     def _clean_contact(self, method, raw):
         if method == "phone":
             return normalize_tz_mobile(raw)
+        if method == "username":
+            validate_username(raw)
+            return normalize_username(raw)
         email = User.objects.normalize_email(raw)
         forms.EmailField().clean(email)  # Same format rule as every other email field.
         return email
@@ -100,7 +107,7 @@ class RegistrationForm(forms.Form):
                 cleaned_data[other] = None
             if not raw:
                 self.add_error(field, ValidationError(
-                    _("Enter your %(contact)s, or choose the other way to contact you.")
+                    _("Enter your %(contact)s, or choose another way to sign up.")
                     % {"contact": dict(CONTACT_METHODS)[method].lower()}, code="required"))
             else:
                 try:
@@ -111,11 +118,11 @@ class RegistrationForm(forms.Form):
         if password1 and password2 and password1 != password2:
             self.add_error("password2", ValidationError(_("The two passwords do not match."), code="password_mismatch"))
         elif password1:
-            try:  # Similarity checks see the name and contact of the new member.
+            try:  # Similarity checks see the name and the identifier of the new member.
                 password_validation.validate_password(password1, User(
                     first_name=cleaned_data.get("first_name") or "", last_name=cleaned_data.get("last_name") or "",
                     phone_number=cleaned_data.get("phone_number"), email=cleaned_data.get("email"),
-                    role=User.Role.MEMBER))
+                    username=cleaned_data.get("username"), role=User.Role.MEMBER))
             except ValidationError as error:
                 self.add_error("password1", error)
         return cleaned_data
@@ -206,22 +213,20 @@ class ThrottledLoginMixin:
 
 
 class LoginForm(ThrottledLoginMixin, AuthenticationForm):
-    """PRD-01: members sign in with their email address (any letter case; once confirmed for
-    accounts created by public sign-up) or their mobile number (any accepted format). Accounts
-    that already have a username keep signing in with it (REG-03 compatibility); staff keep
-    signing in with their email address. Every failure gets the same message."""
+    """PRD-03A: members sign in with whatever they signed up with: their email address (any
+    letter case), their mobile number (any accepted format) or their username (any letter
+    case); staff keep signing in with their email address. Every failure gets the same
+    message, so it does not say which identifiers exist."""
 
     username = forms.CharField(
-        label=_("Email or mobile number"), max_length=254,
-        help_text=_("Already have a username? You can still sign in with it."),
+        label=_("Email, mobile number or username"), max_length=254,
         widget=forms.TextInput(attrs={"autocomplete": "username", "autofocus": True, "autocapitalize": "none",
                                       "spellcheck": "false"}),
     )
     error_messages = {
         **AuthenticationForm.error_messages,
-        "invalid_login": _("We could not sign you in with those details. Check your email or mobile number and "
-                           "password (the password is case-sensitive). Signed up with email? Open the link we sent "
-                           "first: the account is activated only then."),
+        "invalid_login": _("We could not sign you in with those details. Check your email, mobile number or "
+                           "username and your password (the password is case-sensitive)."),
     }
 
 
@@ -240,11 +245,11 @@ class AccountPasswordResetForm(PasswordResetForm):
         PENDING accounts recover by requesting a new activation link; SUSPENDED
         and DISABLED accounts cannot regain access through self-service.
         """
-        # REG-02: only a VERIFIED address recovers an account. A phone number never does.
-        users = User._default_manager.filter(
-            email=User.objects.normalize_email(email), email_verified=True, status=User.Status.ACTIVE
-        )
-        return (user for user in users if user.has_usable_password())
+        # PRD-03A: a confirmed address, or the address an email sign-up uses as its only identifier
+        # (User.email_recovers_account). Never a mobile number or a username; never an unconfirmed
+        # address on an account that signs in with something else.
+        users = User._default_manager.filter(email=User.objects.normalize_email(email), status=User.Status.ACTIVE)
+        return (user for user in users if user.email_recovers_account and user.has_usable_password())
 
     def save(self, *, request=None, **kwargs):
         """Queue reset emails in the durable outbox instead of sending inline.

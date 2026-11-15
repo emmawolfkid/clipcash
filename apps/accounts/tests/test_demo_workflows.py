@@ -152,17 +152,20 @@ class WaiverOffTests(DemoWorkflowTestCase):
             with self.subTest(**change), self.settings(**change):
                 self.assertFalse(demo_unconfirmed(self.demo))
                 self.assertEqual(check_access(self.demo).reason, "email_unverified")
-                self.assertRedirects(self.client.get(reverse("wallets:wallet")),
-                                     reverse("accounts:verification_required"))
-                self.assertRedirects(self.client.get(reverse("advertising:home")),
-                                     reverse("accounts:verification_required"))
+                # PRD-03A: the pages open, but nothing financial or advertiser-related is allowed.
+                self.assertEqual(self.client.get(reverse("advertising:home")).status_code, 200)
+                self.client.post(reverse("wallets:wallet"))
+                self.assertFalse(Wallet.objects.filter(member=self.demo).exists())
+                self.assertEqual(advertising.advertiser_account_reason(self.demo), "email_unverified")
 
     def test_unlisted_accounts_get_no_waiver_anywhere(self):
         other = make_user("other@example.com", verified=False)
         self.client.force_login(other)
         self.assertFalse(demo_unconfirmed(other))
         self.assertEqual(check_access(other).reason, "email_unverified")
-        self.assertRedirects(self.client.get(reverse("dashboard")), reverse("accounts:verification_required"))
+        self.assertEqual(self.client.get(reverse("dashboard")).status_code, 200)  # PRD-03A: pages open.
+        with self.assertRaises(memberships.NotEligible):  # Paying still needs a confirmed address.
+            memberships.choose_plan(other, self.plan)
 
     def test_verified_members_are_unaffected(self):
         self.client.force_login(self.member)  # Verified, not on the list.

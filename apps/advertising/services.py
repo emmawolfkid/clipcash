@@ -320,7 +320,9 @@ def invite_member(user, organization, email, role=ROLE.MANAGER):
 
 
 def pending_invitations_for(user):
-    if advertiser_account_reason(user) != "ok":
+    # PRD-03A: an invitation is addressed to an inbox, so only a CONFIRMED address may claim it
+    # (sign-up no longer confirms addresses; anyone can type someone else's).
+    if advertiser_account_reason(user) != "ok" or not user.has_verified_email:
         return AdvertiserInvitation.objects.none()
     return (AdvertiserInvitation.objects.select_related("organization")
             .filter(email__iexact=user.email, status=AdvertiserInvitation.Status.PENDING,
@@ -328,8 +330,10 @@ def pending_invitations_for(user):
 
 
 def _locked_invitation_for(user, invitation_id):
-    invitation = (AdvertiserInvitation.objects.select_for_update().filter(pk=invitation_id, email__iexact=user.email)
-                  .first())
+    invitation = None
+    if user.has_verified_email:  # PRD-03A: see pending_invitations_for.
+        invitation = (AdvertiserInvitation.objects.select_for_update()
+                      .filter(pk=invitation_id, email__iexact=user.email).first())
     if invitation is None:
         raise NotFound("Invitation not found.")
     if invitation.status != AdvertiserInvitation.Status.PENDING or invitation.expires_at <= timezone.now():
@@ -626,7 +630,9 @@ def _notify_invitee(invitation):
     for addresses without an account)."""
     from apps.notifications import inbox
 
-    invitee = get_user_model().objects.filter(email__iexact=invitation.email, is_active=True).first()
+    # PRD-03A: only an account that has CONFIRMED the invited address hears about it.
+    invitee = get_user_model().objects.filter(email__iexact=invitation.email, email_verified=True,
+                                              is_active=True).first()
     inbox.notify(invitee, "advertiser.invitation", category=inbox.Category.ADVERTISING,
                  title="You were invited to an advertiser team",
                  message=f"{invitation.organization.display_name} invited you as "

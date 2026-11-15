@@ -92,8 +92,10 @@ class PhoneFirstJourneyTests(ManualPaymentTestCase):
         self.assertTrue(identity_ready(member))
         dashboard = self.client.get(DASHBOARD)
         self.assertContains(dashboard, "Next step: choose a membership")
-        self.assertContains(dashboard, "Add a recovery email address")
+        self.assertNotContains(dashboard, "Add an email address to buy a membership")  # PRD-03A: no banner.
         self.assertNotContains(dashboard, "None")  # No empty email shown anywhere.
+        self.assertContains(self.client.get(reverse("memberships:plan_detail", args=["monthly"])),
+                            "Add an email address to buy a membership")  # Explained where paying starts.
         # PRD-01: no paid membership until an email address is confirmed.
         self.client.post(reverse("memberships:choose", args=["monthly"]))
         self.assertFalse(Subscription.objects.filter(member=member).exists())
@@ -186,14 +188,23 @@ class RecoveryTests(ManualPaymentTestCase):
         run_worker()
         self.assertEqual(mail.outbox, [])
 
-    def test_unverified_email_never_receives_a_reset_link(self):
-        user = make_user("unconfirmed@example.com", verified=False)
+    def test_unverified_email_resets_only_when_it_is_the_only_identifier(self):
+        """PRD-03A: an email sign-up's own address recovers it; an unconfirmed address on an
+        account that signs in with a number (or username) never does."""
+        make_user("unconfirmed@example.com", verified=False)
         mail.outbox.clear()
         self.assertRedirects(self.client.post(RESET, {"email": "unconfirmed@example.com"}),
                              reverse("accounts:password_reset_done"))
         run_worker()
+        self.assertEqual([m.to for m in mail.outbox], [["unconfirmed@example.com"]])
+        with_phone = User.objects.create_user("second@example.com", PASSWORD, phone_number="+255713000999",
+                                              status=User.Status.ACTIVE)
+        self.assertFalse(with_phone.email_recovers_account)
+        mail.outbox.clear()
+        self.assertRedirects(self.client.post(RESET, {"email": "second@example.com"}),
+                             reverse("accounts:password_reset_done"))
+        run_worker()
         self.assertEqual(mail.outbox, [])
-        self.assertTrue(user.has_usable_password())
 
     def test_staff_cannot_be_recovered_by_phone_either(self):
         User.objects.filter(pk=self.verifier.pk).update(phone_number="+255713111222")
@@ -241,9 +252,14 @@ class ExistingAccountsTests(ManualPaymentTestCase):
         response = self.client.post(LOGIN, {"username": "0712345678", "password": PASSWORD})
         self.assertEqual([e.code for e in response.context["form"].non_field_errors().as_data()], ["throttled"])
 
-    def test_unverified_email_only_account_still_needs_confirmation(self):
-        self.client.force_login(make_user("legacy@example.com", verified=False))
-        self.assertRedirects(self.client.get(DASHBOARD), reverse("accounts:verification_required"))
+    def test_unverified_email_only_account_uses_the_site_but_cannot_pay(self):
+        legacy = make_user("legacy@example.com", verified=False)
+        self.client.force_login(legacy)
+        self.assertEqual(self.client.get(DASHBOARD).status_code, 200)  # PRD-03A
+        from apps.memberships import services as memberships
+
+        with self.assertRaises(memberships.NotEligible):
+            memberships.choose_plan(legacy, self.plan)
 
     def test_database_requires_a_sign_in_identifier(self):
         from django.db import IntegrityError, transaction

@@ -16,7 +16,7 @@
       {% if user.username %}<dt>{% translate "Username" %}</dt><dd>{{ user.username }}</dd>{% endif %}
       <dt>{% translate "Mobile number" %}</dt><dd>{% if user.phone_number %}{{ user.phone_number }} · {% if user.phone_verified %}{% translate "verified" %}{% else %}{% translate "not verified (SMS verification is not available)" %}{% endif %}{% else %}—{% endif %}</dd>
       <dt>{% translate "Email address" %}</dt><dd>{% if user.email %}{{ user.email }}{% else %}{% translate "None added" %}{% endif %}</dd>
-      {% if user.email %}<dt>{% translate "Email confirmed" %}</dt><dd>{% if user.email_verified %}{% translate "Yes" %}{% else %}{% translate "No" %} · <form class="account-inline-form" method="post" action="{% url 'accounts:resend_verification' %}">{% csrf_token %}<button type="submit" class="button--link">{% translate "Send a new link" %}</button></form>{% endif %}</dd>{% endif %}
+      {% if user.email %}<dt>{% translate "Email confirmed" %}</dt><dd>{% if user.email_verified %}{% translate "Yes" %}{% else %}{% translate "Not yet (optional; needed to buy a membership)" %} · <form class="account-inline-form" method="post" action="{% url 'accounts:resend_verification' %}">{% csrf_token %}<button type="submit" class="button--link">{% translate "Send confirmation link" %}</button></form>{% endif %}</dd>{% endif %}
       <dt>{% translate "Name" %}</dt><dd>{{ user.get_full_name|default:"—" }}</dd>
       <dt>{% translate "Account type" %}</dt><dd>{{ user.get_role_display }}</dd>
       <dt>{% translate "Status" %}</dt><dd>{{ user.get_status_display }}</dd>
@@ -29,7 +29,7 @@
     </ul>
     <div class="notice account-note" role="note">
       <p><strong>{% translate "Resetting a forgotten password" %}</strong></p>
-      <p>{% if user.has_verified_email %}{% blocktranslate with email=user.email %}A reset link can be sent to your confirmed email address, {{ email }}.{% endblocktranslate %}{% else %}{% translate "Only a confirmed email address can receive a password-reset link. Add an email address and open the confirmation link we send, so you can reset your password if you forget it, and so you can buy a membership." %}{% endif %}</p>
+      <p>{% if user.email_recovers_account %}{% blocktranslate with email=user.email %}A reset link can be sent to {{ email }}.{% endblocktranslate %}{% else %}{% translate "A password-reset link can only go to an email address you added and confirmed. Add an email address and open the confirmation link we send, so you can reset your password if you forget it, and so you can buy a membership." %}{% endif %}</p>
       <p>{% translate "A username or a mobile number is never enough to reset a password. Mobile numbers are not verified: SMS verification is not available." %}</p>
       {% if not email_change_available and not user.has_verified_email %}<p>{% translate "Adding an email address is not available right now. Please try again later or contact ClipCash support." %}</p>{% endif %}
     </div>
@@ -41,7 +41,7 @@
     </dl>
     <ul class="links">
       <li><a href="{% url 'accounts:password_change' %}">{% translate "Change password" %}</a></li>
-      {% if user.has_verified_email %}<li><a href="{% url 'accounts:password_reset' %}">{% translate "Forgotten password? Reset by email" %}</a></li>{% endif %}
+      {% if user.email_recovers_account %}<li><a href="{% url 'accounts:password_reset' %}">{% translate "Forgotten password? Reset by email" %}</a></li>{% endif %}
     </ul>
     <ul>
       <li>{% translate "ClipCash staff will never ask for your password, mobile-money PIN or one-time codes." %}</li>

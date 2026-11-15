@@ -252,10 +252,29 @@ class User(AbstractUser):
         return bool((self.email and self.email_verified) or (self.phone_number and self.phone_verified))
 
     @property
+    def email_is_only_identifier(self):
+        """PRD-03A: the account signs up and in with its email address and has nothing else."""
+        return bool(self.email) and not self.phone_number and not self.username
+
+    @property
     def email_signs_in(self):
-        """REG-04/PRD-01: may this account sign in with its email address? Accounts created by
-        public sign-up only once the address is confirmed; all others as before."""
-        return bool(self.email) and (self.email_verified or not self.email_ownership_required)
+        """May this account sign in with its email address?
+
+        * Confirmed addresses, and accounts from before REG-04 (flag off): yes, as always.
+        * PRD-03A: an address that is the account's ONLY identifier (an email sign-up): yes, at
+          once, without confirmation; it is how the member chose to sign in.
+        * REG-04: an unconfirmed address on an account that also has a mobile number or a username:
+          no, until its owner confirms it, so whoever owns a mistyped inbox gets no way in."""
+        return bool(self.email) and (self.email_verified or not self.email_ownership_required
+                                     or self.email_is_only_identifier)
+
+    @property
+    def email_recovers_account(self):
+        """PRD-03A: may a password-reset link be sent to this address? A confirmed address, or the
+        address an email sign-up chose as its only identifier (the member signs in with it). Never a
+        mobile number or a username, and never an unconfirmed address on an account that has
+        another identifier. Completing a reset from the link proves the inbox and confirms it."""
+        return bool(self.email) and (self.email_verified or self.email_is_only_identifier)
 
     def _get_session_auth_hash(self, secret=None):
         """

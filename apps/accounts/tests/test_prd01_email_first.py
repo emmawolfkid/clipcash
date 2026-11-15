@@ -1,17 +1,16 @@
 """
-PRD-01 acceptance: email-first authentication, with fictional test records only.
+PRD-01 + PRD-03A acceptance: registration, sign-in and recovery, with fictional test records only.
 
-Members sign up with an email address OR a Tanzanian mobile number (no username). An email
-sign-up stays PENDING until its emailed link is opened, and cannot sign in or reset a password
-before that. A mobile sign-up is ACTIVE at once with an unverified number (no SMS in this
-phase): it must add and confirm an email address before starting a paid membership or
-recovering a password. Password recovery is by confirmed email only. Existing accounts,
-memberships and submitted payments keep working.
+PRD-03A: members sign up with an email address, a Tanzanian mobile number OR a username and are
+signed in at once. Nothing is emailed at sign-up and nothing has to be confirmed to use the
+account; the identifier is stored unconfirmed. Confirming an email address stays available on
+request and is needed to buy a membership. A password reset goes to a confirmed address, or to
+the address an email sign-up uses as its only identifier; completing it confirms that address.
+Mobile numbers and usernames never reset a password. Existing accounts, memberships and
+submitted payments keep working.
 """
 
 import re
-from datetime import timedelta
-from unittest import mock
 
 from django.contrib.auth import get_user
 from django.core import mail
@@ -19,19 +18,19 @@ from django.core.checks import run_checks
 from django.test import override_settings
 from django.urls import reverse
 
-from apps.accounts import tokens
 from apps.accounts.access import has_verified_contact
 from apps.accounts.tests.helpers import NEW_PASSWORD, PASSWORD, make_user
 from apps.audit.models import AuditEvent
 from apps.memberships import services as memberships
 from apps.memberships.models import Subscription
+from apps.notifications.models import OutboundEmail
 from apps.payments.models import ManualMembershipPayment
 from apps.payments.tests.manual_helpers import ManualPaymentTestCase, User
 
 REGISTER = reverse("accounts:register")
-REGISTER_DONE = reverse("accounts:register_done")
 LOGIN = reverse("accounts:login")
 DASHBOARD = reverse("dashboard")
+PROFILE = reverse("accounts:profile")
 RESET = reverse("accounts:password_reset")
 RESEND = reverse("accounts:resend_verification")
 EMAIL_CHANGE = reverse("accounts:email_change")
@@ -39,9 +38,10 @@ PROFILE_EDIT = reverse("accounts:profile_edit")
 PASSWORD_CHANGE = reverse("accounts:password_change")
 
 
-def sign_up(client, *, email=None, phone=None, password=NEW_PASSWORD):
+def sign_up(client, *, email=None, phone=None, username=None, password=NEW_PASSWORD):
+    method = "email" if email else "phone" if phone else "username"
     data = {"first_name": "Amina", "last_name": "Juma", "password1": password, "password2": password,
-            "contact_method": "email" if email else "phone", "email": email or "", "phone_number": phone or ""}
+            "contact_method": method, "email": email or "", "phone_number": phone or "", "username": username or ""}
     return client.post(REGISTER, data)
 
 
@@ -66,112 +66,122 @@ def subjects(address):
     return [message.subject for message in mail.outbox if address in message.to]
 
 
-class EmailSignUpTests(ManualPaymentTestCase):
+class InstantSignUpTests(ManualPaymentTestCase):
     """ManualPaymentTestCase: registration open, a 5,000 TZS plan, published Lipa details,
     manual payments on, and a client that delivers queued email after each request."""
 
-    def test_the_form_asks_for_email_or_phone_and_no_username(self):
+    def test_the_form_offers_email_phone_or_username(self):
         page = self.client.get(REGISTER)
-        form = page.context["form"]
-        self.assertEqual(list(form.fields),
-                         ["first_name", "last_name", "contact_method", "email", "phone_number", "password1",
-                          "password2"])
-        self.assertContains(page, "you must add an email address in My account and confirm it")
+        self.assertEqual(list(page.context["form"].fields),
+                         ["first_name", "last_name", "contact_method", "email", "phone_number", "username",
+                          "password1", "password2"])
+        self.assertContains(page, "Your account is ready at once")
 
-    def test_email_sign_up_is_pending_until_the_link_is_opened(self):
-        response = sign_up(self.client, email="Amina@Example.com")
-        self.assertRedirects(response, REGISTER_DONE)
-        member = User.objects.get(email="amina@example.com")
-        self.assertEqual((member.status, member.email_verified, member.email_ownership_required, member.is_active),
-                         (User.Status.PENDING, False, True, False))
-        self.assertFalse(get_user(self.client).is_authenticated)  # Not signed in by sign-up.
-        self.assertIsNone(member.username)
-        self.assertEqual(AuditEvent.objects.get(action="account.registered").metadata, {"method": "email"})
-        self.assertEqual(subjects("amina@example.com"), ["Confirm your ClipCash email address"])
-        self.assertIn("activate your account", mail.outbox[-1].body)
-
-        # Before the link: no sign-in (generic message) and no reset link.
-        refused = self.client_class().post(LOGIN, {"username": "amina@example.com", "password": NEW_PASSWORD})
-        self.assertEqual([e.code for e in refused.context["form"].non_field_errors().as_data()], ["invalid_login"])
-        mail.outbox.clear()
-        self.client_class().post(RESET, {"email": "amina@example.com"})
+    def test_every_method_is_signed_in_at_once_and_nothing_is_emailed(self):
+        cases = {"email": {"email": "Amina@Example.com"}, "phone": {"phone": "0712 345 678"},
+                 "username": {"username": "Amina.Juma"}}
+        for method, identifier in cases.items():
+            with self.subTest(method):
+                client = self.client_class()
+                self.assertRedirects(sign_up(client, **identifier), DASHBOARD, fetch_redirect_response=False)
+                member = get_user(client)
+                self.assertTrue(member.is_authenticated)
+                self.assertEqual((member.status, member.email_verified, member.phone_verified),
+                                 (User.Status.ACTIVE, False, False))  # Stored unconfirmed, never marked verified.
+                for url in (DASHBOARD, PROFILE, reverse("memberships:plans")):
+                    self.assertEqual(client.get(url).status_code, 200, url)
+        self.assertIsNone(User.objects.get(username="amina.juma").email)
+        self.assertIsNone(User.objects.get(email="amina@example.com").username)
+        self.assertFalse(OutboundEmail.objects.exists())  # No sign-up verification email, for any method.
         self.assertEqual(mail.outbox, [])
+        methods = sorted(event.metadata["method"] for event in AuditEvent.objects.filter(action="account.registered"))
+        self.assertEqual(methods, ["email", "phone", "username"])
 
-    def test_opening_the_link_activates_and_the_member_signs_in(self):
+    def test_each_identifier_signs_in_again_later(self):
         sign_up(self.client_class(), email="amina@example.com")
-        link = path_of(confirmation_link("amina@example.com"))
-        visitor = self.client_class()
-        self.assertContains(visitor.get(link), "Confirm")  # GET only shows a button (link scanners).
-        self.assertEqual(User.objects.get(email="amina@example.com").status, User.Status.PENDING)
-        done = visitor.post(link)
-        self.assertContains(done, "Account activated")
-        member = User.objects.get(email="amina@example.com")
-        self.assertEqual((member.status, member.email_verified, member.is_active), (User.Status.ACTIVE, True, True))
-        self.assertTrue(has_verified_contact(member))
-        self.assertFalse(get_user(visitor).is_authenticated)  # A link never signs anyone in.
-        self.assertTrue(AuditEvent.objects.filter(action="account.activated", target_id=str(member.pk)).exists())
+        sign_up(self.client_class(), username="baraka")
+        for identifier in ("AMINA@example.com", "Baraka"):
+            with self.subTest(identifier):
+                client = self.client_class()
+                client.post(LOGIN, {"username": identifier, "password": NEW_PASSWORD})
+                self.assertTrue(get_user(client).is_authenticated)
 
-        signed_in = self.client_class()
-        signed_in.post(LOGIN, {"username": "AMINA@example.com", "password": NEW_PASSWORD})
-        self.assertEqual(get_user(signed_in).pk, member.pk)
-        self.assertEqual(signed_in.get(DASHBOARD).status_code, 200)
-        self.assertEqual(memberships.choose_plan(member, self.plan).status, Subscription.Status.PENDING)
-
-    def test_the_link_works_once(self):
+    def test_identifiers_stay_unique_in_any_format_or_case(self):
         sign_up(self.client_class(), email="amina@example.com")
-        link = path_of(confirmation_link("amina@example.com"))
-        self.assertEqual(self.client_class().post(link).status_code, 200)
-        self.assertEqual(self.client_class().post(link).status_code, 400)
-        self.assertEqual(self.client_class().get(link).status_code, 400)
+        sign_up(self.client_class(), phone="0712345678")
+        sign_up(self.client_class(), username="baraka")
+        cases = (({"email": "AMINA@Example.com"}, "email"), ({"phone": "+255 712 345 678"}, "phone_number"),
+                 ({"username": "BARAKA"}, "username"))
+        for identifier, field in cases:
+            with self.subTest(field):
+                refused = sign_up(self.client_class(), **identifier)
+                self.assertEqual(refused.status_code, 200)
+                self.assertIn(field, refused.context["form"].errors)
+        self.assertEqual(User.objects.filter(first_name="Amina").count(), 3)
+        self.assertEqual(AuditEvent.objects.filter(action="account.registration.duplicate").count(), 3)
 
-    def test_an_expired_link_is_refused_and_a_new_one_can_be_requested(self):
-        sign_up(self.client_class(), email="amina@example.com")
-        link = path_of(confirmation_link("amina@example.com"))
-        later = tokens.verification_token_generator._now() + timedelta(hours=25)
-        with mock.patch.object(tokens.AccountVerificationTokenGenerator, "_now", lambda self: later):
-            self.assertEqual(self.client_class().post(link).status_code, 400)
-        self.assertEqual(User.objects.get(email="amina@example.com").status, User.Status.PENDING)
-        mail.outbox.clear()
-        self.client_class().post(RESEND, {"email": "amina@example.com"})
-        fresh = confirmation_link("amina@example.com")
-        self.assertIsNotNone(fresh)
-        self.assertEqual(self.client_class().post(path_of(fresh)).status_code, 200)
-        self.assertEqual(User.objects.get(email="amina@example.com").status, User.Status.ACTIVE)
+    def test_usernames_keep_their_rules(self):
+        for value in ("0712345678", "amina@example.com", "am", "admin"):
+            with self.subTest(value=value):
+                refused = sign_up(self.client_class(), username=value)
+                self.assertIn("username", refused.context["form"].errors)
+        self.assertFalse(User.objects.filter(first_name="Amina").exists())
 
-    def test_the_old_activation_page_cannot_be_used_for_an_email_sign_up(self):
-        sign_up(self.client_class(), email="amina@example.com")
-        link = path_of(confirmation_link("amina@example.com")).replace("/confirm-email/", "/activate/")
-        self.assertEqual(self.client_class().get(link, follow=True).status_code, 200)
-        member = User.objects.get(email="amina@example.com")
-        self.assertEqual(member.status, User.Status.PENDING)
-        self.assertTrue(member.check_password(NEW_PASSWORD))  # The password could not be replaced.
-
-    def test_a_registered_address_is_not_revealed(self):
-        existing = make_user("taken@example.com")
-        mail.outbox.clear()
-        response = sign_up(self.client_class(), email="Taken@example.com")
-        self.assertRedirects(response, REGISTER_DONE, fetch_redirect_response=False)
-        self.assertEqual(User.objects.filter(email="taken@example.com").count(), 1)
-        self.assertEqual(subjects("taken@example.com"), [mail.outbox[-1].subject])
-        self.assertIn("already has an account", mail.outbox[-1].body)
-        self.assertTrue(User.objects.get(pk=existing.pk).check_password(PASSWORD))  # Unchanged.
-        self.assertTrue(AuditEvent.objects.filter(action="account.registration.duplicate").exists())
-
-    def test_signing_up_again_before_confirming_sends_a_fresh_link_to_the_same_account(self):
-        sign_up(self.client_class(), email="amina@example.com")
-        mail.outbox.clear()
-        self.assertRedirects(sign_up(self.client_class(), email="amina@example.com", password="Other-Phrase-77"),
-                             REGISTER_DONE, fetch_redirect_response=False)
-        self.assertEqual(User.objects.filter(email="amina@example.com").count(), 1)
-        self.assertIsNotNone(confirmation_link("amina@example.com"))
-        self.assertTrue(User.objects.get(email="amina@example.com").check_password(NEW_PASSWORD))
-
-    def test_email_sign_up_is_rate_limited_per_address(self):
-        for _attempt in range(10):
+    def test_sign_up_is_rate_limited_per_identifier(self):
+        for _attempt in range(5):
             sign_up(self.client_class(), email="busy@example.com")
         refused = sign_up(self.client_class(), email="busy@example.com")
-        self.assertEqual(refused.status_code, 200)
         self.assertContains(refused, "Too many requests")
+
+    def test_confirming_an_email_is_optional_on_request_and_needed_to_pay(self):
+        sign_up(self.client, email="amina@example.com")
+        member = User.objects.get(email="amina@example.com")
+        with self.assertRaises(memberships.NotEligible):
+            memberships.choose_plan(member, self.plan)
+        detail = self.client.get(reverse("memberships:plan_detail", args=[self.plan.code]))
+        self.assertContains(detail, "Confirm your email address to buy a membership")
+        self.assertNotContains(self.client.get(DASHBOARD), "Confirm your email address")  # No banner.
+        self.assertRedirects(self.client.post(RESEND), PROFILE)
+        link = path_of(confirmation_link("amina@example.com"))
+        self.assertEqual(self.client_class().get(link).status_code, 403)  # Only the signed-in owner confirms.
+        self.client.post(link)
+        member.refresh_from_db()
+        self.assertTrue(member.email_verified)
+        self.assertEqual(memberships.choose_plan(member, self.plan).status, Subscription.Status.PENDING)
+
+    def test_reset_by_the_sign_up_address_works_once_and_confirms_it(self):
+        sign_up(self.client_class(), email="amina@example.com")
+        mail.outbox.clear()
+        self.client_class().post(RESET, {"email": "amina@example.com"})
+        reset = path_of(links("amina@example.com", "/accounts/reset/")[-1])
+        resetter = self.client_class()
+        form_page = resetter.get(reset, follow=True)
+        resetter.post(form_page.request["PATH_INFO"], {"new_password1": "Third-Strong-Phrase-5",
+                                                      "new_password2": "Third-Strong-Phrase-5"})
+        member = User.objects.get(email="amina@example.com")
+        self.assertTrue(member.check_password("Third-Strong-Phrase-5"))
+        self.assertTrue(member.email_verified)  # The link reached this inbox.
+        self.assertIn("Your ClipCash password was changed", subjects("amina@example.com"))
+        self.assertFalse(resetter.get(reset, follow=True).context.get("validlink", False))  # Single use.
+
+    def test_phone_and_username_never_reset_and_unknown_addresses_look_the_same(self):
+        sign_up(self.client_class(), phone="0712345678")
+        sign_up(self.client_class(), username="baraka")
+        mail.outbox.clear()
+        for typed in ("0712345678", "baraka", "nobody@example.com"):
+            with self.subTest(typed):
+                self.client_class().post(RESET, {"email": typed})
+        self.assertEqual(mail.outbox, [])
+        self.assertRedirects(self.client_class().post(RESET, {"email": "nobody@example.com"}),
+                             reverse("accounts:password_reset_done"))
+
+    def test_prd01_pending_sign_ups_still_activate_through_their_link(self):
+        pending = User.objects.create_user("waiting@example.com", NEW_PASSWORD, status=User.Status.PENDING,
+                                           email_ownership_required=True)
+        self.client_class().post(RESEND, {"email": "waiting@example.com"})
+        self.assertEqual(self.client_class().post(path_of(confirmation_link("waiting@example.com"))).status_code, 200)
+        pending.refresh_from_db()
+        self.assertEqual((pending.status, pending.email_verified), (User.Status.ACTIVE, True))
 
 
 class PhoneSignUpTests(ManualPaymentTestCase):
@@ -183,9 +193,7 @@ class PhoneSignUpTests(ManualPaymentTestCase):
         self.assertEqual(get_user(self.client).pk, member.pk)
         self.assertFalse(has_verified_contact(member))
         self.assertEqual(mail.outbox, [])
-        page = self.client.get(DASHBOARD)
-        self.assertContains(page, "Add a recovery email address")
-        self.assertContains(page, f'href="{EMAIL_CHANGE}"')
+        self.assertEqual(self.client.get(DASHBOARD).status_code, 200)
 
     def test_number_signs_in_in_any_format(self):
         sign_up(self.client_class(), phone="0712345678")
@@ -195,13 +203,6 @@ class PhoneSignUpTests(ManualPaymentTestCase):
                 client.post(LOGIN, {"username": identifier, "password": NEW_PASSWORD})
                 self.assertTrue(get_user(client).is_authenticated)
 
-    def test_a_taken_number_is_refused(self):
-        sign_up(self.client_class(), phone="0712345678")
-        refused = sign_up(self.client_class(), phone="+255 712 345 678")
-        self.assertEqual(refused.status_code, 200)
-        self.assertIn("phone_number", refused.context["form"].errors)
-        self.assertEqual(User.objects.filter(phone_number="+255712345678").count(), 1)
-
     def test_no_new_paid_membership_without_a_confirmed_email(self):
         sign_up(self.client, phone="0712345678")
         member = User.objects.get(phone_number="+255712345678")
@@ -209,7 +210,8 @@ class PhoneSignUpTests(ManualPaymentTestCase):
             memberships.choose_plan(member, self.plan)
         self.assertEqual(refused.exception.code, "contact_unverified")
         detail = self.client.get(reverse("memberships:plan_detail", args=[self.plan.code]))
-        self.assertContains(detail, "Add a recovery email address")
+        self.assertContains(detail, "Add an email address to buy a membership")
+        self.assertContains(detail, f'href="{EMAIL_CHANGE}"')
         self.assertNotContains(detail, "Choose this plan")
         response = self.client.post(reverse("memberships:choose", args=[self.plan.code]), follow=True)
         self.assertContains(response, "add an email address in My account")
@@ -240,11 +242,7 @@ class PhoneSignUpTests(ManualPaymentTestCase):
     def test_phone_only_members_are_told_how_to_recover(self):
         page = self.client.get(RESET)
         self.assertContains(page, "Add a recovery email now in My account")
-        self.assertContains(page, "Locked out with no confirmed email?")
-        mail.outbox.clear()
-        sign_up(self.client_class(), phone="0712345678")
-        self.client_class().post(RESET, {"email": "0712345678@example.com"})
-        self.assertEqual(mail.outbox, [])
+        self.assertContains(page, "Locked out with no email on your account?")
 
 
 class ExistingAccountTests(ManualPaymentTestCase):
@@ -311,8 +309,24 @@ class PasswordSecurityEmailTests(ManualPaymentTestCase):
                                       "new_password2": NEW_PASSWORD})
         self.assertEqual(subjects("unconfirmed@example.com"), [])
 
+    def test_notices_reach_unconfirmed_members_in_app_and_confirmed_ones_by_email_too(self):
+        """PRD-03A notification queue: an email copy is queued only for a confirmed address."""
+        from apps.notifications import inbox
+        from apps.notifications.models import Notification
 
-PUBLIC_PRODUCTION = dict(DEBUG=False, RESTRICTED_DEMO_MODE=False, ALLOWED_HOSTS=["clipcash.co.tz"],
+        sign_up(self.client_class(), email="amina@example.com")
+        member = User.objects.get(email="amina@example.com")
+        inbox.notify(member, "account.test", category=inbox.Category.ACCOUNT, title="Hello", dedupe_key="t:1",
+                     email=True)
+        self.assertTrue(Notification.objects.filter(recipient=member, kind="account.test").exists())
+        self.assertFalse(OutboundEmail.objects.filter(recipient="amina@example.com").exists())
+        User.objects.filter(pk=member.pk).update(email_verified=True)
+        inbox.notify(User.objects.get(pk=member.pk), "account.test", category=inbox.Category.ACCOUNT,
+                     title="Hello again", dedupe_key="t:2", email=True)
+        self.assertEqual(OutboundEmail.objects.filter(recipient="amina@example.com").count(), 1)
+
+
+PUBLIC_PRODUCTION =dict(DEBUG=False, RESTRICTED_DEMO_MODE=False, ALLOWED_HOSTS=["clipcash.co.tz"],
                          PUBLIC_BASE_URL="https://clipcash.co.tz")
 
 
@@ -344,7 +358,9 @@ class ProductionEmailCheckTests(ManualPaymentTestCase):
 
     @override_settings(PUBLIC_BASE_URL="https://clipcash.co.tz", ALLOWED_HOSTS=["clipcash.co.tz", "testserver"])
     def test_emailed_links_use_the_configured_https_origin(self):
-        sign_up(self.client_class(), email="amina@example.com")
+        member = self.client_class()
+        sign_up(member, email="amina@example.com")
+        member.post(RESEND)  # PRD-03A: confirmation is sent only on request.
         self.assertTrue(confirmation_link("amina@example.com").startswith("https://clipcash.co.tz/accounts/"))
         make_user("owner@example.com")
         self.client_class().post(RESET, {"email": "owner@example.com"})

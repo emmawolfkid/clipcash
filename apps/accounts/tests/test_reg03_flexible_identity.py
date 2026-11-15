@@ -45,10 +45,10 @@ LETTER_AND_NUMBER = "Your password must contain at least one letter and at least
 
 
 def registration(contact_method, contact, password=NEW_PASSWORD, **extra):
-    """The public sign-up form (PRD-01): names, ONE of email or mobile number, password."""
+    """The public sign-up form (PRD-03A): names, ONE of email, mobile number or username, password."""
     data = {"first_name": "Amina", "last_name": "Juma", "contact_method": contact_method, "email": "",
-            "phone_number": "", "password1": password, "password2": password}
-    data[{"phone": "phone_number", "email": "email"}[contact_method]] = contact
+            "phone_number": "", "username": "", "password1": password, "password2": password}
+    data[{"phone": "phone_number", "email": "email", "username": "username"}[contact_method]] = contact
     return {**data, **extra}
 
 
@@ -90,10 +90,13 @@ class FlexibleRegistrationTests(ManualPaymentTestCase):
         self.assertEqual(set(form.errors), {"first_name", "last_name", "password1", "password2"})
         self.assertFalse(RegistrationForm({**registration("phone", "0712345678"), "contact_method": ""}).is_valid())
 
-    def test_public_sign_up_takes_no_username(self):
-        self.assertNotIn("username", RegistrationForm().fields)
-        self.assertRedirects(self.register("phone", "0712345678", username="injected"), DASHBOARD)
+    def test_public_sign_up_accepts_a_username_again(self):
+        # PRD-03A: username sign-up is back; only the chosen identifier is used.
+        self.assertIn("username", RegistrationForm().fields)
+        self.assertRedirects(self.register("phone", "0712345678", username="ignored"), DASHBOARD)
         self.assertIsNone(User.objects.get(phone_number="+255712345678").username)
+        self.assertRedirects(self.register("username", "Zawadi.K", client=self.client_class()), DASHBOARD)
+        self.assertIsNone(User.objects.get(username="zawadi.k").email)
 
     # --- Normalized duplicates and confusable usernames -----------------------------------
 
@@ -106,10 +109,11 @@ class FlexibleRegistrationTests(ManualPaymentTestCase):
                 response = self.register("phone", value, client=self.client_class())
                 self.assertEqual(response.status_code, 200)
                 self.assertIn("phone_number", response.context["form"].errors)
-        # PRD-01: a registered email address is not revealed; nothing is created either.
+        # PRD-03A: instant sign-up says the address is taken (rate-limited); nothing is created.
         cache.clear()
         response = self.register("email", "AMINA@Example.com", client=self.client_class())
-        self.assertRedirects(response, reverse("accounts:register_done"), fetch_redirect_response=False)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("email", response.context["form"].errors)
         self.assertEqual(User.objects.filter(email="amina@example.com").count(), 1)
         self.assertEqual(User.objects.filter(phone_number="+255712345678").count(), 1)
 
@@ -166,11 +170,13 @@ class FlexibleRegistrationTests(ManualPaymentTestCase):
 
     # --- Password reset ------------------------------------------------------------------
 
-    def test_only_a_verified_email_receives_a_reset_link(self):
+    def test_only_an_eligible_email_receives_a_reset_link(self):
+        """PRD-03A: a confirmed address, or an email sign-up's own (only) address. Never a username,
+        a number, or an unconfirmed address on an account that signs in with something else."""
         make_user("verified@example.com", verified=True)
-        make_user("unverified@example.com", verified=False)
-        User.objects.create_user(None, PASSWORD, username="zawadi", status=User.Status.ACTIVE)
-        for typed in ("unverified@example.com", "zawadi", "0712345678"):
+        User.objects.create_user("second@example.com", PASSWORD, username="zawadi", status=User.Status.ACTIVE)
+        User.objects.create_user(None, PASSWORD, phone_number="+255712345678", status=User.Status.ACTIVE)
+        for typed in ("second@example.com", "zawadi", "0712345678"):
             with self.subTest(typed=typed):
                 mail.outbox.clear()
                 self.client.post(RESET, {"email": typed})
@@ -182,7 +188,7 @@ class FlexibleRegistrationTests(ManualPaymentTestCase):
         self.register("phone", "0712345678")
         page = self.client.get(PROFILE)
         self.assertContains(page, "+255712345678")
-        self.assertContains(page, "Only a confirmed email address can receive a password-reset link.")
+        self.assertContains(page, "A password-reset link can only go to an email address you added and confirmed.")
         self.assertContains(page, "A username or a mobile number is never enough to reset a password.")
 
     # --- Passwords ------------------------------------------------------------------------

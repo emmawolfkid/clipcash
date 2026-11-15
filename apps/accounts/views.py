@@ -31,7 +31,7 @@ from apps.audit.services import (
 from apps.core import features
 
 from . import reauth, services
-from .access import VerifiedAccountRequiredMixin, identity_ready
+from .access import VerifiedAccountRequiredMixin, account_ready
 from .forms import (
     AccountPasswordChangeForm,
     AccountPasswordResetForm,
@@ -62,8 +62,11 @@ User = get_user_model()
 
 TOO_MANY_REQUESTS = _("Too many requests. Please wait a while and try again.")
 INVALID_LINK_TEMPLATE = "accounts/link_invalid.html"
-# REG-02: unavoidable for instant phone sign-up; attempts are rate-limited. Email sign-up never
-# says whether an address is registered (PRD-01).
+# PRD-03A: instant sign-up cannot hide that an identifier is taken; attempts are rate-limited.
+DUPLICATE_REGISTRATION = {
+    "email": _("An account already uses this email address. Sign in instead, or reset your password."),
+    "username": _("This username is already taken. Please choose another one."),
+}
 DUPLICATE_PHONE_REGISTRATION = _("An account already uses this mobile number. Sign in instead, or contact "
                                  "support if it is yours and you cannot sign in.")
 
@@ -154,7 +157,7 @@ class AnonymousOnlyMixin:
 class RegisterView(AnonymousOnlyMixin, FormView):
     template_name = "accounts/register.html"
     form_class = RegistrationForm
-    success_url = reverse_lazy("accounts:register_done")
+    success_url = reverse_lazy("dashboard")
 
     def dispatch(self, request, *args, **kwargs):
         # Checked on GET and POST; existing PENDING accounts can still activate.
@@ -182,21 +185,20 @@ class RegisterView(AnonymousOnlyMixin, FormView):
         except services.DuplicatePhoneNumber:
             form.add_error("phone_number", ValidationError(DUPLICATE_PHONE_REGISTRATION, code="duplicate"))
             return self.form_invalid(form)
-        if method == "email":
-            # PRD-01: the same page whether or not the address was new; the account is activated
-            # by the emailed link and cannot sign in before that.
-            return redirect("accounts:register_done")
+        except services.DuplicateIdentifier as duplicate:
+            form.add_error(services.REGISTRATION_FIELDS[duplicate.method],
+                           ValidationError(DUPLICATE_REGISTRATION[duplicate.method], code="duplicate"))
+            return self.form_invalid(form)
+        # PRD-03A: every sign-up is signed in at once; nothing is emailed and nothing must be confirmed.
         login(self.request, user, backend="apps.accounts.backends.AccountStatusBackend")
         record_security_event("auth.login.succeeded", outcome=SUCCESS, actor=user, target=user,
                               metadata={"interface": "registration"})
-        messages.success(self.request, _(
-            "Welcome to ClipCash. You can sign in with your mobile number. It is not verified: before you can buy a "
-            "membership or reset a forgotten password, add and confirm an email address in My account."))
+        messages.success(self.request, _("Welcome to ClipCash. Your account is ready."))
         return redirect("dashboard")
 
 
 class RegisterDoneView(TemplateView):
-    """PRD-01: shown after every email sign-up, new address or not (no account enumeration)."""
+    """PRD-01 legacy page ("Check your email"); PRD-03A sign-up no longer redirects here."""
 
     template_name = "accounts/register_done.html"
 
@@ -305,9 +307,9 @@ class ResendVerificationView(FormView):
                 request, request.user.email
             ):
                 services.send_verification_email(request.user, request)
-            messages.info(request, _("If your email still needs verification, a new link is on its way."))
-            # REG-04: members who can already use the account go back to their dashboard.
-            return redirect("dashboard" if identity_ready(request.user) else "accounts:verification_required")
+            messages.info(request, _("If your email address still needs confirming, a link is on its way."))
+            # Optional confirmation (PRD-03A): members go back to their account page.
+            return redirect("accounts:profile" if account_ready(request.user) else "accounts:verification_required")
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -325,7 +327,7 @@ class VerificationRequiredView(LoginRequiredMixin, TemplateView):
     template_name = "accounts/verification_required.html"
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and identity_ready(request.user):
+        if request.user.is_authenticated and account_ready(request.user):  # PRD-03A: staff only reach it.
             return redirect("accounts:profile")
         return super().dispatch(request, *args, **kwargs)
 
@@ -399,12 +401,16 @@ class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
 
     def get_user(self, uidb64):
         user = super().get_user(uidb64)
-        return user if user is not None and user.status == User.Status.ACTIVE else None
+        # PRD-03A: the address must still be one that may recover the account when the link is used.
+        return (user if user is not None and user.status == User.Status.ACTIVE and user.email_recovers_account
+                else None)
 
     def form_valid(self, form):
         with transaction.atomic():
             response = super().form_valid(form)  # Saves the new password.
             services.discard_email_change(form.user)
+            # PRD-03A: the link reached this inbox, so the address is now proven (no-op if it was).
+            services.confirm_email_by_reset(form.user)
             services.email_password_changed(form.user, self.request)
             record_business_event("auth.password_reset.completed", actor=form.user, target=form.user)
             services.notify_account(form.user, "password_reset", "Your password was reset",

@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
-from apps.accounts.access import DEMO_UNCONFIRMED_BLOCKED, VerifiedAccountRequiredMixin
+from apps.accounts.access import DEMO_UNCONFIRMED_BLOCKED, VerifiedAccountRequiredMixin, demo_unconfirmed
 from apps.core import features
 from apps.core.features import feature_required
 
@@ -24,7 +24,9 @@ MESSAGES = {
     "already_renewed": _("You already have a renewal scheduled."),
     "membership_suspended": _("Your membership is suspended. Please contact support."),
     "plan_unavailable": _("This plan is no longer available."),
-    "email_unverified": DEMO_UNCONFIRMED_BLOCKED,  # Only approved demo accounts get this far unverified.
+    # PRD-03A: members reach plans without confirming anything; paying needs a confirmed address.
+    "email_unverified": _("Before you buy a membership, confirm your email address: in My account, ask for a "
+                          "confirmation link and open it. Do not pay anything until then."),
     "payment_under_review": _("A payment for your current choice is being verified. You can change plans after "
                               "it is approved or rejected."),
     # PRD-01: a mobile number cannot be verified while SMS is unavailable.
@@ -92,7 +94,10 @@ class ChoosePlanView(VerifiedAccountRequiredMixin, View):
         try:
             subscription = services.choose_plan(request.user, plan)
         except services.MembershipError as error:
-            messages.error(request, MESSAGES.get(error.code, _("This membership cannot be selected right now.")))
+            message = MESSAGES.get(error.code, _("This membership cannot be selected right now."))
+            if error.code == "email_unverified" and demo_unconfirmed(request.user):
+                message = DEMO_UNCONFIRMED_BLOCKED  # Approved restricted-demo accounts: the demo's own wording.
+            messages.error(request, message)
             return redirect("memberships:mine")
         if payment_context()["manual_payments_ready"]:
             messages.success(request, _("Your plan choice is saved. Pay the amount below, then submit the payment "

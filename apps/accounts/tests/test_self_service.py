@@ -124,7 +124,7 @@ class ProfileEditTests(SelfServiceTestCase):
         self.client.logout()
         self.assertEqual(self.client.get(EDIT).status_code, 302)
         self.client.force_login(make_user("other@example.com", verified=False))
-        self.assertRedirects(self.client.get(EDIT), VERIFY)
+        self.assertEqual(self.client.get(EDIT).status_code, 200)  # PRD-03A: no confirmation needed.
 
     def test_cannot_escalate_or_touch_protected_fields(self):
         self.save(role=User.Role.SUPER_ADMIN, status=User.Status.DISABLED, is_staff="on", is_superuser="on",
@@ -284,9 +284,10 @@ class EmailChangeRequestTests(SelfServiceTestCase):
     def test_anonymous_and_unverified_are_turned_away(self):
         self.client.logout()
         self.assertEqual(self.request_change().status_code, 302)
+        # PRD-03A: an unconfirmed member may correct their address (owner confirmation still applies).
         self.client.force_login(make_user("other@example.com", verified=False))
-        self.assertRedirects(self.request_change(), VERIFY)
-        self.assertFalse(PendingEmailChange.objects.exists())
+        self.request_change()
+        self.assertTrue(PendingEmailChange.objects.exists())
 
     def test_link_goes_to_new_address_and_a_warning_to_the_current_one(self):
         self.request_change()
@@ -775,10 +776,11 @@ class RestrictedDemoTests(AccountsTestCase):
         self.assertEqual(self.demo.first_name, "Demo")
         self.assertFalse(self.demo.email_verified)
 
-    def test_unlisted_unverified_account_is_still_redirected(self):
+    def test_unlisted_unverified_account_uses_its_own_pages(self):
+        # PRD-03A: not waived, but members need no confirmation for their own pages.
         self.client.force_login(make_user("other@example.com", verified=False))
-        self.assertRedirects(self.client.get(EDIT), VERIFY)
-        self.assertRedirects(self.client.get(EMAIL_CHANGE), VERIFY)
+        self.assertEqual(self.client.get(EDIT).status_code, 200)
+        self.assertEqual(self.client.get(EMAIL_CHANGE).status_code, 200)
 
     def test_confirmed_account_can_change_address_in_the_demo(self):
         self.client.force_login(make_user("confirmed@example.com"))

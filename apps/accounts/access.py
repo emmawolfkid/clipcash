@@ -11,20 +11,33 @@ from django.utils.translation import gettext_lazy as _
 
 
 def identity_ready(user):
-    """REG-02/REG-03: may this ACTIVE account use member pages?
+    """REG-02/REG-03: may this ACTIVE account take part in member features that rely on who it
+    is (memberships, wallets, advertiser actions; apps.memberships.services.member_eligibility)?
 
-    Members who sign up with a mobile number use the account at once; the number is unique
-    and is what they sign in with (existing username accounts likewise). Accounts that sign
-    in with an email address only still need that address confirmed (the pre-REG-02 rule),
-    because an unconfirmed address may belong to someone else.
+    Members who sign up with a mobile number or a username qualify at once (that identifier is
+    unique and is what they sign in with). Accounts whose only identifier is an email address
+    still need that address confirmed, because an unconfirmed address may belong to someone
+    else. PRD-03A: this is no longer required just to sign in or open member pages (see
+    account_ready); it stays on the financial and identity-sensitive paths.
 
-    PRD-01: this is page access only. Starting a paid membership additionally needs a
-    VERIFIED contact (has_verified_contact): a sign-in identifier is not proof of ownership.
+    Starting a paid membership additionally needs a VERIFIED contact (has_verified_contact).
     Phone ownership (``phone_verified``) is never accepted as proof for account recovery."""
     # REG-04: a username counts for MEMBERS only, so staff keep needing a verified email or a
     # mobile number, as before REG-03.
     return bool(getattr(user, "email_verified", False) or getattr(user, "phone_number", None)
                 or (getattr(user, "username", None) and getattr(user, "role", None) == "MEMBER"))
+
+
+def account_ready(user):
+    """PRD-03A: may this ACTIVE account open member pages (dashboard, profile, plans, library)?
+    Members: yes, whatever they signed up with; nothing has to be confirmed first. Staff keep
+    the stricter rule (a confirmed email or a mobile number), because their access is
+    privileged. Financial and identity-sensitive actions check more (identity_ready,
+    has_verified_contact) inside their services."""
+    if getattr(user, "role", None) == "MEMBER":
+        return bool(getattr(user, "email", None) or getattr(user, "phone_number", None)
+                    or getattr(user, "username", None))
+    return identity_ready(user)
 
 
 def has_verified_contact(user):
@@ -87,7 +100,8 @@ def _deny_or_redirect(request, *, require_verified_email, roles=None):
         # Defensive: the authentication backend already rejects these sessions.
         logout(request)
         return redirect_to_login(request.get_full_path())
-    if require_verified_email and not identity_ready(user) and not email_verification_waived(user):
+    # PRD-03A: members are never sent to "Confirm your email" to use the site; staff still are.
+    if require_verified_email and not account_ready(user) and not email_verification_waived(user):
         return redirect("accounts:verification_required")
     if roles is not None and user.role not in roles:
         raise PermissionDenied
