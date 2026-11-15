@@ -440,7 +440,7 @@ class MembershipActivationPreview(BaseModel):
 # A member pays the exact membership price to ClipCash's Airtel Lipa business number
 # from their own phone, then submits a claim (transaction reference, phone, amount).
 # A claim is NEVER proof of payment: only an authorized staff member who finds the
-# transaction in the official Airtel business records may approve it. Approval posts
+# transaction in the official provider business records may approve it. Approval posts
 # the fee to the real ledger (apps.wallets) and activates the membership exactly once.
 # PostgreSQL guards: migration 0004 (transitions, immutability, single use).
 
@@ -460,12 +460,13 @@ class ManualPaymentMethod(models.TextChoices):
 
 class ManualPaymentInstruction(BaseModel):
     """Where members pay. Append-only history: publishing new details creates a new row
-    and retires the previous one, so every claim keeps the details its member was shown.
+    and retires that provider's previous version, so every claim keeps the details its member was shown.
     Entered by a Super Administrator; nothing here is hard-coded."""
 
-    method = models.CharField(_("method"), max_length=20, choices=ManualPaymentMethod.choices,
+    method = models.CharField(_("method"), max_length=20,
                               default=MANUAL_METHOD_AIRTEL_LIPA)
-    business_number = models.CharField(_("Lipa business number"), max_length=15)
+    provider_label = models.CharField(_("provider label"), max_length=100, default="Airtel Money - Lipa")
+    business_number = models.CharField(_("receiving number"), max_length=15)
     recipient_name = models.CharField(_("recipient name"), max_length=100)
     instructions = models.TextField(_("payment instructions"), max_length=1000, blank=True)
     is_active = models.BooleanField(_("active"), default=False)
@@ -483,7 +484,7 @@ class ManualPaymentInstruction(BaseModel):
             models.CheckConstraint(condition=Q(business_number__regex=r"^[0-9]{4,15}$"),
                                    name="manual_instruction_number_digits"),
             models.CheckConstraint(condition=~Q(recipient_name=""), name="manual_instruction_recipient"),
-            models.CheckConstraint(condition=Q(method__in=[MANUAL_METHOD_AIRTEL_LIPA]),
+            models.CheckConstraint(condition=Q(method__regex=r"^[A-Z][A-Z0-9_]{1,19}$"),
                                    name="manual_instruction_method"),
             # Active rows are never retired; retired rows say who retired them and when.
             models.CheckConstraint(condition=(Q(is_active=True) & Q(retired_at__isnull=True))
@@ -493,12 +494,25 @@ class ManualPaymentInstruction(BaseModel):
         ]
 
     def __str__(self):
-        return f"{self.get_method_display()} {self.business_number} ({self.recipient_name})"
+        return f"{self.provider_label} {self.business_number} ({self.recipient_name})"
+
+
+class ManualPaymentQuote(BaseModel):
+    """Issued instructions: immutable instruction version and subscription price."""
+    subscription = models.ForeignKey("memberships.Subscription", on_delete=models.PROTECT, related_name="payment_quotes")
+    instruction = models.ForeignKey(ManualPaymentInstruction, on_delete=models.PROTECT, related_name="quotes")
+    amount = AmountField(_("quoted amount (TZS)"), non_negative=True)
+    currency = models.CharField(_("currency"), max_length=3, default=DEFAULT_CURRENCY)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(amount__gt=0, currency="TZS"), name="manual_quote_amount_currency"),
+        ]
 
 
 class ManualMembershipPayment(BaseModel):
     """A member's claim that they paid a membership fee manually. Untrusted until a
-    staff member verifies it against the official Airtel business records."""
+    staff member verifies it against the official provider business records."""
 
     class Status(models.TextChoices):
         PENDING_VERIFICATION = "PENDING_VERIFICATION", _("Pending verification")
@@ -507,7 +521,7 @@ class ManualMembershipPayment(BaseModel):
         CANCELLED = "CANCELLED", _("Cancelled")
 
     class RejectionReason(models.TextChoices):
-        NOT_FOUND = "NOT_FOUND", _("No matching transaction in the Airtel business records")
+        NOT_FOUND = "NOT_FOUND", _("No matching transaction in the provider business records")
         AMOUNT_MISMATCH = "AMOUNT_MISMATCH", _("The amount received does not match the plan price")
         REFERENCE_MISMATCH = "REFERENCE_MISMATCH", _("The transaction reference does not match")
         PAYER_MISMATCH = "PAYER_MISMATCH", _("The payment came from a different phone number")
@@ -516,13 +530,16 @@ class ManualMembershipPayment(BaseModel):
 
     reference = models.CharField(_("claim reference"), max_length=16, unique=True, default=new_manual_reference,
                                  editable=False)
-    method = models.CharField(_("method"), max_length=20, choices=ManualPaymentMethod.choices,
+    method = models.CharField(_("method"), max_length=20,
                               default=MANUAL_METHOD_AIRTEL_LIPA)
     member = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT,
                                related_name="manual_membership_payments")
     subscription = models.ForeignKey("memberships.Subscription", on_delete=models.PROTECT,
                                      related_name="manual_payments")
     instruction = models.ForeignKey(ManualPaymentInstruction, on_delete=models.PROTECT, related_name="claims")
+    quote = models.ForeignKey("ManualPaymentQuote", null=True, blank=True, on_delete=models.PROTECT,
+                              related_name="claims")
+    # Legacy claims have no quote; their immutable instruction and amount remain authoritative.
     # Snapshots taken at submission (immutable; database-enforced).
     plan_name = models.CharField(_("plan"), max_length=100)
     amount = AmountField(_("amount (TZS)"), non_negative=True)
@@ -541,7 +558,7 @@ class ManualMembershipPayment(BaseModel):
     # What the reviewer independently confirmed in the Airtel business records.
     verified_amount = AmountField(_("verified amount (TZS)"), non_negative=True, null=True, blank=True)
     verified_reference_key = models.CharField(_("verified reference"), max_length=40, blank=True)
-    receipt_confirmed = models.BooleanField(_("receipt confirmed in Airtel records"), default=False)
+    receipt_confirmed = models.BooleanField(_("receipt confirmed in provider records"), default=False)
     review_note = models.CharField(_("review note"), max_length=300, blank=True)
     rejection_reason = models.CharField(_("rejection reason"), max_length=20, choices=RejectionReason.choices,
                                         blank=True)
@@ -563,7 +580,7 @@ class ManualMembershipPayment(BaseModel):
         constraints = [
             models.CheckConstraint(condition=Q(amount__gt=0), name="manual_payment_amount_positive"),
             models.CheckConstraint(condition=Q(currency="TZS"), name="manual_payment_currency"),
-            models.CheckConstraint(condition=Q(method__in=[MANUAL_METHOD_AIRTEL_LIPA]), name="manual_payment_method"),
+            models.CheckConstraint(condition=Q(method__regex=r"^[A-Z][A-Z0-9_]{1,19}$"), name="manual_payment_method"),
             models.CheckConstraint(condition=Q(reference_key__regex=r"^[A-Z0-9]{6,40}$"),
                                    name="manual_payment_reference_key_format"),
             models.CheckConstraint(condition=Q(payer_phone__regex=r"^\+[1-9][0-9]{7,14}$"),
@@ -572,7 +589,7 @@ class ManualMembershipPayment(BaseModel):
                 condition=Q(status__in=["PENDING_VERIFICATION", "APPROVED", "REJECTED", "CANCELLED"]),
                 name="manual_payment_status_valid"),
             # One transaction reference backs at most one open or approved claim, ever.
-            models.UniqueConstraint(fields=["reference_key"], condition=Q(status__in=MANUAL_OPEN_OR_FINAL),
+            models.UniqueConstraint(fields=["method", "reference_key"], condition=Q(status__in=MANUAL_OPEN_OR_FINAL),
                                     name="manual_payment_reference_single_use"),
             # One open claim, and at most one approved claim, per membership choice.
             models.UniqueConstraint(fields=["subscription"], condition=Q(status="PENDING_VERIFICATION"),

@@ -10,6 +10,7 @@ for the duration of its own session. Migration core.0004 pins every one of them.
 """
 
 import uuid
+from unittest import skipUnless
 
 from django.db import DatabaseError, connection, transaction
 from django.test import TestCase
@@ -19,6 +20,12 @@ from apps.wallets.tests.helpers import LedgerTestCase, check_deferred_now
 from apps.wallets.tests.test_database import raw_entry, raw_line
 
 PINNED = "search_path=pg_catalog, public, pg_temp"
+
+# DB-01: PostgreSQL mechanisms (search_path, pg_temp, psql verification script). On MariaDB
+# these tests cannot run, and their DDL (DROP TABLE pg_temp...) would implicitly commit the
+# test transaction there and leak rows into every later test. The MariaDB counterparts are
+# in apps/core/tests/test_mariadb_port.py.
+postgresql_only = skipUnless(connection.vendor == "postgresql", "PostgreSQL hardening (DB-01: see test_mariadb_port).")
 
 
 def public_functions():
@@ -34,6 +41,7 @@ def public_functions():
         return cursor.fetchall()
 
 
+@postgresql_only
 class FunctionSearchPathTests(TestCase):
     def test_every_application_function_pins_a_safe_search_path(self):
         functions = public_functions()
@@ -55,6 +63,7 @@ class FunctionSearchPathTests(TestCase):
         self.assertEqual(listed, {name for name, _, _ in public_functions()})
 
 
+@postgresql_only
 class TemporaryShadowTableTests(LedgerTestCase):
     """A session cannot make a protected check read its own look-alike table."""
 
@@ -93,6 +102,7 @@ class TemporaryShadowTableTests(LedgerTestCase):
             check_deferred_now()
 
 
+@postgresql_only
 class VerifyGuardsScriptTests(TestCase):
     """NET-02: scripts/database/verify_guards.sql is what operators run after migrations and restores."""
 

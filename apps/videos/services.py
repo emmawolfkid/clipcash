@@ -25,6 +25,7 @@ from apps.audit.services import DENIED, record_business_event, record_security_e
 from apps.core import features
 from apps.core.jobs.errors import PermanentJobError, RetryableJobError
 from apps.core.jobs.services import enqueue
+from apps.core.locking import lock_own_rows
 from apps.memberships.access import check_access
 
 from .models import Video, VideoCategory
@@ -400,7 +401,7 @@ def sweep_unfinished(limit=100):
 def _publication_change(actor, video, action, check, new_status):
     _require(can_publish_videos, actor, f"video.{action}", video)
     with transaction.atomic():
-        video = Video.objects.select_for_update(of=("self",)).select_related("category").get(pk=video.pk)
+        video = lock_own_rows(Video.objects.select_related("category")).get(pk=video.pk)
         check(video)
         old = video.publication_status
         video.publication_status = new_status

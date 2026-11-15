@@ -1,26 +1,23 @@
 {% extends "administration/layout.html" %}{% load i18n %}
-{% block title %}{% translate "Airtel Lipa details" %}{% endblock %}
+{% block title %}{% translate "Manual payment methods" %}{% endblock %}
 {% block console_content %}
-<div class="page-heading"><h1 class="page-title">{% translate "Airtel Lipa payment details" %}</h1><a href="{% url 'administration:membership_payments' %}">{% translate "Verification queue" %}</a></div>
-<p class="notice notice--warning" role="note">{% translate "Members send real money to these details. Enter the business number and recipient name exactly as Airtel issued them, and check them twice: a wrong number sends members' money elsewhere. Every change is recorded and earlier details are kept." %}</p>
-{% if not enabled %}<p class="notice" role="status">{% translate "Manual membership payments are switched off in this deployment." %}</p>{% endif %}
-<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Currently shown to members" %}</h2>
-{% if instruction %}<dl class="details">
-  <dt>{% translate "Business number" %}</dt><dd><strong>{{ instruction.business_number }}</strong></dd>
-  <dt>{% translate "Recipient name" %}</dt><dd>{{ instruction.recipient_name }}</dd>
-  <dt>{% translate "Steps" %}</dt><dd>{{ instruction.instructions|linebreaksbr|default:"—" }}</dd>
-  <dt>{% translate "Published" %}</dt><dd>{{ instruction.created_at|date:"DATETIME_FORMAT" }} · {{ instruction.created_by.email }}</dd>
-</dl>
-<form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="retire"><button class="button button--secondary" type="submit">{% translate "Stop accepting new payments (retire these details)" %}</button></form>
-{% else %}<p>{% translate "None. Members cannot submit payments until details are published." %}</p>{% endif %}
+<div class="page-heading"><h1 class="page-title">{% translate "Manual payment methods" %}</h1><a href="{% url 'administration:membership_payments' %}">{% translate "Verification queue" %}</a></div>
+<p class="notice">{% translate "Check every receiving number and registered recipient before publishing. Changes affect new instructions. Issued instructions and pending claims keep their original details." %}</p>
+{% if not enabled %}<p class="notice">{% translate "Manual membership payments are switched off in this deployment." %}</p>{% endif %}
+<section class="workspace-section"><h2>{% translate "Active methods" %}</h2>
+{% for item in methods %}
+<article class="workspace-section"><h3>{{ item.provider_label }}</h3>
+<p><strong>{{ item.business_number }}</strong> &middot; {{ item.recipient_name }}</p>
+<p>{{ item.instructions|linebreaksbr }}</p>
+<a href="?edit={{ item.pk }}">{% translate "Edit method" %}</a>
+<form method="post">{% csrf_token %}<input type="hidden" name="action" value="retire"><input type="hidden" name="instruction_id" value="{{ item.pk }}"><button class="button button--secondary">{% translate "Retire method" %}</button></form>
+</article>{% empty %}<p>{% translate "No active payment methods." %}</p>{% endfor %}
 </section>
-<section class="workspace-section"><h2 class="workspace-section__title">{% if instruction %}{% translate "Publish new details" %}{% else %}{% translate "Publish details" %}{% endif %}</h2>
-  {% include "components/form.html" with form=form button=_("Publish payment details") %}
+<section class="workspace-section"><h2>{% if form.initial.instruction_id %}{% translate "Edit payment method" %}{% else %}{% translate "Add payment method" %}{% endif %}</h2>
+{% include "components/form.html" with form=form button=_("Publish payment details") %}
 </section>
-<section class="workspace-section"><h2 class="workspace-section__title">{% translate "History" %}</h2>
-{% if history %}<table class="table workspace-table"><caption class="visually-hidden">{% translate "Earlier payment details" %}</caption>
-<thead><tr><th scope="col">{% translate "Business number" %}</th><th scope="col">{% translate "Recipient" %}</th><th scope="col">{% translate "Published" %}</th><th scope="col">{% translate "Retired" %}</th></tr></thead>
-<tbody>{% for item in history %}<tr><td>{{ item.business_number }}</td><td>{{ item.recipient_name }}</td><td>{{ item.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ item.created_by.email }}</td><td>{% if item.retired_at %}{{ item.retired_at|date:"SHORT_DATETIME_FORMAT" }} · {{ item.retired_by.email }}{% else %}<span class="badge badge--active">{% translate "Active" %}</span>{% endif %}</td></tr>{% endfor %}</tbody></table>
-{% else %}<p class="lead">—</p>{% endif %}
-</section>
+<section class="workspace-section"><h2>{% translate "History" %}</h2>
+<table class="table workspace-table"><caption class="visually-hidden">{% translate "Payment method version history" %}</caption><thead><tr><th scope="col">{% translate "Provider" %}</th><th scope="col">{% translate "Receiving number" %}</th><th scope="col">{% translate "Recipient" %}</th><th scope="col">{% translate "State" %}</th></tr></thead>
+<tbody>{% for item in history %}<tr><td>{{ item.provider_label }}</td><td>{{ item.business_number }}</td><td>{{ item.recipient_name }}</td><td>{% if item.is_active %}{% translate "Active" %}{% else %}{% translate "Retired" %} &middot; {{ item.retired_at|date:"SHORT_DATETIME_FORMAT" }}
+<form method="post">{% csrf_token %}<input type="hidden" name="action" value="enable"><input type="hidden" name="instruction_id" value="{{ item.pk }}"><button class="button button--secondary">{% translate "Enable method" %}</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></section>
 {% endblock %}

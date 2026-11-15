@@ -45,6 +45,8 @@ from .models import JournalEntry, JournalLine, LedgerAccount
 from .posting_types import POSTING_TYPES, SINGLE_USE_RELATED_TYPES
 
 DEFERRED_CHECKS = "ledger_line_balanced, ledger_entry_complete"
+# DB-01 (MariaDB only): entries are written as drafts and finalized; see _finalize().
+DRAFT, POSTED = "DRAFT", JournalEntry.Status.POSTED
 MAX_SCOPE_ID = 64
 
 
@@ -283,18 +285,39 @@ def _insert(*, posting_type, lines, total, idempotency_key, fingerprint, descrip
         actor_id=actor.pk if actor is not None else None,
         request_id=context.request_id if context else "",
     )
+    mariadb = connection.vendor == "mysql"
+    if mariadb:
+        entry.status = DRAFT  # DB-01: written as a draft, finalized below.
     entry.save(force_insert=True)
     JournalLine.objects.bulk_create(
         JournalLine(entry=entry, line_number=n, account=line.account, side=line.side,
                     amount=line.amount, memo=line.memo)
         for n, line in enumerate(lines, start=1)
     )
+    if mariadb:
+        _finalize(entry)
+        return entry
     with connection.cursor() as cursor:
         # Run the commit-time balance/separation checks now, inside this
         # savepoint, then defer them again for any later postings.
         cursor.execute(f"SET CONSTRAINTS {DEFERRED_CHECKS} IMMEDIATE")
         cursor.execute(f"SET CONSTRAINTS {DEFERRED_CHECKS} DEFERRED")
     return entry
+
+
+def _finalize(entry):
+    """DB-01, MariaDB: the explicit ledger finalization step that replaces PostgreSQL's
+    commit-time (deferred) checks. The database verifies the draft (balanced, >= 2 lines,
+    active accounts, funding separation, reversal mirror) and applies the balances in this
+    single statement, or refuses it as a whole (wallets migration 0002). Until then the
+    draft and its lines affect no balance and back no approval or activation."""
+    table = connection.ops.quote_name(JournalEntry._meta.db_table)
+    key = JournalEntry._meta.pk.get_db_prep_value(entry.pk, connection)
+    with connection.cursor() as cursor:
+        cursor.execute(f"UPDATE {table} SET status = %s WHERE id = %s AND status = %s", [POSTED, key, DRAFT])
+        if cursor.rowcount != 1:
+            raise PostingValidationError("The ledger entry could not be finalized.", code="database_rejected")
+    entry.status = POSTED
 
 
 def _existing(idempotency_key, fingerprint):

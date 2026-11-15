@@ -10,11 +10,11 @@
   <h2 id="claim-next">{% translate "Awaiting payment verification" %}</h2>
   <p>{% translate "Your membership is not active yet. Submitting a reference does not activate it by itself." %}</p>
   <ol>
-    <li>{% translate "Our team finds your payment in ClipCash's Airtel business records and checks the reference, the exact amount and that it reached our Lipa account. This usually takes up to one working day." %}</li>
+    <li>{% translate "Our team finds your payment in ClipCash's provider business records and checks the reference, the exact amount and that it reached our receiving account. This usually takes up to one working day." %}</li>
     <li>{% translate "You get a notification and an email when the payment is confirmed or if it cannot be matched." %}</li>
     <li>{% blocktranslate with plan=claim.plan_name %}Once confirmed, your {{ plan }} membership starts immediately and its end date appears on your membership page.{% endblocktranslate %}</li>
   </ol>
-  <p>{% translate "Nothing else is needed from you. Never share your Airtel PIN with anyone." %}</p>
+  <p>{% translate "Nothing else is needed from you. Never share your payment PIN with anyone." %}</p>
 </section>
 {% elif claim.status == "APPROVED" %}
 <section class="notice notice--success manual-payment__next" role="status" aria-labelledby="claim-active">
@@ -38,7 +38,7 @@
   <dt>{% translate "Claim reference" %}</dt><dd>{{ claim.reference }}</dd>
   <dt>{% translate "Plan" %}</dt><dd>{{ claim.plan_name }}</dd>
   <dt>{% translate "Amount" %}</dt><dd class="financial-amount">{{ claim.amount|tzs }}</dd>
-  <dt>{% translate "Paid to" %}</dt><dd>{{ claim.instruction.get_method_display }} {{ claim.instruction.business_number }} ({{ claim.instruction.recipient_name }})</dd>
+  <dt>{% translate "Paid to" %}</dt><dd>{{ claim.instruction.provider_label }} {{ claim.instruction.business_number }} ({{ claim.instruction.recipient_name }})</dd>
   <dt>{% translate "Paid from" %}</dt><dd>{{ claim.payer_phone }}</dd>
   <dt>{% translate "Transaction reference" %}</dt><dd>{{ claim.transaction_reference }}</dd>
   <dt>{% translate "Payment date" %}</dt><dd>{{ claim.paid_on|date:"DATE_FORMAT"|default:"—" }}</dd>

@@ -280,7 +280,7 @@ class PublicCopyTests(AccountsTestCase):
         self.assertNotIn("airtel", text)
         with override_settings(MANUAL_MEMBERSHIP_PAYMENTS_ENABLED=True):
             text = self.visible_text(self.client.get(HOME))
-        self.assertIn("airtel money (lipa)", text)
+        self.assertIn("an available payment method", text)
         self.assertNotIn("membership payments are not open yet", text)
         self.assertIn("withdrawals and payouts are not available", text)
 

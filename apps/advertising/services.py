@@ -27,6 +27,7 @@ from django.utils import timezone
 
 from apps.audit.services import DENIED, record_business_event, record_security_event
 from apps.core import features
+from apps.core.locking import lock_own_rows
 from apps.core.money import to_amount
 from apps.memberships.access import check_access
 from apps.memberships.models import MembershipPlan
@@ -509,9 +510,8 @@ def create_campaign(user, organization, *, target_plans=(), **values):
 
 
 def _lock_campaign(campaign):
-    return (Campaign.objects.select_for_update(of=("self",)).select_related("organization", "video",
-                                                                            "video__category")
-            .get(pk=campaign.pk))
+    return lock_own_rows(Campaign.objects.select_related("organization", "video", "video__category")).get(
+        pk=campaign.pk)
 
 
 def update_campaign(user, campaign, changes, *, expected_revision, target_plans=None):
@@ -855,7 +855,7 @@ def run_schedule(now=None, limit=200):
     now = now or timezone.now()
     counts = {"activated": 0, "completed": 0}
     with transaction.atomic():
-        ended = (Campaign.objects.select_for_update(skip_locked=True, of=("self",))
+        ended = (lock_own_rows(Campaign.objects, skip_locked=True)
                  .filter(status__in=[S.SCHEDULED, S.ACTIVE, S.PAUSED], ends_at__lte=now).order_by("ends_at")[:limit])
         for campaign in ended:
             old = campaign.status
@@ -864,8 +864,8 @@ def run_schedule(now=None, limit=200):
             campaign.save()
             _event("completed", None, campaign, old)
             counts["completed"] += 1
-        due = (Campaign.objects.select_for_update(skip_locked=True, of=("self",))
-               .select_related("organization", "video", "video__category")
+        due = (lock_own_rows(Campaign.objects.select_related("organization", "video", "video__category"),
+                             skip_locked=True)
                .filter(status=S.SCHEDULED, starts_at__lte=now, ends_at__gt=now).order_by("starts_at")[:limit])
         for campaign in due:
             counts["activated"] += _activate_if_due(campaign, now)

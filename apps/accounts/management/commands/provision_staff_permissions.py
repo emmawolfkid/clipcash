@@ -29,6 +29,7 @@ from django.db.models import Q
 
 from apps.audit.context import audit_scope
 from apps.audit.services import record_business_event
+from apps.core.locking import transaction_lock_mariadb
 
 from ...roles import ROLE_GROUP_NAMES, ROLE_PERMISSIONS
 
@@ -64,7 +65,14 @@ class Command(BaseCommand):
         if not apply:
             self.stdout.write("\nPreview only. Run with --apply to make the additions above.")
             return
+        mariadb = connection.vendor == "mysql"
+        table = connection.ops.quote_name(Group.permissions.through._meta.db_table)
         with audit_scope(source="CLI"), transaction.atomic():
+            if mariadb:
+                # The permission-link triggers take this same mutex for every write,
+                # including Django admin writes. Held until the outer transaction ends;
+                # works at READ COMMITTED and inside an existing atomic block.
+                transaction_lock_mariadb("authorization.group_permissions")
             for name in ROLE_GROUP_NAMES.values():
                 Group.objects.get_or_create(name=name)
             # Group permissions live in the group-permission link table, which Django admin
@@ -73,9 +81,9 @@ class Command(BaseCommand):
             # delete there (and other provisioning runs) until this transaction ends, while
             # reads continue. The allowlist is then checked on what is committed now, and
             # it stays true until commit.
-            with connection.cursor() as cursor:
-                cursor.execute(f"LOCK TABLE {connection.ops.quote_name(Group.permissions.through._meta.db_table)} "
-                               "IN SHARE ROW EXCLUSIVE MODE")
+            if not mariadb:
+                with connection.cursor() as cursor:
+                    cursor.execute(f"LOCK TABLE {table} IN SHARE ROW EXCLUSIVE MODE")
             group_additions, missing, extras, user_additions, stale = self._plan()
             if extras or missing:
                 raise CommandError(

@@ -137,12 +137,37 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Hosted deployments (Render) provide one DATABASE_URL; local development uses
-# the separate DB_* values. The URL is read here only and never kept as a setting.
+# DB-01: PostgreSQL (default) or MariaDB 10.11+ (the NetPoa port, in progress; see
+# docs/deployment/mariadb_port.md). Hosted deployments (Render) provide one
+# DATABASE_URL (PostgreSQL only); local development and MariaDB use the separate DB_*
+# values. The URL is read here only and never kept as a setting.
+DB_ENGINE = env("DB_ENGINE", default="postgresql")
+MARIADB_ENGINE = "config.db_backends.mariadb"
+if DB_ENGINE not in ("postgresql", "mariadb"):
+    raise ImproperlyConfigured("DB_ENGINE must be postgresql or mariadb.")
 if env("DATABASE_URL", default=""):
+    if DB_ENGINE != "postgresql":
+        raise ImproperlyConfigured("DATABASE_URL is for PostgreSQL; configure MariaDB with the DB_* values.")
     _database = env.db_url("DATABASE_URL")
     if _database["ENGINE"] != "django.db.backends.postgresql":
         raise ImproperlyConfigured("DATABASE_URL must be a PostgreSQL URL (postgres:// or postgresql://).")
+elif DB_ENGINE == "mariadb":
+    _database = {
+        "ENGINE": MARIADB_ENGINE,
+        "NAME": env("DB_NAME"),
+        "USER": env("DB_USER"),
+        "PASSWORD": env("DB_PASSWORD"),
+        "HOST": env("DB_HOST", default="127.0.0.1"),
+        "PORT": env.int("DB_PORT", default=3306),
+        "OPTIONS": {
+            # Full Unicode (MariaDB's "utf8" is the 3-byte utf8mb3), PostgreSQL's isolation
+            # level, strict writes (errors, never silent truncation) and UTC for NOW().
+            "charset": "utf8mb4",
+            "isolation_level": "read committed",
+            "init_command": "SET sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,"
+                            "NO_ENGINE_SUBSTITUTION', time_zone = '+00:00'",
+        },
+    }
 else:
     _database = {
         "ENGINE": "django.db.backends.postgresql",
@@ -156,16 +181,40 @@ _database.update({
     "CONN_MAX_AGE": 60,
     "CONN_HEALTH_CHECKS": True,
     # Disposable test database, provisioned by
-    # scripts/database/create_test_database.sql. The test runner refuses
-    # any non-PostgreSQL engine or a name that is not a distinct test_* database.
+    # scripts/database/create_test_database.sql. The test runner refuses any
+    # engine other than PostgreSQL or ClipCash's MariaDB backend, and a name that
+    # is not a distinct test_* database.
     "TEST": {"NAME": env("DB_TEST_NAME", default="test_clipcash_db")},
 })
+if DB_ENGINE == "mariadb":
+    _database["TEST"].update({"CHARSET": "utf8mb4", "COLLATION": "utf8mb4_unicode_ci"})
 # TLS to the database: require (encrypted) or verify-full (encrypted, server
 # certificate checked). Unset keeps libpq's default ("prefer"); check --deploy
 # warns (core.W002) when a remote database is used without it.
 if env("DJANGO_DB_SSLMODE", default=""):
+    if DB_ENGINE != "postgresql":
+        raise ImproperlyConfigured("DJANGO_DB_SSLMODE is not supported for MariaDB yet (DB-01 pending).")
     _database.setdefault("OPTIONS", {})["sslmode"] = env("DJANGO_DB_SSLMODE")
 DATABASES = {"default": _database}
+if DB_ENGINE == "mariadb" and env("DB_RUNTIME_USER", default=""):
+    # DB-01 login separation, verification and tests only. "default" is then the MIGRATION
+    # login (owner: creates tables and the guard triggers, which run with its rights) and
+    # "runtime" is the least-privileged login the application runs as in production
+    # (production simply sets DB_USER to the runtime login). `manage.py check_mariadb_logins`
+    # verifies both; in tests "runtime" is a mirror of the test database, never flushed.
+    DATABASES["runtime"] = {
+        **{key: value for key, value in _database.items() if key != "TEST"},
+        "USER": env("DB_RUNTIME_USER"),
+        "PASSWORD": env("DB_RUNTIME_PASSWORD"),
+        "CONN_MAX_AGE": 0,
+        "TEST": {"MIRROR": "default", "NAME": _database["TEST"]["NAME"]},
+    }
+if DB_ENGINE == "mariadb":
+    # config.db_backends.mariadb creates the partial (W036), functional (W044) and NULLS
+    # NOT DISTINCT (W047) unique constraints these checks call unsupported (see its
+    # schema.py; apps/core/tests/test_mariadb_port.py proves every one exists).
+    # W037: partial non-unique indexes become full indexes (speed only, no rule).
+    SILENCED_SYSTEM_CHECKS = ["models.W036", "models.W037", "models.W044", "models.W047"]
 
 TEST_RUNNER = "config.test_runner.PostgreSQLTestRunner"
 

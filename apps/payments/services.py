@@ -31,6 +31,7 @@ from django.utils import timezone
 from apps.advertising.models import AdvertiserMembership, Campaign, Organization
 from apps.audit.services import DENIED, record_business_event, record_security_event
 from apps.core import features, ratelimit
+from apps.core.locking import lock_own_rows
 from apps.core.money import to_amount
 from apps.memberships.models import Subscription
 from apps.wallets.posting_types import POSTING_TYPES
@@ -527,7 +528,7 @@ def allocate(user, organization, campaign, *, amount):
     refusal = None
     with transaction.atomic():
         funds = _locked_funds(organization.pk)  # Serializes allocations for this advertiser.
-        campaign = Campaign.objects.select_for_update(of=("self",)).get(pk=campaign.pk)
+        campaign = lock_own_rows(Campaign.objects).get(pk=campaign.pk)
         if campaign.organization_id != organization.pk:
             refusal = "other_advertiser"
         elif campaign.status not in ALLOCATABLE_CAMPAIGN_STATES:

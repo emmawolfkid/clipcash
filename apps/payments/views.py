@@ -181,11 +181,31 @@ class ManualPayView(VerifiedAccountRequiredMixin, View):
         return get_object_or_404(Subscription.objects.select_related("plan"), pk=subscription_id,
                                  member=request.user)
 
-    def _render(self, request, subscription, form, status=200):
+    def _quote(self, request, subscription):
+        from .models import ManualPaymentQuote
+        key = request.POST.get("quote") or request.GET.get("quote")
+        if key:
+            try:
+                return get_object_or_404(ManualPaymentQuote.objects.select_related("instruction"),
+                                         pk=key, subscription=subscription)
+            except (ValueError, ValidationError):
+                raise Http404 from None
+        return None
+
+    def _render(self, request, subscription, form, status=200, quote=None):
         enabled = manual.manual_payments_enabled()
+        quote = (quote or self._quote(request, subscription)) if enabled else None
+        methods = manual.active_instructions() if enabled else []
+        if enabled and quote is None and len(methods) == 1 and subscription.status == Subscription.Status.PENDING:
+            try:
+                quote = manual.issue_instructions(request.user, subscription, methods[0])
+            except manual.ManualPaymentError:
+                pass
+        if quote is not None and not form.is_bound:
+            form.initial["quote"] = quote.pk
         return render(request, self.template_name, {
             "nav": "membership", "subscription": subscription, "form": form, "payments_enabled": enabled,
-            "instruction": manual.active_instruction() if enabled else None,
+            "instruction": quote.instruction if quote else None, "quote": quote, "methods": methods,
             "previous": subscription.manual_payments.exclude(status=ManualMembershipPayment.Status.PENDING_VERIFICATION)
                                                     .order_by("-created_at")[:10],
             "breadcrumbs": [("My membership", "memberships:mine")]}, status=status)
@@ -198,13 +218,28 @@ class ManualPayView(VerifiedAccountRequiredMixin, View):
         if subscription.status != Subscription.Status.PENDING:
             messages.info(request, MANUAL_STATE_MESSAGES["not_pending"])
             return redirect("memberships:mine")
-        status = 200 if manual.manual_payments_ready() else 503
-        return self._render(request, subscription, ManualPaymentForm(), status=status)
+        quote = self._quote(request, subscription)
+        status = 200 if manual.manual_payments_enabled() and (quote or manual.manual_payments_ready()) else 503
+        return self._render(request, subscription, ManualPaymentForm(), status=status, quote=quote)
 
     def post(self, request, subscription_id):
         subscription = self._subscription(request, subscription_id)
+        if request.POST.get("action") == "choose_method":
+            from .models import ManualPaymentInstruction
+            try:
+                instruction = get_object_or_404(ManualPaymentInstruction, pk=request.POST.get("instruction"), is_active=True)
+            except (ValueError, ValidationError):
+                raise Http404 from None
+            try:
+                quote = manual.issue_instructions(request.user, subscription, instruction)
+            except manual.ManualPaymentError as error:
+                messages.error(request, str(error))
+                return redirect("payments:manual_pay", subscription_id=subscription.pk)
+            from django.urls import reverse
+            return redirect(reverse("payments:manual_pay", args=[subscription.pk]) + "?quote=" + str(quote.pk))
         form = ManualPaymentForm(request.POST)
-        if not manual.manual_payments_ready():  # Disabled or no Lipa details: nothing is recorded.
+        quote = self._quote(request, subscription)
+        if not manual.manual_payments_enabled() or (quote is None and not manual.manual_payments_ready()):  # Disabled or no Lipa details: nothing is recorded.
             return self._render(request, subscription, form, status=503)
         if not form.is_valid():
             return self._render(request, subscription, form, status=400)

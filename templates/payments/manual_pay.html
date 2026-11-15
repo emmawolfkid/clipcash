@@ -4,40 +4,49 @@
 {% block crumb %}{% translate "Pay" %}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{% translate "Pay for your membership" %}</h1>
-<p class="lead">{% translate "Pay with Airtel Money (Lipa), then tell us the transaction details. Your membership starts after our team confirms the payment in our Airtel business records, usually within one working day." %}</p>
+<p class="lead">{% translate "Pay with your selected payment provider, then tell us the transaction details. Your membership starts after our team confirms the payment in the provider records, usually within one working day." %}</p>
 
 <section class="panel manual-payment__summary" aria-labelledby="pay-plan">
   <h2 class="panel__title" id="pay-plan">{% translate "Your plan" %}</h2>
   <dl class="details">
     <dt>{% translate "Plan" %}</dt><dd>{{ subscription.plan_name }}</dd>
     <dt>{% translate "Length" %}</dt><dd>{% blocktranslate count days=subscription.duration_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</dd>
-    <dt>{% translate "Amount to pay" %}</dt><dd><strong class="manual-payment__amount financial-amount">{{ subscription.price_amount|tzs }}</strong></dd>
+    <dt>{% translate "Amount to pay" %}</dt><dd><strong class="manual-payment__amount financial-amount">{{ quote.amount|default:subscription.price_amount|tzs }}</strong></dd>
     <dt>{% translate "Price held until" %}</dt><dd>{{ subscription.pending_until|date:"DATETIME_FORMAT" }}</dd>
   </dl>
 </section>
 
+{% if payments_enabled and methods %}
+<section class="panel"><h2>{% translate "Choose a payment method" %}</h2>
+<form method="post">{% csrf_token %}<input type="hidden" name="action" value="choose_method">
+<label for="payment-method">{% translate "Payment provider" %}</label>
+<select id="payment-method" name="instruction">{% for item in methods %}<option value="{{ item.pk }}">{{ item.provider_label }}</option>{% endfor %}</select>
+<button class="button">{% translate "Get payment instructions" %}</button></form></section>
+{% endif %}
 {% if instruction %}
 <section class="panel manual-payment__instructions" aria-labelledby="pay-how">
-  <h2 class="panel__title" id="pay-how">{% translate "1. Pay with Airtel Money – Lipa" %}</h2>
+  <h2 class="panel__title" id="pay-how">{{ instruction.provider_label }}</h2>
+  <p>{% translate "Use the issued receiving number and registered name below. These details stay with your submission even if the method changes." %}</p>
+  <p>{% translate "Instructions issued" %}: {{ quote.created_at|date:"DATETIME_FORMAT" }}</p>
   <dl class="details">
-    <dt>{% translate "Lipa business number" %}</dt><dd><strong class="manual-payment__number">{{ instruction.business_number }}</strong></dd>
+    <dt>{% translate "Receiving number" %}</dt><dd><strong class="manual-payment__number">{{ instruction.business_number }}</strong></dd>
     <dt>{% translate "Recipient name" %}</dt><dd>{{ instruction.recipient_name }}</dd>
-    <dt>{% translate "Exact amount" %}</dt><dd><strong class="financial-amount">{{ subscription.price_amount|tzs }}</strong></dd>
+    <dt>{% translate "Exact amount" %}</dt><dd><strong class="financial-amount">{{ quote.amount|default:subscription.price_amount|tzs }}</strong></dd>
   </dl>
   {% if instruction.instructions %}<p class="manual-payment__steps">{{ instruction.instructions|linebreaksbr }}</p>{% endif %}
-  <p class="notice" role="note">{% translate "Check that Airtel shows the recipient name above before you confirm. Pay the exact amount in one payment: partial or extra amounts cannot be matched automatically. Never share your Airtel PIN with anyone, including ClipCash staff." %}</p>
-  <p>{% translate "Paid a different amount, paid twice, or paid to the wrong number? Do not submit it here." %} <a href="{% url 'support:tickets' %}">{% translate "Contact support" %}</a> {% translate "with your Airtel transaction reference so our team can check it and arrange any refund." %}</p>
+  <p class="notice" role="note">{% translate "Check that the provider shows the recipient name above before you confirm. Pay the exact amount in one payment: partial or extra amounts cannot be matched automatically. Never share your payment PIN with anyone, including ClipCash staff." %}</p>
+  <p>{% translate "Paid a different amount, paid twice, or paid to the wrong number? Do not submit it here." %} <a href="{% url 'support:tickets' %}">{% translate "Contact support" %}</a> {% translate "with your provider transaction reference so our team can check it and arrange any refund." %}</p>
 </section>
 
 <section class="panel" aria-labelledby="pay-tell">
   <h2 class="panel__title" id="pay-tell">{% translate "2. Tell us about your payment" %}</h2>
-  <p>{% translate "Submitting these details does not activate your membership by itself. We check every payment against the official Airtel records first." %}</p>
+  <p>{% translate "Submitting these details does not activate your membership by itself. We check every payment against the official provider records first." %}</p>
   {% include "components/form.html" with form=form button=_("Submit payment details") %}
 </section>
 {% elif not payments_enabled %}
 <p class="notice notice--warning" role="status">{% translate "Membership payments are not available at the moment, so payment details cannot be submitted. Do not send money now. Your plan choice is saved until the date above." %}</p>
-{% else %}
-<p class="notice notice--warning" role="status">{% translate "ClipCash has not published its Airtel Lipa payment details yet, so payment details cannot be submitted. Do not send money now. Your plan choice is saved until the date above." %}</p>
+{% elif not methods %}
+<p class="notice notice--warning" role="status">{% translate "ClipCash has not published its payment methods yet, so payment details cannot be submitted. Do not send money now. Your plan choice is saved until the date above." %}</p>
 {% endif %}
 
 {% if previous %}

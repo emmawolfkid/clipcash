@@ -433,6 +433,10 @@ class FinancialInvariantTests(ComplimentaryTestCase):
         eligibility = withdrawals.withdrawal_eligibility(self.member, amount=10_000)
         self.assertFalse(eligibility)
         self.assertIn("withdrawals_locked", eligibility.reasons)
+        if connection.vendor == "mysql":
+            from apps.core.mariadb_guards import guard_findings
+            self.assertEqual(guard_findings(connection), [])
+            return
         with connection.cursor() as cursor:
             cursor.execute("SELECT tgname FROM pg_trigger WHERE tgname = ANY(%s) AND tgenabled = 'O'",
                            [list(LOCK_TRIGGERS)])

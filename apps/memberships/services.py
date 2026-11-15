@@ -14,8 +14,8 @@ Policies (see docs/architecture/memberships.md):
   verifier that independently confirms the payment, an exact amount match and
   a unique reference. The one other paid path (PAY-01) is
   activate_with_manual_payment(), used only by apps.payments.manual.approve()
-  after an authorized staff member verified a manual Airtel Lipa payment in the
-  official Airtel records; it needs the manual_membership_payments feature.
+  after an authorized staff member verified a manual provider payment in the
+  official provider records; it needs the manual_membership_payments feature.
   Nothing else can mark a subscription paid, and members never can.
 * Complimentary grants are a separate, explicitly labelled policy: Super
   Administrator only, a reason, a fixed expiry, amount paid 0, and only when
@@ -38,6 +38,7 @@ from django.utils import timezone
 
 from apps.audit.services import DENIED, FAILURE, record_business_event, record_security_event
 from apps.core import features
+from apps.core.locking import transaction_lock_mariadb
 
 from .models import MAX_DURATION_DAYS, MembershipPlan, MembershipPlanVersion, Subscription
 
@@ -553,20 +554,22 @@ def activate_with_verified_payment(subscription_id, payment):
 MANUAL_REFERENCE_PREFIX = "AIRTEL-LIPA:"
 
 
-def activate_with_manual_payment(subscription, *, reference_key, amount, actor, submitted_at, now):
-    """PAY-01: activate a PENDING subscription after staff verified a manual Airtel Lipa
-    payment in the official Airtel business records.
+def activate_with_manual_payment(subscription, *, reference_key, amount, actor, submitted_at, now, method="AIRTEL_LIPA"):
+    """PAY-01: activate a PENDING subscription after staff verified a manual provider
+    payment in the official provider business records.
 
     Called ONLY by apps.payments.manual.approve(), inside its transaction, with the member,
     the claim and ``subscription`` locked, after the reviewer's permission, the exact
     amount and the reference were checked and the fee was posted to the real ledger.
     Requires the manual_membership_payments feature. The activation's payment reference
-    is unique in the database, so one Airtel transaction can activate one membership."""
+    is unique in the database, so one provider receipt can activate one membership."""
     if not _feature_enabled("manual_membership_payments"):
         raise PaymentVerificationError("Manual membership payments are not enabled.", code="payments_disabled")
     if amount != subscription.price_amount or subscription.currency != "TZS":
         raise PaymentVerificationError("The payment amount does not match the quoted price.", code="amount_mismatch")
-    payment_reference = MANUAL_REFERENCE_PREFIX + reference_key
+    from apps.payments.manual import activation_reference
+
+    payment_reference = activation_reference(method, reference_key)
     if Subscription.objects.filter(payment_reference=payment_reference).exists():
         raise PaymentVerificationError("This payment reference was already used.", code="duplicate_reference")
     return _activate(subscription, source=Subscription.Source.PAYMENT, payment_reference=payment_reference,
@@ -631,7 +634,11 @@ OPERATION_CONFLICT = "This form was already used for a different grant. Reload t
 def _lock_operation(key):
     """Serialize every grant that carries this retry key, whichever member or plan it
     names. A PostgreSQL transaction-level advisory lock: held until commit or rollback,
-    shared by all processes and servers. Taken before any member lock (fixed order)."""
+    shared by all processes and servers. Taken before any member lock (fixed order).
+    DB-01: on MariaDB the same transaction-scoped lock is a locked row (apps.core.locking)."""
+    if connection.vendor == "mysql":
+        transaction_lock_mariadb(f"membership.complimentary:{key}")
+        return
     with connection.cursor() as cursor:
         cursor.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", [key])
 

@@ -59,7 +59,7 @@ FEATURES = {
         # Environment-owned, off by default and never on in a restricted demonstration.
         # Not one of the locked FINANCIAL_FEATURES: it moves no money out of ClipCash and
         # funds nothing but membership revenue. See apps.payments.manual.
-        Feature("manual_membership_payments", _("Manual membership payments (Airtel Lipa)"), False,
+        Feature("manual_membership_payments", _("Manual membership payments (staff verified)"), False,
                 demo_restricted=True, setting="MANUAL_MEMBERSHIP_PAYMENTS_ENABLED"),
     )
 }

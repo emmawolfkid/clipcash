@@ -1117,7 +1117,7 @@ class MembershipPaymentDetailView(View):
         from apps.payments.forms import ApproveManualPaymentForm, RejectManualPaymentForm
         from apps.wallets.models import JournalEntry
 
-        same_reference = (ManualMembershipPayment.objects.filter(reference_key=claim.reference_key)
+        same_reference = (ManualMembershipPayment.objects.filter(method=claim.method, reference_key=claim.reference_key)
                           .exclude(pk=claim.pk).select_related("member").order_by("-created_at")[:10])
         return render(request, self.template_name, {
             "claim": claim, "subscription": claim.subscription, "member": claim.member,
@@ -1187,13 +1187,14 @@ class MembershipPaymentDetailView(View):
 
 @console
 class PaymentInstructionsView(View):
-    """Super Administrators publish the Airtel Lipa details members pay to."""
+    """Super Administrators manage versioned manual payment methods."""
 
     def _render(self, request, form, status=200):
         from apps.payments.models import ManualPaymentInstruction
 
         return render(request, "administration/membership_payments/instructions.html", {
             "form": form, "instruction": manual_payments.active_instruction(),
+            "methods": manual_payments.active_instructions(),
             "history": ManualPaymentInstruction.objects.select_related("created_by", "retired_by")
                                                    .order_by("-created_at")[:20],
             "enabled": manual_payments.manual_payments_enabled(),
@@ -1204,32 +1205,53 @@ class PaymentInstructionsView(View):
 
         if not manual_payments.can_manage_instructions(request.user):
             raise PermissionDenied
-        current = manual_payments.active_instruction()
-        initial = ({"business_number": current.business_number, "recipient_name": current.recipient_name,
+        from apps.payments.models import ManualPaymentInstruction
+        current = None
+        if request.GET.get("edit"):
+            try:
+                current = get_object_or_404(ManualPaymentInstruction, pk=request.GET["edit"])
+            except (ValueError, ValidationError):
+                raise Http404 from None
+        initial = ({"instruction_id": current.pk, "method": current.method, "provider_label": current.provider_label,
+                    "business_number": current.business_number, "recipient_name": current.recipient_name,
                     "instructions": current.instructions} if current else None)
-        return self._render(request, PaymentInstructionForm(initial=initial))
+        form = PaymentInstructionForm(initial=initial)
+        if current:
+            form.fields["method"].disabled = True
+        return self._render(request, form)
 
     def post(self, request):
         from apps.payments.forms import PaymentInstructionForm
-
+        from apps.payments.models import ManualPaymentInstruction
         if not manual_payments.can_manage_instructions(request.user):
             raise PermissionDenied
-        if request.POST.get("action") == "retire":
-            if manual_payments.retire_instruction(request.user):
-                messages.success(request, _("Payment details retired. Members cannot submit new payments until "
-                                            "new details are published."))
+        action = request.POST.get("action")
+        row = None
+        if request.POST.get("instruction_id"):
+            try:
+                row = get_object_or_404(ManualPaymentInstruction, pk=request.POST["instruction_id"])
+            except (ValueError, ValidationError):
+                raise Http404 from None
+        if action in ("retire", "enable"):
+            if action == "retire":
+                manual_payments.retire_instruction(request.user, row.method if row else "AIRTEL_LIPA")
+            elif row:
+                manual_payments.enable_instruction(request.user, row)
             return redirect("administration:payment_instructions")
         form = PaymentInstructionForm(request.POST)
         if not form.is_valid():
             return self._render(request, form, status=400)
+        values = dict(form.cleaned_data)
+        values.pop("instruction_id")
+        values["method"] = row.method if row else values["method"] or "AIRTEL_LIPA"
         try:
-            manual_payments.publish_instruction(request.user, **form.cleaned_data)
+            manual_payments.publish_instruction(request.user, **values)
         except manual_payments.NotAuthorized:
             raise PermissionDenied from None
         except ValidationError as error:
             _form_errors(form, error)
             return self._render(request, form, status=400)
-        messages.success(request, _("Payment details published. Members now see them on the payment page."))
+        messages.success(request, _("Payment details published. New instructions use these details."))
         return redirect("administration:payment_instructions")
 
 

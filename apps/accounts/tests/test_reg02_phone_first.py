@@ -65,7 +65,9 @@ class PhoneFirstJourneyTests(ManualPaymentTestCase):
         url = reverse("administration:membership_payment", args=[claim.pk])
         if action == "approve":
             data = {"verified_amount": "5000", "verified_reference": claim.transaction_reference,
-                    "receipt_confirmed": "on", "recipient_confirmed": "on", **data}
+                    "receipt_confirmed": "on", "recipient_confirmed": "on",
+                    "verified_receiving_number": claim.instruction.business_number,
+                    "verified_recipient_name": claim.instruction.recipient_name, **data}
         return self.staff.post(url, {"action": action, **data})
 
     def test_signup_to_paid_membership_and_included_video(self):

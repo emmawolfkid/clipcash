@@ -154,8 +154,12 @@ EVENT_TYPES = {
         _event("membership.manual_payment.rejected", Category.MEMBERSHIP, BUSINESS, ["reference", "reason"]),
         _event("membership.manual_payment.refused", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
         _event("membership.payment_instructions.published", Category.MEMBERSHIP, BUSINESS,
-               ["method", "business_number", "recipient_name", "replaced"]),
+               ["method", "provider_label", "business_number", "recipient_name", "replaced"]),
         _event("membership.payment_instructions.retired", Category.MEMBERSHIP, BUSINESS, ["method"]),
+        _event("membership.payment_instructions.issued", Category.MEMBERSHIP, BUSINESS,
+               ["method", "instruction", "subscription", "amount"]),
+        _event("membership.payment_instructions.enabled", Category.MEMBERSHIP, BUSINESS,
+               ["method", "previous"]),
         # Video content (routine playback is not audited)
         _event("video.category.created", Category.CONTENT, BUSINESS, ["slug"]),
         _event("video.category.updated", Category.CONTENT, BUSINESS, ["slug", "fields"]),

@@ -20,6 +20,16 @@ superuser can disable these triggers.
 
 from django.db import migrations
 
+from apps.core.migration_ops import (
+    MariaDBRunSQL,
+    PostgreSQLRunSQL,
+    changed,
+    check_error,
+    drop_triggers,
+    privilege_error,
+    trigger,
+)
+
 SEARCH_PATH = "pg_catalog, public, pg_temp"
 FUNCTIONS = ("payments_manual_claim_guard()", "payments_manual_instruction_guard()")
 
@@ -104,9 +114,70 @@ DROP FUNCTION IF EXISTS payments_manual_instruction_guard();
 """
 
 
+# DB-01: the same rules on MariaDB (one trigger per event).
+CLAIM_SUBMISSION = ("reference", "method", "member_id", "subscription_id", "instruction_id", "plan_name", "amount",
+                    "currency", "payer_phone", "transaction_reference", "reference_key", "paid_on", "created_at")
+
+MARIADB_FORWARD = [
+    trigger("payments_manual_instruction_insert", "BEFORE INSERT", "payments_manualpaymentinstruction", f"""
+    IF NOT NEW.is_active OR NEW.retired_at IS NOT NULL OR NEW.retired_by_id IS NOT NULL THEN
+        {check_error("payment instructions are created active")}
+    END IF;"""),
+    trigger("payments_manual_instruction_update", "BEFORE UPDATE", "payments_manualpaymentinstruction", f"""
+    IF NOT OLD.is_active THEN
+        {privilege_error("retired payment instructions cannot change")}
+    END IF;
+    IF {changed("method", "business_number", "recipient_name", "instructions", "created_by_id", "created_at")} THEN
+        {privilege_error("payment instructions are append-only; publish new details instead")}
+    END IF;"""),
+    trigger("payments_manual_instruction_delete", "BEFORE DELETE", "payments_manualpaymentinstruction",
+            privilege_error("payments_manualpaymentinstruction rows cannot be deleted")),
+    trigger("payments_manual_claim_insert", "BEFORE INSERT", "payments_manualmembershippayment", f"""
+    IF BINARY NEW.status <> 'PENDING_VERIFICATION' OR NEW.reviewed_by_id IS NOT NULL OR NEW.reviewed_at IS NOT NULL
+       OR NEW.verified_amount IS NOT NULL OR NEW.verified_reference_key <> '' OR NEW.receipt_confirmed
+       OR NEW.rejection_reason <> '' OR NEW.ledger_entry_id IS NOT NULL OR NEW.cancelled_at IS NOT NULL THEN
+        {check_error("payment claims must be created pending, without review data")}
+    END IF;"""),
+    trigger("payments_manual_claim_update", "BEFORE UPDATE", "payments_manualmembershippayment", f"""
+    DECLARE message VARCHAR(200);
+    IF BINARY OLD.status <> 'PENDING_VERIFICATION' THEN
+        SET message = CONCAT('a ', LOWER(OLD.status), ' payment claim is final');
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = message;
+    END IF;
+    IF {changed(*CLAIM_SUBMISSION)} THEN
+        {privilege_error("submitted payment details cannot change")}
+    END IF;
+    IF BINARY NEW.status NOT IN ('PENDING_VERIFICATION', 'APPROVED', 'REJECTED', 'CANCELLED') THEN
+        SET message = CONCAT('invalid payment claim transition ', OLD.status, ' -> ', NEW.status);
+        SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+    END IF;
+    -- DB-01 ledger phase: an approval must point at this claim's FINALIZED ledger posting
+    -- (a draft entry, another claim's posting or another amount is refused).
+    IF BINARY NEW.status = 'APPROVED' AND NOT EXISTS (
+        SELECT 1 FROM wallets_journalentry e
+         WHERE e.id = NEW.ledger_entry_id AND BINARY e.status = 'POSTED'
+           AND BINARY e.posting_type = 'membership.manual_payment_received'
+           AND BINARY e.source_type = 'manual_membership_payment'
+           AND BINARY e.source_id = BINARY CAST(NEW.id AS CHAR)
+           AND BINARY e.external_reference = BINARY NEW.reference_key AND e.total_amount = NEW.amount) THEN
+        {check_error("an approval needs this claim's finalized ledger posting")}
+    END IF;"""),
+    trigger("payments_manual_claim_delete", "BEFORE DELETE", "payments_manualmembershippayment",
+            privilege_error("payments_manualmembershippayment rows cannot be deleted")),
+]
+
+MARIADB_REVERSE = drop_triggers(
+    "payments_manual_claim_delete", "payments_manual_claim_update", "payments_manual_claim_insert",
+    "payments_manual_instruction_delete", "payments_manual_instruction_update", "payments_manual_instruction_insert",
+)
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("payments", "0004_manual_membership_payments"),
     ]
 
-    operations = [migrations.RunSQL(FORWARD, REVERSE)]
+    operations = [
+        PostgreSQLRunSQL(FORWARD, REVERSE),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
+    ]

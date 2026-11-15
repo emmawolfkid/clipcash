@@ -1,0 +1,8 @@
+# DB-01: MariaDB 10.11+ build (NetPoa). base.txt stays the PostgreSQL build; psycopg is
+# still needed there because django.contrib.postgres and the memberships models import it.
+# mysqlclient is the driver Django supports. On Linux it compiles against the MariaDB
+# client library (needs pkg-config and libmariadb/libmysqlclient headers); whether that
+# works on the NetPoa host is not yet verified (docs/deployment/mariadb_port.md).
+
+-r base.txt
+mysqlclient==2.2.7

@@ -217,6 +217,10 @@ class MemberAndSecurityTests(DashboardTestCase):
         self.assertGreaterEqual(page.context["summary"]["financial_denials"], 1)
 
     def test_financial_locks_are_still_installed(self):
+        if connection.vendor == "mysql":
+            from apps.core.mariadb_guards import guard_findings
+            self.assertEqual(guard_findings(connection), [])
+            return
         with connection.cursor() as cursor:
             cursor.execute("SELECT tgname FROM pg_trigger WHERE NOT tgisinternal")
             triggers = {row[0] for row in cursor.fetchall()}
