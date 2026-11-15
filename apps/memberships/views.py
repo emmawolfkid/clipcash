@@ -27,6 +27,9 @@ MESSAGES = {
     "email_unverified": DEMO_UNCONFIRMED_BLOCKED,  # Only approved demo accounts get this far unverified.
     "payment_under_review": _("A payment for your current choice is being verified. You can change plans after "
                               "it is approved or rejected."),
+    # PRD-01: a mobile number cannot be verified while SMS is unavailable.
+    "contact_unverified": _("Before you buy a membership, add an email address in My account and open the "
+                            "confirmation link we send. Do not pay anything until then."),
 }
 
 
@@ -70,9 +73,14 @@ class PlanDetailView(DetailView):
         return MembershipPlan.objects.filter(status=MembershipPlan.Status.ACTIVE, is_public=True)
 
     def get_context_data(self, **kwargs):
+        from apps.accounts.services import email_change_available
+
         plan = self.object
+        user = self.request.user
         return {**super().get_context_data(**kwargs), **payment_context(),
-                "entitlement_labels": [label(code) for code in plan.entitlements]}
+                "entitlement_labels": [label(code) for code in plan.entitlements],
+                # PRD-01: members without a verified contact are offered to add an email instead.
+                "email_change_available": user.is_authenticated and email_change_available(user)}
 
 
 @method_decorator(feature_required("memberships"), name="dispatch")

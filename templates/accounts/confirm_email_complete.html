@@ -1,9 +1,17 @@
 {% extends "accounts/layout.html" %}{% load i18n %}
-{% block title %}{% translate "Email confirmed" %}{% endblock %}
+{% block title %}{% if activated %}{% translate "Account activated" %}{% else %}{% translate "Email confirmed" %}{% endif %}{% endblock %}
 {% block auth_content %}
-<h1>{% translate "Email confirmed" %}</h1>
-<p>{% translate "Your email address is confirmed." %}</p>
+{% if activated %}
+<h1>{% translate "Account activated" %}</h1>
+<p>{% translate "Your email address is confirmed and your account is active. Sign in with that address and the password you chose." %}</p>
 <ul class="links">
-  <li><a href="{% url 'accounts:profile' %}">{% translate "Go to my account" %}</a></li>
+  <li><a class="button" href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a></li>
 </ul>
+{% else %}
+<h1>{% translate "Email confirmed" %}</h1>
+<p>{% translate "Your email address is confirmed. You can now use it to sign in and to reset a forgotten password." %}</p>
+<ul class="links">
+  {% if user.is_authenticated %}<li><a href="{% url 'accounts:profile' %}">{% translate "Go to my account" %}</a></li>{% else %}<li><a href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a></li>{% endif %}
+</ul>
+{% endif %}
 {% endblock %}

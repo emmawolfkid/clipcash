@@ -6,4 +6,5 @@
 <form method="post" action="{% url 'accounts:resend_verification' %}">{% csrf_token %}
   <button type="submit" class="button">{% translate "Send a new link" %}</button>
 </form>
+<p class="auth-recovery-note">{% translate "The address is wrong or no longer yours? Contact ClipCash support: they will check that the account is yours before changing it." %}</p>
 {% endblock %}

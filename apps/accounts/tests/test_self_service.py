@@ -104,7 +104,7 @@ class ProfileEditTests(SelfServiceTestCase):
         phone_only = User.objects.create_user(None, PASSWORD, phone_number="+255713000222", status=User.Status.ACTIVE)
         self.client.force_login(phone_only)
         response = self.save(phone_number="")
-        self.assertContains(response, "Add an email address before removing it")
+        self.assertContains(response, "Add and confirm an email address before removing it")
         phone_only.refresh_from_db()
         self.assertEqual(phone_only.phone_number, "+255713000222")
 

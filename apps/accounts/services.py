@@ -2,10 +2,11 @@
 Account lifecycle and access-control services.
 
 Lifecycle:
+    PRD-01: register_member (name + password + ONE of email or Tanzanian mobile number)
+        email -> PENDING; the emailed link (confirm_email) -> ACTIVE, email verified
+        phone -> ACTIVE at once, number unverified (no SMS in this phase)
     REG-02: register_with_phone (mobile number + password) -> ACTIVE member, no email
-    REG-03: register_member (name + ONE of mobile number, username or email + password)
-        -> ACTIVE member; an email account is identity-ready once its address is confirmed
-    Accounts created PENDING before REG-02 (or by staff) still activate through the
+    Accounts created PENDING before PRD-01 (or by staff) still activate through the
     emailed link: activate (owner chooses password) -> ACTIVE, email verified
     ACTIVE <-> SUSPENDED, ACTIVE/SUSPENDED/PENDING -> DISABLED,
     DISABLED -> ACTIVE (Super Administrators only). Nothing returns to PENDING.
@@ -64,7 +65,11 @@ def send_verification_email(user, request):
     Delivery happens after commit; nothing is sent if the caller rolls back."""
     if not user.email:  # REG-02/REG-03: phone- and username-only accounts have no address to verify.
         return
-    if user.status == Status.PENDING:
+    if is_awaiting_email_confirmation(user):
+        # PRD-01: an email sign-up already chose its password; the link only confirms and activates.
+        enqueue_email(emails.CONFIRM_EMAIL, recipient=user.email, user=user,
+                      context={"base_url": base_url(request)})
+    elif user.status == Status.PENDING:
         enqueue_email(emails.ACTIVATION, recipient=user.email, user=user,
                       context={"base_url": base_url(request)})
     elif user.status == Status.ACTIVE and not user.email_verified:
@@ -92,42 +97,98 @@ class DuplicatePhoneNumber(DuplicateIdentifier):
 
 # method -> the User field holding that (already normalized) identifier.
 REGISTRATION_FIELDS = {"phone": "phone_number", "email": "email", "username": "username"}
+CONTACT_METHODS = ("email", "phone")
 
 
-def register_member(*, method, identifier, password, first_name="", last_name="", request=None):
+def is_awaiting_email_confirmation(user):
+    """PRD-01: an email sign-up whose address is not confirmed yet. It cannot sign in (only
+    ACTIVE accounts can) and becomes ACTIVE only through the emailed link."""
+    return bool(user.status == Status.PENDING and user.email_ownership_required and user.email
+                and not user.email_verified)
+
+
+def register_member(*, contact_method, contact, password, first_name, last_name, request=None):
     """
-    REG-03: create an ACTIVE member that signs in with ONE identifier of their choice:
-    ``method`` "phone" (a normalized +2556/7XXXXXXXX number; ownership not yet verified),
-    "username" (normalized, lowercased) or "email" (normalized). Mobile and username accounts
-    are usable at once. An email account is usable once its address is confirmed: the
-    confirmation link is queued here, in the same transaction (apps.accounts.access).
-    Raises DuplicateIdentifier (DuplicatePhoneNumber for numbers) when the identifier is
-    taken in any letter case or number format, including by a concurrent request (the
-    unique constraints decide).
+    PRD-01: create ONE member from the public sign-up form: a first and last name, a password
+    and the sign-in identifier the member chose, ``contact_method`` "email" (a normalized
+    address) or "phone" (a normalized +2556/7XXXXXXXX number). No username.
+
+    * Email: the account is created PENDING with its password, and the confirmation link is
+      queued in the same transaction. Opening the link confirms the address and activates
+      the account (confirm_email); until then it cannot sign in or reset a password. Returns
+      the new account, or None when the address already belongs to an account: nothing is
+      created, the address's owner is emailed instead (a fresh link if that account is still
+      awaiting confirmation, otherwise an "already registered" notice), and the caller shows
+      the same page either way, so the form does not reveal which addresses are registered.
+    * Phone: the account is ACTIVE at once and signs in with the number, which stays
+      unverified (no SMS in this phase). It cannot start a paid membership or recover a
+      password until the member adds and confirms an email address. A number already in
+      use raises DuplicatePhoneNumber (instant sign-up cannot hide it; attempts are
+      rate-limited by the view).
+
+    The unique constraints decide duplicates, including concurrent requests, in any letter
+    case or number format.
     """
-    field = REGISTRATION_FIELDS[method]
-    values = {field: identifier} if method != "email" else {}
+    if contact_method not in CONTACT_METHODS:
+        raise ValueError(f"Unknown contact method {contact_method!r}.")
+    by_email = contact_method == "email"
+    field = REGISTRATION_FIELDS[contact_method]
     try:
         with transaction.atomic():
-            user = User.objects.create_user(identifier if method == "email" else None, password,
-                                            first_name=first_name, last_name=last_name, role=Role.MEMBER,
-                                            status=Status.ACTIVE, **values)
-            record_business_event("account.registered", actor=user, target=user, metadata={"method": method})
-            if method == "email":
+            user = User.objects.create_user(
+                contact if by_email else None, password, first_name=first_name, last_name=last_name,
+                role=Role.MEMBER, status=Status.PENDING if by_email else Status.ACTIVE,
+                email_ownership_required=True, **({} if by_email else {"phone_number": contact}))
+            record_business_event("account.registered", actor=user, target=user, metadata={"method": contact_method})
+            if by_email:
                 send_verification_email(user, request)
     except (IntegrityError, ValidationError):
-        existing = User.objects.filter(**{field: identifier}).first()
+        existing = User.objects.filter(**{field: contact}).first()
         if existing is None:
             raise
         record_security_event("account.registration.duplicate", outcome=DENIED, actor=None, target=existing,
-                              metadata={"method": method})
-        raise (DuplicatePhoneNumber() if method == "phone" else DuplicateIdentifier(method)) from None
+                              metadata={"method": contact_method})
+        if not by_email:
+            raise DuplicatePhoneNumber from None
+        _email_existing_owner(existing, request)
+        return None
     return user
 
 
+def _email_existing_owner(existing, request):
+    """Someone signed up with an address that already has an account: tell its inbox, never
+    the visitor. Suspended or disabled accounts get nothing (the builders skip them)."""
+    if is_awaiting_email_confirmation(existing):
+        send_verification_email(existing, request)
+    elif existing.status == Status.ACTIVE:
+        enqueue_email(emails.ALREADY_REGISTERED, recipient=existing.email, user=existing,
+                      context={"base_url": base_url(request)})
+
+
 def register_with_phone(*, phone_number, password):
-    """REG-02 entry point, kept for existing callers: register_member() with a mobile number."""
-    return register_member(method="phone", identifier=phone_number, password=password)
+    """REG-02 helper (no username), kept for existing callers and tests; the public form uses
+    register_member(). Creates an ACTIVE member that signs in with its mobile number."""
+    try:
+        with transaction.atomic():
+            user = User.objects.create_user(None, password, phone_number=phone_number, role=Role.MEMBER,
+                                            status=Status.ACTIVE)
+            record_business_event("account.registered", actor=user, target=user, metadata={"method": "phone"})
+    except (IntegrityError, ValidationError):
+        existing = User.objects.filter(phone_number=phone_number).first()
+        if existing is None:
+            raise
+        record_security_event("account.registration.duplicate", outcome=DENIED, actor=None, target=existing,
+                              metadata={"method": "phone"})
+        raise DuplicatePhoneNumber from None
+    return user
+
+
+def email_password_changed(user, request):
+    """PRD-01: tell the account's CONFIRMED address that its password changed (change or reset).
+    Queued in the caller's transaction; nothing goes to an unconfirmed address."""
+    if user.has_verified_email:
+        enqueue_email(emails.PASSWORD_CHANGED, recipient=user.email, user=user,
+                      context={"base_url": base_url(request)})
 
 
 def request_verification_email(email, request):
@@ -152,6 +213,7 @@ def activate_account(user_pk, token, password):
         if (
             user is None
             or user.status != Status.PENDING
+            or user.email_ownership_required  # PRD-01 sign-ups activate through confirm_email.
             or not token
             or not verification_token_generator.check_token(user, token)
         ):
@@ -165,18 +227,27 @@ def activate_account(user_pk, token, password):
 
 
 def confirm_email(user_pk, token):
-    """Verify the email of an ACTIVE account (e.g. after an address change)."""
+    """Verify the email of an ACTIVE account (e.g. after an address change), or, PRD-01,
+    confirm and activate an email sign-up (PENDING -> ACTIVE, email verified). The token is
+    re-checked on the locked row; confirming changes the state it signs, so a replayed or
+    concurrent submission fails. Returns the user, or None for any invalid link."""
     with transaction.atomic():
         user = User.objects.select_for_update().filter(pk=user_pk).first()
         if (
             user is None
-            or user.status != Status.ACTIVE
+            or not (user.status == Status.ACTIVE or is_awaiting_email_confirmation(user))
             or user.email_verified
             or not verification_token_generator.check_token(user, token)
         ):
             return None
+        activating = user.status == Status.PENDING
         user.email_verified = True
-        user.save(update_fields=["email_verified", "updated_at"])
+        if activating:
+            user.status = Status.ACTIVE
+            user.save()  # Also derives is_active.
+            record_business_event("account.activated", actor=user, target=user, metadata={"method": "email"})
+        else:
+            user.save(update_fields=["email_verified", "updated_at"])
         record_business_event("account.email_confirmed", actor=user, target=user)
         notify_account(user, "email_confirmed", "Your email address is confirmed",
                        "You can now use every member feature that needs a confirmed address.",

@@ -35,6 +35,7 @@
 </section>
 {% endif %}{% endwith %}
 {% if demo_unconfirmed_account %}{% include "components/demo_unconfirmed_notice.html" %}{% endif %}
+{% if user.role == "MEMBER" %}{% include "components/contact_verification_notice.html" %}{% endif %}
 
 <div class="summary-grid">
   {% with m=summary.membership %}

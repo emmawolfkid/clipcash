@@ -34,7 +34,7 @@ def kinds(user):
 
 
 class AccountEventTests(AccountsTestCase):
-    def test_password_change_creates_a_security_notice_and_auth_emails_are_unchanged(self):
+    def test_password_change_creates_a_security_notice_and_emails_the_confirmed_address(self):
         from apps.accounts.tests.helpers import NEW_PASSWORD, PASSWORD
 
         member = make_user("member@example.com")
@@ -42,12 +42,14 @@ class AccountEventTests(AccountsTestCase):
         self.client.post(reverse("accounts:password_change"), {
             "old_password": PASSWORD, "new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD})
         self.assertEqual(kinds(member), ["account.password_changed"])
-        self.assertEqual(len(mail.outbox), 0)  # In-app only: no new email behaviour.
+        # PRD-01: one security email to the confirmed address (queued in the outbox).
+        self.assertEqual(list(OutboundEmail.objects.values_list("kind", "recipient")),
+                         [("accounts.password_changed", "member@example.com")])
 
     @override_settings(RESTRICTED_DEMO_MODE=False, PUBLIC_REGISTRATION_APPROVED=True)
     def test_phone_registration_sends_no_email_or_notice(self):
         # REG-02: phone-first sign-up has no address to write to.
-        self.client.post(reverse("accounts:register"), {"first_name": "Amina", "last_name": "Juma", "sign_in_method": "phone", "phone_number": "0712345678",
+        self.client.post(reverse("accounts:register"), {"first_name": "Amina", "last_name": "Juma", "contact_method": "phone", "phone_number": "0712345678",
                                                         "password1": "Another-Strong-Phrase-42",
                                                         "password2": "Another-Strong-Phrase-42"})
         self.assertTrue(User.objects.filter(phone_number="+255712345678").exists())

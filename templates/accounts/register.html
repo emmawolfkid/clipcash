@@ -2,8 +2,11 @@
 {% block title %}{% translate "Create an account" %}{% endblock %}
 {% block auth_content %}
 <h1>{% translate "Create an account" %}</h1>
-<p class="lead">{% translate "Tell us your name, choose how you want to sign in, and choose a password. Only the sign-in detail you choose is needed." %}</p>
-<p>{% translate "Creating an account is free. With a mobile number or a username you can use your account straight away; with an email address, first open the confirmation link we send you. Only a confirmed email address can reset a forgotten password, so you can add and confirm one later from your account." %}</p>
+<p class="lead">{% translate "Tell us your name, choose a password, and sign up with your email address or your mobile number. Creating an account is free." %}</p>
+<div class="notice auth-recovery-note" role="note">
+  <p><strong>{% translate "Email address" %}:</strong> {% translate "we send you a link, and your account is activated when you open it. You then sign in with that address, and you can reset a forgotten password by email." %}</p>
+  <p><strong>{% translate "Mobile number" %}:</strong> {% translate "you can sign in at once, but the number is not verified (SMS verification is not available yet). Before you can buy a membership or reset a forgotten password, you must add an email address in My account and confirm it." %}</p>
+</div>
 {% include "components/form.html" with button=_("Create account") %}
 <ul class="links">
   <li><a href="{% url 'accounts:login' %}">{% translate "Already registered? Sign in" %}</a></li>

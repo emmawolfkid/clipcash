@@ -1,11 +1,14 @@
 """
-REG-03 acceptance: members choose ONE sign-in identifier (mobile number, email address or
-username), with fictional test records only.
+REG-03 acceptance, as corrected by PRD-01 (sign-up by email OR mobile number, no username), with
+fictional test records only.
 
-Covers the three registration paths, normalized duplicates, existing members and staff
-signing in as before, password reset (verified email only), the password rules (Django's
-validators plus letters AND numbers; spaces allowed), the Show password control, and a
-username-only member reaching checkout. The favicon (FAV-01) is covered at the end.
+Covers usernames of EXISTING accounts (rules, normalization, uniqueness, signing in), the
+required fields and contact choice of the sign-up form, normalized duplicates, existing members
+and staff signing in as before, password reset (verified email only), the password rules
+(members 8+ characters with a letter and a number, spaces allowed; staff unchanged), the Show
+password control, and a mobile member reaching checkout once an email is confirmed. The favicon
+(FAV-01) is covered at the end. PRD-01's email activation, phone restrictions and production
+email checks are in test_prd01_email_first.
 """
 
 import importlib.util
@@ -41,10 +44,11 @@ VERIFY = reverse("accounts:verification_required")
 LETTER_AND_NUMBER = "Your password must contain at least one letter and at least one number."
 
 
-def registration(method, value, password=NEW_PASSWORD, **extra):
-    data = {"first_name": "Amina", "last_name": "Juma", "sign_in_method": method,
-            "phone_number": "", "email": "", "username": "", "password1": password, "password2": password}
-    data[{"phone": "phone_number", "email": "email", "username": "username"}[method]] = value
+def registration(contact_method, contact, password=NEW_PASSWORD, **extra):
+    """The public sign-up form (PRD-01): names, ONE of email or mobile number, password."""
+    data = {"first_name": "Amina", "last_name": "Juma", "contact_method": contact_method, "email": "",
+            "phone_number": "", "password1": password, "password2": password}
+    data[{"phone": "phone_number", "email": "email"}[contact_method]] = contact
     return {**data, **extra}
 
 
@@ -52,71 +56,62 @@ class FlexibleRegistrationTests(ManualPaymentTestCase):
     """ManualPaymentTestCase: registration open, a 5,000 TZS "monthly" plan, published Lipa
     details and manual payments switched on."""
 
-    def register(self, method, value, client=None, **extra):
-        return (client or self.client).post(REGISTER, registration(method, value, **extra))
+    def register(self, contact_method, contact, client=None, **extra):
+        return (client or self.client).post(REGISTER, registration(contact_method, contact, **extra))
 
-    # --- The three paths -------------------------------------------------------------------
+    # --- The form ----------------------------------------------------------------------------
 
-    def test_mobile_number_account_is_ready_at_once(self):
+    def test_mobile_member_is_signed_in_and_ready_at_once(self):
         self.assertRedirects(self.register("phone", "0712 345 678"), DASHBOARD)
         user = User.objects.get(phone_number="+255712345678")
-        self.assertEqual((user.first_name, user.last_name, user.email, user.username), ("Amina", "Juma", None, None))
-        self.assertFalse(user.phone_verified)  # Unverified until ownership is confirmed.
+        self.assertEqual((user.first_name, user.last_name, user.email, user.username),
+                         ("Amina", "Juma", None, None))
+        self.assertFalse(user.phone_verified)  # No SMS: never verified automatically.
         self.assertTrue(identity_ready(user))
         self.assertEqual(get_user(self.client).pk, user.pk)
         self.assertEqual(self.client.get(DASHBOARD).status_code, 200)
+        self.assertEqual(AuditEvent.objects.get(action="account.registered").metadata, {"method": "phone"})
 
-    def test_username_account_is_ready_at_once(self):
-        self.assertRedirects(self.register("username", "Amina.Juma"), DASHBOARD)
-        user = User.objects.get(username="amina.juma")
-        self.assertEqual((user.email, user.phone_number, user.status), (None, None, User.Status.ACTIVE))
-        self.assertTrue(identity_ready(user))
-        self.assertEqual(self.client.get(DASHBOARD).status_code, 200)
-        self.assertEqual(AuditEvent.objects.get(action="account.registered").metadata["method"], "username")
-
-    def test_email_account_confirms_its_address_before_member_pages(self):
-        response = self.register("email", "  Amina.Juma@Example.COM ")
-        self.assertRedirects(response, DASHBOARD, fetch_redirect_response=False)
-        user = User.objects.get(email="amina.juma@example.com")
-        self.assertFalse(user.email_verified)
-        self.assertFalse(identity_ready(user))  # An unconfirmed address may belong to someone else.
-        self.assertRedirects(self.client.get(DASHBOARD), VERIFY, fetch_redirect_response=False)
-        self.assertEqual(mail.outbox[-1].to, ["amina.juma@example.com"])  # The confirmation link.
-        link = next(word for word in mail.outbox[-1].body.split() if "/accounts/confirm-email/" in word)
-        self.client.post(link)
-        user.refresh_from_db()
-        self.assertTrue(user.email_verified)
-        self.assertEqual(self.client.get(DASHBOARD).status_code, 200)
-
-    def test_only_the_chosen_identifier_is_required_and_used(self):
-        self.assertRedirects(self.register("username", "amina", email="not-an-email", phone_number="12"), DASHBOARD)
-        user = User.objects.get(username="amina")
-        self.assertEqual((user.email, user.phone_number), (None, None))  # The other boxes were ignored.
+    def test_only_the_chosen_contact_is_required_and_used(self):
+        self.assertRedirects(self.register("phone", "0712345678", email="not-an-email"), DASHBOARD)
+        user = User.objects.get(phone_number="+255712345678")
+        self.assertEqual((user.email, user.phone_number), (None, "+255712345678"))  # The email box was ignored.
         form = RegistrationForm(registration("email", ""))
         self.assertFalse(form.is_valid())
         self.assertEqual(list(form.errors), ["email"])
-
-    def test_names_are_required(self):
-        form = RegistrationForm(registration("phone", "0712345678", first_name="", last_name=" "))
+        form = RegistrationForm(registration("phone", "", email="amina@example.com"))
         self.assertFalse(form.is_valid())
-        self.assertEqual(set(form.errors), {"first_name", "last_name"})
+        self.assertEqual(list(form.errors), ["phone_number"])
+
+    def test_names_and_password_are_required(self):
+        form = RegistrationForm(registration("phone", "0712345678", first_name="", last_name=" ",
+                                             password1="", password2=""))
+        self.assertFalse(form.is_valid())
+        self.assertEqual(set(form.errors), {"first_name", "last_name", "password1", "password2"})
+        self.assertFalse(RegistrationForm({**registration("phone", "0712345678"), "contact_method": ""}).is_valid())
+
+    def test_public_sign_up_takes_no_username(self):
+        self.assertNotIn("username", RegistrationForm().fields)
+        self.assertRedirects(self.register("phone", "0712345678", username="injected"), DASHBOARD)
+        self.assertIsNone(User.objects.get(phone_number="+255712345678").username)
 
     # --- Normalized duplicates and confusable usernames -----------------------------------
 
     def test_normalized_duplicates_are_refused(self):
         make_user("amina@example.com")
         User.objects.create_user(None, PASSWORD, phone_number="+255712345678", status=User.Status.ACTIVE)
-        User.objects.create_user(None, PASSWORD, username="Amina.K", status=User.Status.ACTIVE)
-        cases = {("email", "AMINA@Example.com"): "email", ("phone", "0712-345-678"): "phone_number",
-                 ("phone", "255712345678"): "phone_number", ("username", "AMINA.k"): "username"}
-        for (method, value), field in cases.items():
-            with self.subTest(method=method, value=value):
+        for value in ("0712-345-678", "255712345678"):
+            with self.subTest(value=value):
                 cache.clear()
-                response = self.register(method, value, client=self.client_class())
+                response = self.register("phone", value, client=self.client_class())
                 self.assertEqual(response.status_code, 200)
-                self.assertIn(field, response.context["form"].errors)
-        self.assertEqual(User.objects.filter(username="amina.k").count(), 1)
+                self.assertIn("phone_number", response.context["form"].errors)
+        # PRD-01: a registered email address is not revealed; nothing is created either.
+        cache.clear()
+        response = self.register("email", "AMINA@Example.com", client=self.client_class())
+        self.assertRedirects(response, reverse("accounts:register_done"), fetch_redirect_response=False)
         self.assertEqual(User.objects.filter(email="amina@example.com").count(), 1)
+        self.assertEqual(User.objects.filter(phone_number="+255712345678").count(), 1)
 
     def test_usernames_cannot_be_confused_with_numbers_or_emails(self):
         for value in ("0712345678", "255712345678", "+255712345678", "7amina", "amina@example", "am", "a" * 31,
@@ -184,9 +179,9 @@ class FlexibleRegistrationTests(ManualPaymentTestCase):
         self.assertEqual(mail.outbox[-1].to, ["verified@example.com"])
 
     def test_account_settings_explain_password_reset(self):
-        self.client.post(REGISTER, registration("username", "zawadi"))
+        self.register("phone", "0712345678")
         page = self.client.get(PROFILE)
-        self.assertContains(page, "zawadi")
+        self.assertContains(page, "+255712345678")
         self.assertContains(page, "Only a confirmed email address can receive a password-reset link.")
         self.assertContains(page, "A username or a mobile number is never enough to reset a password.")
 
@@ -229,9 +224,9 @@ class FlexibleRegistrationTests(ManualPaymentTestCase):
         self.assertIn("password_too_short", self.refused_codes("zebra8kq", None))  # Unknown account: staff policy.
 
     def test_member_policy_on_registration_change_and_reset(self):
-        form = RegistrationForm(registration("username", "zawadi", password="plum7ox"))
+        form = RegistrationForm(registration("phone", "0712345678", password="plum7ox"))
         self.assertIn("password1", form.errors)  # 7 characters.
-        self.assertRedirects(self.register("username", "zawadi", password="plum7 ox"), DASHBOARD)
+        self.assertRedirects(self.register("phone", "0712345678", password="plum7 ox"), DASHBOARD)
         change = reverse("accounts:password_change")
         response = self.client.post(change, {"old_password": "plum7 ox", "new_password1": "orangekites",
                                              "new_password2": "orangekites"})
@@ -285,38 +280,24 @@ class FlexibleRegistrationTests(ManualPaymentTestCase):
             self.assertContains(page, f'aria-controls="{field}"')
             self.assertContains(page, f'data-password-target="{field}"')
         self.assertContains(self.client.get(LOGIN), 'data-password-target="id_password"')
-        weak = self.register("username", "zawadi", password="no numbers here at all")
+        weak = self.register("phone", "0712345678", password="no numbers here at all")
         self.assertIn("password1", weak.context["form"].errors)
-        self.assertFalse(User.objects.filter(username="zawadi").exists())
+        self.assertFalse(User.objects.filter(phone_number="+255712345678").exists())
 
-    # --- Username-only member to checkout ------------------------------------------------
-
-    def test_username_member_chooses_a_plan_and_reaches_checkout(self):
-        self.assertRedirects(self.register("username", "zawadi"), DASHBOARD)
-        self.client.post(reverse("memberships:choose", args=["monthly"]))
-        pending = Subscription.objects.get(member__username="zawadi", status=Subscription.Status.PENDING)
-        checkout = self.client.get(reverse("payments:manual_pay", args=[pending.pk]))
-        self.assertEqual(checkout.status_code, 200)
-        self.assertContains(checkout, 'name="payer_phone"')
-        self.assertIsNone(checkout.context["form"]["payer_phone"].value())  # Asked here, not taken from the account.
-        missing = self.client.post(reverse("payments:manual_pay", args=[pending.pk]),
-                                   {"amount": "5000", "payer_phone": "", "transaction_reference": "MP13572468"})
-        self.assertEqual(missing.status_code, 400)
-        self.client.post(reverse("payments:manual_pay", args=[pending.pk]),
-                         {"amount": "5000", "payer_phone": "0787 654 321", "transaction_reference": "MP13572468"})
-        claim = ManualMembershipPayment.objects.get(member__username="zawadi")
-        self.assertEqual((claim.status, claim.payer_phone), ("PENDING_VERIFICATION", "+255787654321"))
+    # --- Checkout ------------------------------------------------------------------------
 
     def test_mobile_member_checkout_offers_their_number(self):
         self.register("phone", "0712 345 678")
+        # PRD-01: a confirmed email address first (the email-change flow; see test_prd01_email_first).
+        User.objects.filter(phone_number="+255712345678").update(email="amina@example.com", email_verified=True)
+        self.client.force_login(User.objects.get(phone_number="+255712345678"))  # Session follows the identifier.
         self.client.post(reverse("memberships:choose", args=["monthly"]))
         pending = Subscription.objects.get(member__phone_number="+255712345678", status=Subscription.Status.PENDING)
         checkout = self.client.get(reverse("payments:manual_pay", args=[pending.pk]))
         self.assertEqual(checkout.context["form"]["payer_phone"].value(), "+255712345678")
 
-    def test_no_outbound_email_for_username_or_phone_sign_up(self):
-        self.register("username", "zawadi")
-        self.register("phone", "0712345678", client=self.client_class())
+    def test_no_outbound_email_for_mobile_sign_up(self):
+        self.register("phone", "0712345678")
         self.assertFalse(OutboundEmail.objects.exists())
 
 

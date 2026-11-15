@@ -11,7 +11,7 @@ from apps.audit.services import DENIED, FAILURE, SUCCESS, hash_identifier, recor
 from . import services
 from .password_validation import member_password_guidance_html, password_guidance_html
 from .phone_numbers import identifier_kind, normalize_phone_number, normalize_tz_mobile
-from .usernames import USERNAME_HELP_TEXT, normalize_username, validate_username
+from .usernames import normalize_username
 from .throttling import (
     CURRENT_PASSWORD_FAILURES,
     LOGIN_FAILURES_PER_ACCOUNT,
@@ -32,22 +32,20 @@ def _email_field(**attrs):
     )
 
 
-SIGN_IN_METHODS = (
-    ("phone", _("Mobile number")),
+CONTACT_METHODS = (
     ("email", _("Email address")),
-    ("username", _("Username")),
+    ("phone", _("Mobile number")),
 )
-IDENTIFIER_FIELDS = {"phone": "phone_number", "email": "email", "username": "username"}
+CONTACT_FIELDS = {"email": "email", "phone": "phone_number"}
 
 
 class RegistrationForm(forms.Form):
     """
-    REG-03: public sign-up asks for a first and last name, ONE sign-in identifier of the
-    member's choice (a Tanzanian mobile number, an email address or a username) and a
-    password. Only the chosen identifier is required; the other two fields are ignored.
-    Mobile and username accounts are usable at once; an email account is usable once its
-    address is confirmed (the link is sent at sign-up). There are no role, status or
-    permission fields.
+    PRD-01 (adapted from REG-04): public member sign-up. First name, last name and password,
+    and ONE sign-in identifier of the member's choice: an email address or a Tanzanian
+    mobile number. Only the chosen one is required and used; the other box is ignored. No
+    username is asked for (existing username accounts keep signing in). There are no role,
+    status or permission fields.
     """
 
     first_name = forms.CharField(
@@ -58,25 +56,23 @@ class RegistrationForm(forms.Form):
         label=_("Last name"), max_length=150,
         widget=forms.TextInput(attrs={"autocomplete": "family-name"}),
     )
-    sign_in_method = forms.ChoiceField(
-        label=_("How do you want to sign in?"), choices=SIGN_IN_METHODS, initial="phone",
-        help_text=_("Choose one. Fill in only the matching box below; you can add the others later."),
+    contact_method = forms.ChoiceField(
+        label=_("Sign up with"), choices=CONTACT_METHODS, initial="email",
+        help_text=_("Choose one, then fill in only that box. You will sign in with it."),
         widget=forms.RadioSelect,
-    )
-    phone_number = forms.CharField(
-        label=_("Mobile number"), max_length=24, required=False,
-        help_text=_("A Tanzanian mobile number, for example 0712 345 678. It stays unverified until you "
-                    "confirm you own it, and it is never used to reset your password."),
-        widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel", "inputmode": "tel"}),
     )
     email = forms.CharField(
         label=_("Email address"), max_length=254, required=False,
-        help_text=_("We will send you a link to confirm it. Once confirmed, it can also reset your password."),
+        help_text=_("We will email you a link. Your account is activated when you open it, and you can then sign "
+                    "in and reset a forgotten password with this address."),
         widget=forms.EmailInput(attrs={"autocomplete": "email", "autocapitalize": "none", "spellcheck": "false"}),
     )
-    username = forms.CharField(
-        label=_("Username"), max_length=40, required=False, help_text=USERNAME_HELP_TEXT,
-        widget=forms.TextInput(attrs={"autocomplete": "username", "autocapitalize": "none", "spellcheck": "false"}),
+    phone_number = forms.CharField(
+        label=_("Mobile number"), max_length=24, required=False,
+        help_text=_("A Tanzanian mobile number, for example 0712 345 678. You can sign in with it at once, but it "
+                    "stays unverified: to buy a membership or reset a forgotten password, you must first add and "
+                    "confirm an email address on your account."),
+        widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel", "inputmode": "tel"}),
     )
     password1 = forms.CharField(
         label=_("Password"), strip=False, help_text=lazy(member_password_guidance_html, str)(),
@@ -87,51 +83,48 @@ class RegistrationForm(forms.Form):
         widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
     )
 
-    def _clean_identifier(self, method, raw):
+    def _clean_contact(self, method, raw):
         if method == "phone":
             return normalize_tz_mobile(raw)
-        if method == "email":
-            email = User.objects.normalize_email(raw)
-            forms.EmailField().clean(email)  # Same format rule as every other email field.
-            return email
-        validate_username(raw)
-        return normalize_username(raw)
+        email = User.objects.normalize_email(raw)
+        forms.EmailField().clean(email)  # Same format rule as every other email field.
+        return email
 
     def clean(self):
         cleaned_data = super().clean()
-        method = cleaned_data.get("sign_in_method")
+        method = cleaned_data.get("contact_method")
         if method:
-            field = IDENTIFIER_FIELDS[method]
+            field = CONTACT_FIELDS[method]
             raw = (self.data.get(self.add_prefix(field)) or "").strip()
-            for other in IDENTIFIER_FIELDS.values():  # Only the chosen identifier is used.
+            for other in CONTACT_FIELDS.values():  # Only the chosen contact is used.
                 cleaned_data[other] = None
             if not raw:
-                self.add_error(field, ValidationError(_("Enter your %(identifier)s, or choose another way to sign "
-                                                        "in.") % {"identifier": dict(SIGN_IN_METHODS)[method].lower()},
-                                                      code="required"))
+                self.add_error(field, ValidationError(
+                    _("Enter your %(contact)s, or choose the other way to contact you.")
+                    % {"contact": dict(CONTACT_METHODS)[method].lower()}, code="required"))
             else:
                 try:
-                    cleaned_data[field] = self._clean_identifier(method, raw)
+                    cleaned_data[field] = self._clean_contact(method, raw)
                 except ValidationError as error:
                     self.add_error(field, error)
         password1, password2 = cleaned_data.get("password1"), cleaned_data.get("password2")
         if password1 and password2 and password1 != password2:
             self.add_error("password2", ValidationError(_("The two passwords do not match."), code="password_mismatch"))
         elif password1:
-            try:  # Similarity checks see the name and the identifier the member will sign in with.
+            try:  # Similarity checks see the name and contact of the new member.
                 password_validation.validate_password(password1, User(
                     first_name=cleaned_data.get("first_name") or "", last_name=cleaned_data.get("last_name") or "",
                     phone_number=cleaned_data.get("phone_number"), email=cleaned_data.get("email"),
-                    username=cleaned_data.get("username"), role=User.Role.MEMBER))
+                    role=User.Role.MEMBER))
             except ValidationError as error:
                 self.add_error("password1", error)
         return cleaned_data
 
     @property
-    def identifier(self):
-        """(method, normalized identifier) after a successful is_valid()."""
-        method = self.cleaned_data["sign_in_method"]
-        return method, self.cleaned_data[IDENTIFIER_FIELDS[method]]
+    def contact(self):
+        """(contact method, normalized contact) after a successful is_valid()."""
+        method = self.cleaned_data["contact_method"]
+        return method, self.cleaned_data[CONTACT_FIELDS[method]]
 
 
 def sign_in_key(value):
@@ -213,19 +206,22 @@ class ThrottledLoginMixin:
 
 
 class LoginForm(ThrottledLoginMixin, AuthenticationForm):
-    """REG-02/REG-03: members sign in with their mobile number (any accepted format), their
-    username (any letter case) or their email address (any letter case); staff keep signing
-    in with their email address."""
+    """PRD-01: members sign in with their email address (any letter case; once confirmed for
+    accounts created by public sign-up) or their mobile number (any accepted format). Accounts
+    that already have a username keep signing in with it (REG-03 compatibility); staff keep
+    signing in with their email address. Every failure gets the same message."""
 
     username = forms.CharField(
-        label=_("Username, email or mobile number"), max_length=254,
+        label=_("Email or mobile number"), max_length=254,
+        help_text=_("Already have a username? You can still sign in with it."),
         widget=forms.TextInput(attrs={"autocomplete": "username", "autofocus": True, "autocapitalize": "none",
                                       "spellcheck": "false"}),
     )
     error_messages = {
         **AuthenticationForm.error_messages,
-        "invalid_login": _("Enter a correct username, email or mobile number and password. The password is "
-                           "case-sensitive."),
+        "invalid_login": _("We could not sign you in with those details. Check your email or mobile number and "
+                           "password (the password is case-sensitive). Signed up with email? Open the link we sent "
+                           "first: the account is activated only then."),
     }
 
 
@@ -377,9 +373,11 @@ class ProfileForm(CurrentPasswordMixin, forms.ModelForm):
         if phone == self.instance.phone_number:
             return phone
         if phone is None:
-            if not self.instance.email and not self.instance.username:
-                raise ValidationError(_("You sign in with this mobile number. Add an email address before removing "
-                                        "it."), code="required_identifier")
+            # PRD-01: only an identifier that can actually sign in counts (an unconfirmed address of
+            # an account created by public sign-up cannot), so removing the number never locks out.
+            if not self._stored_account.email_signs_in and not self.instance.username:
+                raise ValidationError(_("You sign in with this mobile number. Add and confirm an email address "
+                                        "before removing it."), code="required_identifier")
             return None
         phone = normalize_tz_mobile(raw)
         if PHONE_CHANGE_ATTEMPTS.is_limited(self.instance.pk):

@@ -1,10 +1,11 @@
 """
 REG-02 acceptance: phone-first members end to end, with test records only.
 
-sign up with a mobile number -> dashboard -> choose a plan -> submit an Airtel Lipa
-payment -> staff verify and approve -> dashboard and inbox show the decision -> included
-video plays. Email copies go only to a verified address; recovery never trusts a phone
-number; existing email members and staff keep signing in as before.
+sign up with a mobile number -> dashboard -> (PRD-01) add and confirm an email address ->
+choose a plan -> submit an Airtel Lipa payment -> staff verify and approve -> dashboard and
+inbox show the decision -> included video plays. A plan choice made before PRD-01 by a
+phone-only member can still be paid and decided. Email copies go only to a verified address;
+recovery never trusts a phone number; existing email members and staff keep signing in.
 """
 
 from django.contrib.auth import get_user
@@ -13,7 +14,13 @@ from django.core.cache import cache
 from django.urls import reverse
 
 from apps.accounts.access import identity_ready
-from apps.accounts.tests.helpers import NEW_PASSWORD, PASSWORD, links_in_last_email, make_user, run_worker
+from apps.accounts.tests.helpers import (
+    NEW_PASSWORD,
+    PASSWORD,
+    links_in_last_email,
+    make_user,
+    run_worker,
+)
 from apps.audit.models import AuditEvent
 from apps.memberships.access import check_access
 from apps.memberships.models import Subscription
@@ -49,10 +56,19 @@ class PhoneFirstJourneyTests(ManualPaymentTestCase):
         self.staff.force_login(self.verifier)
 
     def sign_up(self, phone="0712 345 678"):
-        response = self.client.post(REGISTER, {"first_name": "Amina", "last_name": "Juma", "sign_in_method": "phone", "phone_number": phone, "password1": NEW_PASSWORD,
+        response = self.client.post(REGISTER, {"first_name": "Amina", "last_name": "Juma", "contact_method": "phone", "phone_number": phone, "password1": NEW_PASSWORD,
                                                "password2": NEW_PASSWORD})
         self.assertRedirects(response, DASHBOARD)
         return User.objects.get(phone_number=PHONE)
+
+    def confirm_email(self, member, address="asha@example.com"):
+        """PRD-01: the account page's email-change flow, as the signed-in owner."""
+        self.client.post(reverse("accounts:email_change"), {"new_email": address, "current_password": NEW_PASSWORD})
+        run_worker()
+        link = [link for link in links_in_last_email() if "/accounts/email-change/" in link][0]
+        self.client.post(self.client.get(link).url, {"current_password": NEW_PASSWORD})
+        member.refresh_from_db()
+        self.assertEqual((member.email, member.email_verified), (address, True))
 
     def pay(self, reference="MP24681357"):
         self.client.post(reverse("memberships:choose", args=["monthly"]))
@@ -76,7 +92,12 @@ class PhoneFirstJourneyTests(ManualPaymentTestCase):
         self.assertTrue(identity_ready(member))
         dashboard = self.client.get(DASHBOARD)
         self.assertContains(dashboard, "Next step: choose a membership")
+        self.assertContains(dashboard, "Add a recovery email address")
         self.assertNotContains(dashboard, "None")  # No empty email shown anywhere.
+        # PRD-01: no paid membership until an email address is confirmed.
+        self.client.post(reverse("memberships:choose", args=["monthly"]))
+        self.assertFalse(Subscription.objects.filter(member=member).exists())
+        self.confirm_email(member)
 
         claim = self.pay()
         self.assertContains(self.client.get(reverse("payments:manual_claim", args=[claim.pk])),
@@ -85,7 +106,7 @@ class PhoneFirstJourneyTests(ManualPaymentTestCase):
 
         # Staff find the phone-only member by number, in any format, and see it in the queue.
         queue = self.staff.get(QUEUE, {"q": "0712 345 678", "status": "PENDING_VERIFICATION"})
-        self.assertContains(queue, PHONE)
+        self.assertContains(queue, "asha@example.com")  # Found by number; shown by its confirmed address.
         self.assertContains(queue, claim.transaction_reference)
         self.assertRedirects(self.review(claim, "approve"),
                              reverse("administration:membership_payment", args=[claim.pk]))
@@ -98,16 +119,21 @@ class PhoneFirstJourneyTests(ManualPaymentTestCase):
         self.assertContains(dashboard, "Payment update: confirmed")
         self.assertContains(dashboard, "Monthly is active until")
         self.assertContains(self.client.get(INBOX), "Payment confirmed: membership active")
-        # No verified email: inbox only, never an email copy.
-        self.assertFalse(OutboundEmail.objects.filter(user_id=member.pk).exists())
-        self.assertEqual([m for m in mail.outbox if PHONE in str(m.to)], [])
-        # The audit trail names the phone-only member by number.
-        self.assertTrue(AuditEvent.objects.filter(action="membership.manual_payment.submitted",
-                                                  actor_email=PHONE).exists())
+        # Copies go only to the confirmed address.
+        self.assertEqual(set(OutboundEmail.objects.filter(user_id=member.pk).values_list("recipient", flat=True)),
+                         {"asha@example.com"})
+        self.assertTrue(AuditEvent.objects.filter(action="membership.manual_payment.submitted").exists())
         self.assertEqual(self.client.get(reverse("videos:detail", args=[self.video.slug])).status_code, 200)
 
-    def test_rejection_shows_on_dashboard_and_inbox_without_email(self):
+    def test_choice_made_before_prd01_is_paid_and_rejected_without_email(self):
         member = self.sign_up()
+        # A phone-only member's plan choice from before PRD-01 (created here with a briefly
+        # confirmed address, then left phone-only): it can still be paid and decided.
+        User.objects.filter(pk=member.pk).update(email="old@example.com", email_verified=True)
+        self.client.force_login(User.objects.get(pk=member.pk))  # The session follows the sign-in identifier.
+        self.client.post(reverse("memberships:choose", args=["monthly"]))
+        User.objects.filter(pk=member.pk).update(email=None, email_verified=False)
+        self.client.force_login(User.objects.get(pk=member.pk))
         claim = self.pay()
         self.review(claim, "reject", reason="NOT_FOUND")
         run_worker()

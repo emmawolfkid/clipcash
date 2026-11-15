@@ -11,17 +11,28 @@ from django.utils.translation import gettext_lazy as _
 
 
 def identity_ready(user):
-    """REG-02/REG-03: may this ACTIVE account use member pages, choose a plan and pay?
+    """REG-02/REG-03: may this ACTIVE account use member pages?
 
-    Members who register with a mobile number or a username and a password use the
-    account at once; that identifier is unique and is what they sign in with. Accounts
-    that sign in with an email address only still need that address confirmed (the
-    pre-REG-02 rule), because an unconfirmed address may belong to someone else. Phone
-    *ownership* (``phone_verified``) is tracked separately and is not required here; it is
-    never accepted as proof for account recovery. Real-money steps stay protected by staff
-    verification of every payment."""
+    Members who sign up with a mobile number use the account at once; the number is unique
+    and is what they sign in with (existing username accounts likewise). Accounts that sign
+    in with an email address only still need that address confirmed (the pre-REG-02 rule),
+    because an unconfirmed address may belong to someone else.
+
+    PRD-01: this is page access only. Starting a paid membership additionally needs a
+    VERIFIED contact (has_verified_contact): a sign-in identifier is not proof of ownership.
+    Phone ownership (``phone_verified``) is never accepted as proof for account recovery."""
+    # REG-04: a username counts for MEMBERS only, so staff keep needing a verified email or a
+    # mobile number, as before REG-03.
     return bool(getattr(user, "email_verified", False) or getattr(user, "phone_number", None)
-                or getattr(user, "username", None))
+                or (getattr(user, "username", None) and getattr(user, "role", None) == "MEMBER"))
+
+
+def has_verified_contact(user):
+    """PRD-01: proven ownership of a confirmed email address or an SMS-verified mobile number.
+    Required before a member starts a NEW paid membership (choosing a plan, getting payment
+    details, submitting a payment). Not required to sign in or to have an already submitted
+    payment reviewed, so no money already paid is stranded."""
+    return bool(getattr(user, "is_authenticated", False) and getattr(user, "has_verified_contact", False))
 
 
 def demo_verification_optional():

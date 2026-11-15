@@ -2,11 +2,12 @@
 {% block title %}{% translate "Sign in" %}{% endblock %}
 {% block auth_content %}
 <h1>{% translate "Sign in" %}</h1>
-<p class="lead">{% translate "Use your username, your email address or your mobile number (for example 0712 345 678), whichever you signed up with or added later." %}</p>
+<p class="lead">{% translate "Use the email address or the mobile number (for example 0712 345 678) you signed up with, and your password." %}</p>
 {% include "components/form.html" with button=_("Sign in") %}
+<p class="auth-recovery-note">{% translate "Signed up with your email address? Open the link we sent you first: your account is activated only then." %}</p>
 <ul class="links">
   <li><a href="{% url 'accounts:password_reset' %}">{% translate "Forgot your password?" %}</a></li>
-  <li><a href="{% url 'accounts:resend_verification' %}">{% translate "Need a new verification link?" %}</a></li>
+  <li><a href="{% url 'accounts:resend_verification' %}">{% translate "Need a new activation or confirmation link?" %}</a></li>
 </ul>
 {% if features.registration %}<div class="auth-alternative"><p>{% translate "New to ClipCash?" %}</p><a class="button button--secondary" href="{% url 'accounts:register' %}">{% translate "Create account" %}</a></div>{% endif %}
 {% endblock %}

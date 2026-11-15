@@ -1,6 +1,7 @@
 import logging
 from functools import wraps
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login, update_session_auth_hash
 from django.contrib.auth import views as auth_views
@@ -61,15 +62,10 @@ User = get_user_model()
 
 TOO_MANY_REQUESTS = _("Too many requests. Please wait a while and try again.")
 INVALID_LINK_TEMPLATE = "accounts/link_invalid.html"
+# REG-02: unavoidable for instant phone sign-up; attempts are rate-limited. Email sign-up never
+# says whether an address is registered (PRD-01).
 DUPLICATE_PHONE_REGISTRATION = _("An account already uses this mobile number. Sign in instead, or contact "
                                  "support if it is yours and you cannot sign in.")
-# REG-03: unavoidable for instant sign-up, as for numbers; attempts are rate-limited.
-DUPLICATE_REGISTRATION = {
-    "phone": DUPLICATE_PHONE_REGISTRATION,
-    "email": _("An account already uses this email address. Sign in instead, or reset your password if the "
-               "address is confirmed."),
-    "username": _("This username is already taken. Please choose another one."),
-}
 
 
 def no_referrer(view):
@@ -168,38 +164,45 @@ class RegisterView(AnonymousOnlyMixin, FormView):
 
     def form_valid(self, form):
         ip = client_ip_for_limits(self.request)  # None: unknown client; the per-identifier limit still applies.
-        method, identifier = form.identifier
-        # Numbers keep their own limit (REG-02); usernames and emails share one (REG-03).
-        per_identifier = REGISTRATIONS_PER_PHONE if method == "phone" else REGISTRATIONS_PER_IDENTIFIER
-        if (ip and REGISTRATIONS_PER_IP.is_limited(ip)) or per_identifier.is_limited(identifier):
+        method, contact = form.contact
+        # Numbers keep their own limit (REG-02); email addresses use the identifier limit (REG-03).
+        limit = REGISTRATIONS_PER_PHONE if method == "phone" else REGISTRATIONS_PER_IDENTIFIER
+        if (ip and REGISTRATIONS_PER_IP.is_limited(ip)) or limit.is_limited(contact):
             security_log.warning("registration_throttled ip=%s", ip or "-")
             form.add_error(None, TOO_MANY_REQUESTS)
             return self.form_invalid(form)
         if ip:
             REGISTRATIONS_PER_IP.hit(ip)
-        per_identifier.hit(identifier)
+        limit.hit(contact)
         try:
             user = services.register_member(
-                method=method, identifier=identifier, password=form.cleaned_data["password1"],
+                contact_method=method, contact=contact, password=form.cleaned_data["password1"],
                 first_name=form.cleaned_data["first_name"], last_name=form.cleaned_data["last_name"],
                 request=self.request)
-        except services.DuplicateIdentifier as duplicate:
-            form.add_error(services.REGISTRATION_FIELDS[duplicate.method],
-                           ValidationError(DUPLICATE_REGISTRATION[duplicate.method], code="duplicate"))
+        except services.DuplicatePhoneNumber:
+            form.add_error("phone_number", ValidationError(DUPLICATE_PHONE_REGISTRATION, code="duplicate"))
             return self.form_invalid(form)
+        if method == "email":
+            # PRD-01: the same page whether or not the address was new; the account is activated
+            # by the emailed link and cannot sign in before that.
+            return redirect("accounts:register_done")
         login(self.request, user, backend="apps.accounts.backends.AccountStatusBackend")
         record_security_event("auth.login.succeeded", outcome=SUCCESS, actor=user, target=user,
                               metadata={"interface": "registration"})
-        if method == "email":
-            messages.success(self.request, _("Welcome to ClipCash. We sent a confirmation link to %(email)s: open it "
-                                             "to finish setting up your account.") % {"email": identifier})
-        else:
-            messages.success(self.request, _("Welcome to ClipCash. Your account is ready."))
+        messages.success(self.request, _(
+            "Welcome to ClipCash. You can sign in with your mobile number. It is not verified: before you can buy a "
+            "membership or reset a forgotten password, add and confirm an email address in My account."))
         return redirect("dashboard")
 
 
 class RegisterDoneView(TemplateView):
+    """PRD-01: shown after every email sign-up, new address or not (no account enumeration)."""
+
     template_name = "accounts/register_done.html"
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(valid_hours=max(1, settings.ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT // 3600),
+                                        **kwargs)
 
 
 @method_decorator([never_cache, no_referrer], name="dispatch")
@@ -218,7 +221,9 @@ class ActivateAccountView(auth_views.PasswordResetConfirmView):
 
     def get_user(self, uidb64):
         user = super().get_user(uidb64)
-        return user if user is not None and user.status == User.Status.PENDING else None
+        # PRD-01: email sign-ups already chose a password; they activate through confirm_email.
+        return (user if user is not None and user.status == User.Status.PENDING
+                and not user.email_ownership_required else None)
 
     def form_valid(self, form):
         token = self.request.session.pop(INTERNAL_RESET_SESSION_TOKEN, None)
@@ -243,23 +248,49 @@ class ConfirmEmailView(View):
         user = auth_views.PasswordResetConfirmView().get_user(uidb64)
         if (
             user is None
-            or user.status != User.Status.ACTIVE
+            or not (user.status == User.Status.ACTIVE or services.is_awaiting_email_confirmation(user))
             or user.email_verified
             or not verification_token_generator.check_token(user, token)
         ):
             return None
         return user
 
+    @staticmethod
+    def _needs_owner(request, user):
+        """REG-04/PRD-01: when an account created by public sign-up has ANOTHER way to sign in
+        (a mobile number or a username), its address is confirmed only by the signed-in owner,
+        so whoever reads a mistyped address cannot attach it to the account. An email sign-up
+        (PENDING, the address is its only identifier) is confirmed by the link itself: opening
+        it proves the inbox, which is exactly what is being verified."""
+        if not user.email_ownership_required or services.is_awaiting_email_confirmation(user):
+            return False
+        return not request.user.is_authenticated or request.user.pk != user.pk
+
+    def _sign_in_first(self, request):
+        return render(request, "accounts/confirm_email_sign_in.html", {"next": request.path}, status=403)
+
     def get(self, request, uidb64, token):
-        if self._user(uidb64, token) is None:
+        user = self._user(uidb64, token)
+        if user is None:
             return render(request, INVALID_LINK_TEMPLATE, status=400)
+        if self._needs_owner(request, user):
+            return self._sign_in_first(request)
         return render(request, self.template_name)
 
     def post(self, request, uidb64, token):
         user = self._user(uidb64, token)
-        if user is None or services.confirm_email(user.pk, token) is None:
+        if user is None:
             return render(request, INVALID_LINK_TEMPLATE, status=400)
-        return render(request, "accounts/confirm_email_complete.html")
+        if self._needs_owner(request, user):
+            return self._sign_in_first(request)
+        activating = services.is_awaiting_email_confirmation(user)
+        if services.confirm_email(user.pk, token) is None:
+            return render(request, INVALID_LINK_TEMPLATE, status=400)
+        if request.user.is_authenticated and request.user.pk == user.pk:
+            messages.success(request, _("Your email address is confirmed."))
+            return redirect("dashboard")
+        # PRD-01: never signed in by a link; the member signs in with the address and password.
+        return render(request, "accounts/confirm_email_complete.html", {"activated": activating})
 
 
 class ResendVerificationView(FormView):
@@ -275,7 +306,8 @@ class ResendVerificationView(FormView):
             ):
                 services.send_verification_email(request.user, request)
             messages.info(request, _("If your email still needs verification, a new link is on its way."))
-            return redirect("accounts:verification_required")
+            # REG-04: members who can already use the account go back to their dashboard.
+            return redirect("dashboard" if identity_ready(request.user) else "accounts:verification_required")
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -296,6 +328,7 @@ class VerificationRequiredView(LoginRequiredMixin, TemplateView):
         if request.user.is_authenticated and identity_ready(request.user):
             return redirect("accounts:profile")
         return super().dispatch(request, *args, **kwargs)
+
 
 
 # --- Sign in and out ------------------------------------------------------------
@@ -372,6 +405,7 @@ class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
         with transaction.atomic():
             response = super().form_valid(form)  # Saves the new password.
             services.discard_email_change(form.user)
+            services.email_password_changed(form.user, self.request)
             record_business_event("auth.password_reset.completed", actor=form.user, target=form.user)
             services.notify_account(form.user, "password_reset", "Your password was reset",
                                     "If you did not do this, reset your password again now and contact ClipCash.",
@@ -394,6 +428,7 @@ class PasswordChangeView(auth_views.PasswordChangeView):
         with transaction.atomic():
             response = super().form_valid(form)  # Saves the password, keeps this session.
             services.discard_email_change(self.request.user)
+            services.email_password_changed(self.request.user, self.request)
             record_business_event("auth.password.changed", target=self.request.user)
             services.notify_account(self.request.user, "password_changed", "Your password was changed",
                                     "Other sessions were signed out. If this was not you, reset your password now.",

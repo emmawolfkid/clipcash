@@ -12,6 +12,8 @@
 {% include "components/membership_payment_notice.html" %}
 {% if demo_unconfirmed_account %}
 {% include "components/demo_unconfirmed_notice.html" %}
+{% elif user.is_authenticated and not user.has_verified_contact and user.role == "MEMBER" %}
+{% include "components/contact_verification_notice.html" %}
 {% elif user.is_authenticated %}
 <form method="post" action="{% url 'memberships:choose' plan.code %}">{% csrf_token %}
   <button type="submit" class="button">{% translate "Choose this plan" %}</button>

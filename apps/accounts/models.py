@@ -141,6 +141,17 @@ class User(AbstractUser):
     )
 
     email_verified = models.BooleanField(_("email verified"), default=False)
+    # PRD-01 (from REG-04): set for members created by public sign-up from PRD-01 on (and by the
+    # uncommitted REG-04 path). Their email address signs in and recovers the account only once
+    # its ownership is confirmed. An email sign-up stays PENDING until the emailed link confirms
+    # it; when the account also has another sign-in identifier (a mobile number or a username),
+    # only its signed-in owner can confirm, so a mistyped address gives its inbox no way in.
+    # False for every account created before, which keep signing in as they always have.
+    email_ownership_required = models.BooleanField(
+        _("email needs confirmed ownership before sign-in"), default=False, editable=False,
+        help_text=_("Created by public sign-up: the email address signs in and recovers the account only after "
+                    "its ownership is confirmed."),
+    )
 
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
 
@@ -233,6 +244,18 @@ class User(AbstractUser):
     @property
     def has_verified_email(self):
         return bool(self.email and self.email_verified)
+
+    @property
+    def has_verified_contact(self):
+        """PRD-01: proven ownership of at least one way to reach the member: a confirmed email
+        address or a mobile number verified by SMS. A sign-in identifier alone is not proof."""
+        return bool((self.email and self.email_verified) or (self.phone_number and self.phone_verified))
+
+    @property
+    def email_signs_in(self):
+        """REG-04/PRD-01: may this account sign in with its email address? Accounts created by
+        public sign-up only once the address is confirmed; all others as before."""
+        return bool(self.email) and (self.email_verified or not self.email_ownership_required)
 
     def _get_session_auth_hash(self, secret=None):
         """

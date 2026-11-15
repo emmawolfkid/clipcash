@@ -89,10 +89,13 @@ EVENT_TYPES = {
         # Account lifecycle
         _event("account.registration.started", Category.ACCOUNT, BUSINESS),
         # REG-02: phone-first sign-up creates an ACTIVE member at once.
-        _event("account.registered", Category.ACCOUNT, BUSINESS, ["method"]),
+        # REG-04: username-first sign-up also records which contact was given (email or phone).
+        _event("account.registered", Category.ACCOUNT, BUSINESS, ["method", "contact"]),
         _event("account.registration.duplicate", Category.ACCOUNT, SECURITY, ["method"]),
+        # REG-04: an existing member added a username to the same account.
+        _event("account.username_added", Category.ACCOUNT, BUSINESS),
         _event("account.registration.repeated", Category.ACCOUNT, SECURITY, ["account_status"]),
-        _event("account.activated", Category.ACCOUNT, BUSINESS),
+        _event("account.activated", Category.ACCOUNT, BUSINESS, ["method"]),  # PRD-01: "email" sign-up.
         _event("account.email_confirmed", Category.ACCOUNT, BUSINESS),
         _event("account.profile_updated", Category.ACCOUNT, BUSINESS, ["changed_fields"]),
         _event("account.email_change.requested", Category.ACCOUNT, BUSINESS, ["new_address_hash", "address_available"]),

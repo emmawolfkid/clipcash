@@ -132,6 +132,24 @@ def member_eligibility(member, *, demo_waiver=False):
     return True, "ok"
 
 
+def new_payment_eligibility(member):
+    """(eligible, reason) for STARTING a new paid membership: choosing a plan (including a
+    renewal), getting payment details and submitting a payment. PRD-01: on top of
+    member_eligibility, the member must have a verified contact (a confirmed email address;
+    no mobile number can be verified while SMS is unavailable), so a payer can always be
+    reached and can recover the account. Deliberately NOT applied when staff approve a
+    payment already submitted, or to existing memberships: money already paid is never
+    stranded and nobody loses access they have."""
+    from apps.accounts.access import has_verified_contact
+
+    eligible, reason = member_eligibility(member)
+    if not eligible:
+        return eligible, reason
+    if not has_verified_contact(member):
+        return False, "contact_unverified"
+    return True, "ok"
+
+
 # --- Plans -----------------------------------------------------------------------
 
 
@@ -304,7 +322,7 @@ def choose_plan(member, plan):
     try:
         if not _feature_enabled("memberships"):
             raise PlanUnavailable("Memberships are not available.", code="feature_disabled")
-        eligible, reason = member_eligibility(member)
+        eligible, reason = new_payment_eligibility(member)  # PRD-01: a verified contact first.
         if not eligible:
             raise NotEligible("Your account cannot take a membership yet.", code=reason)
         now = timezone.now()
