@@ -3,12 +3,12 @@
   "use strict";
   var shell = document.querySelector(".auth-shell");
   if (!shell) { return; }
-  // REG-03 registration: show only the input for the chosen way to sign in. Without
-  // JavaScript all three stay visible; the server uses only the chosen one either way.
-  var identifierFields = { phone: "id_phone_number", email: "id_email", username: "id_username" };
-  var methodInputs = shell.querySelectorAll('input[name="sign_in_method"]');
+  // REG-04 registration: show only the box for the chosen contact (email or mobile number).
+  // Without JavaScript both stay visible; the server uses only the chosen one either way.
+  var identifierFields = { email: "id_email", phone: "id_phone_number" };
+  var methodInputs = shell.querySelectorAll('input[name="contact_method"]');
   function syncIdentifierFields() {
-    var chosen = shell.querySelector('input[name="sign_in_method"]:checked');
+    var chosen = shell.querySelector('input[name="contact_method"]:checked');
     Object.keys(identifierFields).forEach(function (method) {
       var input = document.getElementById(identifierFields[method]);
       var group = input && input.closest(".form-field");

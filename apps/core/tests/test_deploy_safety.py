@@ -159,7 +159,8 @@ class DeployCommandTests(SimpleTestCase):
                                 DJANGO_PUBLIC_BASE_URL="https://demo.clipcash.example",
                                 DJANGO_EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
                                 DJANGO_EMAIL_HOST="smtp.example.invalid", DJANGO_EMAIL_PORT="587",
-                                DJANGO_EMAIL_USE_TLS="True")
+                                DJANGO_EMAIL_USE_TLS="True",
+                                DJANGO_DEFAULT_FROM_EMAIL="ClipCash <no-reply@demo.clipcash.example>")  # PRD-01
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("core.W003", result.stderr + result.stdout)
 
@@ -170,7 +171,8 @@ class DeployCommandTests(SimpleTestCase):
                                 DJANGO_PAYMENTS_MODE="disabled", DJANGO_PUBLIC_BASE_URL="https://demo.clipcash.example",
                                 DJANGO_EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
                                 DJANGO_EMAIL_HOST="smtp.example.invalid", DJANGO_EMAIL_PORT="587",
-                                DJANGO_EMAIL_USE_TLS="True")
+                                DJANGO_EMAIL_USE_TLS="True",
+                                DJANGO_DEFAULT_FROM_EMAIL="ClipCash <no-reply@demo.clipcash.example>")  # PRD-01
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn("payments.E00", result.stderr + result.stdout)
 

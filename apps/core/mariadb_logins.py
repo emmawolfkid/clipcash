@@ -215,6 +215,27 @@ def runtime_login_findings(connection, *, ddl_probes=True):
     return findings
 
 
+def global_privileges(lines):
+    """Privileges (upper case) that SHOW GRANTS lines give ON *.* (server-wide)."""
+    found = set()
+    for line in lines:
+        match = _GRANT.match(line.strip())
+        if not match or match.group("object").strip() != "*.*":
+            continue
+        privileges = {part.strip().upper() for part in _COLUMNS.sub("", match.group("privileges")).split(",")}
+        if "ALL" in privileges or ALL_PRIVILEGES in privileges:
+            privileges |= {ALL_PRIVILEGES}
+        found |= privileges
+    return found
+
+
+def has_global_super(connection):
+    """True when the connected login itself holds SUPER (or ALL PRIVILEGES) ON *.*."""
+    with connection.cursor() as cursor:
+        held = global_privileges(_show_grants(cursor, "CURRENT_USER()"))
+    return bool(held & {"SUPER", ALL_PRIVILEGES})
+
+
 def migration_login_findings(connection, runtime_connection=None):
     """Problems that stop ``connection``'s login from migrating ClipCash, or that mean it is
     not a separate login from the runtime one."""
@@ -231,8 +252,13 @@ def migration_login_findings(connection, runtime_connection=None):
     with connection.cursor() as cursor:
         cursor.execute("SELECT @@log_bin, @@log_bin_trust_function_creators")
         log_bin, trust = cursor.fetchone()
-    if log_bin and not trust and "SUPER" not in privileges and ALL_PRIVILEGES not in privileges:
-        findings.append("binary logging is on without log_bin_trust_function_creators: it cannot create triggers")
+    # PRD-00B: only a GLOBAL SUPER (or global ALL) lets a login create triggers while binary logging
+    # is on. cPanel grants "ALL PRIVILEGES" on the database only, which does not include SUPER, so
+    # the database-level privileges above must not be taken as enough.
+    if log_bin and not trust and not has_global_super(connection):
+        findings.append("binary logging is on without log_bin_trust_function_creators and the login has no "
+                        "global SUPER: it cannot create triggers (ask the host to set "
+                        "log_bin_trust_function_creators=1)")
     if runtime_connection is not None:
         with connection.cursor() as cursor:
             cursor.execute("SELECT CURRENT_USER()")

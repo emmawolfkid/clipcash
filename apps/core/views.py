@@ -43,7 +43,11 @@ class MemberDashboardView(VerifiedAccountRequiredMixin, TemplateView):
             recent_videos = list(library_queryset().order_by("-published_at")[:4])
             for video in recent_videos:
                 video.thumbnail = thumbnail_url(video)
+        from apps.accounts.services import email_change_available
+
         context.update({"nav": "dashboard", "summary": summary, "recent_videos": recent_videos,
+                        # REG-04: the unconfirmed-email reminder offers a way to correct the address.
+                        "email_change_available": email_change_available(self.request.user),
                         # Kept for templates and tests that read them directly.
                         "membership": summary.membership.get("subscription"),
                         "pending": summary.membership.get("pending")})

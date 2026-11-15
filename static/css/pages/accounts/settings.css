@@ -16,3 +16,5 @@
   font-size: 0.875rem;
   margin-bottom: 0;
 }
+/* REG-04: "Send a new link" next to the email status. */
+.account-inline-form { display: inline; }

@@ -35,13 +35,33 @@ command -v passenger-config >/dev/null 2>&1 && passenger-config --version 2>/dev
 command -v cloudlinux-selector >/dev/null 2>&1 && echo "cloudlinux-selector present" \
     || echo "cloudlinux-selector not on PATH (normal on some hosts; use the cPanel page)"
 
-section "PostgreSQL client tools (needed for backups and the role scripts)"
-for tool in psql pg_dump pg_restore; do
+section "MariaDB client tools (PRD-00B: backups, restore drills)"
+for tool in mariadb mysql mariadb-dump mysqldump gzip sha256sum; do
     if command -v "$tool" >/dev/null 2>&1; then
-        echo "$tool: $("$tool" --version 2>/dev/null)"
+        echo "$tool: $("$tool" --version 2>/dev/null | head -n 1)"
     else
         echo "$tool: NOT FOUND"
     fi
+done
+
+section "Building the MariaDB driver (mysqlclient compiles in the app virtualenv)"
+for tool in mariadb_config mysql_config pkg-config gcc cc; do
+    if command -v "$tool" >/dev/null 2>&1; then
+        echo "$tool: present"
+    else
+        echo "$tool: NOT FOUND"
+    fi
+done
+if command -v pkg-config >/dev/null 2>&1; then
+    for lib in libmariadb mariadb mysqlclient; do
+        pkg-config --exists "$lib" 2>/dev/null && echo "pkg-config $lib: $(pkg-config --modversion "$lib" 2>/dev/null)"
+    done
+fi
+echo "Without mariadb_config or mysql_config, the headers and a C compiler, mysqlclient cannot be built: ask NetPoa."
+
+section "PostgreSQL client tools (previous plan; not needed for the MariaDB build)"
+for tool in psql pg_dump; do
+    command -v "$tool" >/dev/null 2>&1 && echo "$tool: present" || echo "$tool: NOT FOUND"
 done
 
 section "Cron and locking"
