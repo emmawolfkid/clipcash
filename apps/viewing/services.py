@@ -37,6 +37,8 @@ from apps.audit.services import DENIED, FAILURE, record_business_event, record_s
 from apps.core import features, ratelimit
 from apps.memberships.access import check_access
 from apps.videos.models import Video
+from apps.rewards.terms import PREFETCH as TERMS_PREFETCH
+from apps.rewards.terms import plan_allowed
 from apps.videos.services import authorize_playback
 
 from .models import OPEN_STATES, WatchSession
@@ -105,6 +107,7 @@ DENIAL_MESSAGES = {
     "entitlement_missing": "Your membership plan does not include this video.",
     "plan_not_targeted": "This campaign is for members of other plans.",
     "limit_reached": "You have already watched this campaign the maximum number of times.",
+    "daily_limit": "You already have a verified view of this campaign today. Come back tomorrow.",
     "too_many_attempts": "Too many attempts. Please try again later.",
     "own_campaign": "You cannot watch campaigns of an advertiser you work for.",
     "feature_disabled": "Sponsored videos are not available at the moment.",
@@ -208,6 +211,12 @@ def _start_locked(member, campaign):
         used = mine.filter(campaign=campaign, qualifying_slot__isnull=False).count()
         if used >= campaign.max_views_per_member:
             return None, "limit_reached", None
+        if verified_today(member, campaign, now, sessions=mine):
+            return None, "daily_limit", None  # CR-01: one credited view per campaign per day.
+
+        from apps.rewards.services import current_offer
+
+        quoted_policy, quoted_credits = current_offer(campaign, now)  # CR-01: fixed for this session.
 
         flags = ["rapid_attempts"] if recent >= max(3, settings.VIEWING_MAX_STARTS_PER_HOUR // 2) else []
         duration = campaign.video.duration_seconds
@@ -216,10 +225,27 @@ def _start_locked(member, campaign):
             start_deadline=now + timedelta(seconds=settings.VIEWING_START_WINDOW_SECONDS),
             expires_at=_expiry_for(now, duration),
             video_duration_ms=duration * 1000 if duration else None, required_ms=required_ms_for(duration),
-            flags=flags)
+            flags=flags, quoted_policy=quoted_policy, quoted_credits=quoted_credits)
         record_business_event("viewing.session.started", actor=member, target=session,
-                              metadata={"campaign": str(campaign.pk), "revision": campaign.revision})
+                              metadata={"campaign": str(campaign.pk), "revision": campaign.revision,
+                                        "quoted_credits": quoted_credits})
     return session, None, flags
+
+
+def local_day_bounds(now):
+    """[start, end) of the local calendar day (settings.TIME_ZONE) containing ``now``."""
+    local = timezone.localtime(now)
+    start = local.replace(hour=0, minute=0, second=0, microsecond=0)
+    return start, start + timedelta(days=1)
+
+
+def verified_today(member, campaign, now, sessions=None):
+    """CR-01 same-day rule: does the member already have a counted (verified or under review)
+    view of this campaign that closed today, local time?"""
+    start, end = local_day_bounds(now)
+    sessions = sessions if sessions is not None else WatchSession.objects.filter(member=member)
+    return sessions.filter(campaign=campaign, qualifying_slot__isnull=False,
+                           finalized_at__gte=start, finalized_at__lt=end).exists()
 
 
 def session_for(member, session_id):
@@ -655,7 +681,7 @@ def available_campaigns(member, now=None, limit=50):
                                             revoked_at__isnull=True)
     own = AdvertiserMembership.objects.filter(user=member, is_active=True).values("organization_id")
     candidates = list(
-        Campaign.objects.select_related("organization", "video", "video__category").prefetch_related("target_plans")
+        Campaign.objects.select_related("organization", "video", "video__category").prefetch_related(*TERMS_PREFETCH)
         .filter(status=Campaign.Status.ACTIVE, starts_at__lte=now, ends_at__gt=now,
                 organization__verification_status=Organization.Verification.APPROVED,
                 video__publication_status=Video.Publication.PUBLISHED, video__processing_status=Video.Processing.READY)
@@ -674,13 +700,93 @@ def available_campaigns(member, now=None, limit=50):
         decision = access[entitlement]
         if not decision:
             continue
-        plan_ids = [plan.pk for plan in campaign.target_plans.all()]
-        if plan_ids and decision.subscription.plan_id not in plan_ids:
+        if not plan_allowed(campaign, decision.subscription.plan_id):
             continue
         left = campaign.max_views_per_member - used.get(campaign.pk, 0)
         if left > 0 or campaign.pk in open_sessions:
             rows.append((campaign, max(0, left), open_sessions.get(campaign.pk)))
     return rows
+
+
+def campaign_offers(member, now=None, limit=50):
+    """CR-01: sponsored campaigns as the member sees them before playback.
+
+    [{"campaign", "credits", "left", "open_session", "locked", "reason", "plans", "today_done"}].
+    ``locked`` rows are campaigns the member could see but not watch for credits because of
+    their plan (or no membership): ``plans`` lists the configured plans that qualify. Server
+    checks still run on start (start_session)."""
+    from apps.memberships.models import MembershipPlan
+    from apps.rewards.services import current_offer
+    from apps.rewards.terms import eligible_plan_ids
+
+    now = now or timezone.now()
+    if not getattr(member, "is_authenticated", False) or not features.is_enabled("advertisers"):
+        return []
+    grants = AdvertiserVideo.objects.filter(organization=OuterRef("organization"), video=OuterRef("video"),
+                                            revoked_at__isnull=True)
+    own = AdvertiserMembership.objects.filter(user=member, is_active=True).values("organization_id")
+    candidates = list(
+        Campaign.objects.select_related("organization", "video", "video__category").prefetch_related(*TERMS_PREFETCH)
+        .filter(status=Campaign.Status.ACTIVE, starts_at__lte=now, ends_at__gt=now,
+                organization__verification_status=Organization.Verification.APPROVED,
+                video__publication_status=Video.Publication.PUBLISHED, video__processing_status=Video.Processing.READY)
+        .filter(Exists(grants)).exclude(organization_id__in=own).order_by("ends_at")[:limit])
+    used = dict(WatchSession.objects.filter(member=member, qualifying_slot__isnull=False)
+                .values_list("campaign_id").annotate(n=Count("id")))
+    start, end = local_day_bounds(now)
+    today = set(WatchSession.objects.filter(member=member, qualifying_slot__isnull=False, finalized_at__gte=start,
+                                            finalized_at__lt=end).values_list("campaign_id", flat=True))
+    open_sessions = {s.campaign_id: s for s in WatchSession.objects.filter(member=member, state__in=OPEN_STATES)}
+    plan_names = dict(MembershipPlan.objects.values_list("pk", "name"))
+    access, rows = {}, []
+    for campaign in candidates:
+        if not advertising.video_available(campaign.video):
+            continue
+        entitlement = campaign.video.required_entitlement
+        if entitlement not in access:
+            access[entitlement] = check_access(member, entitlement=entitlement, now=now)
+        decision = access[entitlement]
+        plan_ids = eligible_plan_ids(campaign)
+        locked, reason = False, "ok"
+        if not decision:
+            if decision.reason not in ("no_membership", "entitlement_missing"):
+                continue  # Account problems are explained elsewhere, not per campaign.
+            locked, reason = True, decision.reason
+        elif plan_ids and decision.subscription.plan_id not in plan_ids:
+            locked, reason = True, "plan_not_targeted"
+        left = max(0, campaign.max_views_per_member - used.get(campaign.pk, 0))
+        if not locked and left == 0 and campaign.pk not in open_sessions:
+            continue  # Fully used: nothing left to offer.
+        _policy, credits = current_offer(campaign, now)
+        rows.append({"campaign": campaign, "credits": credits, "left": left,
+                     "open_session": open_sessions.get(campaign.pk), "locked": locked, "reason": reason,
+                     "plans": sorted(plan_names[pk] for pk in plan_ids if pk in plan_names),
+                     "today_done": campaign.pk in today})
+    return rows
+
+
+def campaign_offer_detail(member, campaign, now=None):
+    """CR-01: what the campaign page shows before playback (server checks run again on start)."""
+    from apps.memberships.models import MembershipPlan
+    from apps.rewards import services as rewards
+    from apps.rewards.terms import eligible_plan_ids
+
+    now = now or timezone.now()
+    decision = advertising.campaign_eligibility(campaign, member, now)
+    _policy, credits = rewards.current_offer(campaign, now)
+    budget = rewards.budget_summary(campaign)
+    used = WatchSession.objects.filter(member=member, campaign=campaign, qualifying_slot__isnull=False).count()
+    plan_ids = eligible_plan_ids(campaign)
+    required = required_ms_for(campaign.video.duration_seconds)
+    return {
+        "credits": credits, "eligible": bool(decision), "reason": decision.reason,
+        "reason_message": denial_message(decision.reason) if not decision else "",
+        "plans": sorted(MembershipPlan.objects.filter(pk__in=plan_ids).values_list("name", flat=True)),
+        "views_left": max(0, campaign.max_views_per_member - used),
+        "today_done": verified_today(member, campaign, now),
+        "required_seconds": (required // 1000) if required else None,
+        "budget_short": bool(credits) and budget["demo_remaining"] < credits,
+    }
 
 
 def member_history(member):

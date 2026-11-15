@@ -19,5 +19,7 @@ class DemoRewardHistoryView(VerifiedAccountRequiredMixin, View):
             request.GET.get("page"))
         for reward in page.object_list:
             reward.reason_text = services.reason_text(reward.reasons)
+        totals = list(services.member_totals(request.user))
         return render(request, "rewards/history.html", {
-            "nav": "rewards", "page": page, "totals": services.member_totals(request.user)})
+            "nav": "rewards", "page": page, "totals": totals,
+            "earned_total": sum(row["demo_total"] for row in totals)})

@@ -152,3 +152,37 @@ class CampaignRewardBudget(models.Model):
 
     def __str__(self):
         return f"Demo budget usage for {self.campaign_id}"
+
+
+class CampaignCreditTerms(models.Model):
+    """
+    CR-01: the staff-owned credit terms of a sponsored campaign (non-cash credits).
+
+    * ``credit_budget``: total credits the campaign can award (enforced, with the
+      consumption in CampaignRewardBudget, under a row lock and by a database trigger).
+    * ``eligible_plans``: membership plans whose members may watch for credits. Empty means
+      every plan that includes the video. These are configured plans, never hard-coded.
+
+    The credits per verified view stay in RewardPolicy (versioned, four-eyes approval).
+    The advertiser-approved campaign figures (demo_budget_amount, demo_reward_per_view,
+    target_plans) are not edited here: the approved revision stays as reviewed. Existing
+    campaigns were given terms equal to their approved budget and target plans.
+    """
+
+    campaign = models.OneToOneField("advertising.Campaign", on_delete=models.PROTECT, primary_key=True,
+                                    related_name="credit_terms")
+    credit_budget = models.PositiveIntegerField(_("total credit budget"))
+    eligible_plans = models.ManyToManyField("memberships.MembershipPlan", blank=True, related_name="+",
+                                            verbose_name=_("eligible membership plans"))
+    version = models.PositiveIntegerField(_("version"), default=1)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
+                                   related_name="+")
+    updated_at = models.DateTimeField(_("updated"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("campaign credit terms")
+        verbose_name_plural = _("campaign credit terms")
+        constraints = [models.CheckConstraint(condition=Q(credit_budget__gte=0), name="credit_terms_budget_valid")]
+
+    def __str__(self):
+        return f"Credit terms for {self.campaign_id}"

@@ -9,3 +9,8 @@
   padding-block: 0.6rem;
   cursor: pointer;
 }
+
+/* CR-01: the credits fixed for this session. */
+.credit-quote {
+  margin-bottom: var(--space-4);
+}

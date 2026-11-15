@@ -726,10 +726,67 @@ class RewardPolicyListView(View):
         return redirect("administration:reward_policies")
 
 
+@console
+class CampaignCreditsView(View):
+    """CR-01: a sponsored campaign's credit rules: eligible plans and total credit budget (set
+    here, audited), credits per verified view (versioned policy, four-eyes approval)."""
+
+    template_name = "administration/rewards/campaign_credits.html"
+
+    def _context(self, request, campaign):
+        from apps.memberships.models import MembershipPlan
+        from apps.rewards.terms import effective_terms
+
+        terms = effective_terms(campaign)
+        policy, credits = rewards.current_offer(campaign)
+        stored = getattr(campaign, "credit_terms", None) if terms.configured else None
+        same_video = []
+        for other in (Campaign.objects.filter(video=campaign.video).exclude(pk=campaign.pk)
+                      .select_related("organization").order_by("name")[:20]):
+            same_video.append({"campaign": other, "credits": rewards.current_offer(other)[1]})
+        return {
+            "campaign": campaign, "terms": terms, "terms_version": stored.version if stored else 0,
+            "policy": policy, "credits": credits, "budget": rewards.budget_summary(campaign),
+            "plans": MembershipPlan.objects.filter(status=MembershipPlan.Status.ACTIVE).order_by("display_order",
+                                                                                                "name"),
+            "eligible_names": sorted(MembershipPlan.objects.filter(pk__in=terms.plan_ids).values_list("name",
+                                                                                                    flat=True)),
+            "requested_plans": campaign.target_plans.order_by("name"),
+            "drafts": RewardPolicy.objects.filter(campaign=campaign, status=RewardPolicy.Status.DRAFT),
+            "policies": RewardPolicy.objects.filter(campaign=campaign).order_by("-version")[:10],
+            "same_video": same_video,
+            "history": AuditEvent.objects.filter(action="rewards.credit_terms.updated",
+                                                 target_id=str(campaign.pk)).order_by("-occurred_at")[:20],
+            "can_manage": rewards.can_manage_policies(request.user),
+            "can": console_links(request.user), "nav": "rewards"}
+
+    def _campaign(self, pk):
+        return get_object_or_404(Campaign.objects.select_related("organization", "video"), pk=pk)
+
+    def get(self, request, pk):
+        if not rewards.can_use_rewards_console(request.user):
+            raise PermissionDenied
+        return render(request, self.template_name, self._context(request, self._campaign(pk)))
+
+    def post(self, request, pk):
+        campaign = self._campaign(pk)
+        try:
+            rewards.update_credit_terms(
+                request.user, campaign, credit_budget=request.POST.get("credit_budget", "").strip(),
+                plan_ids=[value for value in request.POST.getlist("plans") if value],
+                expected_version=request.POST.get("expected_version", "0"))
+            messages.success(request, _("Credit terms saved. Past awards are not changed."))
+        except rewards.NotAuthorized:
+            raise PermissionDenied from None
+        except (ValidationError, rewards.RewardsError) as error:
+            messages.error(request, _error_text(error))
+        return redirect("administration:campaign_credits", pk=pk)
+
+
 def _whole_number(request, name):
     raw = request.POST.get(name, "").strip()
     if not raw.isdigit():
-        raise ValidationError({name: "Enter a whole number of shillings."})
+        raise ValidationError({name: "Enter a whole number of credits."})
     return int(raw)
 
 

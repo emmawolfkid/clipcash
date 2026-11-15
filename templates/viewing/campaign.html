@@ -1,19 +1,29 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load i18n static money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/viewing/list.css' %}">{% endblock %}
 {% block title %}{{ campaign.name }}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{{ campaign.name }}</h1>
 <p><a href="{% url 'viewing:list' %}">{% translate "Back to sponsored videos" %}</a></p>
 <p class="lead">{% blocktranslate with name=campaign.organization.display_name %}Sponsored by {{ name }}{% endblocktranslate %}{% if campaign.video.duration_display %} · {{ campaign.video.duration_display }}{% endif %}</p>
 {% if campaign.description %}<p>{{ campaign.description|linebreaksbr }}</p>{% endif %}
-<section class="panel">
-  <h2 class="panel__title">{% translate "How viewing works" %}</h2>
-  <p>{% translate "Eligibility is checked again when you start. Starting a session does not guarantee verification or a reward." %}</p>
+<section class="panel credit-panel" aria-labelledby="credit-title">
+  <h2 class="panel__title" id="credit-title">{% if credits %}{% blocktranslate with credits=credits|credits %}Earn {{ credits }} per verified view{% endblocktranslate %}{% else %}{% translate "No credits for this campaign" %}{% endif %}</h2>
+  {% if eligible %}
+  <p>{% translate "To qualify:" %}</p>
   <ul>
-    <li>{% translate "Watch the video from the start without skipping ahead." %}</li>
+    {% if required_seconds %}<li>{% blocktranslate count n=required_seconds %}Watch at least {{ n }} second of the video from the start, without skipping ahead.{% plural %}Watch at least {{ n }} seconds of the video from the start, without skipping ahead.{% endblocktranslate %}</li>{% endif %}
     <li>{% translate "Only time the video is actually playing counts; pausing or switching away does not." %}</li>
-    <li>{% translate "When the video ends, ClipCash checks the session and shows the result." %}</li>
+    <li>{% translate "ClipCash checks the session on its server when the video ends; only a verified view earns credits." %}</li>
+    <li>{% blocktranslate count n=views_left %}One credited view per day; {{ n }} view left for you on this campaign.{% plural %}One credited view per day; {{ n }} views left for you on this campaign.{% endblocktranslate %}</li>
+    <li>{% translate "The credits shown when you press Start are the credits this view earns, while the campaign's credit budget lasts." %}</li>
   </ul>
-  <form method="post">{% csrf_token %}<button class="button" type="submit">{% translate "Start watching" %}</button></form>
+  {% if budget_short %}<p class="notice notice--warning" role="status">{% translate "This campaign's credit budget is used up. You can still watch, but a view will not earn credits." %}</p>{% endif %}
+  {% if today_done %}<p class="notice" role="status">{% translate "You already have a verified view of this campaign today. Come back tomorrow." %}</p>
+  {% elif views_left %}<form method="post">{% csrf_token %}<button class="button" type="submit">{% translate "Start watching" %}</button></form>{% endif %}
+  {% elif reason == "plan_not_targeted" or reason == "no_membership" or reason == "entitlement_missing" %}
+  <p class="notice" role="status"><strong>{% translate "Locked." %}</strong> {% if plans %}{% blocktranslate with plans=plans|join:", " %}This campaign is for members on: {{ plans }}.{% endblocktranslate %}{% else %}{% translate "An active membership that includes this video is needed." %}{% endif %}</p>
+  <p><a class="button button--secondary" href="{% url 'memberships:plans' %}">{% translate "See membership plans" %}</a></p>
+  {% else %}<p class="notice" role="status">{{ reason_message }}</p>{% endif %}
 </section>
-{% include "components/not_a_reward_notice.html" %}
+<p class="lead">{% translate "Credits are non-cash: they are not money, are kept separate from your wallet and cannot be withdrawn." %}</p>
 {% endblock %}

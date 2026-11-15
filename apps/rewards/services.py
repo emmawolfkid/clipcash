@@ -7,8 +7,13 @@ imports apps.wallets, and demo records have no path to the ledger. Real-money
 rewards need reconciled advertiser funding (Phase 08), the locked
 ``real_money_rewards`` feature and a separate reviewed implementation.
 
-Eligibility is judged at the verified-view event: the policy in force when the
-session was finalized, for the campaign revision the member watched. A
+CR-01 credits (non-cash): the amounts here are campaign credits. The credits per
+verified view are FIXED WHEN THE SESSION STARTS: start_session() records the approved
+policy and its credits on the session (quoted_policy / quoted_credits, immutable in the
+database), the member is shown that figure, and a verified view earns exactly that,
+while the campaign's credit budget lasts. A staff rate change during playback applies
+only to sessions started afterwards. Sessions started before CR-01 keep the old rule:
+the policy in force when the session was finalized, for the revision the member watched. A
 campaign that later completes normally does not disqualify past views; fraud
 reversals, staff revocations and campaign cancellation do.
 """
@@ -17,7 +22,8 @@ from dataclasses import dataclass, field
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Q, Sum
+from django.db.models import BigIntegerField, Count, Q, Sum
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from apps.advertising.models import Campaign, Organization
@@ -26,7 +32,8 @@ from apps.core import features
 from apps.core.money import to_amount
 from apps.viewing.models import WatchSession
 
-from .models import CampaignRewardBudget, DemoReward, RewardPolicy
+from .models import CampaignCreditTerms, CampaignRewardBudget, DemoReward, RewardPolicy
+from .terms import effective_terms
 
 P = RewardPolicy.Status
 R = DemoReward.Status
@@ -153,8 +160,8 @@ def _check_policy_campaign(campaign, amount):
     if amount <= 0:
         raise ValidationError({"reward_amount": "Enter an amount greater than zero."})
     if amount > campaign.demo_reward_per_view:
-        raise ValidationError({"reward_amount": f"Cannot exceed the campaign's approved demo reward per view "
-                                                f"(TZS {campaign.demo_reward_per_view})."})
+        raise ValidationError({"reward_amount": f"Cannot exceed the campaign's approved maximum per view "
+                                                f"({campaign.demo_reward_per_view} credits)."})
 
 
 def approve_policy(actor, policy, *, expected_status=P.DRAFT):
@@ -283,12 +290,17 @@ def reward_eligibility(session, now=None):
         return Eligibility(False, ["organization_not_in_good_standing"], retry_later=True)
     if campaign.status == Campaign.Status.PAUSED and campaign.paused_by_staff:
         return Eligibility(False, ["campaign_paused_by_staff"], retry_later=True)
-    policy = policy_at(campaign.pk, session.campaign_revision, session.finalized_at)
-    if policy is None:
-        return Eligibility(False, ["no_policy"])
+    if session.quoted_credits is not None:  # CR-01: the offer fixed at start.
+        policy = session.quoted_policy
+        if policy is None or not session.quoted_credits:
+            return Eligibility(False, ["no_policy"])
+    else:  # Sessions started before CR-01.
+        policy = policy_at(campaign.pk, session.campaign_revision, session.finalized_at)
+        if policy is None:
+            return Eligibility(False, ["no_policy"])
     if policy.campaign_revision != session.campaign_revision:
         return Eligibility(False, ["revision_mismatch"])
-    if campaign.revision == session.campaign_revision and policy.reward_amount > campaign.demo_reward_per_view:
+    if campaign.revision == session.campaign_revision and quoted_amount(session, policy) > campaign.demo_reward_per_view:
         return Eligibility(False, ["policy_amount_exceeds_campaign"])
     return Eligibility(True, ["eligible"], policy=policy)
 
@@ -302,7 +314,110 @@ def _locked_budget(campaign_id):
 
 
 def demo_allocated(campaign):
-    return campaign.demo_budget_amount
+    """The campaign's total credit budget (CR-01 staff terms, else its approved demo budget)."""
+    return effective_terms(campaign).credit_budget
+
+
+def quoted_amount(session, policy):
+    return session.quoted_credits if session.quoted_credits is not None else policy.reward_amount
+
+
+def current_offer(campaign, now=None):
+    """(policy, credits per verified view) a session starting now would be offered:
+    the approved policy for the campaign's current approved revision, or (None, 0)."""
+    now = now or timezone.now()
+    if campaign.approved_revision is None or campaign.revision != campaign.approved_revision:
+        return None, 0
+    policy = policy_at(campaign.pk, campaign.revision, now)
+    if policy is None or policy.status != P.APPROVED:
+        return None, 0
+    return policy, policy.reward_amount
+
+
+# --- CR-01: staff credit terms -------------------------------------------------------------------
+
+
+def awarded_credits(campaign_id):
+    budget = CampaignRewardBudget.objects.filter(campaign_id=campaign_id).first()
+    return budget.demo_consumed if budget else 0
+
+
+def fit_terms_to_approved_budget(actor, campaign):
+    """Inside the transaction that approves a campaign revision (campaign row locked): lower the
+    active credit terms to the newly approved budget so they never exceed it (the database
+    refuses the approval otherwise). Raises ValidationError if the credits already awarded
+    exceed the approved budget. Returns the terms, or None."""
+    # Lock order: campaign -> budget -> terms. No counter row means nothing awarded yet; it is not
+    # created here (rewards_campaign_budget_bounds still re-checks consumption at approval).
+    budget = CampaignRewardBudget.objects.select_for_update().filter(campaign_id=campaign.pk).first()
+    consumed = budget.demo_consumed if budget else 0
+    if consumed > campaign.demo_budget_amount:
+        raise ValidationError({"demo_budget_amount": f"The approved budget cannot be lower than the "
+                                                     f"{consumed} credits already awarded."})
+    terms = CampaignCreditTerms.objects.select_for_update().filter(campaign=campaign).first()
+    if terms is None or terms.credit_budget <= campaign.demo_budget_amount:
+        return terms
+    previous = terms.credit_budget
+    terms.credit_budget, terms.version, terms.updated_by = campaign.demo_budget_amount, terms.version + 1, actor
+    terms.save()
+    codes = sorted(terms.eligible_plans.values_list("code", flat=True))
+    record_business_event("rewards.credit_terms.updated", actor=actor, target=campaign, metadata={
+        "campaign": str(campaign.pk), "version": terms.version, "budget_from": previous,
+        "budget_to": terms.credit_budget, "plans_from": codes, "plans_to": codes,
+        "reason": "approved_campaign_budget"})
+    return terms
+
+
+def update_credit_terms(actor, campaign, *, credit_budget, plan_ids, expected_version):
+    """Set the campaign's total credit budget and eligible plans. Audited with the before and
+    after values. Bounds (also enforced by rewards_credit_terms_guard): credits already awarded
+    <= credit budget <= the advertiser-approved campaign budget. Past awards are never touched.
+    ``expected_version`` is the terms version the editor saw (0 when none)."""
+    from apps.memberships.models import MembershipPlan
+
+    _require(can_manage_policies, actor, "credit_terms.update", campaign)
+    try:
+        credit_budget = int(credit_budget)
+    except (TypeError, ValueError):
+        raise ValidationError({"credit_budget": "Enter a whole number of credits."}) from None
+    if credit_budget < 0:
+        raise ValidationError({"credit_budget": "Enter zero or more credits."})
+    plans = list(MembershipPlan.objects.filter(pk__in=list(plan_ids or [])))
+    if len(plans) != len(set(plan_ids or [])):
+        raise ValidationError({"plans": "Choose plans from the list."})
+    if any(plan.status != MembershipPlan.Status.ACTIVE for plan in plans):
+        raise ValidationError({"plans": "Only active membership plans can be chosen."})
+    with transaction.atomic():
+        campaign = Campaign.objects.select_for_update(of=("self",)).get(pk=campaign.pk)
+        budget = _locked_budget(campaign.pk)  # Lock order: campaign -> budget (as approvals use).
+        terms = CampaignCreditTerms.objects.select_for_update().filter(campaign=campaign).first()
+        current_version = terms.version if terms else 0
+        if current_version != int(expected_version or 0):
+            raise StaleDecision("The credit terms changed since you opened them. Review and try again.")
+        before = effective_terms(campaign)
+        if credit_budget < budget.demo_consumed:
+            raise ValidationError({"credit_budget": f"The budget cannot be lower than the {budget.demo_consumed} "
+                                                    "credits already awarded."})
+        if credit_budget > campaign.demo_budget_amount:
+            raise ValidationError({"credit_budget": "The budget cannot be more than the advertiser-approved campaign "
+                                                    f"budget of {campaign.demo_budget_amount} credits."})
+        new_plan_ids = frozenset(plan.pk for plan in plans)
+        if terms is not None and credit_budget == terms.credit_budget and new_plan_ids == before.plan_ids:
+            return terms  # Nothing changed.
+        if terms is None:
+            terms = CampaignCreditTerms.objects.create(campaign=campaign, credit_budget=credit_budget,
+                                                       updated_by=actor)
+        else:
+            terms.credit_budget, terms.version, terms.updated_by = credit_budget, terms.version + 1, actor
+            terms.save()
+        terms.eligible_plans.set(plans)
+        codes = dict(MembershipPlan.objects.filter(pk__in=before.plan_ids | new_plan_ids).values_list("pk", "code"))
+        record_business_event("rewards.credit_terms.updated", actor=actor, target=campaign, metadata={
+            "campaign": str(campaign.pk), "version": terms.version,
+            "budget_from": before.credit_budget, "budget_to": credit_budget,
+            "plans_from": sorted(codes[pk] for pk in before.plan_ids),
+            "plans_to": sorted(codes[pk] for pk in new_plan_ids)})
+    return terms
 
 
 def evaluate_session(session_id, *, actor=None):
@@ -329,7 +444,7 @@ def evaluate_session(session_id, *, actor=None):
                 "campaign": str(session.campaign_id), "reasons": decision.reasons})
             return reward
         policy = decision.policy
-        amount = policy.reward_amount
+        amount = quoted_amount(session, policy)  # CR-01: what the member was shown at start.
         budget = _locked_budget(session.campaign_id)  # Lock order: session -> budget.
         allocated = demo_allocated(session.campaign)
         if budget.demo_consumed + amount > allocated:
@@ -447,6 +562,9 @@ def campaign_totals(campaigns=None):
     """Per-campaign simulated totals in one query: [{campaign, qualified, reversed, rejected, demo_consumed}]."""
     qs = DemoReward.objects.all() if campaigns is None else DemoReward.objects.filter(campaign__in=campaigns)
     return (qs.values("campaign_id", "campaign__name", "campaign__demo_budget_amount")
+            # CR-01: the effective credit budget (staff terms, else the approved demo budget).
+            .annotate(budget=Coalesce("campaign__credit_terms__credit_budget", "campaign__demo_budget_amount",
+                                     output_field=BigIntegerField()))
             .annotate(qualified=Count("id", filter=Q(status=R.QUALIFIED)),
                       reversed=Count("id", filter=Q(status=R.REVERSED)),
                       rejected=Count("id", filter=Q(status=R.REJECTED)),
@@ -477,15 +595,15 @@ def member_totals(member):
 
 
 REASON_MESSAGES = {
-    "eligible": "Recorded under an approved demo policy.",
+    "eligible": "Credited at the rate shown when you started watching.",
     "session_not_verified": "The view was not verified.",
     "session_not_finalized": "The viewing session was not finished.",
     "slot_missing": "The view was not counted.",
     "campaign_cancelled": "The campaign was cancelled.",
     "revision_mismatch": "The campaign changed after this view.",
-    "no_policy": "No approved demo reward policy applied at the time of the view.",
+    "no_policy": "No credit rate applied when you started watching.",
     "policy_amount_exceeds_campaign": "The policy exceeded the campaign's approved amount.",
-    "budget_exhausted": "The campaign's demo budget was used up.",
+    "budget_exhausted": "The campaign's credit budget was used up.",
 }
 
 

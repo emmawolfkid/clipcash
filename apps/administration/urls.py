@@ -31,6 +31,7 @@ urlpatterns = [
     path("advertisers/<uuid:pk>/", views.AdvertiserReviewView.as_view(), name="advertiser_review"),
     path("campaigns/", views.CampaignQueueView.as_view(), name="campaigns"),
     path("campaigns/<uuid:pk>/", views.CampaignReviewView.as_view(), name="campaign_review"),
+    path("campaigns/<uuid:pk>/credits/", views.CampaignCreditsView.as_view(), name="campaign_credits"),
     path("viewing/", views.ViewingListView.as_view(), name="viewing"),
     path("viewing/<uuid:pk>/", views.ViewingReviewView.as_view(), name="viewing_review"),
     path("rewards/", views.DemoRewardListView.as_view(), name="demo_rewards"),

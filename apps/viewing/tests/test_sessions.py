@@ -116,9 +116,13 @@ class EvidenceTests(ViewingTestCase):
     def test_views_per_member_two(self):
         campaign = self.running_campaign(name="Twice", max_views_per_member=2)
         first = self.watch(self.start(campaign=campaign), 95)
+        with self.assertRaisesMessage(services.Denied, "today"):  # CR-01: one counted view per day.
+            self.start(campaign=campaign)
+        self.clock.advance(24 * 3600)  # The next day.
         second = self.watch(self.start(campaign=campaign), 95)
         self.assertEqual((first.qualifying_slot, second.qualifying_slot), (1, 2))
-        with self.assertRaises(services.Denied):
+        self.clock.advance(24 * 3600)
+        with self.assertRaises(services.Denied):  # Lifetime limit of 2 reached.
             self.start(campaign=campaign)
 
     def test_seeking_ahead_does_not_verify(self):

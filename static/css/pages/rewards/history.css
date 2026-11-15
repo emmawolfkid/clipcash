@@ -8,3 +8,9 @@
   margin-top: var(--space-2);
   font-size: var(--text-sm);
 }
+
+/* CR-01: total credits earned. */
+.credits-total {
+  font-size: 1.25rem;
+  margin-bottom: var(--space-4);
+}

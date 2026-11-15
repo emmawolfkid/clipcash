@@ -1,9 +1,11 @@
-{% extends "members/layout.html" %}{% load i18n static %}
+{% extends "members/layout.html" %}{% load i18n static money %}
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/viewing/session.css' %}">{% endblock %}
 {% block title %}{{ session.campaign.name }}{% endblock %}
 {% block member_content %}
 <h1 class="page-title">{{ session.campaign.name }}</h1>
 <p><a href="{% url 'viewing:history' %}">{% translate "Viewing history" %}</a> · <a href="{% url 'viewing:list' %}">{% translate "Sponsored videos" %}</a></p>
+{% if session.quoted_credits %}<p class="notice credit-quote" role="note">{% blocktranslate with credits=session.quoted_credits|credits %}This session earns {{ credits }} if ClipCash verifies the view. The amount is fixed for this session.{% endblocktranslate %}</p>
+{% elif session.quoted_credits == 0 %}<p class="notice credit-quote" role="note">{% translate "This session earns no credits." %}</p>{% endif %}
 {% if session.is_open and playback %}
   <div class="player" data-playback-error="{% translate 'Playback is unavailable. Use the player controls to retry, or reload this session to check its current status. Unconfirmed time may not count.' %}">
     {% if playback.kind == "iframe" %}

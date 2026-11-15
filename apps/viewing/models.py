@@ -64,6 +64,12 @@ class WatchSession(BaseModel):
     review_reason = models.CharField(_("review reason"), max_length=300, blank=True)
     # Counts against the campaign's views_per_member (1..limit); unique per member and campaign.
     qualifying_slot = models.PositiveSmallIntegerField(_("qualifying view number"), null=True, blank=True)
+    # CR-01: the credit offer shown when the session started, fixed for its whole life (a
+    # database trigger refuses changes). A verified view earns exactly this, budget permitting.
+    # NULL quoted_credits: a session started before CR-01 (the policy at finalization applies).
+    quoted_policy = models.ForeignKey("rewards.RewardPolicy", null=True, blank=True, on_delete=models.PROTECT,
+                                      related_name="+")
+    quoted_credits = models.PositiveIntegerField(_("credits offered at start"), null=True, blank=True)
 
     start_deadline = models.DateTimeField(_("must start by"))
     expires_at = models.DateTimeField(_("expires"))

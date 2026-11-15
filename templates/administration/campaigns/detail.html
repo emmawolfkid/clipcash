@@ -2,7 +2,7 @@
 {% block title %}{{ campaign.name }}{% endblock %}
 {% block console_content %}
 <div class="page-heading"><h1 class="page-title">{{ campaign.name }}</h1>
-<span class="badge badge--{{ campaign.status|lower }}">{{ campaign.get_status_display }}</span></div>
+<span class="badge badge--{{ campaign.status|lower }}">{{ campaign.get_status_display }}</span>{% if can.rewards %} <a href="{% url 'administration:campaign_credits' campaign.pk %}">{% translate "Credits and eligibility" %}</a>{% endif %}</div>
 <p class="lead">{{ campaign.organization.display_name }} · <span class="badge badge--{{ campaign.organization.verification_status|lower }}">{{ campaign.organization.get_verification_status_display }}</span></p>
 <div class="console-split">
   <section>

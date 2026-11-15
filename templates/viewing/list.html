@@ -1,21 +1,32 @@
-{% extends "members/layout.html" %}{% load i18n static %}
+{% extends "members/layout.html" %}{% load i18n static money %}
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/viewing/list.css' %}">{% endblock %}
 {% block title %}{% translate "Sponsored videos" %}{% endblock %}
 {% block member_content %}
 <div class="section__header"><h1 class="page-title">{% translate "Sponsored videos" %}</h1>
 <a href="{% url 'viewing:history' %}">{% translate "My viewing history" %}</a></div>
-<p class="lead">{% translate "Discover advertiser campaigns available to your account. Start or continue a session to have viewing checked by ClipCash." %}</p>
-{% include "components/not_a_reward_notice.html" %}
-{% if rows %}
-<ul class="video-grid">{% for campaign, left, open_session in rows %}
-  <li class="video-card"><a class="video-card__link" href="{% if open_session %}{% url 'viewing:session' open_session.pk %}{% else %}{% url 'viewing:campaign' campaign.pk %}{% endif %}">
+<p class="lead">{% translate "Watch a sponsored video in full and, once ClipCash verifies the view, you earn the credits shown. Credits are non-cash: not money and cannot be withdrawn. Library videos earn no credits." %}</p>
+{% if offers %}
+<ul class="video-grid">{% for o in offers %}{% with campaign=o.campaign %}
+  <li class="video-card"><a class="video-card__link" href="{% if o.open_session %}{% url 'viewing:session' o.open_session.pk %}{% else %}{% url 'viewing:campaign' campaign.pk %}{% endif %}">
     <div class="video-card__thumb"><span class="video-card__placeholder" aria-hidden="true">{{ campaign.name|slice:":1" }}</span>
       {% if campaign.video.duration_display %}<span class="video-card__duration">{{ campaign.video.duration_display }}</span>{% endif %}</div>
     <div class="video-card__body"><span class="sponsored-label">{% translate "Sponsored" %}</span><h2 class="video-card__title">{{ campaign.name }}</h2>
-      <p class="video-card__meta">{{ campaign.organization.display_name }} · {% if open_session %}{% translate "In progress" %}{% else %}{% blocktranslate count n=left %}{{ n }} view left{% plural %}{{ n }} views left{% endblocktranslate %}{% endif %}</p></div>
-  </a></li>{% endfor %}
+      <p class="credit-offer">{% if o.credits %}{% blocktranslate with credits=o.credits|credits %}{{ credits }} per verified view{% endblocktranslate %}{% else %}{% translate "No credits for this campaign" %}{% endif %}</p>
+      <p class="video-card__meta">{{ campaign.organization.display_name }} · {% if o.open_session %}{% translate "In progress" %}{% elif o.today_done %}{% translate "Verified today: come back tomorrow" %}{% else %}{% blocktranslate count n=o.left %}{{ n }} view left{% plural %}{{ n }} views left{% endblocktranslate %}{% endif %}</p></div>
+  </a></li>{% endwith %}{% endfor %}
 </ul>
-{% else %}
+{% elif not locked %}
 <p class="empty-state">{% translate "No sponsored videos are available to you right now. An active membership is needed, and campaigns appear when advertisers run them." %}</p>
+{% endif %}
+{% if locked %}
+<section class="section" aria-labelledby="locked-title"><h2 id="locked-title">{% translate "For other plans" %}</h2>
+<ul class="video-grid">{% for o in locked %}{% with campaign=o.campaign %}
+  <li class="video-card video-card--locked"><a class="video-card__link" href="{% url 'viewing:campaign' campaign.pk %}">
+    <div class="video-card__thumb"><span class="video-card__placeholder" aria-hidden="true">{{ campaign.name|slice:":1" }}</span></div>
+    <div class="video-card__body"><span class="sponsored-label">{% translate "Locked" %}</span><h2 class="video-card__title">{{ campaign.name }}</h2>
+      <p class="credit-offer">{% if o.credits %}{% blocktranslate with credits=o.credits|credits %}{{ credits }} per verified view{% endblocktranslate %}{% endif %}</p>
+      <p class="video-card__meta">{% if o.plans %}{% blocktranslate with plans=o.plans|join:", " %}Available on: {{ plans }}{% endblocktranslate %}{% else %}{% translate "Needs an active membership" %}{% endif %}</p></div>
+  </a></li>{% endwith %}{% endfor %}
+</ul></section>
 {% endif %}
 {% endblock %}

@@ -1,0 +1,55 @@
+{% extends "administration/layout.html" %}{% load i18n console_labels %}
+{% block title %}{% translate "Credits and eligibility" %} · {{ campaign.name }}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><h1 class="page-title">{% translate "Credits and eligibility" %}</h1>
+<span><a href="{% url 'administration:campaign_review' campaign.pk %}">{{ campaign.name }}</a> · <a href="{% url 'administration:reward_policies' %}">{% translate "All reward policies" %}</a></span></div>
+<p class="notice" role="note">{% translate "Credits are non-cash. They are not money, cannot be withdrawn and do not touch wallets. A member is shown the credits per view when a session starts, and a verified view earns exactly that amount while the budget lasts. Changes here never rewrite past awards." %}</p>
+
+<section class="workspace-section" aria-labelledby="rules-title"><h2 class="workspace-section__title" id="rules-title">{% translate "Effective rules" %}</h2>
+<dl class="details">
+  <dt>{% translate "Video" %}</dt><dd>{{ campaign.video.title }}</dd>
+  <dt>{% translate "Campaign status" %}</dt><dd>{{ campaign.get_status_display }}</dd>
+  <dt>{% translate "Credits per verified view" %}</dt><dd>{% if policy %}<strong>{{ credits }}</strong> {% translate "credits" %} · {% translate "policy" %} v{{ policy.version }}{% else %}{% translate "None: no approved policy, so views earn no credits" %}{% endif %}</dd>
+  <dt>{% translate "Maximum per view (approved with the campaign)" %}</dt><dd>{{ campaign.demo_reward_per_view }} {% translate "credits" %}</dd>
+  <dt>{% translate "Eligible plans" %}</dt><dd>{% if eligible_names %}{{ eligible_names|join:", " }}{% else %}{% translate "Every plan that includes the video" %}{% endif %}{% if not terms.configured %} <span class="badge badge--pending">{% translate "From the approved campaign" %}</span>{% endif %}</dd>
+  <dt>{% translate "Total credit budget" %}</dt><dd>{{ budget.demo_allocated }} {% translate "credits" %} · {% blocktranslate with max=campaign.demo_budget_amount %}approved campaign budget {{ max }}{% endblocktranslate %}</dd>
+  <dt>{% translate "Awarded" %}</dt><dd>{{ budget.demo_consumed }} {% translate "credits" %}</dd>
+  <dt>{% translate "Remaining" %}</dt><dd><strong>{{ budget.demo_remaining }}</strong> {% translate "credits" %}{% if policy and budget.demo_remaining < credits %} <span class="badge badge--paused">{% translate "Not enough for another view" %}</span>{% endif %}</dd>
+  <dt>{% translate "Qualifying view" %}</dt><dd>{% blocktranslate count n=campaign.max_views_per_member %}Verified by the server; at most {{ n }} credited view per member, and one per day.{% plural %}Verified by the server; at most {{ n }} credited views per member, and one per day.{% endblocktranslate %}</dd>
+  <dt>{% translate "Plans requested by the advertiser" %}</dt><dd>{% for plan in requested_plans %}{{ plan.name }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "All plans" %}{% endfor %}</dd>
+</dl></section>
+
+{% if can_manage %}
+<section class="workspace-section" aria-labelledby="terms-title"><h2 class="workspace-section__title" id="terms-title">{% translate "Change eligible plans and budget" %}</h2>
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="expected_version" value="{{ terms_version }}">
+  <fieldset><legend>{% translate "Eligible membership plans (none ticked: every plan that includes the video)" %}</legend>
+  <ul class="list-plain">{% for plan in plans %}<li><label><input type="checkbox" name="plans" value="{{ plan.pk }}"{% if plan.pk in terms.plan_ids %} checked{% endif %}> {{ plan.name }}</label></li>{% endfor %}</ul>
+  </fieldset>
+  <label for="c-budget">{% translate "Total credit budget (whole credits)" %}</label>
+  <input id="c-budget" name="credit_budget" type="number" min="{{ budget.demo_consumed }}" max="{{ campaign.demo_budget_amount }}" step="1" value="{{ budget.demo_allocated }}" required>
+  <p class="lead">{% blocktranslate with n=budget.demo_consumed max=campaign.demo_budget_amount %}Between the {{ n }} credits already awarded and the advertiser-approved campaign budget of {{ max }} credits.{% endblocktranslate %}</p>
+  <button class="button" type="submit">{% translate "Save credit terms" %}</button>
+</form></section>
+
+<section class="workspace-section" aria-labelledby="rate-title"><h2 class="workspace-section__title" id="rate-title">{% translate "Change credits per verified view" %}</h2>
+<p class="lead">{% translate "A new rate is a policy draft. A different administrator must approve it; sessions already started keep the rate they were shown." %}</p>
+<form method="post" action="{% url 'administration:reward_policies' %}" class="form">{% csrf_token %}<input type="hidden" name="campaign" value="{{ campaign.pk }}">
+  <label for="r-amount">{% blocktranslate with max=campaign.demo_reward_per_view %}Credits per verified view (1 to {{ max }}){% endblocktranslate %}</label>
+  <input id="r-amount" name="reward_amount" type="number" min="1" max="{{ campaign.demo_reward_per_view }}" step="1" required>
+  <label for="r-notes">{% translate "Notes" %}</label><input id="r-notes" name="notes" type="text" maxlength="300">
+  <button class="button button--secondary" type="submit">{% translate "Save rate draft" %}</button>
+</form>
+{% if drafts %}<ul class="list">{% for d in drafts %}<li class="list__item"><a href="{% url 'administration:reward_policy' d.pk %}">v{{ d.version }} · {{ d.reward_amount }} {% translate "credits" %}</a><span class="badge badge--draft">{% translate "Awaiting approval" %}</span></li>{% endfor %}</ul>{% endif %}
+</section>
+{% endif %}
+
+<section class="workspace-section" aria-labelledby="same-title"><h2 class="workspace-section__title" id="same-title">{% translate "Same video in other campaigns" %}</h2>
+{% if same_video %}<ul class="list">{% for row in same_video %}<li class="list__item"><a href="{% url 'administration:campaign_credits' row.campaign.pk %}">{{ row.campaign.name }}</a><span>{{ row.credits }} {% translate "credits per view" %} · {{ row.campaign.get_status_display }}</span></li>{% endfor %}</ul>
+{% else %}<p class="lead">{% translate "No other campaign uses this video." %}</p>{% endif %}</section>
+
+<section class="workspace-section" aria-labelledby="policy-title"><h2 class="workspace-section__title" id="policy-title">{% translate "Rate history" %}</h2>
+<ul class="list">{% for p in policies %}<li class="list__item"><a href="{% url 'administration:reward_policy' p.pk %}">v{{ p.version }} · {{ p.reward_amount }} {% translate "credits" %}</a><span class="badge badge--{{ p.status|lower }}">{{ p.get_status_display }}</span></li>{% empty %}<li>—</li>{% endfor %}</ul></section>
+
+<section class="workspace-section" aria-labelledby="audit-title"><h2 class="workspace-section__title" id="audit-title">{% translate "Credit terms changes" %}</h2>
+<ul class="list">{% for e in history %}<li class="list__item"><span>{{ e.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · v{{ e.metadata.version }} · {% translate "budget" %} {{ e.metadata.budget_from }} → {{ e.metadata.budget_to }} · {% translate "plans" %} {{ e.metadata.plans_from|join:", "|default:"all" }} → {{ e.metadata.plans_to|join:", "|default:"all" }}</span><span>{{ e.actor_email }}</span></li>{% empty %}<li>{% translate "No changes yet." %}</li>{% endfor %}</ul></section>
+{% endblock %}

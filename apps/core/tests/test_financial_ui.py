@@ -182,7 +182,7 @@ class RewardPageTests(RewardsTestCase):
         page = self.client.get(reverse("rewards:history"))
         self.assertContains(page, reverse("viewing:session", args=[session.pk]))
         self.assertContains(page, "Verified view")
-        self.assertContains(page, "TZS 70")
+        self.assertContains(page, "70 credits")  # CR-01: non-cash credits.
         self.assertContains(page, "Simulated rewards only")
         self.client.force_login(self.new_member("other@x.example"))
         self.assertEqual(self.client.get(reverse("viewing:session", args=[session.pk])).status_code, 404)
@@ -200,7 +200,7 @@ class RewardPageTests(RewardsTestCase):
     def test_empty_state_points_to_sponsored_videos_and_never_offers_money(self):
         self.client.force_login(self.member)
         page = self.client.get(reverse("rewards:history"))
-        self.assertContains(page, "No demo rewards yet")
+        self.assertContains(page, "No credits yet")
         self.assertContains(page, reverse("viewing:list"))
         for misleading in ("Withdraw now", "Withdrawable", "Available balance", "Cash out"):
             self.assertNotContains(page, misleading)

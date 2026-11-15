@@ -508,6 +508,16 @@ def create_campaign(user, organization, *, target_plans=(), **values):
     return campaign
 
 
+def _check_budget_covers_awards(campaign, budget):
+    """CR-01: a revision cannot set the budget below the credits the campaign already awarded."""
+    from apps.rewards.services import awarded_credits
+
+    awarded = awarded_credits(campaign.pk)
+    if isinstance(budget, int) and budget < awarded:
+        raise ValidationError({"demo_budget_amount": f"The budget cannot be lower than the {awarded} credits "
+                                                     "already awarded for this campaign."})
+
+
 def _lock_campaign(campaign):
     return (Campaign.objects.select_for_update(of=("self",)).select_related("organization", "video",
                                                                             "video__category")
@@ -527,6 +537,7 @@ def update_campaign(user, campaign, changes, *, expected_revision, target_plans=
         merged = {k: getattr(campaign, k) for k in CAMPAIGN_FIELDS}
         merged.update(changes)
         merged, plans = _clean_campaign(campaign.organization, merged, target_plans)
+        _check_budget_covers_awards(campaign, merged.get("demo_budget_amount"))
         changed = sorted(k for k in CAMPAIGN_FIELDS if merged[k] != getattr(campaign, k))
         if plans is not None and {p.pk for p in plans} != set(campaign.target_plans.values_list("pk", flat=True)):
             changed.append("target_plans")
@@ -724,6 +735,10 @@ def approve_campaign(actor, campaign, *, expected_revision, notes=""):
         blocker = _activation_blocker(campaign, now)
         if blocker:
             raise InvalidState("This campaign cannot be approved: " + blocker.replace("_", " ") + ".", code=blocker)
+        from apps.rewards.services import fit_terms_to_approved_budget
+
+        # CR-01: awarded <= credit terms <= the approved budget (rewards_campaign_budget_bounds).
+        fit_terms_to_approved_budget(actor, campaign)
         campaign.status = S.SCHEDULED
         campaign.approved_revision = campaign.revision
         campaign.reviewed_at = now
@@ -946,8 +961,10 @@ def campaign_eligibility(campaign, member=None, now=None):
     access = check_access(member, entitlement=campaign.video.required_entitlement, now=now)
     if not access:
         return EligibilityDecision(False, access.reason)
-    plan_ids = [plan.pk for plan in campaign.target_plans.all()]
-    if plan_ids and access.subscription.plan_id not in plan_ids:
+    from apps.rewards.terms import plan_allowed
+
+    # CR-01: the staff credit terms decide which plans qualify (the approved targeting when unset).
+    if not plan_allowed(campaign, access.subscription.plan_id):
         return EligibilityDecision(False, "plan_not_targeted")
     return EligibilityDecision(True, "ok", financially_eligible=campaign.financially_eligible)
 
@@ -955,8 +972,10 @@ def campaign_eligibility(campaign, member=None, now=None):
 def eligible_campaigns(member, now=None):
     """Active campaigns ``member`` is eligible for right now (for Phase 06)."""
     now = now or timezone.now()
+    from apps.rewards.terms import PREFETCH
+
     candidates = (Campaign.objects.select_related("organization", "video", "video__category")
-                  .prefetch_related("target_plans")
+                  .prefetch_related(*PREFETCH)
                   .filter(status=S.ACTIVE, starts_at__lte=now, ends_at__gt=now,
                           organization__verification_status=V.APPROVED))
     return [c for c in candidates if campaign_eligibility(c, member, now)]

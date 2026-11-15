@@ -4,7 +4,7 @@
 <div class="page-heading"><h1 class="page-title">{{ policy.campaign.name }} · v{{ policy.version }}</h1><a href="{% url 'administration:reward_policies' %}">{% translate "All policies" %}</a></div>
 <section><dl class="details">
   <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ policy.status|lower }}">{{ policy.get_status_display }}</span></dd>
-  <dt>{% translate "Demo amount" %}</dt><dd>{{ policy.reward_amount|tzs }} <span class="badge badge--pending">{% translate "Demo" %}</span></dd>
+  <dt>{% translate "Credits per verified view" %}</dt><dd>{{ policy.reward_amount|credits }} <span class="badge badge--pending">{% translate "Non-cash" %}</span> · <a href="{% url 'administration:campaign_credits' policy.campaign_id %}">{% translate "Credits and eligibility" %}</a></dd>
   <dt>{% translate "Campaign revision" %}</dt><dd>{{ policy.campaign_revision }} ({% translate "current approved" %}: {{ policy.campaign.approved_revision|default:"—" }})</dd>
   <dt>{% translate "Created by" %}</dt><dd>{{ policy.created_by.email }} · {{ policy.created_at|date:"SHORT_DATETIME_FORMAT" }}</dd>
   {% if policy.decided_by %}<dt>{% translate "Decided by" %}</dt><dd>{{ policy.decided_by.email }} · {{ policy.decided_at|date:"SHORT_DATETIME_FORMAT" }}</dd>{% endif %}
@@ -24,5 +24,5 @@
   <p class="lead">{% translate "Approved policies cannot be edited. Past demo rewards keep the policy they were recorded under." %}</p>
 </form></section>{% endif %}
 <section class="workspace-section"><h2 class="workspace-section__title">{% translate "Version history" %}</h2><ul class="list">{% for p in history %}
-  <li class="list__item"><a href="{% url 'administration:reward_policy' p.pk %}">v{{ p.version }}</a><span>{{ p.reward_amount|tzs }} · {{ p.get_status_display }}</span></li>{% endfor %}</ul></section>
+  <li class="list__item"><a href="{% url 'administration:reward_policy' p.pk %}">v{{ p.version }}</a><span>{{ p.reward_amount|credits }} · {{ p.get_status_display }}</span></li>{% endfor %}</ul></section>
 {% endblock %}

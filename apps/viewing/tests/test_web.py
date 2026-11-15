@@ -15,7 +15,7 @@ class MemberPagesTests(ViewingTestCase):
         self.client.force_login(self.member)
         listing = self.client.get(reverse("viewing:list"))
         self.assertContains(listing, self.campaign.name)
-        self.assertContains(listing, "Verified views are not rewards")
+        self.assertContains(listing, "Credits are non-cash")  # CR-01 wording.
         start = self.client.post(reverse("viewing:campaign", args=[self.campaign.pk]))
         session = WatchSession.objects.get()
         self.assertRedirects(start, reverse("viewing:session", args=[session.pk]))

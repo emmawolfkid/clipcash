@@ -24,7 +24,8 @@ WITH expected_triggers(name) AS (VALUES
     ('withdrawals_request_locked'), ('advertising_campaign_guard'),
     ('payments_intent_guard'), ('membership_subscription_guard'),
     ('payments_manual_claim_guard'), ('payments_manual_claim_no_delete'),
-    ('payments_manual_instruction_guard'), ('payments_manual_instruction_no_delete')
+    ('payments_manual_instruction_guard'), ('payments_manual_instruction_no_delete'),
+    ('rewards_credit_terms_guard'), ('rewards_campaign_budget_bounds')
 ), expected_constraints(name) AS (VALUES
     ('adv_campaign_funding_locked'), ('sub_activation_source_consistent'), ('sub_no_overlapping_periods'),
     ('sub_payment_reference_unique'), ('ledger_entry_external_reference_unique'),
@@ -77,7 +78,8 @@ BEGIN
         ('withdrawals_request_locked'), ('advertising_campaign_guard'),
         ('payments_intent_guard'), ('membership_subscription_guard'),
         ('payments_manual_claim_guard'), ('payments_manual_claim_no_delete'),
-        ('payments_manual_instruction_guard'), ('payments_manual_instruction_no_delete')
+        ('payments_manual_instruction_guard'), ('payments_manual_instruction_no_delete'),
+    ('rewards_credit_terms_guard'), ('rewards_campaign_budget_bounds')
     ), expected_constraints(name) AS (VALUES
         ('adv_campaign_funding_locked'), ('sub_activation_source_consistent'), ('sub_no_overlapping_periods'),
         ('sub_payment_reference_unique'), ('ledger_entry_external_reference_unique'),

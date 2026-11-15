@@ -36,8 +36,10 @@ def summary(session):
 @viewing_feature
 class WatchListView(VerifiedAccountRequiredMixin, View):
     def get(self, request):
+        offers = services.campaign_offers(request.user)
         return render(request, "viewing/list.html", {
-            "nav": "watch", "rows": services.available_campaigns(request.user)})
+            "nav": "watch", "offers": [o for o in offers if not o["locked"]],
+            "locked": [o for o in offers if o["locked"]]})
 
 
 @viewing_feature
@@ -47,7 +49,8 @@ class CampaignWatchView(VerifiedAccountRequiredMixin, View):
     def get(self, request, campaign_id):
         campaign = get_object_or_404(Campaign.objects.select_related("organization", "video"), pk=campaign_id,
                                      status=Campaign.Status.ACTIVE)
-        return render(request, self.template_name, {"nav": "watch", "campaign": campaign})
+        return render(request, self.template_name, {"nav": "watch", "campaign": campaign,
+                                                    **services.campaign_offer_detail(request.user, campaign)})
 
     def post(self, request, campaign_id):
         try:

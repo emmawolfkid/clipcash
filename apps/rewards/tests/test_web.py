@@ -15,12 +15,12 @@ class MemberPageTests(RewardsTestCase):
         self.client.force_login(self.member)
         page = self.client.get(reverse("rewards:history"))
         self.assertContains(page, "Simulated rewards only")
-        self.assertContains(page, "TZS 70")
+        self.assertContains(page, "70 credits")  # CR-01: non-cash credits.
         self.assertContains(page, self.campaign.name)
         for misleading in ("Available balance", "Withdrawable", "Payout pending", "Guaranteed"):
             self.assertNotContains(page, misleading)
         self.client.force_login(other)
-        self.assertNotContains(self.client.get(reverse("rewards:history")), "TZS 70")
+        self.assertNotContains(self.client.get(reverse("rewards:history")), "70 credits")
 
     def test_reversal_is_visible(self):
         self.approved_policy()

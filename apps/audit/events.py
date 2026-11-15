@@ -195,7 +195,7 @@ EVENT_TYPES = {
                        "completed", "cancelled", "archived", "reopened")],
         _event("campaign.funding.refused", Category.ADVERTISING, SECURITY, ["requested_status", "reason"]),
         # Verified viewing (evidence summaries only; never playback URLs or raw telemetry)
-        _event("viewing.session.started", Category.VIEWING, BUSINESS, ["campaign", "revision"]),
+        _event("viewing.session.started", Category.VIEWING, BUSINESS, ["campaign", "revision", "quoted_credits"]),
         _event("viewing.session.denied", Category.VIEWING, SECURITY, ["campaign", "reason"]),
         _event("viewing.session.expired", Category.VIEWING, BUSINESS, ["campaign"]),
         _event("viewing.session.invalidated", Category.VIEWING, BUSINESS, ["campaign", "reason"]),
@@ -218,6 +218,9 @@ EVENT_TYPES = {
         _event("rewards.reward.reversed", Category.REWARDS, BUSINESS, ["campaign", "amount", "source", "reason"]),
         _event("rewards.duplicate.refused", Category.REWARDS, SECURITY, ["campaign"]),
         _event("rewards.action.denied", Category.REWARDS, SECURITY, ["action", "reason"]),
+        # CR-01: staff credit terms (budget and eligible plans), with before and after values.
+        _event("rewards.credit_terms.updated", Category.REWARDS, BUSINESS,
+               ["campaign", "version", "budget_from", "budget_to", "plans_from", "plans_to", "reason"]),
         # Payments, SANDBOX (references and whole-TZS amounts only; never payloads or keys)
         _event("payments.intent.created", Category.PAYMENTS, BUSINESS, ["purpose", "amount", "environment"]),
         _event("payments.intent.cancelled", Category.PAYMENTS, BUSINESS, ["reference"]),

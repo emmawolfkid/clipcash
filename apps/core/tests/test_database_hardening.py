@@ -52,6 +52,7 @@ class FunctionSearchPathTests(TestCase):
         # their functions already pinned and list them in their own FUNCTIONS.
         listed = set(import_module("apps.core.migrations.0004_pin_function_search_path").FUNCTIONS)
         listed |= set(import_module("apps.payments.migrations.0005_manual_payment_integrity").FUNCTIONS)
+        listed |= set(import_module("apps.rewards.migrations.0004_credit_budget_bounds").FUNCTIONS)
         self.assertEqual(listed, {name for name, _, _ in public_functions()})
 
 
