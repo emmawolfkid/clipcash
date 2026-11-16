@@ -5,6 +5,8 @@ real command in a subprocess with a fake, nonsecret environment; nothing connect
 database or a remote host.
 """
 
+import os
+import tempfile
 from unittest import mock
 
 from django.test import SimpleTestCase, override_settings
@@ -172,7 +174,10 @@ class DeployCommandTests(SimpleTestCase):
                                 DJANGO_EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend",
                                 DJANGO_EMAIL_HOST="smtp.example.invalid", DJANGO_EMAIL_PORT="587",
                                 DJANGO_EMAIL_USE_TLS="True",
-                                DJANGO_DEFAULT_FROM_EMAIL="ClipCash <no-reply@demo.clipcash.example>")  # PRD-01
+                                DJANGO_DEFAULT_FROM_EMAIL="ClipCash <no-reply@demo.clipcash.example>",  # PRD-01
+                                # PRD-04: private evidence outside the application directory.
+                                DJANGO_PAYMENTS_EVIDENCE_ROOT=os.path.join(tempfile.gettempdir(), "clipcash-private",
+                                                                           "payment_evidence"))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn("payments.E00", result.stderr + result.stdout)
 

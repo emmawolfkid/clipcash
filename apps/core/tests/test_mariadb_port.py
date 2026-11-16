@@ -145,7 +145,8 @@ class SchemaTests(TestCase):
                     for statement in operation.sql:
                         created.update(re.findall(r"CREATE TRIGGER (\w+)", statement))
         self.assertEqual(installed, created)
-        self.assertEqual(len(installed), 108)  # 102 existing guards + 3 permission mutexes + 3 immutable-quote guards.
+        # 102 existing guards + 3 permission mutexes + 3 immutable-quote guards + 3 PRD-04 evidence guards.
+        self.assertEqual(len(installed), 111)
 
     def test_database_and_connection_settings(self):
         with connection.cursor() as cursor:

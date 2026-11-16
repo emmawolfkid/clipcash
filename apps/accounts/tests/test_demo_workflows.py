@@ -90,9 +90,12 @@ class BlockedWorkflowTests(DemoWorkflowTestCase):
         self.assertIn(str(DEMO_UNCONFIRMED_BLOCKED), [str(m) for m in response.wsgi_request._messages])
 
     def test_choosing_a_membership(self):
+        # PRD-04: a restricted demonstration has no way to pay, so choosing is closed for everyone.
         before = self.records()
-        self.assert_blocked(self.client.post(reverse("memberships:choose", args=[self.plan.code])),
-                            reverse("memberships:mine"))
+        response = self.client.post(reverse("memberships:choose", args=[self.plan.code]))
+        self.assertRedirects(response, reverse("memberships:plan_detail", args=[self.plan.code]),
+                             fetch_redirect_response=False)
+        self.assertIn("Membership payments are not open yet", " ".join(str(m) for m in response.wsgi_request._messages))
         self.assertEqual(self.records(), before)
 
     def test_opening_a_wallet(self):

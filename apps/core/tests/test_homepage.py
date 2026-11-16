@@ -198,10 +198,11 @@ class AuthenticationRedirectTests(HomeTestCase):
         self.client.force_login(make_user())
         self.assertRedirects(self.client.get(LOGIN), DASHBOARD)
 
-    def test_unverified_member_sees_homepage_but_not_dashboard(self):
+    def test_unverified_member_sees_homepage_and_dashboard(self):
+        # PRD-03A: no confirmation is needed to use the account.
         self.client.force_login(make_user(verified=False))
         self.assertEqual(self.client.get(HOME).status_code, 200)
-        self.assertRedirects(self.client.get(DASHBOARD), reverse("accounts:verification_required"))
+        self.assertEqual(self.client.get(DASHBOARD).status_code, 200)
 
     def test_sign_out_is_audited_and_lands_on_sign_in(self):
         self.client.force_login(make_user())
