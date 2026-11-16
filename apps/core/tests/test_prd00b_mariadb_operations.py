@@ -102,6 +102,52 @@ class ScriptSafetyTests(SimpleTestCase):
             self.assertEqual(unverified.returncode, 2)
             self.assertIn("cannot be verified", unverified.stderr)
 
+    def test_evidence_backup_and_restore_refusals(self):
+        """PRD-04: payment receipts. Backups never go inside the evidence directory, and a restore
+        never extracts receipts over existing files. Both are refused before any database access."""
+        import gzip
+        import hashlib
+
+        with tempfile.TemporaryDirectory() as outside:
+            option = Path(outside) / "backup.cnf"
+            option.write_text("[client]\n", encoding="utf-8")
+            evidence = Path(outside) / "evidence"
+            evidence.mkdir()
+            base = {"CLIPCASH_DB_OPTION_FILE": str(option), "CLIPCASH_ALLOW_OPEN_OPTION_FILE": "1"}
+            nested = self.run_script("backup.sh", str(evidence / "backups"), CLIPCASH_DB_NAME="clipcash",
+                                     CLIPCASH_EVIDENCE_ROOT=str(evidence), **base)
+            self.assertEqual(nested.returncode, 2)
+            self.assertIn("inside the evidence directory", nested.stderr)
+            missing = self.run_script("backup.sh", str(Path(outside) / "out"), CLIPCASH_DB_NAME="clipcash",
+                                      CLIPCASH_EVIDENCE_ROOT=str(Path(outside) / "nope"), **base)
+            self.assertEqual(missing.returncode, 2)
+            self.assertIn("not a directory", missing.stderr)
+
+            name = "clipcash-x-20261116T000000Z"
+            dump = Path(outside) / f"{name}.sql.gz"
+            dump.write_bytes(gzip.compress(b"-- Dump completed\n"))
+            (Path(outside) / f"{name}.sha256").write_bytes(  # Bytes: no CRLF on Windows (sha256sum reads LF).
+                f"{hashlib.sha256(dump.read_bytes()).hexdigest()}  {dump.name}\n".encode())
+            occupied = Path(outside) / "occupied"
+            occupied.mkdir()
+            (occupied / "keep.txt").write_text("existing", encoding="utf-8")
+            no_archive = self.run_script("restore_check.sh", str(dump), CLIPCASH_RESTORE_DB="acct_clipcash_restore",
+                                         CLIPCASH_RESTORE_EVIDENCE_DIR=str(Path(outside) / "new"), **base)
+            self.assertEqual(no_archive.returncode, 2)
+            self.assertIn("has no evidence archive", no_archive.stderr)
+            (Path(outside) / f"{name}.evidence.tar.gz").write_bytes(gzip.compress(b""))
+            busy = self.run_script("restore_check.sh", str(dump), CLIPCASH_RESTORE_DB="acct_clipcash_restore",
+                                   CLIPCASH_RESTORE_EVIDENCE_DIR=str(occupied), **base)
+            self.assertEqual(busy.returncode, 2)
+            self.assertIn("is not empty", busy.stderr)
+            self.assertEqual(sorted(path.name for path in occupied.iterdir()), ["keep.txt"])
+
+    def test_backups_are_complete_or_absent(self):
+        text = (SCRIPTS / "backup.sh").read_text(encoding="utf-8")
+        self.assertIn("trap cleanup EXIT", text)
+        self.assertIn('completed=1', text)
+        self.assertIn('tar -C "$evidence_root" -czf - .', text)  # Streams: no "host:file" path parsing.
+
     def test_scripts_keep_credentials_out_of_command_lines(self):
         for name in ("backup.sh", "restore_check.sh"):
             text = (SCRIPTS / name).read_text(encoding="utf-8")

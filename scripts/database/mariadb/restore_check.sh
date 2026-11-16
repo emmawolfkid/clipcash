@@ -21,6 +21,9 @@
 #
 # Checks: checksum, completeness, table/trigger counts against the manifest, row counts per table,
 # ledger balances = sum of posted lines, every journal entry balanced, the locked money tables empty.
+# PRD-04: if the backup has a payment-evidence archive (<dump>.evidence.tar.gz), it is verified and
+# every receipt recorded in the restored database must be in it. Set CLIPCASH_RESTORE_EVIDENCE_DIR
+# to an EMPTY (or new) directory to also extract the files there for a staging copy.
 # Exit status 1 on any mismatch. Never prints credentials. Afterwards run the application checks
 # printed at the end against the scratch copy (never production).
 set -euo pipefail
@@ -28,6 +31,7 @@ set -euo pipefail
 file="${1:-}"
 option_file="${CLIPCASH_DB_OPTION_FILE:-}"
 target="${CLIPCASH_RESTORE_DB:-}"
+evidence_target="${CLIPCASH_RESTORE_EVIDENCE_DIR:-}"
 if [ -z "$file" ] || [ -z "$option_file" ] || [ -z "$target" ]; then
     echo "usage: CLIPCASH_DB_OPTION_FILE=... CLIPCASH_RESTORE_DB=... bash scripts/database/mariadb/restore_check.sh <dump.sql.gz>" >&2
     exit 2
@@ -70,6 +74,19 @@ else
 fi
 gzip -t "$file"
 gzip -dc "$file" | tail -n 5 | grep -q "^-- Dump completed" || { echo "Dump is incomplete." >&2; exit 1; }
+evidence="$dir/$base.evidence.tar.gz"
+if [ -n "$evidence_target" ]; then
+    [ -f "$evidence" ] || { echo "Refusing: CLIPCASH_RESTORE_EVIDENCE_DIR is set but the backup has no evidence archive." >&2; exit 2; }
+    if [ -d "$evidence_target" ] && [ -n "$(ls -A "$evidence_target")" ]; then
+        echo "Refusing: $evidence_target is not empty." >&2
+        exit 2
+    fi
+fi
+evidence_listing=""
+if [ -f "$evidence" ]; then
+    evidence_listing="$(tar -tzf - < "$evidence" | sed 's#^\./##' | grep -v '/$' | grep -v '^\.$' || true)"
+    tar -tzf - < "$evidence" > /dev/null  # set -e: an unreadable archive stops here.
+fi
 
 charset="$(sql "SELECT DEFAULT_CHARACTER_SET_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = DATABASE()")"
 [ "$charset" = "utf8mb4" ] || { echo "Refusing: '$target' uses $charset; create it as utf8mb4 / utf8mb4_unicode_ci." >&2; exit 2; }
@@ -122,6 +139,24 @@ report "posted journal entries that do not balance" "$(sql "
             <> SUM(CASE l.side WHEN 'CREDIT' THEN l.amount ELSE 0 END)) unbalanced")" "0"
 report "real withdrawal requests (locked)" "$(sql "SELECT COUNT(*) FROM withdrawals_withdrawalrequest")" "0"
 report "member wallet transactions (locked)" "$(sql "SELECT COUNT(*) FROM wallets_wallettransaction")" "0"
+# PRD-04: payment receipts are files; every one the restored database records must be in the archive.
+has_evidence_table="$(sql "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'payments_manualpaymentevidence'")"
+recorded=""
+[ "$has_evidence_table" = "1" ] && recorded="$(sql "SELECT storage_name FROM payments_manualpaymentevidence ORDER BY storage_name")"
+recorded_count="$(printf '%s' "$recorded" | grep -c . || true)"
+if [ -f "$evidence" ]; then
+    missing="$(comm -23 <(printf '%s\n' "$recorded" | grep . | sort) <(printf '%s\n' "$evidence_listing" | grep . | sort) | grep -c . || true)"
+    report "payment receipts recorded in the database but missing from the evidence archive" "$missing" "0"
+    echo "INFO evidence archive: $(printf '%s\n' "$evidence_listing" | grep -c . || true) files; $recorded_count recorded in the database"
+    if [ -n "$evidence_target" ]; then
+        mkdir -p "$evidence_target"
+        chmod 700 "$evidence_target" 2>/dev/null || true
+        tar -C "$evidence_target" -xzf - < "$evidence"
+        echo "INFO evidence extracted to $evidence_target (point DJANGO_PAYMENTS_EVIDENCE_ROOT of the staging copy there)"
+    fi
+elif [ "$recorded_count" != "0" ]; then
+    report "payment receipts recorded but the backup has no evidence archive" "$recorded_count" "0"
+fi
 echo "INFO migrations recorded: $(sql "SELECT COUNT(*) FROM django_migrations")"
 echo "INFO accounts: $(sql "SELECT COUNT(*) FROM accounts_user"), audit events: $(sql "SELECT COUNT(*) FROM audit_auditevent"), journal entries: $(sql "SELECT COUNT(*) FROM wallets_journalentry")"
 

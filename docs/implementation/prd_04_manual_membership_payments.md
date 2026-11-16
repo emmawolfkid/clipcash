@@ -54,8 +54,10 @@ guards have no reverse migration. Apply as the migration login, with application
 * Migration `payments.0008` (migration login), then `check_mariadb_logins` (expects 111 guards).
 * Before Stage 3: create the private directory (`mkdir -p ~/clipcash/private/payment_evidence && chmod 700`), set
   `DJANGO_PAYMENTS_EVIDENCE_ROOT`, `check --deploy` without `payments.E005`.
-* **Backups:** the database dump does not contain the files. Back up the evidence directory with each database
-  backup (e.g. `tar -czf` next to the dump, kept as privately), and restore both together.
+* **Backups:** the database dump does not contain the files. `scripts/database/mariadb/backup.sh` archives them when
+  `CLIPCASH_EVIDENCE_ROOT` is set (after the snapshot, checksummed), and `restore_check.sh` verifies that every
+  receipt the restored database records is in the archive (optionally extracting it). Drilled locally; see
+  netpoa_mariadb_runbook.md §4 and §8.
 * Web server request-size limit (LiteSpeed/Apache) at least 6 MB for the payment form; the application refuses
   anything larger itself.
 

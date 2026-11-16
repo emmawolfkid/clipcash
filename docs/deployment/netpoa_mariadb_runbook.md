@@ -85,26 +85,34 @@ Proves that a backup made on NetPoa restores on NetPoa with every guard. Uses a 
 
 1. cPanel: create `<account>_clipcash_restore` (utf8mb4 as in §3.1) and add `<account>_ccmigrate` to it with the
    §3.2 privileges (and, to test the runtime login, `<account>_ccapp` with the four data privileges).
-2. Take a backup of the source (staging or production) database:
+2. Take a backup of the source (staging or production) database. Once manual payments are live (Stage 3), add
+   `CLIPCASH_EVIDENCE_ROOT` so payment receipts (files, not rows) are archived with it (PRD-04):
    ```bash
    cd ~/clipcash/app
    CLIPCASH_DB_OPTION_FILE=~/clipcash/secrets/backup.cnf CLIPCASH_DB_NAME=<account>_clipcash \
+   CLIPCASH_EVIDENCE_ROOT=~/clipcash/private/payment_evidence \
        bash scripts/database/mariadb/backup.sh ~/clipcash/backups
    ```
-3. Restore and verify (refuses unless the target contains `restore`, is empty and utf8mb4, and the checksum matches):
+   A failed backup leaves no files behind; a successful one prints `Backup written` and its evidence file count.
+3. Restore and verify (refuses unless the target contains `restore`, is empty and utf8mb4, and the checksum matches;
+   with an evidence archive it also checks that every receipt the database records is in the archive):
    ```bash
    CLIPCASH_DB_OPTION_FILE=~/clipcash/secrets/backup.cnf CLIPCASH_RESTORE_DB=<account>_clipcash_restore \
    CLIPCASH_PRODUCTION_DB=<account>_clipcash \
+   CLIPCASH_RESTORE_EVIDENCE_DIR=~/clipcash/restore/payment_evidence \
        bash scripts/database/mariadb/restore_check.sh ~/clipcash/backups/clipcash-<account>_clipcash-<time>.sql.gz
    ```
    Every line must be `OK` (row-count differences are acceptable only if the site was written to during the backup).
+   `CLIPCASH_RESTORE_EVIDENCE_DIR` (empty or new; never the live evidence directory) also extracts the receipts.
 4. Application checks against the copy, never production:
    ```bash
    ( set -a; . ~/clipcash/secrets/migrate.env; set +a; export DB_NAME=<account>_clipcash_restore;
      python manage.py migrate --check && python manage.py check_mariadb_logins )
    ```
-   Expect `OK migration login`, `OK runtime login`, `OK guards (108 triggers and the lock constraints)`.
-5. Copy the three backup files off the server (encrypted), then drop the scratch database in cPanel.
+   Expect `OK migration login`, `OK runtime login`, `OK guards (111 triggers and the lock constraints)` (111 from
+   `payments.0008`, PRD-04; 108 before it).
+5. Copy the backup files (dump, manifest, checksums and, with Stage 3, the evidence archive) off the server,
+   encrypted, then drop the scratch database in cPanel and delete the extracted receipts.
 6. Record: date, release, dump size, counts, results.
 
 ## 5. First deploy on MariaDB (Stage 1: registration closed, payments off)
@@ -136,9 +144,18 @@ Precondition: §1 has no STOP, §3 done, §4 drilled on the scratch database.
    45 2 * * * find /home/<account>/clipcash/backups -maxdepth 1 -name 'clipcash-*' -mtime +14 -delete
    ```
    No password appears in any line. The first line is mandatory: without it no activation or reset email leaves.
+   From Stage 3 (PRD-04), add `CLIPCASH_EVIDENCE_ROOT=/home/<account>/clipcash/private/payment_evidence` to the
+   backup line, so receipts are backed up with the database.
 7. SMTP acceptance with an owner-controlled mailbox: [prd_01_email_first_authentication.md](../implementation/prd_01_email_first_authentication.md)
    "Production acceptance". Configured SMTP and passing tests are not evidence of delivery.
 8. Public runbook §13–§14 (administrators, Stage 1 acceptance); then Stage 2 and Stage 3 exactly as written there.
+9. Before Stage 3 (manual payments, PRD-04): create the private receipt directory **outside** `~/clipcash/app`
+   (each release replaces that folder) and outside `public_html`:
+   `mkdir -p ~/clipcash/private/payment_evidence && chmod 700 ~/clipcash/private ~/clipcash/private/payment_evidence`;
+   set `DJANGO_PAYMENTS_EVIDENCE_ROOT` to it in `.env`; `check --deploy` must show no `payments.E005`; allow request
+   bodies of at least 6 MB for the payment form in the web server; switch the backup cron line to include receipts
+   (§5.6); run §4 once with receipts present. Plans stay unchoosable until manual payments are on and payment details
+   are published.
 
 ## 6. Later deploys
 
@@ -176,6 +193,18 @@ sign-ups), then:
 * A dump whose triggers named a login that does not exist here restored with all 108 triggers and the view owned by
   the restoring login.
 * The disposable database and the drill's option file were deleted afterwards.
+
+PRD-04 drill (16 Nov 2026, same setup, release with `payments.0008`): 5 accounts, 3 claims (2 with a receipt, 1
+approved with its ledger posting).
+
+* `backup.sh` with `CLIPCASH_EVIDENCE_ROOT`: 66 tables, 111 triggers, evidence archive with 2 files, all of them in
+  the checksum file. A run made to fail at the archive step left no files at all.
+* Restored with extraction: every check `OK`, including "receipts recorded but missing from the archive: 0"; the
+  extracted files were byte-identical to the source; the application read both through its storage with matching
+  SHA-256; `check_mariadb_logins`: OK x3, guards 111.
+* A tampered archive (one receipt removed, checksums regenerated) was refused: "missing from the evidence archive: 1",
+  exit 1.
+* The disposable database, files and option file were deleted afterwards.
 
 Not proven: anything on NetPoa (§1), restore of a large production-size dump, `mariadb-dump` 10.11 output (the
 drill used the 10.4 client).
