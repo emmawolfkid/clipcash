@@ -62,7 +62,7 @@
     <tr>
       <td><a href="{% url 'memberships:subscription_detail' item.pk %}">{{ item.plan_name }}</a></td>
       <td><span class="badge badge--{{ item.status|lower }}">{{ item.get_status_display }}</span></td>
-      <td>{% if item.activation_source == "COMPLIMENTARY" %}{% translate "Complimentary, no payment" %}{% else %}<span class="financial-amount">{{ item.price_amount|tzs }}</span>{% endif %}</td>
+      <td>{% if item.activation_source == "COMPLIMENTARY" %}{% translate "Complimentary, no payment" %}{% elif item.activation_source == "EXTENSION" %}{% translate "Extension, no payment" %}{% else %}<span class="financial-amount">{{ item.price_amount|tzs }}</span>{% endif %}</td>
       <td>{% if item.starts_at %}{{ item.starts_at|date:"DATE_FORMAT" }} – {{ item.expires_at|date:"DATE_FORMAT" }}{% else %}—{% endif %}</td>
     </tr>
   {% endfor %}

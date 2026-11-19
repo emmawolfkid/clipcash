@@ -150,6 +150,8 @@ class MemberDetailView(View):
         from apps.memberships.access import check_access
         from apps.wallets.models import Wallet
 
+        from . import memberships as membership_console
+
         return render(request, "administration/members/detail.html", {
             "member": member, "membership": check_access(member).subscription,
             "subscriptions": member.subscriptions.order_by("-created_at")[:5],
@@ -160,6 +162,8 @@ class MemberDetailView(View):
             "activity": member_activity(member, limit=15),
             "can_change": request.user.has_perm("accounts.change_user"), "can": can, "nav": "members",
             "can_grant": memberships.can_grant_complimentary(request.user),
+            # PAY-LIVE-01D: membership details, history, audit trail and permitted actions.
+            **membership_console.member_detail_context(request.user, member, can),
             "breadcrumbs": [("Overview", "administration:overview"), ("Members", "administration:members")]})
 
 

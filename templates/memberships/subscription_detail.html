@@ -14,7 +14,7 @@
 <section class="panel">
 <div class="membership-status"><span class="membership-status__label">{% translate "Status" %}</span><span class="badge badge--{{ subscription.status|lower }}">{{ subscription.get_status_display }}</span></div>
 <dl class="details">
-  {% if subscription.activation_source == "COMPLIMENTARY" %}<dt>{% translate "Listed plan price" %}</dt><dd><span class="financial-amount">{{ subscription.price_amount|tzs }}</span></dd>
+  {% if subscription.activation_source == "COMPLIMENTARY" or subscription.activation_source == "EXTENSION" %}<dt>{% translate "Listed plan price" %}</dt><dd><span class="financial-amount">{{ subscription.price_amount|tzs }}</span></dd>
   <dt>{% translate "Amount paid" %}</dt><dd><span class="financial-amount">{{ subscription.amount_paid|tzs }}</span></dd>
   {% else %}<dt>{% translate "Price" %}</dt><dd><span class="financial-amount">{{ subscription.price_amount|tzs }}</span></dd>{% endif %}
   <dt>{% translate "Duration" %}</dt><dd>{% blocktranslate count days=subscription.duration_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</dd>

@@ -367,9 +367,10 @@ def has_open_manual_payment(subscription):
 
 
 def _transition(subscription, new_status, *, actor, now, reason="", audit_actor=None, metadata=None,
-                extra_fields=()):
+                extra_fields=(), notify=True):
     """Apply one state change (one UPDATE, with any ``extra_fields`` already set on
-    the instance) and its audit event. Caller holds the row lock."""
+    the instance) and its audit event. Caller holds the row lock. ``notify=False``
+    (PAY-LIVE-01D cascades only): audited, but the member hears once, from the main change."""
     old = subscription.status
     if new_status not in ALLOWED.get(old, set()):
         raise InvalidTransition(f"A {old.lower()} subscription cannot become {new_status.lower()}.")
@@ -396,7 +397,8 @@ def _transition(subscription, new_status, *, actor, now, reason="", audit_actor=
         metadata={"from_status": old, "to_status": new_status, "reason": reason or "",
                   "plan_code": subscription.plan.code, **(metadata or {})},
     )
-    _notify_member(subscription, old, new_status, reason)
+    if notify:
+        _notify_member(subscription, old, new_status, reason)
     return subscription
 
 
@@ -415,6 +417,10 @@ def _notify_member(subscription, old, new, reason):
         notice = ("complimentary", f"Complimentary {plan} membership granted",
                   f"You have demonstration access until {inbox.when(subscription.expires_at)}. "
                   "No payment was taken and nothing renews automatically.", True)
+    elif new == S.ACTIVE and subscription.activation_source == Subscription.Source.EXTENSION:
+        notice = ("extended", f"Your {plan} membership was extended",
+                  f"Access now continues until {inbox.when(subscription.expires_at)}. No payment was taken "
+                  "and nothing renews automatically.", True)
     elif new == S.ACTIVE:
         starts = "" if subscription.starts_at <= timezone.now() else f" from {inbox.when(subscription.starts_at)}"
         notice = ("activated", f"Your {plan} membership is active",
@@ -650,13 +656,14 @@ GRANT_ACTION = "membership.complimentary.granted"
 OPERATION_CONFLICT = "This form was already used for a different grant. Reload the page and start again."
 
 
-def _lock_operation(key):
-    """Serialize every grant that carries this retry key, whichever member or plan it
-    names. A PostgreSQL transaction-level advisory lock: held until commit or rollback,
-    shared by all processes and servers. Taken before any member lock (fixed order).
-    DB-01: on MariaDB the same transaction-scoped lock is a locked row (apps.core.locking)."""
+def _lock_operation(key, namespace="membership.complimentary"):
+    """Serialize every grant (or, PAY-LIVE-01D, extension) that carries this retry key,
+    whichever member or plan it names. A PostgreSQL transaction-level advisory lock: held
+    until commit or rollback, shared by all processes and servers. Taken before any member
+    lock (fixed order). DB-01: on MariaDB the same transaction-scoped lock is a locked row
+    (apps.core.locking)."""
     if connection.vendor == "mysql":
-        transaction_lock_mariadb(f"membership.complimentary:{key}")
+        transaction_lock_mariadb(f"{namespace}:{key}")
         return
     with connection.cursor() as cursor:
         cursor.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", [key])
@@ -808,38 +815,248 @@ ADMIN_REASONS = {R.ADMIN_REVIEW, R.POLICY_VIOLATION, R.FRAUD_SUSPECTED, R.REFUND
                  R.MEMBER_REQUEST}
 
 
-def _admin_change(actor, subscription, new_status, reason, action):
+ADMIN_NOTE_MAX = 200
+
+
+def _admin_note(note):
+    """PAY-LIVE-01D: the administrator's own words, recorded in the audit event only (never
+    shown to the member, whose notices never state reasons)."""
+    return " ".join(str(note or "").split())[:ADMIN_NOTE_MAX]
+
+
+def _admin_change(actor, subscription, new_status, reason, action, note=""):
     try:
         if not can_manage_subscriptions(actor):
             raise NotAuthorized("You are not allowed to manage subscriptions.")
+        if subscription.member_id == getattr(actor, "pk", None):
+            raise NotAuthorized("You cannot change your own membership.", code="own_membership")
         if new_status != S.ACTIVE and reason not in ADMIN_REASONS:
             raise ValidationError("A valid reason is required.")
+        note = _admin_note(note)
+        metadata = {"note": note} if note else None
         now = timezone.now()
         with transaction.atomic():
+            # Same lock order as every other membership change: member, then subscription.
+            _lock_member(subscription.member)
             subscription = _locked(subscription)  # Decide on the locked row, never a stale copy.
+            suspended_together_at = subscription.suspended_at  # Before reinstating: which extensions followed it.
             if new_status == S.ACTIVE:
                 if subscription.status != S.SUSPENDED:
                     raise InvalidTransition("Only suspended subscriptions can be reinstated.")
                 if subscription.expires_at <= now:
-                    return _transition(subscription, S.EXPIRED, actor=actor, now=now)
-            return _transition(subscription, new_status, actor=actor, now=now, reason=reason)
+                    return _transition(subscription, S.EXPIRED, actor=actor, now=now, metadata=metadata)
+                eligible, why = member_eligibility(subscription.member)
+                if not eligible:  # PAY-LIVE-01D: never restore access to an ineligible account.
+                    raise NotEligible("The member's account is not eligible, so access cannot be restored.",
+                                      code=why)
+            was_live = subscription.status in (S.ACTIVE, S.SUSPENDED)
+            result = _transition(subscription, new_status, actor=actor, now=now, reason=reason, metadata=metadata)
+            if was_live:
+                _cascade_to_extensions(result, new_status, actor=actor, now=now, reason=reason, note=note,
+                                       suspended_together_at=suspended_together_at)
+            return result
     except MembershipError as error:
         _deny(action, error, actor, subscription)
         raise
 
 
-def suspend(actor, subscription, reason):
-    return _admin_change(actor, subscription, S.SUSPENDED, reason, "subscription.suspend")
+def _cascade_to_extensions(subscription, new_status, *, actor, now, reason, note, suspended_together_at):
+    """PAY-LIVE-01D: an administrator's revocation also covers the member's later
+    administrative extensions, so a scheduled extension can never restore access after a
+    cancellation or bypass a suspension when the revoked period ends. Same transaction,
+    member already locked; each extension gets its own audited transition (rows are kept).
+
+    * cancelled: later extensions (active or suspended) are cancelled with the same reason;
+    * suspended: later active extensions are suspended with the same reason and time;
+    * reinstated: only the later extensions suspended together with this period (same
+      suspension time) are reinstated; any suspended separately stay suspended.
+
+    Paid renewals and other non-extension periods are never changed here, and nothing
+    is refunded, reversed or deleted. Only transitions the guard triggers already allow
+    are used (ACTIVE <-> SUSPENDED, ACTIVE/SUSPENDED -> CANCELLED)."""
+    if new_status == S.CANCELLED:
+        statuses = [S.ACTIVE, S.SUSPENDED]
+    elif new_status == S.SUSPENDED:
+        statuses = [S.ACTIVE]
+    elif new_status == S.ACTIVE and suspended_together_at is not None:
+        statuses = [S.SUSPENDED]
+    else:
+        return []
+    later = (Subscription.objects.select_for_update().select_related("plan")
+             .filter(member_id=subscription.member_id, activation_source=Subscription.Source.EXTENSION,
+                     status__in=statuses, starts_at__gte=subscription.expires_at, expires_at__gt=now)
+             .exclude(pk=subscription.pk).order_by("starts_at"))
+    if new_status == S.ACTIVE:
+        later = later.filter(suspended_at=suspended_together_at)
+    metadata = {"cascade_of": str(subscription.pk), **({"note": note} if note else {})}
+    return [_transition(extension, new_status, actor=actor, now=now, reason=reason, metadata=metadata,
+                        notify=False) for extension in later]
 
 
-def reinstate(actor, subscription):
-    """SUSPENDED -> ACTIVE; the period is not extended (time kept running)."""
-    return _admin_change(actor, subscription, S.ACTIVE, "", "subscription.reinstate")
+def suspend(actor, subscription, reason, note=""):
+    return _admin_change(actor, subscription, S.SUSPENDED, reason, "subscription.suspend", note)
 
 
-def cancel(actor, subscription, reason):
-    """Administrator cancellation: immediate; no automatic refund."""
-    return _admin_change(actor, subscription, S.CANCELLED, reason, "subscription.cancel")
+def reinstate(actor, subscription, note=""):
+    """SUSPENDED -> ACTIVE; the period is not extended (time kept running). An ended period
+    becomes EXPIRED instead, and an ineligible account is refused."""
+    return _admin_change(actor, subscription, S.ACTIVE, "", "subscription.reinstate", note)
+
+
+def cancel(actor, subscription, reason, note=""):
+    """Administrator cancellation: immediate; no automatic refund and no ledger reversal."""
+    return _admin_change(actor, subscription, S.CANCELLED, reason, "subscription.cancel", note)
+
+
+# --- Administrative extension (PAY-LIVE-01D) ------------------------------------------------
+
+EXTENSION_MIN_DAYS = 1
+EXTENSION_MAX_DAYS = 365
+EXTENSION_ACTION = "membership.subscription.extended"
+EXTENSION_IDEMPOTENCY_PREFIX = "membership.extension:"
+EXTENSION_LOCK_NAMESPACE = "membership.extension"
+EXTENSION_CONFLICT = "This form was already used for a different extension. Reload the page and start again."
+EXTENSION_STALE = ("This membership changed after you opened the page (another administrator may have extended or "
+                   "changed it). Nothing was changed; reload the page and review it again.")
+
+
+def can_extend_memberships(user):
+    return is_super_admin(user)
+
+
+def live_periods(member, now=None):
+    """The member's ACTIVE or SUSPENDED periods that have not ended, oldest first."""
+    now = now or timezone.now()
+    return list(Subscription.objects.filter(member=member, status__in=[S.ACTIVE, S.SUSPENDED], expires_at__gt=now)
+                .order_by("starts_at"))
+
+
+def membership_end(member, now=None):
+    """When the member's access currently ends (the last live period's expiry), or None."""
+    periods = live_periods(member, now)
+    return max(p.expires_at for p in periods) if periods else None
+
+
+def _extension_days(days):
+    try:
+        days = int(days)
+    except (TypeError, ValueError):
+        days = 0
+    if not EXTENSION_MIN_DAYS <= days <= EXTENSION_MAX_DAYS:
+        raise ValidationError({"days": f"Choose between {EXTENSION_MIN_DAYS} and {EXTENSION_MAX_DAYS} days."})
+    return days
+
+
+def _replayed_extension(key, *, actor, subscription, days, reason):
+    """The extension a repeated submission of the same form already made, or None. The key
+    belongs to exactly one request (administrator, membership, days, reason)."""
+    from apps.audit.models import AuditEvent
+
+    event = AuditEvent.objects.filter(idempotency_key=key).first()
+    if event is None:
+        return None
+    original = event.metadata
+    if not (event.action == EXTENSION_ACTION and event.actor_id == actor.pk
+            and original.get("extended_subscription") == str(subscription.pk)
+            and original.get("days") == days and original.get("reason") == reason):
+        raise InvalidTransition(EXTENSION_CONFLICT, code="operation_conflict")
+    return Subscription.objects.get(pk=event.target_id)
+
+
+def extend(actor, subscription, *, days, reason, operation_id, expected_end):
+    """A Super Administrator extends a member's current membership by ``days``.
+
+    Activated periods are immutable (database guards), so the extension is its own period,
+    appended immediately after the member's last live period: same plan, plan version and
+    entitlements as ``subscription``, activation source EXTENSION, amount paid 0, no payment
+    reference, and no ledger, wallet or payment record. Nothing about the original period or
+    any payment changes.
+
+    Only an ACTIVE membership that is in force now, of an eligible account with no suspended
+    period and no open plan choice, can be extended. ``expected_end`` is the access end the
+    administrator reviewed; if it changed meanwhile (another administrator acted), nothing is
+    done. ``operation_id`` (the form token) makes a repeated submission return the original
+    extension instead of adding another. Returns (extension subscription, created)."""
+    try:
+        if not can_extend_memberships(actor):
+            raise NotAuthorized("Only Super Administrators can extend memberships.")
+        if subscription.member_id == getattr(actor, "pk", None):
+            raise NotAuthorized("You cannot change your own membership.", code="own_membership")
+        if not _feature_enabled("memberships"):
+            raise PlanUnavailable("Memberships are not available.", code="feature_disabled")
+        days = _extension_days(days)
+        reason = _grant_reason(reason)
+        operation_id = str(operation_id or "")
+        if not GRANT_OPERATION_RE.match(operation_id):
+            raise ValidationError({"operation": "The form expired. Reload the page and try again."})
+        key = EXTENSION_IDEMPOTENCY_PREFIX + operation_id
+        with transaction.atomic():
+            _lock_operation(key, EXTENSION_LOCK_NAMESPACE)  # Before the member lock: one order.
+            member = _lock_member(subscription.member)
+            subscription = _locked(subscription)
+            replayed = _replayed_extension(key, actor=actor, subscription=subscription, days=days, reason=reason)
+            if replayed is not None:
+                return replayed, False
+            now = timezone.now()
+            if not subscription.is_in_force(now):
+                raise InvalidTransition("Only an active membership that is in force now can be extended.",
+                                        code="not_in_force")
+            eligible, why = member_eligibility(member)
+            if not eligible:
+                raise NotEligible("The member's account is not eligible.", code=why)
+            periods = live_periods(member, now)
+            if any(p.status == S.SUSPENDED for p in periods):
+                raise InvalidTransition("This member has a suspended period. Resolve it before extending.",
+                                        code="suspended_period")
+            if Subscription.objects.filter(member=member, status=S.PENDING).exists():
+                raise InvalidTransition("This member has a plan choice waiting for payment. Resolve it before "
+                                        "extending.", code="pending_choice")
+            previous_end = max(p.expires_at for p in periods)
+            if _parse_moment(expected_end) != previous_end:
+                raise InvalidTransition(EXTENSION_STALE, code="stale_extension")
+            # Inserted PENDING and activated in the same transaction (the only path the guards allow),
+            # with the original period's terms.
+            pending = Subscription.objects.create(
+                member=member, plan_id=subscription.plan_id, plan_version_id=subscription.plan_version_id,
+                plan_name=subscription.plan_name, price_amount=subscription.price_amount,
+                currency=subscription.currency, duration_days=days, benefits=list(subscription.benefits),
+                entitlements=list(subscription.entitlements),
+                pending_until=now + timedelta(days=settings.MEMBERSHIPS_PENDING_DAYS))
+            record_business_event("membership.subscription.created", actor=actor, target=pending,
+                                  metadata={"plan_code": subscription.plan.code, "amount_paid": 0,
+                                            "renewal": False, "extension_of": str(subscription.pk)})
+            extension = _activate(pending, source=Subscription.Source.EXTENSION, payment_reference="", amount_paid=0,
+                                  actor=actor, now=now, period=timedelta(days=days), note=reason, honour_quote=True)
+            if extension.starts_at != previous_end:  # Appended exactly, never overlapping or leaving a gap.
+                raise InvalidTransition(EXTENSION_STALE, code="stale_extension")
+            event = record_business_event(
+                EXTENSION_ACTION, actor=actor, target=extension, idempotency_key=key,
+                metadata={"member": str(member.pk), "extended_subscription": str(subscription.pk),
+                          "plan_code": subscription.plan.code, "days": days, "reason": reason,
+                          "previous_expires_at": previous_end.isoformat(),
+                          "new_expires_at": extension.expires_at.isoformat(),
+                          "adjustment": "administrative_non_payment", "amount_paid": 0, "operation": operation_id},
+            )
+            if event is None or event.target_id != str(extension.pk):
+                raise InvalidTransition(EXTENSION_CONFLICT, code="operation_conflict")
+            return extension, True
+    except IntegrityError as error:
+        conflict = InvalidTransition("The extension conflicted with another membership change. Nothing was changed.",
+                                     code="conflict")
+        _deny("subscription.extend", conflict, actor, subscription)
+        raise conflict from error
+    except MembershipError as error:
+        _deny("subscription.extend", error, actor, subscription)
+        raise
+
+
+def _parse_moment(value):
+    if isinstance(value, datetime):
+        return value
+    try:
+        return datetime.fromisoformat(str(value or ""))
+    except ValueError:
+        return None
 
 
 # --- Expiry (background job) ---------------------------------------------------------

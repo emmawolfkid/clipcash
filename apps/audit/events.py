@@ -139,10 +139,15 @@ EVENT_TYPES = {
                ["fields", "version", "price_amount", "new_version"]),
         _event("membership.plan.status_changed", Category.MEMBERSHIP, BUSINESS, ["from_status", "to_status"]),
         _event("membership.subscription.created", Category.MEMBERSHIP, BUSINESS,
-               ["plan_code", "price_amount", "renewal"]),
+               ["plan_code", "price_amount", "renewal", "amount_paid", "extension_of"]),
+        # PAY-LIVE-01D: "note" is the administrator's own words for a console change; "cascade_of"
+        # names the period whose suspension, reinstatement or cancellation an extension followed.
         *[_event(f"membership.subscription.{name}", Category.MEMBERSHIP, BUSINESS,
-                 ["from_status", "to_status", "reason", "plan_code", "source", "queued"])
+                 ["from_status", "to_status", "reason", "plan_code", "source", "queued", "note", "cascade_of"])
           for name in ("activated", "cancelled", "suspended", "reinstated", "expired")],
+        _event("membership.subscription.extended", Category.MEMBERSHIP, BUSINESS,
+               ["member", "extended_subscription", "plan_code", "days", "reason", "previous_expires_at",
+                "new_expires_at", "adjustment", "amount_paid", "operation"]),
         _event("membership.complimentary.granted", Category.MEMBERSHIP, BUSINESS,
                ["member", "plan_code", "starts_at", "expires_at", "reason", "operation"]),
         _event("membership.action.denied", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
