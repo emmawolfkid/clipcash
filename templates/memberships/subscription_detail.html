@@ -4,7 +4,7 @@
 {% block member_content %}
 <h1 class="page-title">{{ subscription.plan_name }}</h1>
 <p><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></p>
-{% if subscription.activation_source == "COMPLIMENTARY" %}<p class="notice">{% translate "Complimentary demonstration access: no payment was made, and access ends on the date below." %}</p>
+{% if subscription.activation_source == "COMPLIMENTARY" %}<p class="notice">{% if restricted_demo %}{% translate "Complimentary demonstration access: no payment was made, and access ends on the date below." %}{% else %}{% translate "Complimentary access: no payment was made, and access ends on the date below. Nothing renews automatically." %}{% endif %}</p>
 {% elif subscription.status == "EXPIRED" %}<p class="notice" role="status">{% translate "This membership has ended, so it no longer gives access to included content." %}</p>
 {% elif subscription.status == "CANCELLED" %}<p class="notice" role="status">{% translate "This membership choice was cancelled. It does not give access to included content." %}</p>
 {% elif subscription.status == "SUSPENDED" %}<p class="notice notice--warning" role="status">{% translate "Your membership is suspended. Please contact support." %}</p>

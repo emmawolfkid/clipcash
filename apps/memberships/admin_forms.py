@@ -58,3 +58,18 @@ class ExtensionForm(forms.Form):
         error_messages={"required": _("Tick the confirmation box to continue.")})
     operation = forms.CharField(widget=forms.HiddenInput, max_length=64)
     expected_end = forms.CharField(widget=forms.HiddenInput, max_length=64)
+
+
+def adapt_grant_form(form, mode):
+    """PAY-LIVE-01E: production wording for the existing complimentary-grant forms
+    (apps.memberships.forms.ComplimentaryGrantForm / ComplimentaryConfirmForm). The rules
+    themselves are enforced by services.grant_complimentary; this only describes them."""
+    if mode != services.GRANT_MODE_PRODUCTION:
+        return form
+    form.fields["expires_at"].help_text = _(
+        "In the site time zone. Must be in the future and at most %(days)s days from now."
+    ) % {"days": services.PRODUCTION_GRANT_MAX_DAYS}
+    if "confirm" in form.fields:
+        form.fields["confirm"].label = _("I confirm this is a complimentary membership: no payment was received, "
+                                         "and no payment, ledger or wallet record is created.")
+    return form

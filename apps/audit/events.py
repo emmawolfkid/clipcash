@@ -148,8 +148,10 @@ EVENT_TYPES = {
         _event("membership.subscription.extended", Category.MEMBERSHIP, BUSINESS,
                ["member", "extended_subscription", "plan_code", "days", "reason", "previous_expires_at",
                 "new_expires_at", "adjustment", "amount_paid", "operation"]),
+        # PAY-LIVE-01E: "mode" is demo or production; the grant is never a payment (amount_paid 0).
         _event("membership.complimentary.granted", Category.MEMBERSHIP, BUSINESS,
-               ["member", "plan_code", "starts_at", "expires_at", "reason", "operation"]),
+               ["member", "plan_code", "starts_at", "expires_at", "reason", "operation", "mode", "duration_minutes",
+                "plan_version", "amount_paid"]),
         _event("membership.action.denied", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
         _event("membership.activation.rejected", Category.MEMBERSHIP, SECURITY, ["reason", "subscription"]),
         # PAY-01: manual (Airtel Lipa) membership payments. Phone numbers are never recorded.

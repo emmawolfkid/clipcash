@@ -188,9 +188,14 @@ class ComplimentaryGrantView(View):
         from apps.memberships.access import current_subscription
         from apps.memberships.models import Subscription
 
+        from apps.memberships.admin_forms import adapt_grant_form
+
         eligible, reason = memberships.member_eligibility(member)
+        mode = memberships.complimentary_grant_mode()  # PAY-LIVE-01E: demo or production wording.
         return render(request, self.template_name, {
-            "member": member, "form": form, "review": review, "eligible": eligible, "eligibility_reason": reason,
+            "grant_mode": mode, "max_days": memberships.PRODUCTION_GRANT_MAX_DAYS,
+            "member": member, "form": adapt_grant_form(form, mode), "review": review, "eligible": eligible,
+            "eligibility_reason": reason,
             "current": current_subscription(member),
             "pending": Subscription.objects.filter(member=member, status=Subscription.Status.PENDING).first(),
             "time_zone": timezone.get_current_timezone_name(), "can": console_links(request.user),

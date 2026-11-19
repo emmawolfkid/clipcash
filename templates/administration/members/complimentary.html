@@ -1,9 +1,9 @@
 {% extends "administration/layout.html" %}{% load i18n %}
-{% block title %}{% translate "Complimentary demo membership" %}{% endblock %}
+{% block title %}{% if grant_mode == "production" %}{% translate "Complimentary membership" %}{% else %}{% translate "Complimentary demo membership" %}{% endif %}{% endblock %}
 {% block crumb %}{{ member.sign_in_identifier }}{% endblock %}
 {% block console_content %}
-<div class="page-heading"><h1 class="page-title">{% translate "Complimentary demo membership" %}</h1><a href="{% url 'administration:member' member.pk %}">{% translate "Back to member" %}</a></div>
-<p class="notice notice--warning" role="note">{% translate "This grants membership access without any payment. It is not a payment, records no money, creates no payment, ledger, wallet, reward-funding or withdrawal entry, and ends automatically at the expiry you set." %}</p>
+<div class="page-heading"><h1 class="page-title">{% if grant_mode == "production" %}{% translate "Complimentary membership" %}{% else %}{% translate "Complimentary demo membership" %}{% endif %}</h1><a href="{% url 'administration:member' member.pk %}">{% translate "Back to member" %}</a></div>
+<p class="notice notice--warning" role="note">{% translate "This grants membership access without any payment. It is not a payment, records no money, creates no payment, ledger, wallet, reward-funding or withdrawal entry, and ends automatically at the expiry you set." %}{% if grant_mode == "production" %} {% blocktranslate with days=max_days %}A grant can last at most {{ days }} days.{% endblocktranslate %}{% endif %}</p>
 
 <section><h2 class="workspace-section__title">{% translate "Member" %}</h2><dl class="details">
   <dt>{% translate "Account" %}</dt><dd>{{ member.sign_in_identifier }}</dd>
@@ -13,16 +13,18 @@
   {% if pending %}<dt>{% translate "Pending choice" %}</dt><dd>{{ pending.plan_name }}</dd>{% endif %}
 </dl>
 {% if not eligible %}<p class="notice notice--warning">{% translate "This account is not eligible for a membership (it must be active with a confirmed email address). The grant will be refused." %}</p>
-{% elif current %}<p class="notice notice--warning">{% translate "This member already has a membership. It is never replaced, shortened or extended here; the grant will be refused." %}</p>{% endif %}
+{% elif current %}<p class="notice notice--warning">{% translate "This member already has a membership. It is never replaced, shortened or extended here; the grant will be refused." %}</p>
+{% elif pending %}<p class="notice" role="note">{% translate "This member has a plan choice waiting for payment. A grant of the same plan uses that choice; a different plan, or a choice with a payment awaiting verification, is refused." %}</p>{% endif %}
 </section>
 
 <section>
 {% if review %}
   <h2 class="workspace-section__title">{% translate "Review and confirm" %}</h2>
   <dl class="details">
-    <dt>{% translate "Plan" %}</dt><dd>{{ review.plan.name }} ({{ review.plan.code }})</dd>
+    <dt>{% translate "Plan" %}</dt><dd>{{ review.plan.name }} ({{ review.plan.code }}) · {% blocktranslate with v=review.plan.version %}version {{ v }}, kept as granted{% endblocktranslate %}</dd>
+    <dt>{% translate "Included" %}</dt><dd>{{ review.plan.entitlements|join:", " }}</dd>
     <dt>{% translate "Access starts" %}</dt><dd>{% translate "Immediately on confirmation" %}</dd>
-    <dt>{% translate "Access ends" %}</dt><dd>{{ review.expires_at|date:"DATETIME_FORMAT" }} ({{ time_zone }})</dd>
+    <dt>{% translate "Access ends" %}</dt><dd>{{ review.expires_at|date:"DATETIME_FORMAT" }} ({{ time_zone }}) · {% blocktranslate with left=review.expires_at|timeuntil %}about {{ left }}{% endblocktranslate %}</dd>
     <dt>{% translate "Reason" %}</dt><dd>{{ review.reason }}</dd>
     <dt>{% translate "Amount paid" %}</dt><dd>{% translate "TZS 0 — complimentary, no payment" %}</dd>
   </dl>
@@ -35,7 +37,7 @@
     <div>
       {% if form.errors.confirm %}<ul class="errorlist" role="alert"><li>{% translate "Tick the confirmation box to grant the membership." %}</li></ul>{% endif %}
       <input type="checkbox" name="confirm" id="id_confirm" required aria-describedby="confirm-help">
-      <label for="id_confirm">{% translate "I confirm this is a complimentary demo membership: no payment was received or simulated." %}</label>
+      <label for="id_confirm">{% if grant_mode == "production" %}{% translate "I confirm this is a complimentary membership: no payment was received, and no payment, ledger or wallet record is created." %}{% else %}{% translate "I confirm this is a complimentary demo membership: no payment was received or simulated." %}{% endif %}</label>
       <p class="helptext" id="confirm-help">{% translate "The grant is recorded in the audit trail with your account and the reason." %}</p>
     </div>
     <button type="submit" class="button">{% translate "Grant complimentary membership" %}</button>

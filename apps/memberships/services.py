@@ -414,8 +414,10 @@ def _notify_member(subscription, old, new, reason):
         notice = ("reinstated", f"Your {plan} membership was reinstated",
                   f"Access is restored until {inbox.when(subscription.expires_at)}.", False)
     elif new == S.ACTIVE and subscription.activation_source == Subscription.Source.COMPLIMENTARY:
+        # PAY-LIVE-01E: a production grant is complimentary access, not a demonstration.
+        access = "demonstration access" if settings.RESTRICTED_DEMO_MODE else "complimentary access"
         notice = ("complimentary", f"Complimentary {plan} membership granted",
-                  f"You have demonstration access until {inbox.when(subscription.expires_at)}. "
+                  f"You have {access} until {inbox.when(subscription.expires_at)}. "
                   "No payment was taken and nothing renews automatically.", True)
     elif new == S.ACTIVE and subscription.activation_source == Subscription.Source.EXTENSION:
         notice = ("extended", f"Your {plan} membership was extended",
@@ -618,10 +620,27 @@ GRANT_OPERATION_RE = re.compile(r"^[A-Za-z0-9-]{8,64}$")
 GRANT_IDEMPOTENCY_PREFIX = "membership.complimentary:"
 
 
+GRANT_MODE_DEMO = "demo"
+GRANT_MODE_PRODUCTION = "production"
+PRODUCTION_GRANT_MAX_DAYS = 365  # PAY-LIVE-01E: the longest production complimentary grant.
+
+
+def complimentary_grant_mode():
+    """Which complimentary-grant policy applies here, or None (grants unavailable).
+
+    * demo (owner decision D1): MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED inside a restricted
+      demonstration; expiry within the plan's own length.
+    * production (PAY-LIVE-01E): MEMBERSHIPS_PRODUCTION_COMPLIMENTARY_GRANTS_ENABLED outside a
+      restricted demonstration; expiry within PRODUCTION_GRANT_MAX_DAYS.
+
+    Each switch works only in its own kind of deployment, so neither can enable the other."""
+    if settings.RESTRICTED_DEMO_MODE:
+        return GRANT_MODE_DEMO if settings.MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED else None
+    return GRANT_MODE_PRODUCTION if settings.MEMBERSHIPS_PRODUCTION_COMPLIMENTARY_GRANTS_ENABLED else None
+
+
 def complimentary_grants_available():
-    """Time-limited complimentary demo memberships (owner decision D1) exist only when
-    MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED is set inside a restricted demonstration."""
-    return bool(settings.MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED and settings.RESTRICTED_DEMO_MODE)
+    return complimentary_grant_mode() is not None
 
 
 def can_grant_complimentary(user):
@@ -643,9 +662,14 @@ def _aware_expiry(expires_at):
     return expires_at
 
 
-def _grant_expiry(expires_at, plan, now):
+def _grant_expiry(expires_at, plan, now, mode=GRANT_MODE_DEMO):
     if expires_at <= now:
         raise ValidationError({"expires_at": "The expiry must be in the future."})
+    if mode == GRANT_MODE_PRODUCTION:
+        if expires_at > now + timedelta(days=PRODUCTION_GRANT_MAX_DAYS):
+            raise ValidationError({"expires_at": f"A complimentary membership can last at most "
+                                                 f"{PRODUCTION_GRANT_MAX_DAYS} days from now."})
+        return expires_at
     if expires_at > now + timedelta(days=plan.duration_days):
         raise ValidationError({"expires_at": f"The expiry cannot be later than the plan's own length "
                                              f"({plan.duration_days} days from now)."})
@@ -708,12 +732,20 @@ def grant_complimentary(actor, member, plan, *, expires_at, reason, operation_id
     same plan is used, any other pending choice is left alone and the grant refused.
     ``operation_id`` (the form token) identifies one request: repeating it with the
     same inputs returns the original grant while it is active; anything else is refused.
+
+    PAY-LIVE-01E: the same grant in production (complimentary_grant_mode), with the expiry
+    bounded by PRODUCTION_GRANT_MAX_DAYS instead of the plan's length. In both modes a pending
+    choice with a payment awaiting verification is never turned into a free membership, and
+    nobody can grant to themselves.
     """
     try:
-        if not complimentary_grants_available():
+        mode = complimentary_grant_mode()
+        if mode is None:
             raise NotAuthorized("Complimentary grants are disabled.", code="grants_disabled")
         if not is_super_admin(actor):
             raise NotAuthorized("Only Super Administrators can grant complimentary memberships.")
+        if member is not None and member.pk == getattr(actor, "pk", None):
+            raise NotAuthorized("You cannot grant a membership to yourself.", code="own_membership")
         if not _feature_enabled("memberships"):
             raise PlanUnavailable("Memberships are not available.", code="feature_disabled")
         if member is None or plan is None:
@@ -743,7 +775,7 @@ def grant_complimentary(actor, member, plan, *, expires_at, reason, operation_id
                 raise NotEligible("The member's account is not eligible.", code=why)
             if plan.status != MembershipPlan.Status.ACTIVE:
                 raise PlanUnavailable("The plan is not active.")
-            expires_at = _grant_expiry(expires_at, plan, now)
+            expires_at = _grant_expiry(expires_at, plan, now, mode)
             current, queued = _current_and_queued(member, now)
             if current is not None or queued is not None:
                 raise NotEligible("This member already has a current or scheduled membership. It is left "
@@ -753,6 +785,10 @@ def grant_complimentary(actor, member, plan, *, expires_at, reason, operation_id
                 # Already due for cancellation by process_expiry; apply the same outcome now.
                 _transition(pending, S.CANCELLED, actor=None, now=now, reason=R.UNPAID_TIMEOUT)
                 pending = None
+            if pending is not None and has_open_manual_payment(pending):
+                # The member may have paid for this choice: only the reviewer's decision closes it.
+                raise InvalidTransition("The member has a payment for their plan choice awaiting verification. "
+                                        "Approve or reject it first.", code="payment_under_review")
             if pending is not None and pending.plan_version_id != plan.versions.get(version=plan.version).pk:
                 raise InvalidTransition(f"The member has a pending choice of another plan "
                                         f"({pending.plan_name}). It is left unchanged.",
@@ -770,7 +806,10 @@ def grant_complimentary(actor, member, plan, *, expires_at, reason, operation_id
                 metadata={"member": str(member.pk), "plan_code": plan.code,
                           "starts_at": subscription.starts_at.isoformat(),
                           "expires_at": subscription.expires_at.isoformat(), "reason": reason,
-                          "operation": operation_id},
+                          "operation": operation_id, "mode": mode,
+                          "duration_minutes": int((subscription.expires_at - subscription.starts_at)
+                                                  .total_seconds() // 60),
+                          "plan_version": subscription.plan_version.version, "amount_paid": 0},
             )
             # The audit layer treats a duplicate idempotency key as a replay and returns the
             # stored event. The operation lock makes that impossible here; if it ever happens,

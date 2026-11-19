@@ -92,7 +92,8 @@ def member_detail_context(user, member, can):
     return {"current_period": current, "scheduled_periods": [s for s in live if s.starts_at > now],
             "membership_end": max((s.expires_at for s in live), default=None),
             "membership_history": history, "membership_audit": audit, "show_membership_audit": show_audit,
-            "can_manage_memberships": _can_manage(user), "now": now}
+            "can_manage_memberships": _can_manage(user), "now": now,
+            "grant_mode": memberships.complimentary_grant_mode()}  # PAY-LIVE-01E: button wording.
 
 
 @console

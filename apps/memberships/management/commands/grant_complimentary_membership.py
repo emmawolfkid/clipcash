@@ -1,11 +1,13 @@
 """
-Grant a time-limited complimentary (free, explicitly labelled) demo membership.
+Grant a time-limited complimentary (free, explicitly labelled) membership.
 
 Same service and rules as the console (/manage/members/<id>/complimentary/):
 requires DJANGO_MEMBERSHIPS_COMPLIMENTARY_GRANTS=True inside a restricted
-demonstration, an ACTIVE Super Administrator as the acting account, an eligible
-member without a current membership, a future expiry within the plan's length and
-a reason. Recorded with amount paid 0 and audited. It never marks anything as paid.
+demonstration (expiry within the plan's length) or, PAY-LIVE-01E, the separate
+DJANGO_MEMBERSHIPS_PRODUCTION_COMPLIMENTARY_GRANTS=True in production (expiry within
+365 days); an ACTIVE Super Administrator as the acting account, an eligible member
+without a current membership and a reason. Recorded with amount paid 0 and audited.
+It never marks anything as paid.
 
     python manage.py grant_complimentary_membership --actor-email root@example.com \
         --member-email member@example.com --plan-code monthly \

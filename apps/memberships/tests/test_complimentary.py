@@ -227,9 +227,12 @@ class CorrectnessTests(ComplimentaryTestCase):
         event = AuditEvent.objects.get(action="membership.complimentary.granted")
         self.assertEqual((event.actor_id, event.target_id, event.outcome, event.category),
                          (self.root.pk, str(granted.pk), "SUCCESS", "MEMBERSHIP"))
+        # PAY-LIVE-01E added the policy mode, exact duration, granted plan version and amount paid (0).
         self.assertEqual(event.metadata, {
             "member": str(self.member.pk), "plan_code": "monthly", "starts_at": granted.starts_at.isoformat(),
-            "expires_at": expiry.isoformat(), "reason": "Client demo session", "operation": "op-12345678"})
+            "expires_at": expiry.isoformat(), "reason": "Client demo session", "operation": "op-12345678",
+            "mode": "demo", "duration_minutes": int((expiry - granted.starts_at).total_seconds() // 60),
+            "plan_version": granted.plan_version.version, "amount_paid": 0})
         activated = AuditEvent.objects.get(action="membership.subscription.activated")
         self.assertEqual(activated.metadata["source"], "COMPLIMENTARY")
 

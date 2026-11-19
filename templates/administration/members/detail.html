@@ -13,7 +13,7 @@
   {% if can.wallets %}<dt>{% translate "Wallet" %}</dt><dd>{% if wallet %}<a href="{% url 'administration:wallet' wallet.pk %}">{{ wallet.number }}</a> · {{ wallet.get_status_display }}{% else %}{% translate "Not opened" %}{% endif %}</dd>{% endif %}
 </dl>
 {% if can_change %}<p><a class="button button--secondary" href="{% url 'admin:accounts_user_change' member.pk %}">{% translate "Manage account (admin)" %}</a></p>{% endif %}
-{% if can_grant %}<p><a class="button button--secondary" href="{% url 'administration:member_complimentary' member.pk %}">{% translate "Grant complimentary demo membership" %}</a></p>{% endif %}
+{% if can_grant %}<p><a class="button button--secondary" href="{% url 'administration:member_complimentary' member.pk %}">{% if grant_mode == "production" %}{% translate "Grant complimentary membership" %}{% else %}{% translate "Grant complimentary demo membership" %}{% endif %}</a></p>{% endif %}
 <p class="lead">{% translate "Account status changes use the reviewed account workflow. Membership changes are made from the membership history below, each with a reason and a confirmation." %}</p></section>
 <section><h2 class="workspace-section__title">{% translate "Current membership" %}</h2>
   {% if current_period %}<dl class="details">

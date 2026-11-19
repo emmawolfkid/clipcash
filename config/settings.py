@@ -467,6 +467,11 @@ WITHDRAWALS_PAYOUT_STUCK_MINUTES = 60
 # Free memberships granted by a Super Administrator. Off unless a business
 # policy approves them.
 MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED = env.bool("DJANGO_MEMBERSHIPS_COMPLIMENTARY_GRANTS", default=False)
+# PAY-LIVE-01E: complimentary grants in a production (not restricted-demo) deployment. A separate,
+# owner-approved switch, off by default and ignored in a restricted demonstration (which uses the
+# demo switch above). Super Administrators only, at most 365 days, never a payment.
+MEMBERSHIPS_PRODUCTION_COMPLIMENTARY_GRANTS_ENABLED = env.bool(
+    "DJANGO_MEMBERSHIPS_PRODUCTION_COMPLIMENTARY_GRANTS", default=False)
 
 # Advertiser reports: non-zero counts below this are shown as "fewer than N" to
 # advertisers (owner decision D12: 5; also hides figures a count could be derived
