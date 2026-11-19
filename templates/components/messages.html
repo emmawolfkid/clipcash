@@ -1,5 +1,8 @@
-{% if messages %}
-  <ul class="messages" role="status">
-    {% for message in messages %}<li class="messages__item messages__item--{{ message.tags|default:'info' }}">{{ message }}</li>{% endfor %}
+{% load i18n feedback_tags %}{% if messages %}
+  <ul class="messages toast-region" aria-label="{% translate 'Action feedback' %}">
+    {% for message in messages|unique_feedback %}<li class="messages__item messages__item--{{ message.level_tag|default:'info' }} toast" data-level="{{ message.level_tag|default:'info' }}"{% if 'persistent' in message.extra_tags %} data-persistent="true"{% endif %}>
+      <div class="toast__body" role="{% if message.level >= 40 %}alert{% else %}status{% endif %}" aria-atomic="true"><strong class="toast__label">{% if message.level >= 40 %}{% translate "Error" %}{% elif message.level == 30 %}{% translate "Warning" %}{% elif message.level == 25 %}{% translate "Success" %}{% else %}{% translate "Information" %}{% endif %}</strong><span class="toast__text">{{ message }}</span></div>
+      <button class="toast__close" type="button" aria-label="{% translate 'Dismiss notification' %}" hidden><span aria-hidden="true">×</span></button>
+    </li>{% endfor %}
   </ul>
 {% endif %}

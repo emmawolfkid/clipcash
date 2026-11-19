@@ -27,6 +27,9 @@ from apps.core.tests.test_middleware import PASSWORD, User
 # Fake values only. The reserved .invalid domain can never resolve, so no
 # command run here can reach a real server.
 PRODUCTION_ENV = {
+    # These subprocess fixtures must not inherit a developer's tunnel origins
+    # when config.settings reads .env. Render adds its HTTPS origin itself.
+    "DJANGO_CSRF_TRUSTED_ORIGINS": "",
     "DJANGO_DEBUG": "False",
     "DJANGO_SECRET_KEY": "deployment-test-value-not-a-real-secret-0123456789abcdefghij",
     "DATABASE_URL": "postgres://clipcash:example-password@clipcash-db.invalid:5432/clipcash",

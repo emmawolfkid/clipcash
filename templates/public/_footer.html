@@ -1,6 +1,6 @@
 {% load i18n %}
 <div class="public-footer">
-  <div><strong>{{ site_config.platform_name|default:"ClipCash" }}</strong><p lang="sw">Tazama Video · Kusanya Zawadi</p>
+  <div>{% include "components/wordmark.html" with light=True %}<p lang="sw">Tazama Video · Kusanya Zawadi</p>
     <p>{{ site_config.company_name|default:site_config.platform_name|default:"ClipCash" }}{% if site_config.support_email %} · <a href="mailto:{{ site_config.support_email }}">{{ site_config.support_email }}</a>{% endif %}{% if site_config.support_phone %} · <a href="tel:{{ site_config.support_phone }}">{{ site_config.support_phone }}</a>{% endif %}</p>
   </div>
   <nav aria-label="{% translate 'Useful links' %}">

@@ -76,7 +76,7 @@ class MemberViewingUITests(SimpleTestCase):
                 self.assertIn('max="100" value="25"', html)
                 self.assertIn('id="watch-video"', html)
                 self.assertIn('data-unconfirmed=', html)
-                self.assertIn("does not confirm a verified view or a reward", html)
+                self.assertIn(translation.gettext("The player's timeline shows playback position. This progress bar shows only time counted by the server; it does not confirm a verified view or a reward."), html)
                 self.assertNotIn(" style=", html)
 
     def test_closed_outcomes_and_unavailable_playback(self):

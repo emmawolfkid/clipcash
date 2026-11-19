@@ -466,6 +466,12 @@ LANGUAGES = [
 
 LOCALE_PATHS = [BASE_DIR / "locale"]
 
+# Remember the explicit EN / SW choice across browser sessions. LocaleMiddleware
+# and Django's CSRF-protected set_language view remain responsible for selection.
+LANGUAGE_COOKIE_AGE = 60 * 60 * 24 * 365
+LANGUAGE_COOKIE_SAMESITE = "Lax"
+LANGUAGE_COOKIE_SECURE = SESSION_COOKIE_SECURE
+
 TIME_ZONE = 'UTC'
 
 USE_I18N = True

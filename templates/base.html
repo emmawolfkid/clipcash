@@ -22,13 +22,14 @@
   {% endblock %}
   <script src="{% static 'js/member-nav.js' %}" defer></script>
   <script src="{% static 'js/shared-ui.js' %}" defer></script>
+  <script src="{% static 'js/toasts.js' %}" defer></script>
 </head>
 <body data-table-scroll-hint="{% translate 'Scroll sideways to see all columns.' %}">
   <a class="skip-link" href="#content">{% translate "Skip to content" %}</a>
   <header class="site-header">
     <div class="site-header__inner">
       <div class="brand-block">
-        <a class="brand" href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}">{{ site_config.platform_name|default:"ClipCash" }}</a>
+        <a class="brand" href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}">{% include "components/wordmark.html" %}</a>
         <p class="brand-tagline" lang="sw">Tazama Video · Kusanya Zawadi</p>
       </div>
       {% if request %}{# Error pages rendered without a request get no forms. #}
@@ -80,6 +81,7 @@
 
   <footer class="site-footer">
     {% block footer_content %}
+    <div>{% include "components/wordmark.html" with light=True %}</div>
     {{ site_config.company_name|default:site_config.platform_name|default:"ClipCash" }}
     {% if site_config.support_email %} · <a href="mailto:{{ site_config.support_email }}">{{ site_config.support_email }}</a>{% endif %}
     {% if site_config.support_phone %} · <a href="tel:{{ site_config.support_phone }}">{{ site_config.support_phone }}</a>{% endif %}

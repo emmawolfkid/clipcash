@@ -4,7 +4,7 @@
   <label class="visually-hidden" for="language-select">{% translate "Language" %}</label>
   <select id="language-select" name="language">
     {% get_current_language as LANGUAGE_CODE %}
-    {% for code, name in LANGUAGES %}<option value="{{ code }}"{% if code == LANGUAGE_CODE %} selected{% endif %}>{{ name }}</option>{% endfor %}
+    {% for code, name in LANGUAGES %}<option lang="{{ code }}" value="{{ code }}"{% if code == LANGUAGE_CODE %} selected{% endif %}>{% if code == 'en' %}EN — English{% elif code == 'sw' %}SW — Kiswahili{% else %}{{ name }}{% endif %}</option>{% endfor %}
   </select>
   <button type="submit" class="button--link">{% translate "Change" %}</button>
 </form>{% endif %}

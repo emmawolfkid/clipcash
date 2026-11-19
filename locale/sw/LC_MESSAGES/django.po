@@ -1,0 +1,4786 @@
+# Kiswahili translations for ClipCash.
+# Financial values and identifiers are never translated.
+msgid ""
+msgstr "Project-Id-Version: ClipCash UI-09\nLanguage: sw\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: apps/core/templatetags/money.py
+#, python-format
+msgid "%(amount)s credit"
+msgid_plural "%(amount)s credits"
+msgstr[0] "krediti %(amount)s"
+msgstr[1] "krediti %(amount)s"
+
+#: templates/viewing/list.html
+#, python-format
+msgid "%(credits)s per verified view"
+msgstr "%(credits)s kwa kila mtazamo uliohakikiwa"
+
+#: templates/administration/plans/form.html templates/administration/plans/list.html templates/memberships/plan_list.html templates/memberships/subscription_detail.html templates/payments/manual_pay.html
+#, python-format
+msgid "%(days)s day"
+msgid_plural "%(days)s days"
+msgstr[0] "siku %(days)s"
+msgstr[1] "siku %(days)s"
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "%(n)s available"
+msgid_plural "%(n)s available"
+msgstr[0] "%(n)s inapatikana"
+msgstr[1] "%(n)s zinapatikana"
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "%(n)s payout destination saved."
+msgid_plural "%(n)s payout destinations saved."
+msgstr[0] "Njia %(n)s ya kupokea malipo imehifadhiwa."
+msgstr[1] "Njia %(n)s za kupokea malipo zimehifadhiwa."
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "%(n)s recorded"
+msgid_plural "%(n)s recorded"
+msgstr[0] "%(n)s imerekodiwa"
+msgstr[1] "%(n)s zimerekodiwa"
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "%(n)s reversed"
+msgid_plural "%(n)s reversed"
+msgstr[0] "%(n)s imebatilishwa"
+msgstr[1] "%(n)s zimebatilishwa"
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "%(n)s test payment"
+msgid_plural "%(n)s test payments"
+msgstr[0] "malipo %(n)s ya majaribio"
+msgstr[1] "malipo %(n)s ya majaribio"
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "%(n)s under review"
+msgid_plural "%(n)s under review"
+msgstr[0] "%(n)s unakaguliwa"
+msgstr[1] "%(n)s inakaguliwa"
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "%(n)s verified view"
+msgid_plural "%(n)s verified views"
+msgstr[0] "mtazamo %(n)s uliohakikiwa"
+msgstr[1] "mitazamo %(n)s iliyohakikiwa"
+
+#: templates/viewing/list.html
+#, python-format
+msgid "%(n)s view left"
+msgid_plural "%(n)s views left"
+msgstr[0] "umebakiza mtazamo %(n)s"
+msgstr[1] "umebakiza mitazamo %(n)s"
+
+#: templates/advertising/home.html
+#, python-format
+msgid "%(name)s invited you as %(role)s."
+msgstr "%(name)s amekualika kama %(role)s."
+
+#: templates/memberships/my_membership.html
+#, python-format
+msgid "%(plan)s for %(price)s. This choice is kept until %(until)s."
+msgstr "%(plan)s kwa %(price)s. Chaguo hili linahifadhiwa hadi %(until)s."
+
+#: templates/memberships/my_membership.html
+#, python-format
+msgid "%(plan)s starts on %(start)s."
+msgstr "%(plan)s unaanza %(start)s."
+
+#: templates/payments/manual_claim.html
+#, python-format
+msgid "%(plan)s: from %(start)s until %(end)s."
+msgstr "%(plan)s: kuanzia %(start)s hadi %(end)s."
+
+#: templates/advertising/campaign_detail.html templates/components/campaign_performance.html
+#, python-format
+msgid "%(used)s of %(allocated)s"
+msgstr "%(used)s kati ya %(allocated)s"
+
+#: apps/advertising/forms.py
+msgid "1 to 10. How many verified views one member can count for this campaign."
+msgstr "1 hadi 10. Idadi ya mitazamo iliyohakikiwa inayoweza kuhesabiwa kwa mwanachama mmoja katika kampeni hii."
+
+#: templates/payments/manual_pay.html
+msgid "1. Pay with Airtel Money – Lipa"
+msgstr "1. Lipa kwa Airtel Money – Lipa"
+
+#: templates/payments/manual_pay.html
+msgid "2. Tell us about your payment"
+msgstr "2. Tuambie kuhusu malipo yako"
+
+#: templates/accounts/profile.html
+#, python-format
+msgid "A change to <strong>%(email)s</strong> is waiting for confirmation. Your email address stays the same until the link sent there is used."
+msgstr "Mabadiliko kwenda <strong>%(email)s</strong> yanasubiri uthibitisho. Anwani yako ya barua pepe inabaki ileile mpaka kiungo kilichotumwa huko kitumike."
+
+#: templates/accounts/layout.html
+msgid "A clear path to your next clip."
+msgstr "Njia rahisi ya kufikia video yako inayofuata."
+
+#: templates/memberships/plan_detail.html
+msgid "A membership gives access to content. It is not an investment and does not promise any earnings."
+msgstr "Uanachama unatoa ufikiaji wa maudhui. Si uwekezaji na hauahidi mapato yoyote."
+
+#: templates/public/home.html
+msgid "A more transparent viewing journey"
+msgstr "Utazamaji wenye uwazi zaidi"
+
+#: apps/payments/views.py
+msgid "A payment for this membership is already waiting for verification."
+msgstr "Malipo ya uanachama huu tayari yanasubiri uhakiki."
+
+#: apps/memberships/views.py
+msgid "A payment for your current choice is being verified. You can change plans after it is approved or rejected."
+msgstr "Malipo ya chaguo lako la sasa yanahakikiwa. Unaweza kubadilisha mipango baada ya malipo kukubaliwa au kukataliwa."
+
+#: templates/payments/history.html
+msgid "A sandbox payment shows what would happen. It does not activate your membership."
+msgstr "Malipo ya majaribio yanaonyesha kinachoweza kutokea. Hayawezeshi uanachama wako."
+
+#: templates/advertising/campaign_detail.html templates/components/campaign_performance.html
+msgid "A verified view means ClipCash's server-side checks passed for the required watch time. It is evidence of playback, not proof of attention. Revoked views are not counted."
+msgstr "Mtazamo uliohakikiwa unamaanisha kuwa ukaguzi wa seva ya ClipCash umepita kwa muda unaohitajika wa kutazama. Ni ushahidi wa kucheza video, si uthibitisho wa umakini. Mitazamo iliyobatilishwa haihesabiwi."
+
+#: apps/support/forms.py
+msgid "About which advertiser account?"
+msgstr "Kuhusu akaunti ipi ya mtangazaji?"
+
+#: templates/advertising/home.html
+msgid "Accept"
+msgstr "Kubali"
+
+#: apps/advertising/models.py apps/payments/models.py
+msgid "Accepted"
+msgstr "Imekubaliwa"
+
+#: apps/reports/services.py templates/administration/members/complimentary.html templates/administration/members/detail.html templates/administration/members/list.html templates/administration/membership_payments/detail.html templates/administration/payments/funding.html templates/base.html templates/components/member_sidebar.html
+msgid "Account"
+msgstr "Akaunti"
+
+#: templates/accounts/activation_complete.html
+msgid "Account activated"
+msgstr "Akaunti imewezeshwa"
+
+#: apps/support/models.py
+msgid "Account and sign-in"
+msgstr "Akaunti na kuingia"
+
+#: templates/withdrawals/destinations.html
+msgid "Account holder name"
+msgstr "Jina la mmiliki wa akaunti"
+
+#: templates/withdrawals/destinations.html
+msgid "Account number"
+msgstr "Namba ya akaunti"
+
+#: templates/public/_footer.html
+msgid "Account recovery"
+msgstr "Urejeshaji wa akaunti"
+
+#: templates/accounts/profile.html
+msgid "Account type"
+msgstr "Aina ya akaunti"
+
+#: templates/accounts/account_unavailable.html
+msgid "Account unavailable"
+msgstr "Akaunti haipatikani"
+
+#: templates/components/messages.html
+msgid "Action feedback"
+msgstr "Matokeo ya hatua"
+
+#: templates/administration/payments/exceptions.html templates/administration/rewards/rewards.html templates/administration/wallets/reconciliation.html templates/administration/withdrawals/detail.html templates/administration/withdrawals/exceptions.html templates/advertising/team.html templates/payments/funding.html templates/withdrawals/destinations.html
+msgid "Actions"
+msgstr "Hatua"
+
+#: templates/memberships/subscription_detail.html
+msgid "Activated by"
+msgstr "Uliwezeshwa na"
+
+#: apps/accounts/models.py apps/advertising/models.py apps/memberships/models.py apps/reports/analytics.py apps/reports/services.py apps/wallets/models.py apps/withdrawals/models.py templates/administration/categories/list.html templates/administration/membership_payments/instructions.html templates/advertising/organization.html templates/components/campaign_report.html
+msgid "Active"
+msgstr "Unatumika"
+
+#: templates/administration/overview.html templates/advertising/organization.html
+msgid "Active campaigns"
+msgstr "Kampeni zinazoendeshwa"
+
+#: apps/reports/services.py templates/components/member_sidebar.html templates/members/activity.html
+msgid "Activity"
+msgstr "Matukio"
+
+#: templates/members/activity.html
+msgid "Activity navigation"
+msgstr "Urambazaji wa matukio"
+
+#: templates/accounts/email_change_form.html templates/accounts/profile.html
+msgid "Add an email address"
+msgstr "Ongeza anwani ya barua pepe"
+
+#: templates/public/home.html
+msgid "Add and confirm an email address from your account to reset your password by email and get email copies of payment updates."
+msgstr "Ongeza na uthibitishe anwani ya barua pepe kutoka kwenye akaunti yako ili kuweka upya nenosiri kwa barua pepe na kupata nakala za masasisho ya malipo."
+
+#: templates/accounts/profile.html
+msgid "Add and confirm an email address so you can reset your password if you forget it. Password reset by SMS is not available."
+msgstr "Ongeza na uthibitishe anwani ya barua pepe ili uweze kuweka upya nenosiri ukilisahau. Kuweka upya nenosiri kwa SMS hakupatikani."
+
+#: templates/withdrawals/destinations.html
+msgid "Add bank account"
+msgstr "Ongeza akaunti ya benki"
+
+#: templates/withdrawals/destinations.html
+msgid "Add mobile money"
+msgstr "Ongeza huduma ya pesa kwa simu"
+
+#: templates/advertising/team.html
+msgid "Added"
+msgstr "Ameongezwa"
+
+#: templates/advertising/home.html templates/components/member_sidebar.html templates/public/_navigation.html
+msgid "Advertise"
+msgstr "Tangaza"
+
+#: templates/advertising/home.html
+msgid "Advertise on ClipCash"
+msgstr "Tangaza kwenye ClipCash"
+
+#: apps/reports/analytics.py apps/reports/services.py templates/administration/advertisers/list.html templates/administration/campaigns/list.html templates/administration/payments/funding.html templates/administration/support/ticket.html templates/advertising/home.html
+msgid "Advertiser"
+msgstr "Mtangazaji"
+
+#: templates/support/ticket_detail.html
+msgid "Advertiser account"
+msgstr "Akaunti ya mtangazaji"
+
+#: templates/advertising/onboard.html
+msgid "Advertiser application"
+msgstr "Ombi la mtangazaji"
+
+#: apps/payments/models.py
+msgid "Advertiser deposit"
+msgstr "Amana ya mtangazaji"
+
+#: templates/advertising/profile.html
+msgid "Advertiser profile"
+msgstr "Wasifu wa mtangazaji"
+
+#: templates/advertising/_header.html
+msgid "Advertiser sections"
+msgstr "Sehemu za mtangazaji"
+
+#: templates/public/home.html
+msgid "Advertisers cannot pay online. Campaign budgets are records agreed with the ClipCash team, not payments."
+msgstr "Watangazaji hawawezi kulipa mtandaoni. Bajeti za kampeni ni rekodi zilizokubaliwa na timu ya ClipCash, si malipo."
+
+#: apps/support/models.py
+msgid "Advertising and campaigns"
+msgstr "Utangazaji na kampeni"
+
+#: templates/payments/funding.html
+msgid "Affected by dispute"
+msgstr "Imeathiriwa na mgogoro"
+
+#: apps/payments/models.py
+msgid "Airtel Money – Lipa"
+msgstr "Airtel Money – Lipa"
+
+#: apps/payments/forms.py
+msgid "Airtel transaction reference"
+msgstr "Kumbukumbu ya muamala wa Airtel"
+
+#: templates/administration/advertisers/list.html templates/administration/campaigns/list.html templates/videos/library.html
+msgid "All"
+msgstr "Zote"
+
+#: templates/administration/campaigns/detail.html templates/advertising/_campaign_table.html
+msgid "All active members"
+msgstr "Wanachama wote wanaotumika"
+
+#: templates/members/dashboard.html
+msgid "All activity"
+msgstr "Matukio yote"
+
+#: templates/advertising/campaign_detail.html templates/advertising/campaign_form.html templates/advertising/organization.html
+msgid "All campaigns"
+msgstr "Kampeni zote"
+
+#: templates/administration/categories/form.html templates/administration/videos/list.html templates/notifications/inbox.html
+msgid "All categories"
+msgstr "Kategoria zote"
+
+#: templates/advertising/campaign_detail.html
+msgid "All members with an active membership"
+msgstr "Wanachama wote wenye uanachama unaotumika"
+
+#: templates/payments/funding.html
+msgid "Allocate sandbox funds"
+msgstr "Tenga fedha za majaribio"
+
+#: templates/payments/funding.html
+msgid "Allocate to a campaign"
+msgstr "Tenga kwa kampeni"
+
+#: apps/payments/models.py templates/administration/payments/funding.html
+msgid "Allocated"
+msgstr "Imetengwa"
+
+#: templates/payments/funding.html
+msgid "Allocated to campaigns"
+msgstr "Zimetengwa kwa kampeni"
+
+#: apps/payments/views.py
+msgid "Allocation released."
+msgstr "Mgao umeachiliwa."
+
+#: templates/accounts/register_done.html
+msgid "Already have an account? We will have emailed you instead."
+msgstr "Tayari una akaunti? Tutakuwa tumekutumia barua pepe badala yake."
+
+#: templates/accounts/register.html templates/public/home.html
+msgid "Already registered? Sign in"
+msgstr "Tayari una akaunti? Ingia"
+
+#: templates/administration/payments/detail.html templates/administration/payments/exceptions.html templates/administration/payments/funding.html templates/administration/payments/list.html templates/payments/funding.html templates/payments/history.html templates/payments/intent.html templates/payments/manual_claim.html templates/wallets/transaction.html templates/wallets/wallet.html
+msgid "Amount"
+msgstr "Kiasi"
+
+#: templates/withdrawals/overview.html
+msgid "Amount (TZS)"
+msgstr "Kiasi (TZS)"
+
+#: templates/payments/funding.html
+msgid "Amount (whole TZS)"
+msgstr "Kiasi (TZS bila senti)"
+
+#: apps/payments/models.py
+msgid "Amount does not match"
+msgstr "Kiasi hakilingani"
+
+#: templates/administration/members/complimentary.html templates/memberships/subscription_detail.html
+msgid "Amount paid"
+msgstr "Kiasi kilicholipwa"
+
+#: apps/payments/forms.py
+msgid "Amount paid (TZS)"
+msgstr "Kiasi kilicholipwa (TZS)"
+
+#: templates/payments/manual_pay.html
+msgid "Amount to pay"
+msgstr "Kiasi cha kulipa"
+
+#: templates/withdrawals/overview.html
+msgid "Amounts this large would need two ClipCash reviewers."
+msgstr "Kiasi kikubwa hivi kingehitaji wakaguzi wawili wa ClipCash."
+
+#: apps/accounts/views.py
+msgid "An account already uses this mobile number. Sign in instead, or contact support if it is yours and you cannot sign in."
+msgstr "Akaunti tayari inatumia namba hii ya simu. Ingia badala yake, au wasiliana na usaidizi ikiwa ni yako na huwezi kuingia."
+
+#: templates/viewing/campaign.html
+msgid "An active membership that includes this video is needed."
+msgstr "Unahitaji uanachama unaotumika unaojumuisha video hii."
+
+#: templates/accounts/email_change_form.html
+msgid "An email address is optional. Once you confirm it, you can reset your password by email, sign in with it as well as your mobile number, and receive email copies of important notices."
+msgstr "Barua pepe si lazima. Baada ya kuithibitisha, unaweza kuweka upya nenosiri kwa barua pepe, kuitumia kuingia pamoja na namba yako ya simu, na kupata nakala za taarifa muhimu kwa barua pepe."
+
+#: templates/public/home.html
+msgid "An introduction to the experience, not a playable video."
+msgstr "Huu ni utambulisho wa huduma, si video inayoweza kuchezwa."
+
+#: apps/administration/views.py
+msgid "Another administrator changed this plan's price or duration while you were editing. The form now shows the current terms; check them and save again."
+msgstr "Msimamizi mwingine amebadilisha bei au muda wa mpango huu ulipokuwa unahariri. Fomu sasa inaonyesha masharti ya sasa; yaangalie na uhifadhi tena."
+
+msgid "Any reward record shown here has no cash value. Membership gives access to content, not a promise of earnings."
+msgstr "Rekodi yoyote ya zawadi inayoonyeshwa hapa haina thamani ya fedha. Uanachama unatoa ufikiaji wa maudhui, si ahadi ya mapato."
+
+#: templates/administration/membership_payments/list.html templates/administration/payments/list.html templates/administration/rewards/rewards.html templates/administration/support/queue.html templates/administration/videos/list.html templates/administration/withdrawals/list.html templates/advertising/campaign_list.html templates/support/ticket_list.html
+msgid "Any status"
+msgstr "Hali yoyote"
+
+#: apps/advertising/views.py
+msgid "Application resubmitted for review."
+msgstr "Ombi limewasilishwa tena kwa ukaguzi."
+
+#: templates/public/home.html
+msgid "Apply as an advertiser organization, prepare campaign details and work through ClipCash approval. The team uploads and authorizes sponsored media before it can be selected for a campaign."
+msgstr "Omba kuwa shirika la mtangazaji, andaa maelezo ya kampeni na upitie idhini ya ClipCash. Timu hupakia na kuidhinisha maudhui yanayodhaminiwa kabla ya kuchaguliwa kwa kampeni."
+
+#: templates/advertising/home.html
+msgid "Apply for an advertiser account"
+msgstr "Omba akaunti ya mtangazaji"
+
+#: templates/public/home.html
+msgid "Approval before publication"
+msgstr "Idhini kabla ya kuchapisha"
+
+#: apps/advertising/models.py apps/payments/models.py apps/rewards/models.py apps/withdrawals/models.py
+msgid "Approved"
+msgstr "Umekubaliwa"
+
+#: apps/advertising/models.py templates/advertising/organization.html templates/components/campaign_report.html
+msgid "Approved, scheduled"
+msgstr "Umekubaliwa, umepangwa"
+
+#: templates/administration/campaigns/detail.html templates/administration/videos/detail.html templates/advertising/campaign_detail.html
+msgid "Archive"
+msgstr "Hifadhi kwenye kumbukumbu"
+
+#: templates/advertising/campaign_detail.html
+msgid "Archive this campaign"
+msgstr "Hifadhi kampeni hii kwenye kumbukumbu"
+
+#: apps/advertising/models.py apps/memberships/models.py apps/videos/models.py templates/advertising/organization.html
+msgid "Archived"
+msgstr "Imehifadhiwa kwenye kumbukumbu"
+
+#: templates/administration/videos/detail.html templates/advertising/campaign_detail.html
+msgid "Archiving is permanent"
+msgstr "Kuhifadhi kwenye kumbukumbu ni hatua ya kudumu"
+
+#: templates/support/ticket_form.html templates/support/ticket_list.html
+msgid "Ask for help"
+msgstr "Omba msaada"
+
+#: apps/support/models.py
+msgid "Assigned"
+msgstr "Limepangiwa mhudumu"
+
+#: templates/support/_conversation.html
+#, python-format
+msgid "Assigned to %(who)s"
+msgstr "Limepangiwa %(who)s"
+
+#: templates/administration/campaigns/detail.html templates/advertising/_campaign_table.html templates/advertising/campaign_detail.html templates/advertising/campaign_form.html
+msgid "Audience"
+msgstr "Hadhira"
+
+#: apps/wallets/models.py templates/members/dashboard.html
+msgid "Available"
+msgstr "Inapatikana"
+
+#: templates/viewing/list.html
+#, python-format
+msgid "Available on: %(plans)s"
+msgstr "Inapatikana kwa: %(plans)s"
+
+#: templates/wallets/wallet.html
+msgid "Available real ledger balance"
+msgstr "Salio halisi la leja linalopatikana"
+
+#: templates/withdrawals/overview.html
+msgid "Available wallet balance"
+msgstr "Salio la pochi linalopatikana"
+
+#: apps/payments/models.py templates/administration/rewards/campaign_credits.html
+msgid "Awaiting approval"
+msgstr "Inasubiri idhini"
+
+#: templates/components/manual_payment_status.html templates/members/dashboard.html templates/payments/manual_claim.html
+msgid "Awaiting payment verification"
+msgstr "Unasubiri uhakiki wa malipo"
+
+#: apps/advertising/models.py apps/reports/analytics.py apps/reports/services.py apps/viewing/models.py templates/administration/viewing/list.html templates/advertising/organization.html templates/components/campaign_report.html
+msgid "Awaiting review"
+msgstr "Unasubiri ukaguzi"
+
+#: templates/advertising/campaign_detail.html templates/components/campaign_performance.html
+msgid "Awaiting staff review"
+msgstr "Inasubiri ukaguzi wa wafanyakazi"
+
+#: templates/accounts/layout.html
+msgid "Back to ClipCash"
+msgstr "Rudi ClipCash"
+
+#: templates/memberships/plan_detail.html
+msgid "Back to all plans"
+msgstr "Rudi kwenye mipango yote"
+
+#: templates/advertising/campaign_form.html
+msgid "Back to campaign"
+msgstr "Rudi kwenye kampeni"
+
+#: templates/members/activity.html
+msgid "Back to dashboard"
+msgstr "Rudi kwenye dashibodi"
+
+#: templates/accounts/password_change_done.html
+msgid "Back to my account"
+msgstr "Rudi kwenye akaunti yangu"
+
+#: templates/memberships/subscription_detail.html templates/payments/manual_claim.html templates/payments/manual_pay.html
+msgid "Back to my membership"
+msgstr "Rudi kwenye uanachama wangu"
+
+#: templates/support/ticket_detail.html templates/support/ticket_form.html
+msgid "Back to my tickets"
+msgstr "Rudi kwenye maombi yangu"
+
+#: templates/payments/intent.html
+msgid "Back to sandbox payments"
+msgstr "Rudi kwenye malipo ya majaribio"
+
+#: templates/accounts/password_reset_done.html templates/accounts/password_reset_form.html templates/accounts/resend_verification.html
+msgid "Back to sign in"
+msgstr "Rudi kuingia"
+
+#: templates/viewing/campaign.html templates/viewing/session.html
+msgid "Back to sponsored videos"
+msgstr "Rudi kwenye video zinazodhaminiwa"
+
+#: templates/videos/detail.html
+msgid "Back to videos"
+msgstr "Rudi kwenye video"
+
+#: templates/wallets/transaction.html
+msgid "Back to wallet"
+msgstr "Rudi kwenye pochi"
+
+#: templates/withdrawals/demo.html
+msgid "Back to withdrawals"
+msgstr "Rudi kwenye utoaji wa pesa"
+
+#: templates/administration/payments/funding.html templates/wallets/transaction.html
+msgid "Balance"
+msgstr "Salio"
+
+#: templates/withdrawals/destinations.html
+msgid "Bank code"
+msgstr "Msimbo wa benki"
+
+#: templates/public/home.html
+msgid "Before you begin"
+msgstr "Kabla ya kuanza"
+
+#: apps/memberships/forms.py templates/memberships/plan_detail.html templates/memberships/subscription_detail.html
+msgid "Benefits"
+msgstr "Faida"
+
+#: templates/administration/layout.html templates/members/layout.html
+msgid "Breadcrumb"
+msgstr "Njia ya ukurasa"
+
+#: templates/public/home.html
+msgid "Bring your story to a reviewed campaign."
+msgstr "Leta ujumbe wako katika kampeni iliyokaguliwa."
+
+#: templates/public/home.html
+msgid "Browse an organized video library when enabled, with clear membership and playback requirements."
+msgstr "Vinjari maktaba ya video iliyopangwa inapowezeshwa, yenye masharti wazi ya uanachama na kucheza video."
+
+#: templates/components/demo_budget_notice.html
+msgid "Budgets and reward rates are planning figures. No money is charged, held or paid out, and no campaign is funded yet."
+msgstr "Bajeti na viwango vya zawadi ni takwimu za kupanga. Hakuna fedha zinazotozwa, kushikiliwa au kulipwa, na bado hakuna kampeni iliyofadhiliwa."
+
+#: templates/rewards/history.html
+msgid "By campaign"
+msgstr "Kwa kampeni"
+
+#: apps/reports/analytics.py apps/reports/services.py templates/administration/campaigns/list.html templates/administration/payments/funding.html templates/administration/rewards/policies.html templates/administration/rewards/rewards.html templates/administration/viewing/detail.html templates/administration/viewing/list.html templates/advertising/_campaign_table.html templates/advertising/reports.html templates/payments/funding.html templates/rewards/history.html templates/viewing/history.html
+msgid "Campaign"
+msgstr "Kampeni"
+
+#: templates/administration/payments/funding.html templates/payments/funding.html
+msgid "Campaign allocations"
+msgstr "Migao ya kampeni"
+
+#: apps/advertising/views.py
+msgid "Campaign archived."
+msgstr "Kampeni imehifadhiwa kwenye kumbukumbu."
+
+#: apps/advertising/views.py
+msgid "Campaign cancelled."
+msgstr "Kampeni imeghairiwa."
+
+#: templates/advertising/campaign_form.html
+msgid "Campaign details"
+msgstr "Maelezo ya kampeni"
+
+#: templates/payments/funding.html
+msgid "Campaign funding status stays 'Not funded' until real funding is approved in a later phase."
+msgstr "Hali ya ufadhili wa kampeni inabaki 'Haijafadhiliwa' mpaka ufadhili halisi uidhinishwe katika awamu ya baadaye."
+
+#: templates/advertising/campaign_detail.html
+msgid "Campaign overview"
+msgstr "Muhtasari wa kampeni"
+
+#: apps/advertising/views.py
+msgid "Campaign paused."
+msgstr "Kampeni imesitishwa kwa muda."
+
+#: apps/advertising/views.py
+msgid "Campaign reopened as a draft. It must be reviewed again."
+msgstr "Kampeni imefunguliwa tena kama rasimu. Lazima ikaguliwe tena."
+
+#: apps/advertising/views.py
+msgid "Campaign resumed."
+msgstr "Kampeni imeendelea."
+
+#: apps/advertising/views.py
+msgid "Campaign saved as a draft."
+msgstr "Kampeni imehifadhiwa kama rasimu."
+
+#: apps/advertising/views.py
+msgid "Campaign saved."
+msgstr "Kampeni imehifadhiwa."
+
+#: apps/advertising/views.py
+msgid "Campaign submitted for review."
+msgstr "Kampeni imewasilishwa kwa ukaguzi."
+
+#: apps/administration/views.py
+msgid "Campaign updated."
+msgstr "Kampeni imesasishwa."
+
+#: apps/advertising/views.py
+msgid "Campaign withdrawn to draft."
+msgstr "Kampeni imerudishwa kuwa rasimu."
+
+#: apps/reports/analytics.py templates/administration/advertisers/detail.html templates/administration/advertisers/list.html templates/administration/campaigns/list.html templates/administration/layout.html templates/administration/overview.html templates/advertising/_header.html templates/advertising/campaign_list.html templates/components/campaign_report.html
+msgid "Campaigns"
+msgstr "Kampeni"
+
+#: templates/advertising/organization.html
+msgid "Campaigns by status"
+msgstr "Kampeni kwa hali"
+
+#: templates/advertising/campaign_list.html
+msgid "Campaigns, newest first"
+msgstr "Kampeni, mpya zaidi kwanza"
+
+#: templates/public/home.html
+msgid "Can I withdraw money?"
+msgstr "Je, ninaweza kutoa pesa?"
+
+#: templates/public/home.html
+msgid "Can demonstration rewards be withdrawn?"
+msgstr "Je, zawadi za majaribio zinaweza kutolewa kama pesa?"
+
+msgid "Can rewards be withdrawn?"
+msgstr "Je, zawadi zinaweza kutolewa kama pesa?"
+
+#: templates/accounts/email_change_form.html templates/accounts/logout_confirm.html templates/accounts/password_change_form.html templates/accounts/profile_edit.html templates/administration/withdrawals/detail.html
+msgid "Cancel"
+msgstr "Ghairi"
+
+#: templates/administration/campaigns/detail.html templates/advertising/campaign_detail.html
+msgid "Cancel campaign"
+msgstr "Ghairi kampeni"
+
+#: templates/payments/intent.html
+msgid "Cancel payment"
+msgstr "Ghairi malipo"
+
+#: templates/accounts/profile.html
+msgid "Cancel this change"
+msgstr "Ghairi mabadiliko haya"
+
+#: templates/memberships/my_membership.html
+msgid "Cancel this choice"
+msgstr "Ghairi chaguo hili"
+
+#: apps/advertising/models.py apps/core/models.py apps/memberships/models.py apps/notifications/models.py apps/payments/models.py apps/withdrawals/models.py templates/advertising/organization.html templates/memberships/subscription_detail.html
+msgid "Cancelled"
+msgstr "Umeghairiwa"
+
+#: templates/administration/campaigns/detail.html templates/advertising/campaign_detail.html
+msgid "Cancelling is permanent"
+msgstr "Kughairi ni hatua ya kudumu"
+
+msgid "Cash rewards and withdrawals are not available on this site."
+msgstr "Zawadi za fedha na utoaji wa pesa havipatikani kwenye tovuti hii."
+
+#: templates/public/home.html
+msgid "Cash rewards and withdrawals are not available, and nothing on this site is a promise of earnings."
+msgstr "Zawadi za fedha na utoaji wa pesa havipatikani, na hakuna kilicho kwenye tovuti hii kinachoahidi mapato."
+
+#: templates/accounts/layout.html templates/public/_footer.html
+msgid "Cash rewards and withdrawals are not available."
+msgstr "Zawadi za fedha na utoaji wa pesa havipatikani."
+
+#: templates/administration/categories/list.html templates/administration/layout.html templates/videos/library.html
+msgid "Categories"
+msgstr "Kategoria"
+
+#: apps/reports/services.py apps/support/forms.py templates/administration/support/queue.html templates/administration/support/ticket.html templates/administration/videos/list.html templates/notifications/inbox.html templates/support/ticket_detail.html
+msgid "Category"
+msgstr "Kategoria"
+
+#: apps/administration/views.py
+msgid "Category created."
+msgstr "Kategoria imeundwa."
+
+#: apps/administration/views.py
+msgid "Category saved."
+msgstr "Kategoria imehifadhiwa."
+
+#: apps/administration/views.py
+msgid "Category updated."
+msgstr "Kategoria imesasishwa."
+
+#: templates/components/language_form.html
+msgid "Change"
+msgstr "Badilisha"
+
+#: templates/advertising/campaign_detail.html
+msgid "Change (needs new review)"
+msgstr "Badilisha (inahitaji ukaguzi mpya)"
+
+#: templates/accounts/email_change_form.html templates/accounts/profile.html
+msgid "Change email address"
+msgstr "Badilisha anwani ya barua pepe"
+
+#: templates/accounts/password_change_form.html templates/accounts/profile.html
+msgid "Change password"
+msgstr "Badilisha nenosiri"
+
+#: apps/advertising/models.py templates/advertising/organization.html
+msgid "Changes requested"
+msgstr "Mabadiliko yameombwa"
+
+#: templates/advertising/campaign_detail.html
+msgid "Changes requested:"
+msgstr "Mabadiliko yaliyoombwa:"
+
+#: apps/administration/views.py
+msgid "Changes saved."
+msgstr "Mabadiliko yamehifadhiwa."
+
+#: templates/accounts/profile.html
+msgid "Changing your password signs you out on other devices."
+msgstr "Kubadilisha nenosiri hukuondoa kwenye vifaa vingine."
+
+#: apps/administration/views.py
+msgid "Chargeback"
+msgstr "Batilisha malipo kupitia mtoa huduma"
+
+#: apps/payments/models.py
+msgid "Charged back"
+msgstr "Malipo yamebatilishwa na mtoa huduma"
+
+#: templates/administration/wallets/reconciliation.html templates/administration/withdrawals/beneficiaries.html templates/administration/withdrawals/exceptions.html templates/withdrawals/overview.html
+msgid "Check"
+msgstr "Kagua"
+
+#: templates/payments/manual_pay.html
+msgid "Check that Airtel shows the recipient name above before you confirm. Pay the exact amount in one payment: partial or extra amounts cannot be matched automatically. Never share your Airtel PIN with anyone, including ClipCash staff."
+msgstr "Hakikisha Airtel inaonyesha jina la mpokeaji lililo hapo juu kabla ya kuthibitisha. Lipa kiasi kamili kwa muamala mmoja: kiasi pungufu au cha ziada hakiwezi kulinganishwa kiotomatiki. Usimpe mtu yeyote PIN yako ya Airtel, hata wafanyakazi wa ClipCash."
+
+#: templates/members/dashboard.html
+msgid "Check the details and submit them again."
+msgstr "Angalia taarifa na uziwasilishe tena."
+
+#: templates/accounts/password_reset_done.html templates/accounts/register_done.html templates/accounts/resend_verification_done.html
+msgid "Check your email"
+msgstr "Angalia barua pepe yako"
+
+#: templates/accounts/layout.html
+msgid "Check your membership eligibility."
+msgstr "Angalia kama unastahili uanachama."
+
+#: apps/administration/views.py
+#, python-format
+msgid "Checked %(w)s wallets: %(f)s findings."
+msgstr "Pochi %(w)s zimekaguliwa: masuala %(f)s yamebainika."
+
+#: apps/support/forms.py
+msgid "Choose a category"
+msgstr "Chagua kategoria"
+
+#: templates/accounts/layout.html
+msgid "Choose a membership plan. It stays pending until your payment is verified."
+msgstr "Chagua mpango wa uanachama. Utabaki unasubiri mpaka malipo yako yahakikiwe."
+
+#: templates/accounts/password_reset_confirm.html
+msgid "Choose a new password"
+msgstr "Chagua nenosiri jipya"
+
+#: apps/memberships/forms.py templates/members/dashboard.html templates/memberships/my_membership.html
+msgid "Choose a plan"
+msgstr "Chagua mpango"
+
+#: templates/public/home.html
+msgid "Choose a plan from your dashboard. It stays pending until it is activated. Membership payments are not open yet."
+msgstr "Chagua mpango kutoka kwenye dashibodi yako. Unabaki unasubiri mpaka uwezeshwe. Malipo ya uanachama bado hayajafunguliwa."
+
+#: templates/public/home.html
+msgid "Choose a plan from your dashboard. It stays pending until it is activated: pay with Airtel Money (Lipa), submit your transaction reference, and the ClipCash team activates it after checking the payment."
+msgstr "Chagua mpango kutoka kwenye dashibodi yako. Unabaki unasubiri mpaka uwezeshwe: lipa kwa Airtel Money (Lipa), wasilisha kumbukumbu ya muamala wako, na timu ya ClipCash itauwezesha baada ya kuhakiki malipo."
+
+#: apps/payments/manual.py
+msgid "Choose a reason."
+msgstr "Chagua sababu."
+
+#: templates/memberships/plan_list.html
+msgid "Choose access based on the published price, duration and included content. Membership does not promise earnings or create wallet money."
+msgstr "Chagua ufikiaji kulingana na bei, muda na maudhui yaliyochapishwa. Uanachama hauahidi mapato wala kuunda fedha kwenye pochi."
+
+#: apps/support/forms.py
+msgid "Choose one of your advertiser accounts."
+msgstr "Chagua moja ya akaunti zako za mtangazaji."
+
+#: templates/memberships/plan_detail.html
+msgid "Choose this plan"
+msgstr "Chagua mpango huu"
+
+#: templates/accounts/activate_account.html
+msgid "Choose your password"
+msgstr "Chagua nenosiri lako"
+
+#: templates/memberships/subscription_detail.html
+msgid "Chosen"
+msgstr "Ulichaguliwa"
+
+#: templates/payments/manual_claim.html
+msgid "Claim reference"
+msgstr "Kumbukumbu ya taarifa za malipo"
+
+#: templates/advertising/campaign_list.html
+msgid "Clear filters"
+msgstr "Ondoa vichujio"
+
+#: templates/videos/library.html
+msgid "Clear search"
+msgstr "Futa utafutaji"
+
+#: templates/viewing/campaign.html
+msgid "ClipCash checks the session on its server when the video ends; only a verified view earns credits."
+msgstr "ClipCash huhakiki kipindi kwenye seva yake video inapoisha; mtazamo uliohakikiwa pekee hupata krediti."
+
+#: templates/public/home.html
+msgid "ClipCash checks watch time and viewing evidence on the server. Playback alone does not guarantee an accepted view."
+msgstr "ClipCash huhakiki muda na ushahidi wa utazamaji kwenye seva. Kucheza video pekee hakuhakikishi mtazamo unaokubaliwa."
+
+#: templates/public/home.html
+msgid "ClipCash does not pay out money."
+msgstr "ClipCash hailipi fedha."
+
+#: templates/advertising/campaign_form.html
+msgid "ClipCash has not authorized any videos for your advertiser account yet. Contact us to have your sponsored video uploaded and authorized."
+msgstr "ClipCash bado haijaidhinisha video zozote kwa akaunti yako ya mtangazaji. Wasiliana nasi ili video yako inayodhaminiwa ipakiwe na kuidhinishwa."
+
+#: templates/payments/manual_pay.html
+msgid "ClipCash has not published its Airtel Lipa payment details yet, so payment details cannot be submitted. Do not send money now. Your plan choice is saved until the date above."
+msgstr "ClipCash bado haijachapisha taarifa zake za malipo ya Airtel Lipa, hivyo taarifa za malipo haziwezi kuwasilishwa. Usitume pesa sasa. Chaguo lako la mpango linahifadhiwa hadi tarehe iliyo hapo juu."
+
+#: templates/advertising/campaign_detail.html
+msgid "ClipCash is reviewing this campaign. Withdraw it if you need to make changes."
+msgstr "ClipCash inakagua kampeni hii. Iondoe ikiwa unahitaji kufanya mabadiliko."
+
+#: templates/withdrawals/destinations.html
+msgid "ClipCash keeps only the last four digits and a protected fingerprint of your number. Never enter a PIN or password here."
+msgstr "ClipCash huhifadhi tarakimu nne za mwisho pekee na alama tambulishi iliyolindwa ya namba yako. Usiweke PIN au nenosiri hapa kamwe."
+
+#: templates/accounts/profile.html
+msgid "ClipCash staff will never ask for your password, mobile-money PIN or one-time codes."
+msgstr "Wafanyakazi wa ClipCash hawatakuomba nenosiri, PIN ya huduma ya pesa kwa simu au misimbo ya matumizi ya mara moja."
+
+#: templates/support/_conversation.html
+msgid "ClipCash support"
+msgstr "Usaidizi wa ClipCash"
+
+#: templates/advertising/campaign_form.html
+msgid "ClipCash uploads and authorizes sponsored videos. It must be published and ready before the campaign can be submitted."
+msgstr "ClipCash hupakia na kuidhinisha video zinazodhaminiwa. Video lazima iwe imechapishwa na iko tayari kabla ya kampeni kuwasilishwa."
+
+#: templates/advertising/_organization_fields.html
+msgid "ClipCash uses these details to review the application."
+msgstr "ClipCash hutumia taarifa hizi kukagua ombi."
+
+#: templates/withdrawals/overview.html
+msgid "ClipCash will never ask for your mobile-money PIN, one-time codes or bank passwords."
+msgstr "ClipCash haitakuomba kamwe PIN ya huduma ya pesa kwa simu, misimbo ya matumizi ya mara moja au manenosiri ya benki."
+
+#: apps/support/models.py apps/wallets/models.py templates/administration/support/ticket.html
+msgid "Closed"
+msgstr "Limefungwa"
+
+#: apps/advertising/models.py templates/advertising/organization.html templates/components/campaign_report.html
+msgid "Completed"
+msgstr "Umekamilika"
+
+#: apps/administration/views.py
+#, python-format
+msgid "Complimentary %(plan)s membership granted until %(end)s. No payment was recorded."
+msgstr "Uanachama wa %(plan)s umetolewa bure hadi %(end)s. Hakuna malipo yaliyorekodiwa."
+
+#: templates/administration/members/detail.html templates/members/dashboard.html
+msgid "Complimentary (no payment)"
+msgstr "Uliotolewa bure (hakuna malipo)"
+
+#: templates/memberships/my_membership.html templates/memberships/subscription_detail.html
+msgid "Complimentary demonstration access: no payment was made, and access ends on the date below."
+msgstr "Ufikiaji wa majaribio uliotolewa bure: hakuna malipo yaliyofanywa, na ufikiaji unaisha tarehe iliyo hapa chini."
+
+#: templates/memberships/my_membership.html
+msgid "Complimentary, no payment"
+msgstr "Uliotolewa bure, bila malipo"
+
+#: templates/accounts/verification_required.html
+#, python-format
+msgid "Confirm %(email)s before using your account. Follow the link we sent to that address."
+msgstr "Thibitisha %(email)s kabla ya kutumia akaunti yako. Fuata kiungo tulichotuma kwenye anwani hiyo."
+
+#: templates/videos/detail.html
+msgid "Confirm email"
+msgstr "Thibitisha barua pepe"
+
+#: templates/accounts/confirm_email.html
+msgid "Confirm email address"
+msgstr "Thibitisha anwani ya barua pepe"
+
+#: templates/advertising/team.html
+msgid "Confirm leaving"
+msgstr "Thibitisha kuondoka"
+
+#: templates/accounts/profile.html
+msgid "Confirm now"
+msgstr "Thibitisha sasa"
+
+#: apps/accounts/forms.py
+msgid "Confirm password"
+msgstr "Thibitisha nenosiri"
+
+#: templates/advertising/team.html templates/withdrawals/destinations.html
+msgid "Confirm removal"
+msgstr "Thibitisha kuondoa"
+
+#: apps/payments/manual.py
+msgid "Confirm that the payment was received into the Lipa account shown to the member."
+msgstr "Thibitisha kuwa malipo yalipokelewa kwenye akaunti ya Lipa iliyoonyeshwa kwa mwanachama."
+
+#: templates/accounts/confirm_email.html
+msgid "Confirm that this email address belongs to you."
+msgstr "Thibitisha kuwa anwani hii ya barua pepe ni yako."
+
+#: apps/payments/manual.py
+msgid "Confirm that you found this transaction in the official Airtel business records."
+msgstr "Thibitisha kuwa umeona muamala huu katika rekodi rasmi za biashara za Airtel."
+
+#: templates/accounts/confirm_email.html templates/accounts/verification_required.html
+msgid "Confirm your email"
+msgstr "Thibitisha barua pepe yako"
+
+#: templates/accounts/layout.html
+msgid "Confirm your email address."
+msgstr "Thibitisha anwani yako ya barua pepe."
+
+#: templates/accounts/email_change_confirm.html
+msgid "Confirm your new email address"
+msgstr "Thibitisha anwani yako mpya ya barua pepe"
+
+#: apps/payments/models.py
+msgid "Confirmed by provider, checking"
+msgstr "Yamethibitishwa na mtoa huduma, yanakaguliwa"
+
+#: templates/base.html
+msgid "Console"
+msgstr "Usimamizi"
+
+#: templates/administration/advertisers/detail.html templates/advertising/_organization_fields.html
+msgid "Contact"
+msgstr "Mawasiliano"
+
+#: templates/accounts/password_reset_form.html
+msgid "Contact ClipCash support"
+msgstr "Wasiliana na usaidizi wa ClipCash"
+
+#: templates/accounts/password_reset_form.html
+msgid "Contact ClipCash support."
+msgstr "Wasiliana na usaidizi wa ClipCash."
+
+#: templates/advertising/profile.html
+msgid "Contact email"
+msgstr "Barua pepe ya mawasiliano"
+
+#: templates/payments/manual_pay.html
+msgid "Contact support"
+msgstr "Wasiliana na usaidizi"
+
+#: templates/members/dashboard.html
+msgid "Continue"
+msgstr "Endelea"
+
+#: templates/support/ticket_detail.html
+msgid "Conversation"
+msgstr "Mazungumzo"
+
+#: templates/administration/support/ticket.html templates/support/_conversation.html
+msgid "Conversation and history"
+msgstr "Mazungumzo na historia"
+
+#: apps/payments/forms.py
+msgid "Copy it from the Airtel Money confirmation SMS, for example the code after “TID” or “Ref”."
+msgstr "Nakili kutoka SMS ya uthibitisho ya Airtel Money, kwa mfano msimbo baada ya “TID” au “Ref”."
+
+#: templates/viewing/session.html
+msgid "Counted watch time:"
+msgstr "Muda wa kutazama uliohesabiwa:"
+
+#: templates/administration/advertisers/detail.html templates/administration/advertisers/list.html templates/advertising/profile.html
+msgid "Country"
+msgstr "Nchi"
+
+#: templates/accounts/login.html templates/base.html templates/public/_navigation.html templates/public/home.html
+msgid "Create account"
+msgstr "Fungua akaunti"
+
+#: templates/accounts/register.html
+msgid "Create an account"
+msgstr "Fungua akaunti"
+
+#: templates/public/home.html
+msgid "Create an account when registration is available, or sign in with access provided by the ClipCash team."
+msgstr "Fungua akaunti usajili unapopatikana, au ingia kwa ufikiaji uliotolewa na timu ya ClipCash."
+
+#: templates/public/home.html
+msgid "Create an account with your mobile number and a password. It is free, and you can use it straight away."
+msgstr "Fungua akaunti kwa namba yako ya simu na nenosiri. Ni bure, na unaweza kuitumia mara moja."
+
+#: templates/payments/funding.html
+msgid "Create deposit request"
+msgstr "Unda ombi la amana"
+
+#: templates/accounts/layout.html
+msgid "Create your account with your mobile number and a password."
+msgstr "Fungua akaunti kwa namba yako ya simu na nenosiri."
+
+#: apps/payments/models.py apps/reports/analytics.py apps/support/models.py templates/administration/videos/list.html templates/payments/funding.html templates/payments/history.html templates/withdrawals/demo.html
+msgid "Created"
+msgstr "Imeundwa"
+
+#: templates/accounts/register.html
+msgid "Creating an account is free. An email address is optional: add and confirm one later from your account so you can reset your password by email."
+msgstr "Kufungua akaunti ni bure. Barua pepe si lazima: ongeza na uthibitishe anwani baadaye kwenye akaunti yako ili uweze kuweka upya nenosiri kwa barua pepe."
+
+#: templates/public/home.html
+msgid "Creating an account is free. You only need your mobile number."
+msgstr "Kufungua akaunti ni bure. Unahitaji namba yako ya simu pekee."
+
+#: templates/rewards/history.html
+msgid "Credit decisions"
+msgstr "Maamuzi ya krediti"
+
+#: apps/administration/views.py
+msgid "Credit terms saved. Past awards are not changed."
+msgstr "Masharti ya krediti yamehifadhiwa. Zawadi za awali hazijabadilishwa."
+
+#: apps/rewards/services.py
+msgid "Credited at the rate shown when you started watching."
+msgstr "Krediti zimetolewa kwa kiwango kilichoonyeshwa ulipoanza kutazama."
+
+#: templates/rewards/history.html
+msgid "Credited views"
+msgstr "Mitazamo iliyopata krediti"
+
+#: templates/rewards/history.html
+msgid "Credits"
+msgstr "Krediti"
+
+#: templates/viewing/campaign.html
+msgid "Credits are non-cash: they are not money, are kept separate from your wallet and cannot be withdrawn."
+msgstr "Krediti si fedha: zinahifadhiwa kando na pochi yako na haziwezi kutolewa kama pesa."
+
+#: templates/rewards/history.html
+msgid "Credits by campaign"
+msgstr "Krediti kwa kampeni"
+
+#: templates/rewards/history.html
+msgid "Credits you earned from sponsored views that ClipCash verified. Credits are non-cash: they are not money, are kept separate from your wallet and cannot be spent or withdrawn."
+msgstr "Krediti ulizopata kutokana na mitazamo ya video zinazodhaminiwa iliyohakikiwa na ClipCash. Krediti si fedha: zinahifadhiwa kando na pochi yako na haziwezi kutumika kulipia au kutolewa kama pesa."
+
+#: apps/payments/models.py
+msgid "Currency does not match"
+msgstr "Sarafu hailingani"
+
+#: apps/accounts/forms.py
+msgid "Current password"
+msgstr "Nenosiri la sasa"
+
+#: templates/memberships/my_membership.html
+msgid "Current plan"
+msgstr "Mpango wa sasa"
+
+#: templates/components/demo_withdrawal_notice.html
+msgid "DEMO / SIMULATED."
+msgstr "MAJARIBIO / KUIGIZA."
+
+#: templates/base.html templates/components/member_sidebar.html templates/members/dashboard.html templates/public/_navigation.html
+msgid "Dashboard"
+msgstr "Dashibodi"
+
+#: templates/members/dashboard.html
+msgid "Dashboard shortcuts"
+msgstr "Njia za mkato za dashibodi"
+
+#: templates/rewards/history.html templates/wallets/transaction.html templates/wallets/wallet.html
+msgid "Date"
+msgstr "Tarehe"
+
+#: apps/administration/views.py
+msgid "Decision saved."
+msgstr "Uamuzi umehifadhiwa."
+
+#: templates/administration/wallets/detail.html templates/advertising/home.html
+msgid "Decline"
+msgstr "Kataa"
+
+#: templates/administration/campaigns/detail.html templates/administration/overview.html templates/administration/videos/list.html templates/administration/withdrawals/detail.html templates/administration/withdrawals/list.html templates/advertising/campaign_detail.html templates/withdrawals/demo.html templates/withdrawals/overview.html
+msgid "Demo"
+msgstr "Majaribio"
+
+#: templates/administration/campaigns/detail.html templates/advertising/campaign_detail.html
+msgid "Demo budget"
+msgstr "Bajeti ya majaribio"
+
+#: apps/reports/services.py templates/advertising/_campaign_table.html
+msgid "Demo budget (not money)"
+msgstr "Bajeti ya majaribio (si fedha)"
+
+#: templates/components/campaign_report.html
+msgid "Demo budget in approved campaigns (not money)"
+msgstr "Bajeti ya majaribio katika kampeni zilizokubaliwa (si fedha)"
+
+#: templates/advertising/organization.html
+#, python-format
+msgid "Demo budget in approved campaigns: %(amount)s (a planning figure, not money)."
+msgstr "Bajeti ya majaribio katika kampeni zilizokubaliwa: %(amount)s (takwimu ya kupanga, si fedha)."
+
+#: templates/advertising/campaign_detail.html templates/components/campaign_performance.html
+msgid "Demo budget used (simulated figure, never charged)"
+msgstr "Bajeti ya majaribio iliyotumika (kiasi cha kuigiza, hakitozwi kamwe)"
+
+#: templates/advertising/campaign_detail.html templates/advertising/campaign_form.html
+msgid "Demo planning figures"
+msgstr "Takwimu za kupanga majaribio"
+
+#: apps/administration/views.py
+msgid "Demo request created."
+msgstr "Ombi la majaribio limeundwa."
+
+#: templates/advertising/campaign_detail.html
+msgid "Demo reward per view"
+msgstr "Zawadi ya majaribio kwa kila mtazamo"
+
+#: apps/administration/views.py
+msgid "Demo reward reversed."
+msgstr "Zawadi ya majaribio imebatilishwa."
+
+#: apps/notifications/models.py templates/administration/layout.html templates/administration/overview.html templates/administration/rewards/policies.html templates/administration/rewards/rewards.html templates/components/member_sidebar.html
+msgid "Demo rewards"
+msgstr "Zawadi za majaribio"
+
+#: templates/advertising/reports.html
+msgid "Demo rewards (simulated)"
+msgstr "Zawadi za majaribio (za kuigiza)"
+
+#: templates/advertising/campaign_detail.html templates/components/campaign_performance.html
+msgid "Demo rewards (simulated, not money)"
+msgstr "Zawadi za majaribio (za kuigiza, si fedha)"
+
+#: templates/members/dashboard.html
+msgid "Demo rewards appear when sponsored videos are available. They are simulations, never money."
+msgstr "Zawadi za majaribio huonekana video zinazodhaminiwa zikipatikana. Ni za kuigiza, si fedha kamwe."
+
+#: templates/accounts/layout.html
+msgid "Demo rewards have no cash value."
+msgstr "Zawadi za majaribio hazina thamani ya fedha."
+
+#: apps/support/models.py
+msgid "Demo rewards, wallet and withdrawals"
+msgstr "Zawadi za majaribio, pochi na utoaji wa pesa"
+
+#: templates/components/preview_player.html templates/components/video_card.html templates/videos/detail.html templates/viewing/session.html
+msgid "Demo sample"
+msgstr "Sampuli ya majaribio"
+
+#: templates/withdrawals/overview.html
+msgid "Demo scenarios (simulated)"
+msgstr "Mifano ya majaribio (ya kuigiza)"
+
+#: apps/administration/views.py
+msgid "Demo withdrawal updated."
+msgstr "Utoaji wa pesa wa majaribio umesasishwa."
+
+#: templates/components/demo_withdrawal_notice.html
+msgid "Demo withdrawals use invented amounts. No money is owed, reserved or paid, and nothing is sent to any mobile-money or bank account."
+msgstr "Utoaji wa pesa wa majaribio hutumia kiasi cha kubuni. Hakuna fedha zinazodaiwa, kutengwa au kulipwa, na hakuna kinachotumwa kwenye akaunti yoyote ya pesa kwa simu au benki."
+
+#: templates/components/demo_budget_notice.html
+msgid "Demonstration budgets only."
+msgstr "Bajeti za majaribio pekee."
+
+#: templates/advertising/campaign_form.html
+msgid "Demonstration budgets only. No money is charged, held or paid out."
+msgstr "Bajeti za majaribio pekee. Hakuna fedha zinazotozwa, kushikiliwa au kulipwa."
+
+#: apps/advertising/forms.py
+msgid "Demonstration figure only. It is not money and is never charged or paid out."
+msgstr "Takwimu ya majaribio pekee. Si fedha na haitozwi wala kulipwa kamwe."
+
+#: apps/advertising/forms.py
+msgid "Demonstration figure only. No rewards are paid yet."
+msgstr "Takwimu ya majaribio pekee. Bado hakuna zawadi zinazolipwa."
+
+#: templates/public/home.html
+msgid "Demonstration records"
+msgstr "Rekodi za majaribio"
+
+#: templates/public/home.html
+msgid "Demonstration rewards are clearly labelled and kept separate from real ledger balances."
+msgstr "Zawadi za majaribio zimeandikwa wazi na kuhifadhiwa kando na masalio halisi ya leja."
+
+#: templates/payments/funding.html
+msgid "Deposits"
+msgstr "Amana"
+
+#: apps/support/forms.py
+msgid "Describe what happened and what you expected. Never include your password, PIN or payment details. Attachments are not supported."
+msgstr "Eleza kilichotokea na ulichotarajia. Usiweke nenosiri, PIN au taarifa zako za malipo. Viambatisho havitumiki."
+
+#: templates/administration/withdrawals/beneficiaries.html templates/withdrawals/demo.html templates/withdrawals/destinations.html
+msgid "Destination"
+msgstr "Njia ya kupokea malipo"
+
+#: apps/audit/admin.py templates/administration/campaigns/detail.html templates/administration/videos/detail.html templates/advertising/profile.html templates/components/manual_payment_status.html
+msgid "Details"
+msgstr "Maelezo"
+
+#: templates/accounts/register_done.html
+msgid "Did not receive it? Send a new link"
+msgstr "Hujapokea? Tuma kiungo kipya"
+
+#: templates/wallets/transaction.html templates/wallets/wallet.html
+msgid "Direction"
+msgstr "Mwelekeo"
+
+#: templates/public/home.html
+msgid "Discover reviewed video campaigns, explore eligible content and follow your viewing journey with clarity."
+msgstr "Gundua kampeni za video zilizokaguliwa, chunguza maudhui unayostahili na ufuatilie utazamaji wako kwa uwazi."
+
+#: templates/members/dashboard.html
+msgid "Discover something new. Keep track of what ClipCash has verified."
+msgstr "Gundua kitu kipya. Fuatilia kilichohakikiwa na ClipCash."
+
+#: templates/public/home.html
+msgid "Discover with direction"
+msgstr "Gundua ukiwa na mwongozo"
+
+#: templates/public/home.html
+msgid "Discover. Watch. Understand."
+msgstr "Gundua. Tazama. Elewa."
+
+#: templates/components/messages.html
+msgid "Dismiss notification"
+msgstr "Funga taarifa"
+
+#: apps/payments/models.py
+msgid "Dismissed"
+msgstr "Imeondolewa"
+
+#: apps/administration/views.py
+msgid "Dispute resolved."
+msgstr "Mgogoro umetatuliwa."
+
+#: apps/payments/models.py
+msgid "Disputed"
+msgstr "Yanapingwa"
+
+#: templates/accounts/logout_confirm.html
+msgid "Do you want to sign out of ClipCash on this device?"
+msgstr "Unataka kuondoka ClipCash kwenye kifaa hiki?"
+
+#: templates/public/home.html
+msgid "Does choosing a membership plan activate it?"
+msgstr "Je, kuchagua mpango wa uanachama kunauwezesha?"
+
+#: templates/public/home.html
+msgid "Does every video create a reward?"
+msgstr "Je, kila video inatoa zawadi?"
+
+#: templates/public/home.html
+msgid "Does watching videos pay money?"
+msgstr "Je, kutazama video kunalipa pesa?"
+
+#: apps/advertising/models.py apps/rewards/models.py apps/videos/models.py templates/advertising/organization.html
+msgid "Draft"
+msgstr "Rasimu"
+
+#: templates/advertising/organization.html templates/components/campaign_report.html
+msgid "Drafts"
+msgstr "Rasimu"
+
+#: templates/advertising/campaign_detail.html
+msgid "Drafts are not shown to members. ClipCash reviews every campaign before it can run."
+msgstr "Rasimu hazionyeshwi kwa wanachama. ClipCash hukagua kila kampeni kabla ya kuendeshwa."
+
+#: apps/payments/models.py
+msgid "Duplicate / replay"
+msgstr "Rudufu / marudio"
+
+#: apps/payments/models.py
+msgid "Duplicate payment"
+msgstr "Malipo yaliyorudiwa"
+
+#: templates/administration/videos/detail.html templates/memberships/subscription_detail.html
+msgid "Duration"
+msgstr "Muda"
+
+#: templates/public/home.html
+msgid "Each step has a purpose. Access, viewing evidence and demonstration rewards are separate parts of the journey."
+msgstr "Kila hatua ina lengo. Ufikiaji, ushahidi wa utazamaji na zawadi za majaribio ni sehemu tofauti za safari hii."
+
+#: templates/public/home.html
+msgid "Each step has a purpose. Your account, your membership and your viewing records are separate parts of the journey."
+msgstr "Kila hatua ina lengo. Akaunti yako, uanachama wako na rekodi zako za utazamaji ni sehemu tofauti za safari hii."
+
+#: templates/payments/manual_pay.html
+msgid "Earlier submissions for this plan"
+msgstr "Taarifa zilizowasilishwa awali kwa mpango huu"
+
+#: templates/viewing/campaign.html
+#, python-format
+msgid "Earn %(credits)s per verified view"
+msgstr "Pata %(credits)s kwa kila mtazamo uliohakikiwa"
+
+#: templates/advertising/campaign_detail.html
+msgid "Edit"
+msgstr "Hariri"
+
+#: templates/advertising/campaign_form.html
+msgid "Edit campaign"
+msgstr "Hariri kampeni"
+
+#: templates/accounts/profile.html
+msgid "Edit name and phone number"
+msgstr "Hariri jina na namba ya simu"
+
+#: templates/accounts/profile_edit.html
+msgid "Edit profile"
+msgstr "Hariri wasifu"
+
+#: templates/advertising/campaign_detail.html
+msgid "Edit the campaign, then submit it for review again."
+msgstr "Hariri kampeni, kisha iwasilishe kwa ukaguzi tena."
+
+#: templates/public/home.html
+msgid "Eligible membership"
+msgstr "Uanachama unaostahili"
+
+#: templates/administration/members/list.html templates/advertising/team.html
+msgid "Email"
+msgstr "Barua pepe"
+
+#: apps/accounts/forms.py apps/advertising/forms.py templates/accounts/profile.html
+msgid "Email address"
+msgstr "Anwani ya barua pepe"
+
+#: apps/accounts/views.py
+msgid "Email address change cancelled"
+msgstr "Mabadiliko ya anwani ya barua pepe yameghairiwa"
+
+#: apps/accounts/views.py
+msgid "Email address change requested"
+msgstr "Mabadiliko ya anwani ya barua pepe yameombwa"
+
+#: apps/accounts/views.py templates/accounts/email_change_complete.html
+msgid "Email address changed"
+msgstr "Anwani ya barua pepe imebadilishwa"
+
+#: apps/accounts/views.py
+msgid "Email address changes are not available for this account at the moment."
+msgstr "Anwani ya barua pepe haiwezi kubadilishwa kwa akaunti hii kwa sasa."
+
+#: apps/accounts/views.py
+msgid "Email address confirmed"
+msgstr "Anwani ya barua pepe imethibitishwa"
+
+#: apps/reports/services.py templates/accounts/confirm_email_complete.html templates/accounts/profile.html templates/administration/members/complimentary.html templates/administration/members/detail.html templates/administration/members/list.html
+msgid "Email confirmed"
+msgstr "Barua pepe imethibitishwa"
+
+#: templates/public/home.html
+msgid "Email verification"
+msgstr "Uthibitisho wa barua pepe"
+
+#: templates/base.html
+msgid "Email verification is optional for authorized demo accounts. Real payments and payouts are disabled."
+msgstr "Uthibitisho wa barua pepe si lazima kwa akaunti za majaribio zilizoidhinishwa. Malipo halisi na utoaji wa pesa vimezimwa."
+
+#: templates/advertising/campaign_detail.html
+msgid "End this campaign"
+msgstr "Maliza kampeni hii"
+
+#: apps/advertising/forms.py templates/memberships/my_membership.html templates/memberships/subscription_detail.html
+msgid "Ends"
+msgstr "Inaisha"
+
+#: apps/accounts/phone_numbers.py
+msgid "Enter a Tanzanian mobile number, for example 0712 345 678 or +255 712 345 678."
+msgstr "Weka namba ya simu ya Tanzania, kwa mfano 0712 345 678 au +255 712 345 678."
+
+#: apps/accounts/forms.py
+msgid "Enter a correct mobile number or email and password. Both may be case-sensitive."
+msgstr "Weka namba ya simu au barua pepe na nenosiri sahihi. Herufi kubwa na ndogo zinaweza kutofautishwa katika vyote viwili."
+
+#: apps/accounts/phone_numbers.py
+msgid "Enter a valid phone number, for example +255712345678 or 0712345678."
+msgstr "Weka namba halali ya simu, kwa mfano +255712345678 au 0712345678."
+
+#: apps/payments/manual.py
+msgid "Enter the Lipa business number: digits only, 4 to 15 of them."
+msgstr "Weka namba ya biashara ya Lipa: tarakimu pekee, kati ya 4 na 15."
+
+#: apps/payments/manual.py
+msgid "Enter the amount in whole shillings, for example 5000."
+msgstr "Weka kiasi kwa shilingi zisizo na senti, kwa mfano 5000."
+
+#: templates/accounts/password_reset_form.html
+msgid "Enter the email address you added and confirmed on your account. We will send a link to choose a new password."
+msgstr "Weka anwani ya barua pepe uliyoongeza na kuthibitisha kwenye akaunti yako. Tutatuma kiungo cha kuchagua nenosiri jipya."
+
+#: templates/accounts/resend_verification.html
+msgid "Enter the email address you registered with."
+msgstr "Weka anwani ya barua pepe uliyojisajili nayo."
+
+#: apps/payments/manual.py
+msgid "Enter the phone number you paid from."
+msgstr "Weka namba ya simu uliyolipia."
+
+#: apps/payments/manual.py
+msgid "Enter the recipient name shown by Airtel when paying."
+msgstr "Weka jina la mpokeaji linaloonyeshwa na Airtel wakati wa kulipa."
+
+#: apps/payments/manual.py
+msgid "Enter the transaction reference exactly as it appears in the Airtel confirmation message (letters and digits, 6 to 40 characters)."
+msgstr "Weka kumbukumbu ya muamala kama ilivyo katika ujumbe wa uthibitisho wa Airtel (herufi na tarakimu, vibambo 6 hadi 40)."
+
+#: templates/accounts/register.html
+msgid "Enter your mobile number and choose a password. You can use your account straight away."
+msgstr "Weka namba yako ya simu na uchague nenosiri. Unaweza kutumia akaunti yako mara moja."
+
+#: templates/components/messages.html
+msgid "Error"
+msgstr "Hitilafu"
+
+#: apps/administration/views.py
+#, python-format
+msgid "Evaluated: %(q)s recorded, %(r)s not eligible, %(w)s waiting."
+msgstr "Zimetathminiwa: %(q)s zimerekodiwa, %(r)s hazistahili, %(w)s zinasubiri."
+
+#: templates/accounts/email_change_complete.html
+msgid "Every other device signed in to this account has been signed out."
+msgstr "Vifaa vingine vyote vilivyoingia kwenye akaunti hii vimeondolewa."
+
+#: templates/public/home.html
+msgid "Everything in its place."
+msgstr "Kila kitu mahali pake."
+
+#: templates/payments/manual_pay.html
+msgid "Exact amount"
+msgstr "Kiasi kamili"
+
+#: apps/payments/forms.py
+msgid "Exactly the plan price shown above, in whole shillings."
+msgstr "Bei kamili ya mpango iliyoonyeshwa hapo juu, kwa shilingi zisizo na senti."
+
+#: apps/administration/views.py
+msgid "Exception resolved."
+msgstr "Hitilafu imetatuliwa."
+
+#: apps/administration/views.py
+msgid "Exception updated."
+msgstr "Hitilafu imesasishwa."
+
+#: apps/memberships/models.py apps/payments/models.py apps/viewing/models.py
+msgid "Expired"
+msgstr "Umeisha muda"
+
+#: templates/advertising/team.html templates/payments/intent.html
+msgid "Expires"
+msgstr "Inaisha muda"
+
+#: apps/payments/manual.py
+msgid "Explain the reason in a few words."
+msgstr "Eleza sababu kwa maneno machache."
+
+#: templates/public/home.html
+msgid "Explore advertiser access"
+msgstr "Angalia ufikiaji wa mtangazaji"
+
+#: templates/public/home.html
+msgid "Explore available videos and eligible sponsored campaigns. Availability depends on your account and membership."
+msgstr "Gundua video zinazopatikana na kampeni zinazodhaminiwa unazostahili. Upatikanaji unategemea akaunti na uanachama wako."
+
+#: templates/videos/library.html
+msgid "Explore published videos. Playback access depends on your membership; library playback is separate from sponsored viewing verification."
+msgstr "Gundua video zilizochapishwa. Ufikiaji wa kucheza unategemea uanachama wako; kutazama katika maktaba ni tofauti na uhakiki wa utazamaji unaodhaminiwa."
+
+#: templates/members/dashboard.html templates/public/_navigation.html
+msgid "Explore videos"
+msgstr "Gundua video"
+
+#: templates/accounts/layout.html
+msgid "Explore videos and understand what counts."
+msgstr "Gundua video na uelewe kinachohesabiwa."
+
+#: apps/administration/views.py
+msgid "Fail"
+msgstr "Shindwa"
+
+#: apps/core/models.py apps/notifications/models.py apps/payments/models.py apps/videos/models.py apps/withdrawals/models.py
+msgid "Failed"
+msgstr "Imeshindikana"
+
+#: apps/accounts/views.py
+msgid "Failed sign-in attempt"
+msgstr "Jaribio la kuingia limeshindikana"
+
+#: templates/administration/advertisers/list.html templates/administration/campaigns/list.html templates/administration/membership_payments/list.html templates/administration/payments/list.html templates/administration/rewards/rewards.html templates/administration/support/queue.html templates/administration/videos/list.html templates/administration/viewing/list.html templates/administration/withdrawals/list.html templates/advertising/campaign_list.html templates/notifications/inbox.html templates/support/ticket_list.html
+msgid "Filter"
+msgstr "Chuja"
+
+#: templates/notifications/inbox.html
+msgid "Filter notifications"
+msgstr "Chuja taarifa"
+
+#: templates/public/home.html
+msgid "Find account security and membership information together, including pending choices and expiry dates."
+msgstr "Pata taarifa za usalama wa akaunti na uanachama pamoja, ikiwemo machaguo yanayosubiri na tarehe za kuisha."
+
+#: templates/viewing/history.html
+msgid "Find sponsored videos"
+msgstr "Tafuta video zinazodhaminiwa"
+
+#: apps/administration/views.py
+msgid "Finding resolved."
+msgstr "Suala lililobainika limetatuliwa."
+
+#: templates/viewing/session.html
+msgid "Finish session"
+msgstr "Maliza kipindi"
+
+#: templates/public/home.html
+msgid "Follow your verification link and complete the account steps. Restricted demo access may have specific exceptions."
+msgstr "Fuata kiungo chako cha uthibitisho na ukamilishe hatua za akaunti. Ufikiaji wa majaribio yenye mipaka unaweza kuwa na ruhusa maalumu."
+
+#: templates/public/home.html
+msgid "Follow your viewing history"
+msgstr "Fuatilia historia yako ya utazamaji"
+
+#: templates/withdrawals/overview.html
+#, python-format
+msgid "For %(amount)s, these rules would block a withdrawal today:"
+msgstr "Kwa %(amount)s, masharti haya yangezuia kutoa pesa leo:"
+
+#: apps/payments/forms.py
+msgid "For example 0781234567 or +255781234567."
+msgstr "Kwa mfano 0781234567 au +255781234567."
+
+#: templates/public/home.html
+msgid "For organizations"
+msgstr "Kwa mashirika"
+
+#: templates/viewing/list.html
+msgid "For other plans"
+msgstr "Kwa mipango mingine"
+
+#: apps/accounts/forms.py
+msgid "For your security, confirm your password to finish the change."
+msgstr "Kwa usalama wako, thibitisha nenosiri lako ili kukamilisha mabadiliko."
+
+#: apps/administration/views.py
+msgid "Forged notice"
+msgstr "Taarifa ya kughushi"
+
+#: templates/accounts/login.html
+msgid "Forgot your password?"
+msgstr "Umesahau nenosiri lako?"
+
+#: templates/accounts/profile.html
+msgid "Forgotten password? Reset by email"
+msgstr "Umesahau nenosiri? Liweke upya kwa barua pepe"
+
+#: templates/administration/analytics/dashboard.html templates/administration/plans/form.html templates/administration/reports/detail.html templates/advertising/reports.html
+msgid "From"
+msgstr "Kuanzia"
+
+#: templates/public/home.html
+msgid "From first visit to verified viewing"
+msgstr "Kutoka ziara ya kwanza hadi utazamaji uliohakikiwa"
+
+#: templates/payments/funding.html
+msgid "Frozen (refund/dispute)"
+msgstr "Zimezuiwa (urejeshaji wa malipo/mgogoro)"
+
+#: templates/administration/campaigns/detail.html templates/advertising/campaign_detail.html
+msgid "Funding"
+msgstr "Ufadhili"
+
+#: templates/advertising/_header.html templates/payments/funding.html
+msgid "Funding (sandbox)"
+msgstr "Ufadhili (majaribio)"
+
+#: templates/accounts/confirm_email_complete.html templates/accounts/email_change_complete.html
+msgid "Go to my account"
+msgstr "Nenda kwenye akaunti yangu"
+
+#: templates/public/home.html
+msgid "Go to your dashboard"
+msgstr "Nenda kwenye dashibodi yako"
+
+#: templates/advertising/reports.html
+msgid "Has not run"
+msgstr "Haijaendeshwa"
+
+#: templates/viewing/session.html
+msgid "Having playback trouble?"
+msgstr "Una tatizo la kucheza video?"
+
+#: templates/advertising/campaign_detail.html templates/components/campaign_performance.html
+#, python-format
+msgid "Hidden for privacy, of %(allocated)s"
+msgstr "Imefichwa kwa faragha, kati ya %(allocated)s"
+
+#: templates/components/form.html
+msgid "Hide password"
+msgstr "Ficha nenosiri"
+
+#: apps/support/models.py
+msgid "High"
+msgstr "Juu"
+
+#: templates/administration/membership_payments/instructions.html templates/memberships/my_membership.html templates/payments/history.html templates/rewards/history.html templates/withdrawals/demo.html
+msgid "History"
+msgstr "Historia"
+
+#: templates/administration/withdrawals/beneficiaries.html templates/withdrawals/destinations.html
+msgid "Holder"
+msgstr "Mmiliki"
+
+#: templates/components/member_sidebar.html templates/public/_navigation.html
+msgid "Home"
+msgstr "Nyumbani"
+
+#: apps/support/forms.py
+msgid "How can we help?"
+msgstr "Tunaweza kusaidiaje?"
+
+#: templates/public/home.html
+msgid "How do I recover my account?"
+msgstr "Ninawezaje kurejesha akaunti yangu?"
+
+#: templates/public/_footer.html templates/public/_navigation.html templates/public/home.html
+msgid "How it works"
+msgstr "Jinsi inavyofanya kazi"
+
+#: templates/advertising/_organization_fields.html
+msgid "How your advertiser appears on ClipCash."
+msgstr "Jinsi mtangazaji wako anavyoonekana kwenye ClipCash."
+
+#: templates/accounts/resend_verification_done.html
+msgid "If that address belongs to an account that still needs verification, we have sent it a new link."
+msgstr "Ikiwa anwani hiyo ni ya akaunti ambayo bado inahitaji uthibitisho, tumeitumia kiungo kipya."
+
+#: apps/accounts/views.py
+msgid "If that address can be used, a confirmation link is on its way to it. Your email address stays the same until the link is used."
+msgstr "Ikiwa anwani hiyo inaweza kutumika, kiungo cha uthibitisho kinatumwa huko. Anwani yako ya barua pepe inabaki ileile mpaka kiungo kitumike."
+
+#: templates/accounts/password_reset_done.html
+msgid "If that address is confirmed on an active account, we have sent it a link to choose a new password. The link expires in one hour."
+msgstr "Ikiwa anwani hiyo imethibitishwa kwenye akaunti inayotumika, tumetuma kiungo cha kuchagua nenosiri jipya. Kiungo kitaisha muda baada ya saa moja."
+
+#: templates/accounts/register_done.html
+msgid "If this address can be registered, we have sent it a link. Open it within 24 hours to confirm your email and choose your password."
+msgstr "Ikiwa anwani hii inaweza kusajiliwa, tumeitumia kiungo. Kifungue ndani ya saa 24 kuthibitisha barua pepe na kuchagua nenosiri lako."
+
+#: templates/public/home.html
+msgid "If you added and confirmed an email address, request a password reset by email. Password reset by SMS is not available, so if you signed up with your mobile number only, contact ClipCash support, who will check that the account is yours."
+msgstr "Ikiwa uliongeza na kuthibitisha anwani ya barua pepe, omba kuweka upya nenosiri kwa barua pepe. Kuweka upya nenosiri kwa SMS hakupatikani, hivyo ikiwa ulijiandikisha kwa namba ya simu pekee, wasiliana na usaidizi wa ClipCash, ambao utahakikisha akaunti ni yako."
+
+#: templates/accounts/profile.html
+msgid "If you do not recognise something here, change your password and contact support."
+msgstr "Ikiwa hutambui jambo hapa, badilisha nenosiri na uwasiliane na usaidizi."
+
+#: templates/payments/manual_claim.html
+msgid "If you paid and believe this is a mistake, contact support with the claim reference below."
+msgstr "Ikiwa ulilipa na unaamini hili ni kosa, wasiliana na usaidizi ukiwa na kumbukumbu ya taarifa za malipo iliyo hapa chini."
+
+#: templates/accounts/account_unavailable.html
+msgid "If you think this is a mistake, contact ClipCash support."
+msgstr "Ikiwa unaona hili ni kosa, wasiliana na usaidizi wa ClipCash."
+
+#: apps/accounts/views.py
+msgid "If your email still needs verification, a new link is on its way."
+msgstr "Ikiwa barua pepe yako bado inahitaji uthibitisho, kiungo kipya kinatumwa."
+
+#: apps/support/models.py templates/viewing/list.html
+msgid "In progress"
+msgstr "Linaendelea"
+
+#: apps/reports/services.py templates/advertising/reports.html
+msgid "In review"
+msgstr "Inakaguliwa"
+
+#: templates/payments/intent.html
+msgid "In sandbox mode a ClipCash staff member simulates the provider. Nothing is charged."
+msgstr "Katika hali ya majaribio mfanyakazi wa ClipCash huigiza mtoa huduma. Hakuna kinachotozwa."
+
+#: templates/memberships/plan_detail.html templates/memberships/subscription_detail.html
+msgid "Includes"
+msgstr "Vinavyojumuishwa"
+
+#: apps/accounts/views.py
+msgid "Incorrect current password entered"
+msgstr "Nenosiri la sasa lisilo sahihi limeingizwa"
+
+#: templates/components/messages.html
+msgid "Information"
+msgstr "Taarifa"
+
+#: templates/support/_conversation.html
+msgid "Internal note"
+msgstr "Dokezo la ndani"
+
+#: apps/support/forms.py
+msgid "Internal note (staff only, never shown to the customer)"
+msgstr "Dokezo la ndani (wafanyakazi pekee, halionyeshwi kwa mteja kamwe)"
+
+#: apps/advertising/views.py
+msgid "Invitation created. The person sees it after signing in with that email address."
+msgstr "Mwaliko umeundwa. Mtu atauona baada ya kuingia kwa anwani hiyo ya barua pepe."
+
+#: apps/advertising/views.py
+msgid "Invitation declined."
+msgstr "Mwaliko umekataliwa."
+
+#: apps/advertising/views.py
+msgid "Invitation revoked."
+msgstr "Mwaliko umebatilishwa."
+
+#: templates/advertising/home.html
+msgid "Invitations"
+msgstr "Mialiko"
+
+#: templates/advertising/team.html
+msgid "Invitations waiting for a response"
+msgstr "Mialiko inayosubiri jibu"
+
+#: templates/advertising/team.html
+msgid "Invite a team member"
+msgstr "Alika mwanatimu"
+
+#: templates/payments/manual_claim.html
+msgid "It gives you access to:"
+msgstr "Unakupa ufikiaji wa:"
+
+#: apps/support/forms.py
+msgid "Keep the current status"
+msgstr "Dumisha hali ya sasa"
+
+#: apps/payments/manual.py
+msgid "Keep the instructions to 1000 characters or fewer."
+msgstr "Maelekezo yasizidi vibambo 1000."
+
+#: templates/accounts/layout.html
+msgid "Keep your password private. ClipCash staff will never ask for your mobile-money PIN or one-time codes."
+msgstr "Weka nenosiri lako kwa siri. Wafanyakazi wa ClipCash hawatakuomba PIN ya huduma ya pesa kwa simu au misimbo ya matumizi ya mara moja."
+
+#: templates/memberships/subscription_detail.html
+msgid "Kept until"
+msgstr "Linahifadhiwa hadi"
+
+#: templates/public/home.html
+msgid "Know what counts."
+msgstr "Jua kinachohesabiwa."
+
+#: templates/components/language_form.html
+msgid "Language"
+msgstr "Lugha"
+
+#: templates/accounts/profile.html
+msgid "Last sign-in"
+msgstr "Mara ya mwisho kuingia"
+
+#: templates/support/ticket_list.html
+msgid "Last update"
+msgstr "Sasisho la mwisho"
+
+#: templates/members/dashboard.html
+msgid "Latest videos"
+msgstr "Video za hivi karibuni"
+
+#: templates/advertising/team.html
+msgid "Leave"
+msgstr "Ondoka"
+
+#: apps/advertising/forms.py
+msgid "Leave all unticked to show the campaign to every member with an active membership."
+msgstr "Usitie alama yoyote ili kampeni ionyeshwe kwa kila mwanachama mwenye uanachama unaotumika."
+
+#: templates/wallets/wallet.html
+msgid "Ledger-backed wallet transactions"
+msgstr "Miamala ya pochi iliyo kwenye leja"
+
+#: templates/advertising/_organization_fields.html
+msgid "Legal and registration"
+msgstr "Taarifa za kisheria na usajili"
+
+#: templates/administration/advertisers/detail.html templates/advertising/profile.html
+msgid "Legal name"
+msgstr "Jina la kisheria"
+
+#: templates/administration/plans/form.html templates/administration/plans/list.html templates/payments/manual_pay.html
+msgid "Length"
+msgstr "Muda"
+
+#: templates/public/home.html
+msgid "Less guesswork, more context. Your account keeps the information that matters within reach."
+msgstr "Bashiri kidogo, elewa zaidi. Akaunti yako inaweka taarifa muhimu karibu nawe."
+
+#: templates/videos/detail.html
+msgid "Library playback does not verify a sponsored view or award a reward. Sponsored sessions have their own eligibility and verification checks."
+msgstr "Kutazama katika maktaba hakuhakiki mtazamo wa video inayodhaminiwa wala kutoa zawadi. Vipindi vinavyodhaminiwa vina masharti na uhakiki wake."
+
+#: templates/accounts/link_invalid.html
+msgid "Link not valid"
+msgstr "Kiungo si halali"
+
+#: apps/payments/models.py templates/payments/manual_pay.html
+msgid "Lipa business number"
+msgstr "Namba ya biashara ya Lipa"
+
+#: templates/memberships/subscription_detail.html
+msgid "Listed plan price"
+msgstr "Bei ya mpango iliyoorodheshwa"
+
+#: templates/public/home.html
+msgid "Live advertising payments are not enabled. Any funding or budget figures in the demonstration are clearly marked as simulated or sandbox."
+msgstr "Malipo halisi ya matangazo hayajawezeshwa. Takwimu zozote za ufadhili au bajeti katika majaribio zimeandikwa wazi kuwa za kuigiza au za majaribio."
+
+#: templates/viewing/list.html
+msgid "Locked"
+msgstr "Imefungwa"
+
+#: templates/viewing/campaign.html
+msgid "Locked."
+msgstr "Imefungwa."
+
+#: apps/support/models.py
+msgid "Low"
+msgstr "Chini"
+
+#: templates/public/home.html
+msgid "Made for a clearer experience"
+msgstr "Imeundwa kwa matumizi yenye uwazi"
+
+#: templates/public/layout.html
+msgid "Main navigation"
+msgstr "Urambazaji mkuu"
+
+#: templates/withdrawals/overview.html
+msgid "Manage destinations"
+msgstr "Simamia njia za kupokea malipo"
+
+#: templates/members/dashboard.html
+msgid "Manage membership"
+msgstr "Simamia uanachama"
+
+#: templates/public/home.html
+msgid "Manage your access"
+msgstr "Simamia ufikiaji wako"
+
+#: templates/notifications/inbox.html
+msgid "Mark all as read"
+msgstr "Weka zote kuwa zimesomwa"
+
+#: templates/notifications/inbox.html
+msgid "Mark as read"
+msgstr "Weka kuwa imesomwa"
+
+#: apps/administration/views.py
+msgid "Media deletion requested."
+msgstr "Ufutaji wa maudhui umeombwa."
+
+#: apps/accounts/models.py templates/administration/members/complimentary.html templates/administration/members/list.html templates/administration/membership_payments/detail.html templates/administration/membership_payments/list.html templates/administration/rewards/rewards.html templates/administration/viewing/detail.html templates/administration/viewing/list.html templates/administration/wallets/detail.html templates/administration/wallets/list.html templates/administration/withdrawals/beneficiaries.html templates/administration/withdrawals/detail.html templates/administration/withdrawals/list.html templates/advertising/team.html
+msgid "Member"
+msgstr "Mwanachama"
+
+#: templates/components/member_sidebar.html
+msgid "Member menu"
+msgstr "Menyu ya mwanachama"
+
+#: templates/accounts/profile.html
+msgid "Member since"
+msgstr "Mwanachama tangu"
+
+#: apps/notifications/models.py apps/support/models.py templates/accounts/profile.html templates/administration/members/detail.html templates/base.html templates/components/member_sidebar.html templates/members/dashboard.html templates/public/home.html
+msgid "Membership"
+msgstr "Uanachama"
+
+#: templates/payments/intent.html
+msgid "Membership (preview only)"
+msgstr "Uanachama (hakikisho pekee)"
+
+#: apps/payments/models.py
+msgid "Membership fee"
+msgstr "Ada ya uanachama"
+
+#: templates/public/home.html
+msgid "Membership fees are paid with Airtel Money (Lipa) and checked by the ClipCash team before a membership starts."
+msgstr "Ada za uanachama hulipwa kwa Airtel Money (Lipa) na kuhakikiwa na timu ya ClipCash kabla ya uanachama kuanza."
+
+#: templates/public/_footer.html
+msgid "Membership fees are paid with Airtel Money (Lipa) and checked by the ClipCash team."
+msgstr "Ada za uanachama hulipwa kwa Airtel Money (Lipa) na kuhakikiwa na timu ya ClipCash."
+
+#: apps/payments/models.py
+msgid "Membership no longer awaiting payment"
+msgstr "Uanachama hausubiri malipo tena"
+
+#: templates/payments/manual_claim.html
+msgid "Membership payment"
+msgstr "Malipo ya uanachama"
+
+#: templates/payments/manual_pay.html
+msgid "Membership payments are not available at the moment, so payment details cannot be submitted. Do not send money now. Your plan choice is saved until the date above."
+msgstr "Malipo ya uanachama hayapatikani kwa sasa, hivyo taarifa za malipo haziwezi kuwasilishwa. Usitume pesa sasa. Chaguo lako la mpango linahifadhiwa hadi tarehe iliyo hapo juu."
+
+#: templates/members/dashboard.html
+msgid "Membership payments are not open yet."
+msgstr "Malipo ya uanachama bado hayajafunguliwa."
+
+#: templates/public/home.html
+msgid "Membership payments are not open yet: a plan you choose stays pending until it is activated."
+msgstr "Malipo ya uanachama bado hayajafunguliwa: mpango unaochagua unabaki unasubiri mpaka uwezeshwe."
+
+#: apps/advertising/forms.py templates/administration/layout.html templates/administration/plans/list.html templates/memberships/plan_list.html templates/public/_navigation.html
+msgid "Membership plans"
+msgstr "Mipango ya uanachama"
+
+#: templates/public/home.html
+msgid "Membership status, payments awaiting a check and expiry dates are shown plainly. Nothing is presented as earnings."
+msgstr "Hali ya uanachama, malipo yanayosubiri uhakiki na tarehe za kuisha zinaonyeshwa wazi. Hakuna kinachowasilishwa kama mapato."
+
+#: apps/videos/views.py templates/members/dashboard.html
+msgid "Memberships are not available at the moment."
+msgstr "Uanachama haupatikani kwa sasa."
+
+#: templates/payments/history.html
+msgid "Memberships awaiting payment"
+msgstr "Uanachama unaosubiri malipo"
+
+#: templates/administration/layout.html templates/base.html templates/components/member_sidebar.html
+msgid "Menu"
+msgstr "Menyu"
+
+#: apps/support/forms.py
+msgid "Message"
+msgstr "Ujumbe"
+
+#: apps/accounts/forms.py templates/accounts/profile.html templates/withdrawals/destinations.html
+msgid "Mobile number"
+msgstr "Namba ya simu"
+
+#: apps/accounts/forms.py
+msgid "Mobile number or email"
+msgstr "Namba ya simu au barua pepe"
+
+#: templates/components/member_sidebar.html
+msgid "Money"
+msgstr "Fedha"
+
+#: templates/accounts/profile.html templates/administration/layout.html templates/base.html templates/public/_footer.html templates/public/home.html
+msgid "My account"
+msgstr "Akaunti yangu"
+
+#: templates/accounts/profile.html templates/memberships/my_membership.html templates/memberships/plan_list.html
+msgid "My membership"
+msgstr "Uanachama wangu"
+
+#: apps/support/forms.py
+msgid "My own account (not an advertiser)"
+msgstr "Akaunti yangu binafsi (si ya mtangazaji)"
+
+#: templates/viewing/list.html
+msgid "My viewing history"
+msgstr "Historia yangu ya utazamaji"
+
+#: templates/accounts/profile.html templates/administration/categories/list.html
+msgid "Name"
+msgstr "Jina"
+
+msgid "Navigation"
+msgstr "Urambazaji"
+
+#: templates/accounts/login.html
+msgid "Need a new verification link?"
+msgstr "Unahitaji kiungo kipya cha uthibitisho?"
+
+#: apps/accounts/forms.py
+msgid "Needed only when you change your mobile number."
+msgstr "Linahitajika tu unapobadilisha namba yako ya simu."
+
+#: templates/viewing/list.html
+msgid "Needs an active membership"
+msgstr "Inahitaji uanachama unaotumika"
+
+#: templates/withdrawals/destinations.html
+msgid "Network"
+msgstr "Mtandao"
+
+#: templates/public/home.html
+msgid "New accounts are not open to the public at the moment. If the ClipCash team has given you access, sign in with your account."
+msgstr "Usajili wa akaunti mpya hauko wazi kwa umma kwa sasa. Ikiwa timu ya ClipCash imekupa ufikiaji, ingia kwa akaunti yako."
+
+#: templates/accounts/registration_closed.html
+msgid "New accounts cannot be created at the moment. Please try again later."
+msgstr "Akaunti mpya haziwezi kufunguliwa kwa sasa. Jaribu tena baadaye."
+
+#: templates/advertising/_new_campaign_action.html templates/advertising/campaign_form.html
+msgid "New campaign"
+msgstr "Kampeni mpya"
+
+#: templates/advertising/campaign_form.html
+msgid "New campaigns cannot be created while this advertiser is not in good standing."
+msgstr "Kampeni mpya haziwezi kuundwa wakati mtangazaji huyu hajakidhi masharti."
+
+#: templates/withdrawals/overview.html
+msgid "New destinations can only be used after a waiting period."
+msgstr "Njia mpya za kupokea malipo zinaweza kutumika tu baada ya muda wa kusubiri."
+
+#: apps/accounts/forms.py
+msgid "New email address"
+msgstr "Anwani mpya ya barua pepe"
+
+#: templates/payments/funding.html
+msgid "New sandbox deposit"
+msgstr "Amana mpya ya majaribio"
+
+#: templates/accounts/login.html
+msgid "New to ClipCash?"
+msgstr "Je, wewe ni mpya ClipCash?"
+
+#: templates/administration/videos/list.html templates/components/pagination.html templates/videos/library.html
+msgid "Next"
+msgstr "Inayofuata"
+
+#: templates/members/dashboard.html
+msgid "Next step: choose a membership"
+msgstr "Hatua inayofuata: chagua uanachama"
+
+#: templates/members/dashboard.html
+msgid "Next step: complete your membership"
+msgstr "Hatua inayofuata: kamilisha uanachama wako"
+
+#: templates/accounts/activation_complete.html
+msgid "Next: sign in and choose a membership plan from your dashboard."
+msgstr "Kinachofuata: ingia na uchague mpango wa uanachama kutoka kwenye dashibodi yako."
+
+#: templates/accounts/profile.html
+msgid "No"
+msgstr "Hapana"
+
+#: templates/members/_activity_list.html
+msgid "No activity yet."
+msgstr "Bado hakuna matukio."
+
+#: templates/payments/funding.html
+msgid "No allocations yet."
+msgstr "Bado hakuna migao."
+
+#: templates/payments/funding.html
+msgid "No approved campaigns to allocate to."
+msgstr "Hakuna kampeni zilizokubaliwa za kutengewa."
+
+#: templates/advertising/campaign_list.html
+msgid "No campaigns match these filters."
+msgstr "Hakuna kampeni zinazolingana na vichujio hivi."
+
+#: templates/advertising/campaign_list.html templates/advertising/organization.html templates/advertising/reports.html
+msgid "No campaigns yet."
+msgstr "Bado hakuna kampeni."
+
+#: templates/advertising/organization.html
+msgid "No campaigns yet. Create a draft to get started."
+msgstr "Bado hakuna kampeni. Unda rasimu ili kuanza."
+
+#: apps/payments/models.py
+msgid "No change"
+msgstr "Hakuna mabadiliko"
+
+#: apps/rewards/services.py
+msgid "No credit rate applied when you started watching."
+msgstr "Hakuna kiwango cha krediti kilichotumika ulipoanza kutazama."
+
+#: templates/viewing/campaign.html templates/viewing/list.html
+msgid "No credits for this campaign"
+msgstr "Hakuna krediti kwa kampeni hii"
+
+#: templates/rewards/history.html
+msgid "No credits yet. They appear shortly after a sponsored view is verified."
+msgstr "Bado hakuna krediti. Zinaonekana muda mfupi baada ya mtazamo wa video inayodhaminiwa kuhakikiwa."
+
+#: templates/withdrawals/demo.html
+msgid "No demo decisions have been recorded."
+msgstr "Hakuna maamuzi ya majaribio yaliyorekodiwa."
+
+#: templates/members/dashboard.html
+msgid "No demo rewards yet. They appear after a sponsored view is verified."
+msgstr "Bado hakuna zawadi za majaribio. Zinaonekana baada ya mtazamo wa video inayodhaminiwa kuhakikiwa."
+
+#: templates/payments/funding.html
+msgid "No deposits yet."
+msgstr "Bado hakuna amana."
+
+#: templates/accounts/password_reset_done.html
+msgid "No email? If you signed up with your mobile number only, contact ClipCash support."
+msgstr "Huna barua pepe? Ikiwa ulijiandikisha kwa namba ya simu pekee, wasiliana na usaidizi wa ClipCash."
+
+#: apps/payments/models.py
+msgid "No matching transaction in the Airtel business records"
+msgstr "Hakuna muamala unaolingana katika rekodi za biashara za Airtel"
+
+#: templates/memberships/plan_list.html
+msgid "No membership plans are available at the moment."
+msgstr "Hakuna mipango ya uanachama inayopatikana kwa sasa."
+
+#: templates/memberships/my_membership.html
+msgid "No memberships yet."
+msgstr "Bado hakuna uanachama."
+
+#: templates/public/home.html
+msgid "No money is paid out on this site."
+msgstr "Hakuna fedha zinazolipwa kwenye tovuti hii."
+
+#: templates/notifications/inbox.html
+msgid "No notifications match this filter."
+msgstr "Hakuna taarifa zinazolingana na kichujio hiki."
+
+#: templates/payments/history.html
+msgid "No payments yet."
+msgstr "Bado hakuna malipo."
+
+#: templates/withdrawals/destinations.html
+msgid "No payout destinations yet."
+msgstr "Bado hakuna njia za kupokea malipo."
+
+#: templates/components/sandbox_notice.html
+msgid "No real money is collected, held or paid. Figures are test records, not balances, deposits or receipts."
+msgstr "Hakuna fedha halisi zinazokusanywa, kushikiliwa au kulipwa. Takwimu ni rekodi za majaribio, si masalio, amana au risiti."
+
+#: templates/members/dashboard.html
+msgid "No real money moves."
+msgstr "Hakuna fedha halisi zinazohamishwa."
+
+#: templates/advertising/campaign_detail.html
+msgid "No results yet: this campaign has not run."
+msgstr "Bado hakuna matokeo: kampeni hii haijaendeshwa."
+
+#: templates/viewing/list.html
+msgid "No sponsored videos are available to you right now. An active membership is needed, and campaigns appear when advertisers run them."
+msgstr "Hakuna video zinazodhaminiwa zinazopatikana kwako sasa. Uanachama unaotumika unahitajika, na kampeni zinaonekana watangazaji wanapoziendesha."
+
+#: templates/members/dashboard.html
+msgid "No test payments."
+msgstr "Hakuna malipo ya majaribio."
+
+#: templates/administration/support/queue.html templates/support/ticket_list.html
+msgid "No tickets match these filters."
+msgstr "Hakuna maombi yanayolingana na vichujio hivi."
+
+#: templates/viewing/session.html
+msgid "No video file is configured for demo playback, so this session cannot be verified."
+msgstr "Hakuna faili ya video iliyowekwa kwa majaribio, hivyo kipindi hiki hakiwezi kuhakikiwa."
+
+#: templates/components/preview_player.html
+msgid "No video file is configured for demo playback."
+msgstr "Hakuna faili ya video iliyowekwa kwa kucheza katika majaribio."
+
+#: templates/videos/library.html
+msgid "No videos are available here yet."
+msgstr "Bado hakuna video hapa."
+
+#: templates/members/dashboard.html
+msgid "No videos have been published yet."
+msgstr "Bado hakuna video zilizochapishwa."
+
+#: templates/videos/library.html
+msgid "No videos match your search."
+msgstr "Hakuna video zinazolingana na utafutaji wako."
+
+#: templates/advertising/reports.html
+msgid "No viewing sessions started in this period."
+msgstr "Hakuna vipindi vya utazamaji vilivyoanza katika kipindi hiki."
+
+#: templates/wallets/wallet.html
+msgid "No wallet transactions. Real rewards are not available yet."
+msgstr "Hakuna miamala ya pochi. Zawadi halisi bado hazipatikani."
+
+#: templates/public/home.html
+msgid "No. A choice stays pending until an authorized activation takes place. Sandbox payment only previews an outcome. Complimentary demonstration access is granted separately by authorized staff and has an expiry date."
+msgstr "Hapana. Chaguo linabaki linasubiri mpaka uwezeshaji ulioidhinishwa ufanyike. Malipo ya majaribio yanaonyesha matokeo ya mfano tu. Ufikiaji wa majaribio wa bure hutolewa kando na wafanyakazi walioidhinishwa na una tarehe ya kuisha."
+
+msgid "No. Cash rewards and withdrawals are not available."
+msgstr "Hapana. Zawadi za fedha na utoaji wa pesa havipatikani."
+
+#: templates/public/home.html
+msgid "No. Cash rewards are not available. ClipCash checks sponsored views on the server and records them, but a view does not pay you money."
+msgstr "Hapana. Zawadi za fedha hazipatikani. ClipCash huhakiki mitazamo inayodhaminiwa kwenye seva na kuirekodi, lakini mtazamo haukulipi pesa."
+
+#: templates/public/home.html
+msgid "No. Demonstration rewards have no cash value, do not credit your wallet and cannot be withdrawn. Live payments and real payouts remain disabled."
+msgstr "Hapana. Zawadi za majaribio hazina thamani ya fedha, haziongezi salio kwenye pochi yako na haziwezi kutolewa kama pesa. Malipo halisi na utoaji wa pesa halisi vinaendelea kuwa vimezimwa."
+
+#: templates/public/home.html
+msgid "No. Library playback and sponsored viewing are different experiences. A sponsored view must pass server checks, and demonstration rewards also depend on an applicable policy, eligibility and available demo budget."
+msgstr "Hapana. Kutazama katika maktaba na utazamaji unaodhaminiwa ni vitu tofauti. Mtazamo unaodhaminiwa lazima upite uhakiki wa seva, na zawadi za majaribio pia hutegemea sera inayotumika, ustahiki na bajeti ya majaribio iliyopo."
+
+#: templates/public/home.html
+msgid "No. Withdrawals and payouts are not available."
+msgstr "Hapana. Utoaji wa pesa na malipo kwa watumiaji havipatikani."
+
+#: templates/public/home.html
+msgid "No. Your choice stays pending until it is activated. Membership payments are not open yet, so a pending plan cannot be activated at the moment."
+msgstr "Hapana. Chaguo lako linabaki linasubiri mpaka liwezeshwe. Malipo ya uanachama bado hayajafunguliwa, hivyo mpango unaosubiri hauwezi kuwezeshwa kwa sasa."
+
+#: templates/public/home.html
+msgid "No. Your choice stays pending until it is activated. Pay the plan price with Airtel Money (Lipa) using the details on the payment page, then submit your transaction reference. The ClipCash team checks the payment, activates the membership and sends you a notification. ClipCash staff will never ask for your PIN."
+msgstr "Hapana. Chaguo lako linabaki linasubiri mpaka liwezeshwe. Lipa bei ya mpango kwa Airtel Money (Lipa) ukitumia taarifa kwenye ukurasa wa malipo, kisha wasilisha kumbukumbu ya muamala wako. Timu ya ClipCash huhakiki malipo, huwezesha uanachama na kukutumia taarifa. Wafanyakazi wa ClipCash hawatakuomba PIN yako kamwe."
+
+#: templates/accounts/profile.html
+msgid "None active"
+msgstr "Hakuna unaotumika"
+
+#: templates/accounts/profile.html
+msgid "None added"
+msgstr "Hakuna iliyoongezwa"
+
+#: templates/withdrawals/overview.html
+msgid "None saved yet."
+msgstr "Bado hakuna kilichohifadhiwa."
+
+#: apps/support/models.py
+msgid "Normal"
+msgstr "Kawaida"
+
+#: templates/members/dashboard.html
+msgid "Not available"
+msgstr "Haipatikani"
+
+#: apps/rewards/models.py templates/administration/rewards/rewards.html
+msgid "Not eligible"
+msgstr "Hastahili"
+
+#: templates/viewing/session.html
+msgid "Not enough of the video was watched continuously to verify the view."
+msgstr "Sehemu ya kutosha ya video haikutazamwa mfululizo ili kuhakiki mtazamo."
+
+#: templates/advertising/campaign_detail.html
+msgid "Not shown to members right now:"
+msgstr "Haionyeshwi kwa wanachama sasa:"
+
+#: apps/reports/services.py apps/withdrawals/models.py templates/advertising/campaign_detail.html templates/advertising/reports.html templates/components/campaign_performance.html
+msgid "Not verified"
+msgstr "Haijahakikiwa"
+
+#: templates/administration/support/queue.html templates/support/ticket_list.html
+msgid "Not yet resolved"
+msgstr "Bado haijatatuliwa"
+
+#: templates/payments/manual_claim.html
+msgid "Nothing else is needed from you. Never share your Airtel PIN with anyone."
+msgstr "Hakuna kingine kinachohitajika kutoka kwako. Usimpe mtu yeyote PIN yako ya Airtel."
+
+#: apps/accounts/views.py
+msgid "Nothing to change."
+msgstr "Hakuna cha kubadilisha."
+
+#: templates/base.html templates/components/member_sidebar.html templates/members/dashboard.html templates/notifications/inbox.html
+msgid "Notifications"
+msgstr "Taarifa"
+
+#: templates/base.html
+#, python-format
+msgid "Notifications, %(n)s unread"
+msgid_plural "Notifications, %(n)s unread"
+msgstr[0] "Taarifa, %(n)s haijasomwa"
+msgstr[1] "Taarifa, %(n)s hazijasomwa"
+
+#: templates/payments/manual_claim.html
+#, python-format
+msgid "Once confirmed, your %(plan)s membership starts immediately and its end date appears on your membership page."
+msgstr "Baada ya kuthibitishwa, uanachama wako wa %(plan)s unaanza mara moja na tarehe ya kuisha inaonekana kwenye ukurasa wako wa uanachama."
+
+#: templates/viewing/campaign.html
+#, python-format
+msgid "One credited view per day; %(n)s view left for you on this campaign."
+msgid_plural "One credited view per day; %(n)s views left for you on this campaign."
+msgstr[0] "Mtazamo mmoja unaopata krediti kwa siku; umebakiza mtazamo %(n)s kwenye kampeni hii."
+msgstr[1] "Mtazamo mmoja unaopata krediti kwa siku; umebakiza mitazamo %(n)s kwenye kampeni hii."
+
+#: templates/components/membership_payment_notice.html
+msgid "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed."
+msgstr "Malipo ya mtandaoni bado hayapatikani. Ukichagua mpango unahifadhiwa ukiwa unasubiri; uanachama wako unaanza tu baada ya malipo kuthibitishwa."
+
+#: templates/withdrawals/overview.html
+msgid "Only add destinations in your own name."
+msgstr "Ongeza tu njia za kupokea malipo zilizo kwa jina lako mwenyewe."
+
+#: templates/accounts/email_change_confirm.html
+msgid "Only continue if you asked for this change. If you did not, close this page and nothing will change."
+msgstr "Endelea tu ikiwa uliomba mabadiliko haya. Ikiwa hukuomba, funga ukurasa huu na hakuna kitakachobadilika."
+
+#: apps/advertising/views.py
+msgid "Only draft campaigns can be edited."
+msgstr "Kampeni za rasimu pekee zinaweza kuhaririwa."
+
+#: templates/payments/manual_claim.html
+msgid "Only if you entered something wrong or did not pay. Withdrawing does not refund a payment."
+msgstr "Fanya hivyo tu ikiwa uliingiza taarifa isiyo sahihi au hukulipa. Kuondoa taarifa hakurejeshi malipo."
+
+#: templates/advertising/profile.html
+msgid "Only owners can change the profile."
+msgstr "Wamiliki pekee wanaweza kubadilisha wasifu."
+
+#: templates/advertising/team.html
+msgid "Only owners can invite or remove other people."
+msgstr "Wamiliki pekee wanaweza kualika au kuondoa watu wengine."
+
+#: templates/withdrawals/destinations.html
+msgid "Only the last four digits are shown after saving."
+msgstr "Tarakimu nne za mwisho pekee huonyeshwa baada ya kuhifadhi."
+
+#: templates/viewing/campaign.html
+msgid "Only time the video is actually playing counts; pausing or switching away does not."
+msgstr "Muda ambao video inacheza tu ndio unaohesabiwa; kusitisha au kuhamia sehemu nyingine hakuhesabiwi."
+
+#: apps/payments/models.py apps/reports/services.py apps/support/models.py apps/wallets/models.py apps/withdrawals/models.py templates/administration/overview.html templates/notifications/inbox.html
+msgid "Open"
+msgstr "Wazi"
+
+#: templates/support/ticket_detail.html
+msgid "Open a new ticket"
+msgstr "Fungua ombi jipya"
+
+#: templates/memberships/my_membership.html templates/memberships/subscription_detail.html templates/payments/manual_claim.html
+msgid "Open included videos"
+msgstr "Fungua video zilizojumuishwa"
+
+#: templates/wallets/wallet.html
+msgid "Open my wallet"
+msgstr "Fungua pochi yangu"
+
+#: templates/members/dashboard.html
+msgid "Open wallet"
+msgstr "Fungua pochi"
+
+#: templates/wallets/wallet.html
+msgid "Open your wallet to see where future, advertiser-funded rewards will appear. Opening a wallet does not create any money."
+msgstr "Fungua pochi yako kuona mahali zawadi za baadaye zinazofadhiliwa na watangazaji zitakapoonekana. Kufungua pochi hakuundi fedha zozote."
+
+#: apps/reports/analytics.py templates/administration/payments/exceptions.html templates/administration/support/ticket.html templates/administration/wallets/list.html templates/administration/withdrawals/exceptions.html templates/support/ticket_detail.html
+msgid "Opened"
+msgstr "Imefunguliwa"
+
+#: templates/public/_navigation.html
+msgid "Operations console"
+msgstr "Sehemu ya usimamizi"
+
+#: templates/public/home.html
+msgid "Optional email"
+msgstr "Barua pepe si lazima"
+
+#: apps/advertising/forms.py
+msgid "Optional. Shown only to your team and ClipCash reviewers."
+msgstr "Si lazima. Inaonyeshwa kwa timu yako na wakaguzi wa ClipCash pekee."
+
+#: templates/public/home.html
+msgid "Organization checks, authorized media and campaign review help keep the workflow accountable."
+msgstr "Uhakiki wa mashirika, maudhui yaliyoidhinishwa na ukaguzi wa kampeni husaidia kudumisha uwajibikaji."
+
+#: apps/payments/models.py
+msgid "Other (see note)"
+msgstr "Nyingine (angalia dokezo)"
+
+#: templates/payments/manual_claim.html
+msgid "Our team finds your payment in ClipCash's Airtel business records and checks the reference, the exact amount and that it reached our Lipa account. This usually takes up to one working day."
+msgstr "Timu yetu hutafuta malipo yako kwenye rekodi za biashara za Airtel za ClipCash na kuhakiki kumbukumbu, kiasi kamili na kama yamefika kwenye akaunti yetu ya Lipa. Kwa kawaida hili huchukua hadi siku moja ya kazi."
+
+#: templates/administration/layout.html templates/administration/overview.html templates/advertising/_header.html templates/advertising/organization.html
+msgid "Overview"
+msgstr "Muhtasari"
+
+#: templates/advertising/team.html
+msgid "Owners manage the profile and the team. Campaign managers work on campaigns."
+msgstr "Wamiliki husimamia wasifu na timu. Wasimamizi wa kampeni hushughulikia kampeni."
+
+#: templates/components/pagination.html templates/videos/library.html
+#, python-format
+msgid "Page %(n)s of %(total)s"
+msgstr "Ukurasa wa %(n)s kati ya %(total)s"
+
+#: templates/administration/videos/list.html templates/components/pagination.html templates/videos/library.html
+msgid "Pages"
+msgstr "Kurasa"
+
+#: apps/payments/models.py apps/withdrawals/models.py
+msgid "Paid"
+msgstr "Imelipwa"
+
+#: templates/payments/manual_pay.html
+msgid "Paid a different amount, paid twice, or paid to the wrong number? Do not submit it here."
+msgstr "Umelipa kiasi tofauti, umelipa mara mbili, au umelipa namba isiyo sahihi? Usiwasilishe hapa."
+
+#: templates/administration/membership_payments/detail.html templates/payments/manual_claim.html
+msgid "Paid from"
+msgstr "Imelipwa kutoka"
+
+#: templates/payments/manual_claim.html
+msgid "Paid to"
+msgstr "Imelipwa kwa"
+
+#: apps/accounts/forms.py
+msgid "Password"
+msgstr "Nenosiri"
+
+#: apps/accounts/views.py templates/accounts/password_change_done.html templates/accounts/password_reset_complete.html
+msgid "Password changed"
+msgstr "Nenosiri limebadilishwa"
+
+#: templates/accounts/password_reset_form.html
+msgid "Password reset by SMS is not available yet, and ClipCash never resets a password just because someone gives a phone number."
+msgstr "Kuweka upya nenosiri kwa SMS bado hakupatikani, na ClipCash haiweki upya nenosiri kwa sababu tu mtu ametoa namba ya simu."
+
+#: apps/accounts/views.py
+msgid "Password reset by email"
+msgstr "Kuweka upya nenosiri kwa barua pepe"
+
+#: templates/administration/campaigns/detail.html templates/advertising/campaign_detail.html
+msgid "Pause"
+msgstr "Sitisha kwa muda"
+
+#: apps/advertising/models.py templates/advertising/organization.html templates/components/campaign_report.html
+msgid "Paused"
+msgstr "Umesitishwa kwa muda"
+
+#: templates/advertising/campaign_detail.html
+msgid "Paused by ClipCash staff. Please contact support."
+msgstr "Imesitishwa kwa muda na wafanyakazi wa ClipCash. Wasiliana na usaidizi."
+
+#: templates/payments/manual_pay.html
+msgid "Pay"
+msgstr "Lipa"
+
+#: apps/administration/views.py
+msgid "Pay (correct amount)"
+msgstr "Lipa (kiasi sahihi)"
+
+#: templates/components/manual_payment_status.html
+msgid "Pay and submit details"
+msgstr "Lipa na uwasilishe taarifa"
+
+#: templates/payments/manual_pay.html
+msgid "Pay for your membership"
+msgstr "Lipia uanachama wako"
+
+#: templates/memberships/my_membership.html templates/memberships/subscription_detail.html
+msgid "Pay now"
+msgstr "Lipa sasa"
+
+#: templates/components/membership_payment_notice.html
+msgid "Pay with Airtel Money (Lipa) after choosing a plan, then submit the transaction details. Your membership starts once our team confirms the payment in our Airtel business records."
+msgstr "Lipa kwa Airtel Money (Lipa) baada ya kuchagua mpango, kisha wasilisha taarifa za muamala. Uanachama wako unaanza timu yetu ikithibitisha malipo kwenye rekodi zetu za biashara za Airtel."
+
+#: templates/members/dashboard.html
+msgid "Pay with Airtel Money (Lipa) and submit your transaction reference; the ClipCash team activates the membership after checking the payment."
+msgstr "Lipa kwa Airtel Money (Lipa) na uwasilishe kumbukumbu ya muamala wako; timu ya ClipCash inawezesha uanachama baada ya kuhakiki malipo."
+
+#: templates/members/dashboard.html
+msgid "Pay with Airtel Money (Lipa) to start this membership."
+msgstr "Lipa kwa Airtel Money (Lipa) ili kuanza uanachama huu."
+
+#: templates/payments/manual_pay.html
+msgid "Pay with Airtel Money (Lipa), then tell us the transaction details. Your membership starts after our team confirms the payment in our Airtel business records, usually within one working day."
+msgstr "Lipa kwa Airtel Money (Lipa), kisha tuambie taarifa za muamala. Uanachama wako unaanza baada ya timu yetu kuthibitisha malipo katika rekodi zetu za biashara za Airtel, kwa kawaida ndani ya siku moja ya kazi."
+
+#: apps/administration/views.py
+msgid "Pay wrong amount"
+msgstr "Lipa kiasi kisicho sahihi"
+
+#: apps/administration/views.py
+msgid "Payment approved and membership activated."
+msgstr "Malipo yamekubaliwa na uanachama umewezeshwa."
+
+#: apps/payments/views.py
+msgid "Payment cancelled."
+msgstr "Malipo yameghairiwa."
+
+#: apps/payments/manual.py
+msgid "Payment confirmed: membership active"
+msgstr "Malipo yamethibitishwa: uanachama unatumika"
+
+#: templates/payments/manual_claim.html
+msgid "Payment confirmed: your membership is active"
+msgstr "Malipo yamethibitishwa: uanachama wako unatumika"
+
+#: templates/payments/manual_claim.html
+msgid "Payment date"
+msgstr "Tarehe ya malipo"
+
+#: apps/payments/forms.py
+msgid "Payment date (optional)"
+msgstr "Tarehe ya malipo (si lazima)"
+
+#: apps/administration/views.py
+msgid "Payment details published. Members now see them on the payment page."
+msgstr "Taarifa za malipo zimechapishwa. Wanachama sasa wanaziona kwenye ukurasa wa malipo."
+
+#: apps/administration/views.py
+msgid "Payment details retired. Members cannot submit new payments until new details are published."
+msgstr "Taarifa za malipo zimeondolewa. Wanachama hawawezi kuwasilisha malipo mapya mpaka taarifa mpya zichapishwe."
+
+#: templates/members/dashboard.html
+msgid "Payment history"
+msgstr "Historia ya malipo"
+
+#: apps/payments/manual.py templates/members/dashboard.html
+msgid "Payment not confirmed"
+msgstr "Malipo hayajathibitishwa"
+
+#: apps/administration/views.py
+msgid "Payment rejected. The member was notified."
+msgstr "Malipo yamekataliwa. Mwanachama amepewa taarifa."
+
+#: apps/payments/manual.py
+msgid "Payment submitted for verification"
+msgstr "Malipo yamewasilishwa kwa uhakiki"
+
+#: templates/members/dashboard.html
+msgid "Payment update: confirmed"
+msgstr "Sasisho la malipo: yamethibitishwa"
+
+#: templates/members/dashboard.html
+msgid "Payment update: not confirmed"
+msgstr "Sasisho la malipo: hayajathibitishwa"
+
+#: templates/administration/overview.html templates/administration/payments/exceptions.html templates/administration/payments/funding.html templates/administration/payments/list.html templates/members/dashboard.html templates/payments/history.html
+msgid "Payments"
+msgstr "Malipo"
+
+#: templates/administration/layout.html templates/administration/payments/list.html templates/components/member_sidebar.html templates/payments/history.html
+msgid "Payments (sandbox)"
+msgstr "Malipo (majaribio)"
+
+#: templates/components/membership_payment_notice.html
+msgid "Payments are temporarily unavailable. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed."
+msgstr "Malipo hayapatikani kwa muda. Ukichagua mpango unahifadhiwa ukiwa unasubiri; uanachama wako unaanza tu baada ya malipo kuthibitishwa."
+
+#: apps/payments/views.py
+msgid "Payments are temporarily unavailable. Please try again later."
+msgstr "Malipo hayapatikani kwa muda. Jaribu tena baadaye."
+
+#: templates/public/home.html
+msgid "Payments, real-money rewards and withdrawals are switched off. Any rewards, balances or payouts you see here are demonstration records with no cash value, and nothing on this site should be read as a promise of earnings."
+msgstr "Malipo, zawadi za fedha halisi na utoaji wa pesa vimezimwa. Zawadi, masalio au malipo yoyote unayoona hapa ni rekodi za majaribio zisizo na thamani ya fedha, na hakuna kilicho kwenye tovuti hii kinachopaswa kuchukuliwa kama ahadi ya mapato."
+
+#: templates/withdrawals/destinations.html templates/withdrawals/overview.html
+msgid "Payout destinations"
+msgstr "Njia za kupokea malipo"
+
+#: apps/accounts/models.py apps/advertising/models.py apps/core/models.py apps/notifications/models.py apps/payments/models.py apps/wallets/models.py apps/withdrawals/models.py
+msgid "Pending"
+msgstr "Unasubiri"
+
+#: templates/wallets/wallet.html
+msgid "Pending (not spendable)"
+msgstr "Linalosubiri (haliwezi kutumika kulipia)"
+
+#: templates/advertising/team.html
+msgid "Pending invitations"
+msgstr "Mialiko inayosubiri"
+
+#: apps/payments/models.py
+msgid "Pending verification"
+msgstr "Yanasubiri uhakiki"
+
+#: templates/advertising/team.html
+msgid "People with access to this advertiser"
+msgstr "Watu wenye ufikiaji wa mtangazaji huyu"
+
+#: templates/advertising/campaign_detail.html templates/components/campaign_performance.html
+msgid "Performance"
+msgstr "Utendaji"
+
+#: templates/administration/analytics/_chart.html templates/memberships/my_membership.html
+msgid "Period"
+msgstr "Kipindi"
+
+#: apps/payments/forms.py
+msgid "Phone number you paid from"
+msgstr "Namba ya simu uliyolipia"
+
+#: templates/administration/members/complimentary.html templates/administration/membership_payments/detail.html templates/administration/plans/list.html templates/memberships/my_membership.html templates/payments/manual_claim.html templates/payments/manual_pay.html
+msgid "Plan"
+msgstr "Mpango"
+
+#: apps/administration/views.py
+msgid "Plan created. It is active and can be bought now if it is listed."
+msgstr "Mpango umeundwa. Unatumika na unaweza kununuliwa sasa ikiwa umeorodheshwa."
+
+#: apps/administration/views.py
+msgid "Plan saved. New choices use these terms; existing choices, payments and memberships keep the price and duration they were quoted."
+msgstr "Mpango umehifadhiwa. Machaguo mapya hutumia masharti haya; machaguo, malipo na uanachama uliopo vinabaki na bei na muda vilivyoainishiwa."
+
+#: apps/administration/views.py
+msgid "Plan status changed."
+msgstr "Hali ya mpango imebadilishwa."
+
+#: templates/base.html
+msgid "Plans"
+msgstr "Mipango"
+
+#: templates/videos/detail.html
+msgid "Playback is unavailable. Use the player controls to retry, or reload this page to check access again."
+msgstr "Video haiwezi kuchezwa. Tumia vidhibiti vya kichezaji kujaribu tena, au pakia upya ukurasa huu kuangalia tena ufikiaji."
+
+#: templates/viewing/session.html
+msgid "Playback is unavailable. Use the player controls to retry, or reload this session to check its current status. Unconfirmed time may not count."
+msgstr "Video haiwezi kuchezwa. Tumia vidhibiti vya kichezaji kujaribu tena, au pakia upya kipindi hiki kuangalia hali yake ya sasa. Muda ambao haujathibitishwa unaweza kutohesabiwa."
+
+#: templates/viewing/session.html
+msgid "Playback unavailable"
+msgstr "Video haiwezi kuchezwa"
+
+#: templates/advertising/_form_errors.html templates/components/form.html
+msgid "Please correct the errors below."
+msgstr "Tafadhali rekebisha makosa yaliyo hapa chini."
+
+#: apps/administration/views.py
+msgid "Policy draft saved. Another administrator must approve it."
+msgstr "Rasimu ya sera imehifadhiwa. Msimamizi mwingine lazima aiidhinishe."
+
+#: apps/administration/views.py
+msgid "Policy updated."
+msgstr "Sera imesasishwa."
+
+#: templates/viewing/session.html
+msgid "Press play to begin. Progress is checked by ClipCash, not your browser."
+msgstr "Bonyeza cheza kuanza. Maendeleo yanahakikiwa na ClipCash, si kivinjari chako."
+
+#: templates/withdrawals/overview.html
+msgid "Preview (nothing is saved)"
+msgstr "Hakikisho (hakuna kinachohifadhiwa)"
+
+#: templates/administration/videos/list.html templates/components/pagination.html templates/videos/library.html
+msgid "Previous"
+msgstr "Iliyotangulia"
+
+#: templates/administration/plans/form.html templates/administration/plans/list.html templates/memberships/my_membership.html templates/memberships/subscription_detail.html
+msgid "Price"
+msgstr "Bei"
+
+#: templates/payments/manual_pay.html
+msgid "Price held until"
+msgstr "Bei inahifadhiwa hadi"
+
+#: apps/support/models.py
+msgid "Priority changed"
+msgstr "Kipaumbele kimebadilishwa"
+
+#: templates/accounts/profile.html templates/administration/advertisers/detail.html templates/administration/membership_payments/detail.html templates/advertising/_header.html templates/advertising/profile.html
+msgid "Profile"
+msgstr "Wasifu"
+
+#: templates/accounts/profile.html templates/components/member_sidebar.html
+msgid "Profile and security"
+msgstr "Wasifu na usalama"
+
+#: apps/advertising/views.py
+msgid "Profile saved."
+msgstr "Wasifu umehifadhiwa."
+
+#: apps/accounts/views.py
+msgid "Profile updated"
+msgstr "Wasifu umesasishwa"
+
+#: templates/advertising/home.html
+msgid "Promote your brand with sponsored videos shown to ClipCash members. Every advertiser is reviewed before campaigns can run."
+msgstr "Tangaza chapa yako kwa video zinazodhaminiwa zinazoonyeshwa kwa wanachama wa ClipCash. Kila mtangazaji hukaguliwa kabla ya kampeni kuendeshwa."
+
+#: templates/payments/intent.html
+msgid "Provider updates"
+msgstr "Masasisho ya mtoa huduma"
+
+#: apps/administration/views.py
+msgid "Provider: failure"
+msgstr "Mtoa huduma: imeshindikana"
+
+#: apps/administration/views.py
+msgid "Provider: payout returned"
+msgstr "Mtoa huduma: malipo kwa mtumiaji yamerejeshwa"
+
+#: apps/administration/views.py
+msgid "Provider: reachable again"
+msgstr "Mtoa huduma: anapatikana tena"
+
+#: apps/administration/views.py
+msgid "Provider: success"
+msgstr "Mtoa huduma: imefanikiwa"
+
+#: apps/administration/views.py
+msgid "Provider: timeout"
+msgstr "Mtoa huduma: muda wa kusubiri umeisha"
+
+#: templates/advertising/_organization_fields.html
+msgid "Public identity"
+msgstr "Utambulisho wa umma"
+
+#: templates/public/home.html
+msgid "Public registration may be closed. Video access can depend on email verification, membership entitlements, feature availability and content readiness. The relevant account or video page explains the next step."
+msgstr "Usajili wa umma unaweza kuwa umefungwa. Ufikiaji wa video unaweza kutegemea uthibitisho wa barua pepe, haki za uanachama, upatikanaji wa huduma na utayari wa maudhui. Ukurasa husika wa akaunti au video unaeleza hatua inayofuata."
+
+#: apps/reports/services.py templates/administration/payments/list.html templates/payments/intent.html
+msgid "Purpose"
+msgstr "Madhumuni"
+
+#: templates/public/_footer.html templates/public/home.html
+msgid "Questions and answers"
+msgstr "Maswali na majibu"
+
+#: templates/withdrawals/overview.html
+msgid "Real rewards and payouts are not active, and your wallet balance is TZS 0. Demo rewards can never be withdrawn."
+msgstr "Zawadi halisi na malipo kwa watumiaji havijawezeshwa, na salio la pochi yako ni TZS 0. Zawadi za majaribio haziwezi kutolewa kama pesa kamwe."
+
+#: templates/members/dashboard.html
+msgid "Real rewards are not available yet. Cash rewards and withdrawals are not available; any reward record shown here has no cash value."
+msgstr "Zawadi halisi bado hazipatikani. Zawadi za fedha na utoaji wa pesa havipatikani; rekodi yoyote ya zawadi inayoonyeshwa hapa haina thamani ya fedha."
+
+#: templates/members/dashboard.html
+msgid "Real rewards are not available yet. Demo rewards and sandbox payments are simulations; your real wallet holds only ledger-backed money."
+msgstr "Zawadi halisi bado hazipatikani. Zawadi za majaribio na malipo ya majaribio ni ya kuigiza; pochi yako halisi ina fedha zilizo kwenye leja pekee."
+
+#: apps/advertising/forms.py apps/memberships/forms.py apps/reports/services.py templates/administration/members/complimentary.html templates/administration/payments/exceptions.html templates/administration/rewards/policy.html templates/administration/rewards/rewards.html
+msgid "Reason"
+msgstr "Sababu"
+
+#: templates/advertising/_header.html
+msgid "Reason:"
+msgstr "Sababu:"
+
+#: templates/members/dashboard.html
+msgid "Recent activity"
+msgstr "Matukio ya hivi karibuni"
+
+#: templates/advertising/organization.html
+msgid "Recent campaigns"
+msgstr "Kampeni za hivi karibuni"
+
+#: templates/accounts/profile.html
+msgid "Recent security activity"
+msgstr "Matukio ya hivi karibuni ya usalama"
+
+#: templates/administration/membership_payments/instructions.html templates/payments/manual_pay.html
+msgid "Recipient name"
+msgstr "Jina la mpokeaji"
+
+#: apps/payments/models.py
+msgid "Reconciled, awaiting settlement"
+msgstr "Yamelinganishwa, yanasubiri ukamilishaji"
+
+#: templates/administration/payments/list.html templates/administration/support/queue.html templates/administration/withdrawals/list.html templates/payments/funding.html templates/payments/history.html templates/support/ticket_detail.html templates/support/ticket_list.html templates/wallets/transaction.html templates/withdrawals/overview.html
+msgid "Reference"
+msgstr "Kumbukumbu"
+
+#: apps/payments/models.py
+msgid "Reference does not match"
+msgstr "Kumbukumbu hailingani"
+
+#: apps/administration/views.py
+msgid "Refund decision saved."
+msgstr "Uamuzi wa kurejesha malipo umehifadhiwa."
+
+#: apps/administration/views.py
+msgid "Refund requested. A second person must approve it."
+msgstr "Urejeshaji wa malipo umeombwa. Mtu wa pili lazima auidhinishe."
+
+#: apps/memberships/models.py apps/payments/models.py templates/administration/payments/funding.html templates/payments/funding.html
+msgid "Refunded"
+msgstr "Yamerejeshwa"
+
+#: apps/payments/models.py
+msgid "Refused"
+msgstr "Imekataliwa"
+
+#: templates/advertising/home.html
+msgid "Register another advertiser"
+msgstr "Sajili mtangazaji mwingine"
+
+#: templates/withdrawals/destinations.html
+msgid "Registered name"
+msgstr "Jina lililosajiliwa"
+
+#: templates/accounts/registration_closed.html
+msgid "Registration closed"
+msgstr "Usajili umefungwa"
+
+#: templates/public/home.html
+msgid "Registration is not open yet. If the ClipCash team has given you access, sign in with your account."
+msgstr "Usajili bado haujafunguliwa. Ikiwa timu ya ClipCash imekupa ufikiaji, ingia kwa akaunti yako."
+
+#: templates/public/home.html
+msgid "Registration is not open yet. When it opens, you will need your mobile number and a password."
+msgstr "Usajili bado haujafunguliwa. Ukifunguliwa, utahitaji namba yako ya simu na nenosiri."
+
+#: apps/advertising/models.py apps/payments/models.py apps/reports/services.py apps/rewards/models.py apps/withdrawals/models.py
+msgid "Rejected"
+msgstr "Umekataliwa"
+
+#: templates/payments/funding.html
+msgid "Release"
+msgstr "Achilia"
+
+#: apps/payments/models.py
+msgid "Released"
+msgstr "Imeachiliwa"
+
+#: templates/advertising/team.html templates/withdrawals/destinations.html
+msgid "Remove"
+msgstr "Ondoa"
+
+#: apps/withdrawals/models.py templates/withdrawals/destinations.html
+msgid "Removed"
+msgstr "Imeondolewa"
+
+#: templates/memberships/my_membership.html
+msgid "Renewal"
+msgstr "Kuhuisha uanachama"
+
+#: templates/memberships/my_membership.html
+#, python-format
+msgid "Renewal opens on %(date)s."
+msgstr "Unaweza kuhuisha kuanzia %(date)s."
+
+#: apps/support/models.py
+msgid "Reopened"
+msgstr "Limefunguliwa tena"
+
+#: apps/administration/views.py
+msgid "Replay last notice"
+msgstr "Rudia taarifa ya mwisho"
+
+#: templates/support/ticket_detail.html
+msgid "Reply"
+msgstr "Jibu"
+
+#: templates/administration/reports/detail.html templates/advertising/reports.html
+msgid "Report period"
+msgstr "Kipindi cha ripoti"
+
+#: templates/administration/layout.html templates/administration/reports/list.html templates/advertising/_header.html templates/advertising/organization.html templates/advertising/reports.html
+msgid "Reports"
+msgstr "Ripoti"
+
+#: templates/accounts/password_reset_confirm.html
+msgid "Request a new link"
+msgstr "Omba kiungo kipya"
+
+#: templates/public/home.html
+msgid "Request a password reset"
+msgstr "Omba kuweka upya nenosiri"
+
+#: templates/wallets/wallet.html
+msgid "Reserved (not spendable)"
+msgstr "Lililotengwa (haliwezi kutumika kulipia)"
+
+#: templates/accounts/link_invalid.html templates/accounts/password_reset_form.html
+msgid "Reset your password"
+msgstr "Weka upya nenosiri lako"
+
+#: apps/payments/models.py apps/reports/analytics.py apps/support/forms.py apps/support/models.py apps/wallets/models.py apps/withdrawals/models.py templates/administration/health.html templates/administration/support/ticket.html
+msgid "Resolved"
+msgstr "Limetatuliwa"
+
+#: templates/base.html templates/public/home.html
+msgid "Restricted demonstration"
+msgstr "Majaribio yenye mipaka"
+
+#: templates/components/demo_unconfirmed_notice.html
+msgid "Restricted demonstration account."
+msgstr "Akaunti ya majaribio yenye mipaka."
+
+#: templates/public/_footer.html
+msgid "Restricted demonstration. Demonstration rewards are not wallet money. Live payments and withdrawals are not available."
+msgstr "Majaribio yenye mipaka. Zawadi za majaribio si fedha za pochi. Malipo halisi na utoaji wa pesa havipatikani."
+
+#: templates/advertising/profile.html
+msgid "Resubmit for review"
+msgstr "Wasilisha tena kwa ukaguzi"
+
+#: templates/viewing/history.html
+msgid "Result"
+msgstr "Matokeo"
+
+#: templates/advertising/reports.html
+#, python-format
+msgid "Results by campaign, %(first)s to %(last)s"
+msgstr "Matokeo kwa kampeni, %(first)s hadi %(last)s"
+
+#: templates/advertising/reports.html
+msgid "Results come from verified viewing sessions started in this period. Small counts are shown as a range to protect viewers' privacy. Demo rewards are simulated, never money."
+msgstr "Matokeo yanatokana na vipindi vya utazamaji vilivyohakikiwa vilivyoanza katika kipindi hiki. Idadi ndogo huonyeshwa kama masafa ili kulinda faragha ya watazamaji. Zawadi za majaribio ni za kuigiza, si fedha kamwe."
+
+#: templates/administration/campaigns/detail.html templates/advertising/campaign_detail.html
+msgid "Resume"
+msgstr "Endelea"
+
+#: apps/rewards/models.py templates/administration/membership_payments/instructions.html
+msgid "Retired"
+msgstr "Umeondolewa"
+
+#: apps/reports/analytics.py apps/reports/services.py templates/administration/rewards/rewards.html templates/rewards/history.html
+msgid "Reversed"
+msgstr "Zimebatilishwa"
+
+#: templates/rewards/history.html
+msgid "Reversed after review."
+msgstr "Zimebatilishwa baada ya ukaguzi."
+
+#: apps/administration/views.py
+msgid "Review decision saved."
+msgstr "Uamuzi wa ukaguzi umehifadhiwa."
+
+#: templates/public/home.html
+msgid "Review membership requirements. Selecting a plan saves a pending choice; sandbox payments do not activate access."
+msgstr "Angalia masharti ya uanachama. Kuchagua mpango kunahifadhi chaguo linalosubiri; malipo ya majaribio hayawezeshi ufikiaji."
+
+#: templates/public/home.html
+msgid "Review sponsored sessions and their outcomes, including views awaiting review or not accepted."
+msgstr "Angalia vipindi vinavyodhaminiwa na matokeo yake, pamoja na mitazamo inayosubiri ukaguzi au isiyokubaliwa."
+
+#: templates/advertising/profile.html
+msgid "Review status"
+msgstr "Hali ya ukaguzi"
+
+#: templates/administration/membership_payments/detail.html templates/advertising/profile.html templates/payments/manual_claim.html
+msgid "Reviewed"
+msgstr "Ilikaguliwa"
+
+#: templates/public/home.html
+msgid "Reviewed campaigns. Server-checked viewing. Records you can follow."
+msgstr "Kampeni zilizokaguliwa. Utazamaji uliohakikiwa na seva. Rekodi unazoweza kufuatilia."
+
+#: templates/public/home.html
+msgid "Reviewed video. Clear records."
+msgstr "Video zilizokaguliwa. Rekodi zilizo wazi."
+
+#: templates/administration/campaigns/detail.html templates/advertising/campaign_detail.html
+msgid "Revision"
+msgstr "Toleo"
+
+#: templates/administration/advertisers/detail.html templates/advertising/team.html
+msgid "Revoke"
+msgstr "Batilisha"
+
+#: templates/members/dashboard.html
+msgid "Rewards"
+msgstr "Zawadi"
+
+#: apps/advertising/forms.py templates/advertising/team.html
+msgid "Role"
+msgstr "Jukumu"
+
+#: templates/withdrawals/destinations.html
+msgid "Run demo check"
+msgstr "Fanya ukaguzi wa majaribio"
+
+#: templates/administration/campaigns/detail.html templates/administration/campaigns/list.html templates/advertising/_campaign_table.html templates/advertising/campaign_detail.html
+msgid "Runs"
+msgstr "Inaendeshwa"
+
+#: templates/components/sandbox_notice.html
+msgid "SANDBOX: simulated payments."
+msgstr "MAJARIBIO: malipo ya kuigiza."
+
+#: templates/members/dashboard.html
+msgid "SIMULATED REWARDS — NOT WITHDRAWABLE."
+msgstr "ZAWADI ZA KUIGIZA — HAZIWEZI KUTOLEWA KAMA PESA."
+
+#: templates/administration/overview.html templates/administration/payments/detail.html templates/administration/payments/funding.html templates/administration/payments/list.html templates/members/dashboard.html templates/payments/history.html templates/payments/intent.html
+msgid "Sandbox"
+msgstr "Mazingira ya majaribio"
+
+#: templates/payments/funding.html
+msgid "Sandbox allocations to campaigns"
+msgstr "Migao ya majaribio kwa kampeni"
+
+#: templates/payments/funding.html
+msgid "Sandbox deposit requests"
+msgstr "Maombi ya amana za majaribio"
+
+#: apps/payments/views.py
+msgid "Sandbox funds allocated."
+msgstr "Fedha za majaribio zimetengwa."
+
+#: templates/payments/history.html
+msgid "Sandbox payment intents"
+msgstr "Maombi ya malipo ya majaribio"
+
+#: apps/reports/analytics.py apps/reports/services.py templates/administration/payments/list.html templates/memberships/my_membership.html
+msgid "Sandbox payments"
+msgstr "Malipo ya majaribio"
+
+#: templates/payments/intent.html
+msgid "Sandbox payments never activate or extend a membership."
+msgstr "Malipo ya majaribio hayawezeshi wala kuongeza muda wa uanachama kamwe."
+
+#: templates/memberships/my_membership.html
+msgid "Sandbox: you can try a simulated payment for this choice. It shows what would happen and never activates your membership."
+msgstr "Majaribio: unaweza kujaribu malipo ya kuigiza kwa chaguo hili. Yanaonyesha kinachoweza kutokea na hayawezeshi uanachama wako kamwe."
+
+#: templates/administration/support/ticket.html
+msgid "Save"
+msgstr "Hifadhi"
+
+msgid "Save changes"
+msgstr "Hifadhi mabadiliko"
+
+#: templates/withdrawals/destinations.html
+msgid "Save destination"
+msgstr "Hifadhi njia ya kupokea malipo"
+
+#: templates/administration/rewards/policies.html templates/advertising/campaign_form.html
+msgid "Save draft"
+msgstr "Hifadhi rasimu"
+
+#: templates/advertising/profile.html
+msgid "Save profile"
+msgstr "Hifadhi wasifu"
+
+#: templates/withdrawals/destinations.html
+msgid "Saved payout destinations"
+msgstr "Njia za kupokea malipo zilizohifadhiwa"
+
+#: templates/advertising/campaign_form.html
+msgid "Schedule"
+msgstr "Ratiba"
+
+#: templates/base.html
+msgid "Scroll sideways to see all columns."
+msgstr "Sogeza pembeni kuona safu zote."
+
+#: templates/administration/advertisers/list.html templates/administration/campaigns/list.html templates/administration/members/list.html templates/administration/membership_payments/list.html templates/administration/videos/list.html templates/videos/library.html
+msgid "Search"
+msgstr "Tafuta"
+
+#: templates/administration/support/queue.html templates/support/ticket_list.html
+msgid "Search by reference or subject"
+msgstr "Tafuta kwa kumbukumbu au mada"
+
+#: templates/advertising/campaign_list.html
+msgid "Search campaigns"
+msgstr "Tafuta kampeni"
+
+#: templates/videos/library.html
+msgid "Search videos"
+msgstr "Tafuta video"
+
+#: templates/viewing/session.html
+msgid "Seconds counted by ClipCash:"
+msgstr "Sekunde zilizohesabiwa na ClipCash:"
+
+#: templates/accounts/profile.html
+msgid "Security"
+msgstr "Usalama"
+
+#: templates/members/dashboard.html
+msgid "See all"
+msgstr "Angalia zote"
+
+#: templates/members/dashboard.html
+msgid "See demo rewards"
+msgstr "Angalia zawadi za majaribio"
+
+#: templates/members/dashboard.html templates/videos/detail.html templates/viewing/campaign.html
+msgid "See membership plans"
+msgstr "Angalia mipango ya uanachama"
+
+#: templates/memberships/my_membership.html
+msgid "See plans"
+msgstr "Angalia mipango"
+
+#: templates/members/dashboard.html templates/rewards/history.html
+msgid "See sponsored videos"
+msgstr "Angalia video zinazodhaminiwa"
+
+#: templates/wallets/wallet.html
+msgid "See your demo rewards (simulated, not wallet money)"
+msgstr "Angalia zawadi zako za majaribio (za kuigiza, si fedha za pochi)"
+
+#: templates/accounts/activate_account.html templates/accounts/verification_required.html
+msgid "Send a new link"
+msgstr "Tuma kiungo kipya"
+
+#: templates/accounts/link_invalid.html templates/accounts/resend_verification.html
+msgid "Send a new verification link"
+msgstr "Tuma kiungo kipya cha uthibitisho"
+
+#: templates/support/ticket_detail.html
+msgid "Send reply"
+msgstr "Tuma jibu"
+
+#: templates/support/ticket_form.html
+msgid "Send request"
+msgstr "Tuma ombi"
+
+#: apps/payments/models.py
+msgid "Sent to review"
+msgstr "Imetumwa kwa ukaguzi"
+
+#: templates/viewing/session.html
+msgid "Server-counted viewing progress"
+msgstr "Maendeleo ya utazamaji yaliyohesabiwa na seva"
+
+#: templates/viewing/history.html
+msgid "Session outcomes and counted watch time come from ClipCash's checks. A verified view is separate from a reward decision."
+msgstr "Matokeo ya kipindi na muda wa kutazama uliohesabiwa hutokana na uhakiki wa ClipCash. Mtazamo uliohakikiwa ni tofauti na uamuzi wa zawadi."
+
+#: templates/viewing/session.html
+msgid "Session verification"
+msgstr "Uhakiki wa kipindi"
+
+#: apps/reports/analytics.py apps/reports/services.py templates/advertising/reports.html
+msgid "Sessions"
+msgstr "Vipindi"
+
+#: apps/reports/analytics.py templates/advertising/campaign_detail.html templates/advertising/reports.html templates/components/campaign_performance.html
+msgid "Sessions started"
+msgstr "Vipindi vilivyoanza"
+
+#: templates/advertising/profile.html
+msgid "Set by ClipCash."
+msgstr "Imewekwa na ClipCash."
+
+#: apps/administration/views.py
+msgid "Settle"
+msgstr "Kamilisha malipo"
+
+#: apps/payments/models.py apps/reports/analytics.py
+msgid "Settled"
+msgstr "Yamekamilishwa"
+
+#: templates/payments/intent.html
+msgid "Settled (simulated)"
+msgstr "Yamekamilishwa (ya kuigiza)"
+
+#: templates/payments/funding.html
+msgid "Settled deposits (sandbox)"
+msgstr "Amana zilizokamilishwa (majaribio)"
+
+#: templates/administration/analytics/dashboard.html templates/administration/reports/detail.html templates/advertising/reports.html
+msgid "Show"
+msgstr "Onyesha"
+
+#: templates/components/form.html
+msgid "Show password"
+msgstr "Onyesha nenosiri"
+
+#: templates/advertising/campaign_detail.html
+msgid "Shown to eligible members."
+msgstr "Inaonyeshwa kwa wanachama wanaostahili."
+
+#: templates/accounts/activate_account.html templates/accounts/activation_complete.html templates/accounts/link_invalid.html templates/accounts/login.html templates/accounts/password_reset_complete.html templates/accounts/register_done.html templates/accounts/registration_closed.html templates/accounts/resend_verification_done.html templates/base.html templates/public/_navigation.html templates/public/home.html templates/videos/detail.html
+msgid "Sign in"
+msgstr "Ingia"
+
+#: templates/memberships/plan_detail.html
+msgid "Sign in to choose this plan"
+msgstr "Ingia kuchagua mpango huu"
+
+#: templates/accounts/logout_confirm.html templates/accounts/profile.html templates/base.html templates/components/member_sidebar.html
+msgid "Sign out"
+msgstr "Ondoka"
+
+#: templates/accounts/profile.html
+msgid "Sign out on shared computers."
+msgstr "Ondoka kwenye akaunti unapotumia kompyuta za pamoja."
+
+#: apps/accounts/views.py
+msgid "Signed in"
+msgstr "Umeingia"
+
+#: templates/accounts/password_reset_form.html
+msgid "Signed up with your mobile number only?"
+msgstr "Ulijiandikisha kwa namba ya simu pekee?"
+
+#: templates/members/_activity_list.html templates/members/dashboard.html
+msgid "Simulated"
+msgstr "Ya kuigiza"
+
+#: templates/administration/rewards/rewards.html templates/administration/withdrawals/detail.html templates/administration/withdrawals/list.html templates/withdrawals/demo.html templates/withdrawals/overview.html
+msgid "Simulated amount"
+msgstr "Kiasi cha kuigiza"
+
+#: apps/administration/views.py
+#, python-format
+msgid "Simulated notice: HTTP %(s)s, %(o)s."
+msgstr "Taarifa ya kuigiza: HTTP %(s)s, %(o)s."
+
+#: apps/administration/views.py
+#, python-format
+msgid "Simulated provider notice: HTTP %(s)s, %(o)s."
+msgstr "Taarifa ya kuigiza ya mtoa huduma: HTTP %(s)s, %(o)s."
+
+#: apps/rewards/models.py
+msgid "Simulated reward recorded"
+msgstr "Zawadi ya kuigiza imerekodiwa"
+
+#: apps/rewards/models.py
+msgid "Simulated reward reversed"
+msgstr "Zawadi ya kuigiza imebatilishwa"
+
+#: templates/components/demo_reward_notice.html
+msgid "Simulated rewards only."
+msgstr "Zawadi za kuigiza pekee."
+
+#: templates/advertising/campaign_detail.html templates/components/campaign_performance.html
+msgid "Simulated rewards recorded"
+msgstr "Zawadi za kuigiza zilizorekodiwa"
+
+#: templates/advertising/campaign_detail.html templates/components/campaign_performance.html
+msgid "Simulated rewards reversed"
+msgstr "Zawadi za kuigiza zilizobatilishwa"
+
+#: templates/withdrawals/overview.html
+msgid "Simulated withdrawal scenarios"
+msgstr "Mifano ya kuigiza ya utoaji wa pesa"
+
+#: templates/base.html
+msgid "Skip to content"
+msgstr "Ruka hadi kwenye maudhui"
+
+#: apps/support/models.py
+msgid "Something else"
+msgstr "Jambo lingine"
+
+#: templates/components/campaign_report.html
+msgid "Spend"
+msgstr "Matumizi"
+
+#: templates/components/campaign_report.html
+msgid "Spend: not applicable (no real money is charged)"
+msgstr "Matumizi: hayatumiki (hakuna fedha halisi zinazotozwa)"
+
+#: templates/advertising/organization.html
+msgid "Spend: not applicable. No money is charged to advertisers in this demonstration."
+msgstr "Matumizi: hayatumiki. Hakuna fedha zinazotozwa watangazaji katika majaribio haya."
+
+#: templates/advertising/campaign_detail.html templates/components/campaign_performance.html
+msgid "Spend: not applicable. No money is charged to advertisers or paid to members in this demonstration."
+msgstr "Matumizi: hayatumiki. Hakuna fedha zinazotozwa watangazaji au kulipwa wanachama katika majaribio haya."
+
+#: templates/viewing/list.html
+msgid "Sponsored"
+msgstr "Inayodhaminiwa"
+
+#: templates/viewing/campaign.html
+#, python-format
+msgid "Sponsored by %(name)s"
+msgstr "Imedhaminiwa na %(name)s"
+
+#: templates/components/member_sidebar.html templates/members/dashboard.html templates/viewing/list.html templates/viewing/session.html
+msgid "Sponsored videos"
+msgstr "Video zinazodhaminiwa"
+
+#: templates/members/dashboard.html
+msgid "Sponsored videos for you"
+msgstr "Video zinazodhaminiwa kwa ajili yako"
+
+#: templates/advertising/home.html
+msgid "Staff accounts cannot act for an advertiser. Use the administration console to review advertisers."
+msgstr "Akaunti za wafanyakazi haziwezi kutenda kwa niaba ya mtangazaji. Tumia sehemu ya usimamizi kukagua watangazaji."
+
+#: templates/wallets/wallet.html
+msgid "Staff accounts do not have member wallets."
+msgstr "Akaunti za wafanyakazi hazina pochi za wanachama."
+
+#: templates/payments/history.html
+msgid "Start sandbox payment"
+msgstr "Anza malipo ya majaribio"
+
+#: templates/viewing/campaign.html
+msgid "Start watching"
+msgstr "Anza kutazama"
+
+#: templates/memberships/my_membership.html templates/memberships/subscription_detail.html templates/viewing/history.html
+msgid "Started"
+msgstr "Ilianza"
+
+#: apps/advertising/forms.py
+msgid "Starts"
+msgstr "Inaanza"
+
+#: apps/reports/services.py templates/accounts/profile.html templates/administration/campaigns/list.html templates/administration/categories/list.html templates/administration/health.html templates/administration/members/complimentary.html templates/administration/members/detail.html templates/administration/membership_payments/list.html templates/administration/payments/detail.html templates/administration/payments/exceptions.html templates/administration/payments/funding.html templates/administration/payments/list.html templates/administration/plans/list.html templates/administration/rewards/policies.html templates/administration/rewards/policy.html templates/administration/rewards/rewards.html templates/administration/support/queue.html templates/administration/support/ticket.html templates/administration/videos/detail.html templates/administration/wallets/detail.html templates/administration/wallets/list.html templates/administration/wallets/reconciliation.html templates/administration/withdrawals/beneficiaries.html templates/administration/withdrawals/detail.html templates/administration/withdrawals/exceptions.html templates/administration/withdrawals/list.html templates/advertising/_campaign_table.html templates/advertising/campaign_list.html templates/advertising/home.html templates/advertising/profile.html templates/advertising/reports.html templates/memberships/my_membership.html templates/memberships/subscription_detail.html templates/payments/funding.html templates/payments/history.html templates/payments/intent.html templates/rewards/history.html templates/support/ticket_list.html templates/withdrawals/demo.html templates/withdrawals/overview.html
+msgid "Status"
+msgstr "Hali"
+
+#: apps/support/models.py
+msgid "Status changed"
+msgstr "Hali imebadilishwa"
+
+#: apps/administration/views.py
+msgid "Status check queued. Refresh in a minute."
+msgstr "Ukaguzi wa hali umewekwa kwenye foleni. Pakia upya baada ya dakika moja."
+
+#: templates/withdrawals/overview.html
+msgid "Stay safe"
+msgstr "Kaa salama"
+
+#: apps/support/forms.py templates/administration/support/queue.html templates/support/ticket_list.html
+msgid "Subject"
+msgstr "Mada"
+
+msgid "Submit"
+msgstr "Wasilisha"
+
+#: templates/advertising/onboard.html
+msgid "Submit application"
+msgstr "Wasilisha ombi"
+
+#: templates/components/manual_payment_status.html templates/payments/manual_claim.html
+msgid "Submit corrected details"
+msgstr "Wasilisha taarifa zilizorekebishwa"
+
+#: templates/advertising/campaign_detail.html
+msgid "Submit for review"
+msgstr "Wasilisha kwa ukaguzi"
+
+msgid "Submit payment details"
+msgstr "Wasilisha taarifa za malipo"
+
+#: templates/payments/manual_claim.html
+msgid "Submit payment details again"
+msgstr "Wasilisha taarifa za malipo tena"
+
+#: templates/administration/advertisers/detail.html templates/administration/advertisers/list.html templates/administration/campaigns/list.html templates/administration/membership_payments/detail.html templates/administration/membership_payments/list.html templates/advertising/profile.html templates/payments/manual_claim.html
+msgid "Submitted"
+msgstr "Iliwasilishwa"
+
+#: templates/advertising/campaign_detail.html
+msgid "Submitting becomes available once your advertiser account is approved."
+msgstr "Kuwasilisha kunawezekana akaunti yako ya mtangazaji ikikubaliwa."
+
+#: templates/payments/manual_pay.html
+msgid "Submitting these details does not activate your membership by itself. We check every payment against the official Airtel records first."
+msgstr "Kuwasilisha taarifa hizi pekee hakuwezeshi uanachama wako. Kwanza tunahakiki kila malipo kwa kuyalinganisha na rekodi rasmi za Airtel."
+
+#: templates/accounts/layout.html
+msgid "Submitting your request…"
+msgstr "Ombi lako linatumwa…"
+
+#: apps/audit/models.py templates/components/messages.html
+msgid "Success"
+msgstr "Imefanikiwa"
+
+#: apps/notifications/models.py templates/administration/support/queue.html templates/components/member_sidebar.html templates/support/ticket_list.html
+msgid "Support"
+msgstr "Usaidizi"
+
+#: templates/administration/support/queue.html templates/support/ticket_list.html
+msgid "Support tickets"
+msgstr "Maombi ya usaidizi"
+
+#: templates/accounts/password_reset_form.html
+msgid "Support will check that the account is yours before helping."
+msgstr "Usaidizi utahakikisha kuwa akaunti ni yako kabla ya kukusaidia."
+
+#: apps/accounts/models.py apps/advertising/models.py apps/memberships/models.py
+msgid "Suspended"
+msgstr "Umesimamishwa"
+
+#: templates/advertising/campaign_detail.html
+msgid "Targeting"
+msgstr "Ulengaji"
+
+#: templates/administration/advertisers/detail.html templates/advertising/_header.html templates/advertising/team.html
+msgid "Team"
+msgstr "Timu"
+
+#: apps/advertising/views.py
+msgid "Team member removed."
+msgstr "Mwanatimu ameondolewa."
+
+#: apps/support/models.py
+msgid "Technical problem"
+msgstr "Tatizo la kiufundi"
+
+#: templates/advertising/onboard.html
+msgid "Tell us about the business. ClipCash reviews every application before campaigns can be submitted. Do not upload or paste identity documents here."
+msgstr "Tuambie kuhusu biashara. ClipCash hukagua kila ombi kabla ya kampeni kuwasilishwa. Usipakie wala kubandika hati za utambulisho hapa."
+
+#: apps/advertising/views.py
+msgid "Thank you. Your advertiser application is awaiting review."
+msgstr "Asante. Ombi lako la mtangazaji linasubiri ukaguzi."
+
+#: apps/payments/views.py
+msgid "Thank you. Your payment details were submitted. Awaiting payment verification."
+msgstr "Asante. Taarifa zako za malipo zimewasilishwa. Zinasubiri uhakiki wa malipo."
+
+#: apps/payments/manual.py
+#, python-format
+msgid "The amount must be exactly %(price)s, the price of your plan."
+msgstr "Kiasi lazima kiwe %(price)s kamili, bei ya mpango wako."
+
+#: apps/payments/models.py
+msgid "The amount received does not match the plan price"
+msgstr "Kiasi kilichopokelewa hakilingani na bei ya mpango"
+
+#: apps/rewards/services.py
+msgid "The campaign changed after this view."
+msgstr "Kampeni ilibadilika baada ya mtazamo huu."
+
+#: apps/rewards/services.py
+msgid "The campaign was cancelled."
+msgstr "Kampeni ilighairiwa."
+
+#: apps/rewards/services.py
+msgid "The campaign's credit budget was used up."
+msgstr "Bajeti ya krediti ya kampeni iliisha."
+
+#: templates/viewing/campaign.html
+msgid "The credits shown when you press Start are the credits this view earns, while the campaign's credit budget lasts."
+msgstr "Krediti zinazoonyeshwa unapobonyeza Anza ndizo mtazamo huu unapata, mradi bajeti ya krediti ya kampeni haijaisha."
+
+#: apps/accounts/views.py
+msgid "The email address change was cancelled."
+msgstr "Mabadiliko ya anwani ya barua pepe yameghairiwa."
+
+#: templates/advertising/organization.html
+msgid "The five newest campaigns"
+msgstr "Kampeni tano mpya zaidi"
+
+#: apps/payments/models.py
+msgid "The payment came from a different phone number"
+msgstr "Malipo yalitoka kwenye namba tofauti ya simu"
+
+#: apps/payments/views.py
+msgid "The payment could not be submitted."
+msgstr "Malipo hayakuweza kuwasilishwa."
+
+#: apps/payments/manual.py
+msgid "The payment date cannot be in the future."
+msgstr "Tarehe ya malipo haiwezi kuwa ya baadaye."
+
+#: apps/payments/manual.py
+msgid "The payment date must be after you chose this plan."
+msgstr "Tarehe ya malipo lazima iwe baada ya kuchagua mpango huu."
+
+#: templates/advertising/team.html
+msgid "The person must already have a verified ClipCash account with this email address. They will see the invitation on their Advertise page."
+msgstr "Mtu huyu lazima tayari awe na akaunti ya ClipCash iliyothibitishwa yenye anwani hii ya barua pepe. Ataona mwaliko kwenye ukurasa wake wa Tangaza."
+
+#: templates/viewing/session.html
+msgid "The player's timeline shows playback position. This progress bar shows only time counted by the server; it does not confirm a verified view or a reward."
+msgstr "Mstari wa muda wa kichezaji unaonyesha sehemu inayochezwa. Kiashirio hiki cha maendeleo kinaonyesha tu muda uliohesabiwa na seva; hakithibitishi mtazamo uliohakikiwa wala zawadi."
+
+#: apps/rewards/services.py
+msgid "The policy exceeded the campaign's approved amount."
+msgstr "Sera ilizidi kiasi kilichoidhinishwa kwa kampeni."
+
+#: templates/advertising/profile.html
+msgid "The profile cannot be changed while this advertiser is suspended."
+msgstr "Wasifu hauwezi kubadilishwa wakati mtangazaji huyu amesimamishwa."
+
+#: apps/payments/manual.py
+msgid "The reference you found differs from the one the member submitted. Check it again, or reject the payment."
+msgstr "Kumbukumbu uliyoona inatofautiana na iliyowasilishwa na mwanachama. Iangalie tena, au kataa malipo."
+
+#: templates/viewing/session.html
+msgid "The required watch time has been counted. Finish playback so ClipCash can check the session outcome."
+msgstr "Muda wa kutazama unaohitajika umehesabiwa. Malizia kucheza video ili ClipCash ihakiki matokeo ya kipindi."
+
+#: templates/viewing/session.html
+msgid "The session expired before the video was played."
+msgstr "Kipindi kiliisha muda kabla ya video kuchezwa."
+
+#: templates/payments/intent.html
+msgid "The simulated workflow is complete. No real money was collected."
+msgstr "Mchakato wa kuigiza umekamilika. Hakuna fedha halisi zilizokusanywa."
+
+#: apps/payments/models.py
+msgid "The transaction reference does not match"
+msgstr "Kumbukumbu ya muamala hailingani"
+
+#: apps/payments/models.py
+msgid "The transaction was already used for another membership"
+msgstr "Muamala tayari umetumika kwa uanachama mwingine"
+
+#: apps/accounts/forms.py
+msgid "The two passwords do not match."
+msgstr "Nenosiri na uthibitisho wake havifanani."
+
+#: apps/payments/manual.py
+#, python-format
+msgid "The verified amount differs from the plan price (%(price)s). Reject the payment with the reason “amount does not match” instead."
+msgstr "Kiasi kilichohakikiwa kinatofautiana na bei ya mpango (%(price)s). Kataa malipo kwa sababu “kiasi hakilingani”."
+
+#: templates/components/preview_player.html
+msgid "The video is not published and ready, so it cannot be previewed or shown."
+msgstr "Video haijachapishwa na kuwa tayari, hivyo haiwezi kuhakikiwa au kuonyeshwa."
+
+#: apps/rewards/services.py
+msgid "The view was not counted."
+msgstr "Mtazamo haukuhesabiwa."
+
+#: apps/rewards/services.py
+msgid "The view was not verified."
+msgstr "Mtazamo haukuhakikiwa."
+
+#: apps/rewards/services.py
+msgid "The viewing session was not finished."
+msgstr "Kipindi cha utazamaji hakikumalizika."
+
+#: apps/support/forms.py
+msgid "Then"
+msgstr "Kisha"
+
+#: templates/components/demo_reward_notice.html
+msgid "These are demonstration records of what a verified view would earn. They are not money, cannot be withdrawn or spent, and nothing is owed or paid."
+msgstr "Hizi ni rekodi za majaribio za kile ambacho mtazamo uliohakikiwa ungepata. Si fedha, haziwezi kutolewa wala kutumika kulipia, na hakuna deni au malipo yanayotokana nazo."
+
+#: templates/advertising/_organization_fields.html
+msgid "These details were verified, so they are read-only here."
+msgstr "Taarifa hizi zimehakikiwa, hivyo zinaweza kusomwa tu hapa."
+
+#: apps/payments/views.py
+msgid "These payment details can no longer be withdrawn."
+msgstr "Taarifa hizi za malipo haziwezi kuondolewa tena."
+
+#: templates/accounts/activate_account.html
+msgid "This activation link is invalid, has expired or has already been used."
+msgstr "Kiungo hiki cha kuwezesha akaunti si halali, kimeisha muda au kimetumika tayari."
+
+#: templates/advertising/_header.html
+msgid "This advertiser is suspended. Campaigns cannot run. Please contact support."
+msgstr "Mtangazaji huyu amesimamishwa. Kampeni haziwezi kuendeshwa. Wasiliana na usaidizi."
+
+#: templates/advertising/campaign_detail.html
+msgid "This campaign has finished and is no longer shown to members."
+msgstr "Kampeni hii imekamilika na haionyeshwi tena kwa wanachama."
+
+#: templates/viewing/campaign.html
+#, python-format
+msgid "This campaign is for members on: %(plans)s."
+msgstr "Kampeni hii ni ya wanachama wa: %(plans)s."
+
+#: templates/advertising/campaign_detail.html
+msgid "This campaign was cancelled and is no longer shown to members."
+msgstr "Kampeni hii ilighairiwa na haionyeshwi tena kwa wanachama."
+
+#: templates/viewing/campaign.html
+msgid "This campaign's credit budget is used up. You can still watch, but a view will not earn credits."
+msgstr "Bajeti ya krediti ya kampeni hii imeisha. Unaweza bado kutazama, lakini mtazamo hautapata krediti."
+
+#: templates/withdrawals/destinations.html
+msgid "This destination will no longer be available for withdrawals."
+msgstr "Njia hii haitapatikana tena kwa kutoa pesa."
+
+#: templates/videos/detail.html
+msgid "This is a demonstration record. No video file has been configured for demo playback."
+msgstr "Hii ni rekodi ya majaribio. Hakuna faili ya video iliyowekwa kwa kucheza katika majaribio."
+
+#: templates/accounts/registration_closed.html
+msgid "This is a restricted demonstration: only accounts provided by the ClipCash team can sign in."
+msgstr "Haya ni majaribio yenye mipaka: akaunti zilizotolewa na timu ya ClipCash pekee zinaweza kuingia."
+
+#: apps/accounts/forms.py
+msgid "This is already your email address."
+msgstr "Hii tayari ndiyo anwani yako ya barua pepe."
+
+#: templates/accounts/link_invalid.html
+msgid "This link is invalid, has expired or has already been used."
+msgstr "Kiungo hiki si halali, kimeisha muda au kimetumika tayari."
+
+#: apps/memberships/views.py
+msgid "This membership can no longer be cancelled here."
+msgstr "Uanachama huu hauwezi kughairiwa hapa tena."
+
+#: apps/memberships/views.py
+msgid "This membership cannot be selected right now."
+msgstr "Uanachama huu hauwezi kuchaguliwa sasa."
+
+#: apps/payments/views.py
+msgid "This membership choice has expired. Choose the plan again to pay."
+msgstr "Chaguo hili la uanachama limeisha muda. Chagua mpango tena ili kulipa."
+
+#: templates/memberships/subscription_detail.html
+msgid "This membership choice was cancelled. It does not give access to included content."
+msgstr "Chaguo hili la uanachama limeghairiwa. Halitoi ufikiaji wa maudhui yaliyojumuishwa."
+
+#: templates/memberships/subscription_detail.html
+msgid "This membership has ended, so it no longer gives access to included content."
+msgstr "Uanachama huu umeisha, hivyo hautoi tena ufikiaji wa maudhui yaliyojumuishwa."
+
+#: apps/payments/views.py
+msgid "This membership is not waiting for payment."
+msgstr "Uanachama huu hausubiri malipo."
+
+#: templates/advertising/reports.html
+msgid "This narrow view shows verified views. Open a campaign for its other figures."
+msgstr "Mwonekano huu mdogo unaonyesha mitazamo iliyohakikiwa. Fungua kampeni kwa takwimu zake nyingine."
+
+#: templates/payments/intent.html
+msgid "This outcome was simulated. No real money was collected or returned."
+msgstr "Matokeo haya yalikuwa ya kuigiza. Hakuna fedha halisi zilizokusanywa au kurejeshwa."
+
+#: templates/payments/history.html
+msgid "This page contains test payment intents only. Statuses describe the sandbox workflow and never confirm a real charge or membership activation."
+msgstr "Ukurasa huu una maombi ya malipo ya majaribio pekee. Hali zinaeleza mchakato wa majaribio na hazithibitishi kamwe tozo halisi au uwezeshaji wa uanachama."
+
+#: templates/accounts/password_reset_confirm.html
+msgid "This password reset link is invalid, has expired or has already been used."
+msgstr "Kiungo hiki cha kuweka upya nenosiri si halali, kimeisha muda au kimetumika tayari."
+
+#: apps/administration/views.py
+msgid "This payment was already approved. Nothing changed."
+msgstr "Malipo haya tayari yalikuwa yamekubaliwa. Hakuna kilichobadilika."
+
+#: apps/administration/views.py
+msgid "This payment was already rejected. Nothing changed."
+msgstr "Malipo haya tayari yalikuwa yamekataliwa. Hakuna kilichobadilika."
+
+#: templates/advertising/team.html
+msgid "This person will lose access to this advertiser."
+msgstr "Mtu huyu atapoteza ufikiaji wa mtangazaji huyu."
+
+#: apps/accounts/forms.py
+msgid "This phone number cannot be used. Please check it or contact support."
+msgstr "Namba hii ya simu haiwezi kutumika. Iangalie au wasiliana na usaidizi."
+
+#: apps/memberships/views.py
+msgid "This plan is no longer available."
+msgstr "Mpango huu haupatikani tena."
+
+#: apps/payments/views.py
+msgid "This plan is no longer available. Choose another plan."
+msgstr "Mpango huu haupatikani tena. Chagua mpango mwingine."
+
+#: templates/advertising/campaign_form.html
+msgid "This saves a draft. Members see nothing until ClipCash has reviewed and approved the campaign."
+msgstr "Hii inahifadhi rasimu. Wanachama hawataona chochote mpaka ClipCash ikague na kukubali kampeni."
+
+#: templates/viewing/session.html
+msgid "This session could not be accepted."
+msgstr "Kipindi hiki hakikuweza kukubaliwa."
+
+#: templates/viewing/session.html
+#, python-format
+msgid "This session earns %(credits)s if ClipCash verifies the view. The amount is fixed for this session."
+msgstr "Kipindi hiki kinapata %(credits)s ikiwa ClipCash itahakiki mtazamo. Kiasi kimewekwa kwa kipindi hiki."
+
+#: templates/viewing/session.html
+msgid "This session earns no credits."
+msgstr "Kipindi hiki hakipati krediti."
+
+#: templates/payments/intent.html
+msgid "This test payment has ended. Nothing was charged."
+msgstr "Malipo haya ya majaribio yameisha. Hakuna kilichotozwa."
+
+#: templates/payments/intent.html
+msgid "This test payment is moving through the simulated checks. Nothing is charged."
+msgstr "Malipo haya ya majaribio yanapitia uhakiki wa kuigiza. Hakuna kinachotozwa."
+
+#: templates/support/ticket_detail.html
+msgid "This ticket is closed."
+msgstr "Ombi hili limefungwa."
+
+#: templates/support/ticket_detail.html
+msgid "This ticket is resolved. Replying will reopen it."
+msgstr "Ombi hili limetatuliwa. Ukijibu litafunguliwa tena."
+
+#: apps/payments/manual.py
+msgid "This transaction reference has already been submitted."
+msgstr "Kumbukumbu hii ya muamala tayari imewasilishwa."
+
+#: apps/payments/manual.py
+msgid "This transaction reference has already been submitted. Each Airtel payment can be used for one membership only. Contact support if you think this is a mistake."
+msgstr "Kumbukumbu hii ya muamala tayari imewasilishwa. Kila malipo ya Airtel yanaweza kutumika kwa uanachama mmoja pekee. Wasiliana na usaidizi ikiwa unaona hili ni kosa."
+
+#: templates/viewing/session.html
+msgid "This update was not confirmed. Check your connection or reload the session to see its current status."
+msgstr "Sasisho hili halijathibitishwa. Angalia muunganisho wako au pakia upya kipindi kuona hali yake ya sasa."
+
+#: templates/viewing/session.html
+msgid "This video has no confirmed length yet, so the session cannot be verified."
+msgstr "Muda wa video hii bado haujathibitishwa, hivyo kipindi hakiwezi kuhakikiwa."
+
+#: templates/components/preview_player.html
+msgid "This video is no longer authorized for this advertiser."
+msgstr "Video hii haijaidhinishwa tena kwa mtangazaji huyu."
+
+#: templates/viewing/session.html
+msgid "This view is being reviewed by ClipCash staff."
+msgstr "Mtazamo huu unakaguliwa na wafanyakazi wa ClipCash."
+
+#: templates/viewing/session.html
+msgid "This view was verified by ClipCash's checks."
+msgstr "Mtazamo huu umehakikiwa na ClipCash."
+
+#: templates/viewing/session.html
+msgid "This viewing session has ended. Loading the result…"
+msgstr "Kipindi hiki cha utazamaji kimeisha. Matokeo yanapakiwa…"
+
+#: apps/administration/views.py
+msgid "Tick the confirmation box first. This action cannot be undone."
+msgstr "Tia alama kwenye kisanduku cha uthibitisho kwanza. Hatua hii haiwezi kutenguliwa."
+
+#: apps/advertising/views.py
+msgid "Tick the confirmation box first. This cannot be undone."
+msgstr "Tia alama kwenye kisanduku cha uthibitisho kwanza. Hili haliwezi kutenguliwa."
+
+#: templates/support/_conversation.html
+msgid "Ticket opened"
+msgstr "Ombi limefunguliwa"
+
+#: templates/support/_conversation.html
+msgid "Ticket reopened"
+msgstr "Ombi limefunguliwa tena"
+
+#: apps/advertising/forms.py
+msgid "Times are in the platform timezone."
+msgstr "Saa zinatumia ukanda wa saa wa jukwaa."
+
+#: templates/administration/analytics/dashboard.html templates/administration/reports/detail.html templates/advertising/reports.html
+msgid "To"
+msgstr "Hadi"
+
+#: templates/viewing/campaign.html
+msgid "To qualify:"
+msgstr "Ili kustahili:"
+
+#: apps/accounts/forms.py
+msgid "Too many failed sign-in attempts. Please wait a few minutes and try again."
+msgstr "Majaribio mengi ya kuingia yameshindikana. Subiri dakika chache kisha ujaribu tena."
+
+#: apps/accounts/forms.py
+msgid "Too many incorrect passwords. Please wait a few minutes and try again."
+msgstr "Nenosiri lisilo sahihi limeingizwa mara nyingi. Subiri dakika chache kisha ujaribu tena."
+
+#: apps/payments/views.py
+msgid "Too many payment submissions. Please wait an hour and try again."
+msgstr "Taarifa za malipo zimewasilishwa mara nyingi. Subiri saa moja kisha ujaribu tena."
+
+#: apps/accounts/forms.py
+msgid "Too many phone number changes. Please try again later."
+msgstr "Namba ya simu imebadilishwa mara nyingi. Jaribu tena baadaye."
+
+#: apps/accounts/views.py
+msgid "Too many requests. Please wait a while and try again."
+msgstr "Maombi mengi sana. Subiri kidogo kisha ujaribu tena."
+
+#: templates/administration/membership_payments/detail.html templates/administration/membership_payments/list.html templates/payments/manual_claim.html
+msgid "Transaction reference"
+msgstr "Kumbukumbu ya muamala"
+
+#: templates/administration/wallets/detail.html templates/wallets/wallet.html
+msgid "Transactions"
+msgstr "Miamala"
+
+#: templates/administration/payments/detail.html templates/wallets/transaction.html templates/wallets/wallet.html
+msgid "Type"
+msgstr "Aina"
+
+#: templates/payments/funding.html
+msgid "Unallocated (sandbox)"
+msgstr "Hazijatengwa (majaribio)"
+
+#: apps/reports/analytics.py apps/reports/services.py templates/administration/support/queue.html templates/administration/support/ticket.html templates/support/_conversation.html
+msgid "Unassigned"
+msgstr "Haijapangiwa mhudumu"
+
+#: apps/viewing/models.py apps/withdrawals/models.py templates/members/dashboard.html
+msgid "Under review"
+msgstr "Inakaguliwa"
+
+#: templates/public/home.html
+msgid "Understand your records"
+msgstr "Elewa rekodi zako"
+
+#: apps/reports/analytics.py apps/reports/services.py templates/advertising/reports.html
+msgid "Unique viewers"
+msgstr "Watazamaji tofauti"
+
+#: templates/advertising/campaign_detail.html templates/advertising/organization.html templates/advertising/reports.html templates/components/campaign_performance.html templates/components/campaign_report.html
+msgid "Unique viewers (verified)"
+msgstr "Watazamaji tofauti (waliohakikiwa)"
+
+#: apps/administration/views.py
+msgid "Unknown-reference notice"
+msgstr "Taarifa ya kumbukumbu isiyojulikana"
+
+#: templates/notifications/inbox.html
+msgid "Unread"
+msgstr "Haijasomwa"
+
+#: templates/notifications/inbox.html
+msgid "Unread only"
+msgstr "Zisizosomwa pekee"
+
+#: templates/advertising/_header.html
+msgid "Update and resubmit"
+msgstr "Sasisha na uwasilishe tena"
+
+#: templates/viewing/session.html
+msgid "Updates are temporarily limited. Verification has not been confirmed; wait before trying again."
+msgstr "Masasisho yamewekewa kikomo kwa muda. Uhakiki haujathibitishwa; subiri kabla ya kujaribu tena."
+
+#: apps/support/models.py
+msgid "Urgent"
+msgstr "Haraka"
+
+#: templates/accounts/email_change_confirm.html
+#, python-format
+msgid "Use <strong>%(new_email)s</strong> to sign in to your ClipCash account from now on?"
+msgstr "Utumie <strong>%(new_email)s</strong> kuingia kwenye akaunti yako ya ClipCash kuanzia sasa?"
+
+#: templates/viewing/session.html
+msgid "Use the player's controls to retry playback. If it remains unavailable, reload this session to check access and status. Unconfirmed time may not count. You can finish the session to see the server's decision."
+msgstr "Tumia vidhibiti vya kichezaji kujaribu tena. Ikiwa bado haiwezi kuchezwa, pakia upya kipindi hiki kuangalia ufikiaji na hali. Muda ambao haujathibitishwa unaweza kutohesabiwa. Unaweza kumaliza kipindi kuona uamuzi wa seva."
+
+#: templates/accounts/login.html
+msgid "Use your mobile number (for example 0712 345 678) or your email address."
+msgstr "Tumia namba yako ya simu (kwa mfano 0712 345 678) au anwani yako ya barua pepe."
+
+#: templates/public/_footer.html
+msgid "Useful links"
+msgstr "Viungo muhimu"
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "Valid until %(date)s"
+msgstr "Unatumika hadi %(date)s"
+
+#: templates/administration/advertisers/list.html templates/withdrawals/destinations.html
+msgid "Verification"
+msgstr "Uhakiki"
+
+#: apps/advertising/forms.py
+msgid "Verified details. Contact support to change them."
+msgstr "Taarifa zilizohakikiwa. Wasiliana na usaidizi ili kuzibadilisha."
+
+#: templates/viewing/list.html
+msgid "Verified today: come back tomorrow"
+msgstr "Imehakikiwa leo: rudi kesho"
+
+#: templates/rewards/history.html
+msgid "Verified view"
+msgstr "Mtazamo uliohakikiwa"
+
+#: apps/administration/views.py
+msgid "Verified view revoked; its demo reward (if any) was reversed."
+msgstr "Mtazamo uliohakikiwa umebatilishwa; zawadi yake ya majaribio (ikiwa ipo) imebatilishwa."
+
+#: apps/reports/analytics.py templates/public/home.html
+msgid "Verified viewing"
+msgstr "Utazamaji uliohakikiwa"
+
+#: apps/reports/analytics.py apps/reports/services.py templates/administration/overview.html templates/advertising/campaign_detail.html templates/advertising/organization.html templates/advertising/reports.html templates/components/campaign_performance.html templates/components/campaign_report.html
+msgid "Verified views"
+msgstr "Mitazamo iliyohakikiwa"
+
+#: templates/components/not_a_reward_notice.html
+msgid "Verified views are not rewards."
+msgstr "Mitazamo iliyohakikiwa si zawadi."
+
+#: templates/administration/advertisers/detail.html templates/administration/campaigns/detail.html templates/administration/rewards/campaign_credits.html templates/advertising/campaign_detail.html templates/advertising/campaign_form.html
+msgid "Video"
+msgstr "Video"
+
+#: apps/administration/views.py
+msgid "Video archived."
+msgstr "Video imehifadhiwa kwenye kumbukumbu."
+
+#: apps/administration/views.py
+msgid "Video authorization revoked."
+msgstr "Idhini ya video imebatilishwa."
+
+#: apps/administration/views.py
+msgid "Video authorized for this advertiser."
+msgstr "Video imeidhinishwa kwa mtangazaji huyu."
+
+#: apps/administration/views.py
+msgid "Video created."
+msgstr "Video imeundwa."
+
+#: templates/public/home.html
+msgid "Video discovery"
+msgstr "Ugunduzi wa video"
+
+#: templates/videos/library.html
+msgid "Video library"
+msgstr "Maktaba ya video"
+
+#: templates/administration/campaigns/detail.html templates/components/preview_player.html
+msgid "Video preview"
+msgstr "Hakikisho la video"
+
+#: apps/administration/views.py
+msgid "Video published."
+msgstr "Video imechapishwa."
+
+#: apps/administration/views.py
+msgid "Video unpublished (back to draft)."
+msgstr "Video imeondolewa kwenye uchapishaji (imerudi kuwa rasimu)."
+
+#: apps/notifications/models.py templates/administration/categories/list.html templates/administration/overview.html templates/administration/videos/list.html templates/base.html templates/components/member_sidebar.html templates/videos/library.html
+msgid "Videos"
+msgstr "Video"
+
+#: apps/advertising/forms.py
+msgid "Videos ClipCash has authorized for your advertiser account."
+msgstr "Video zilizoidhinishwa na ClipCash kwa akaunti yako ya mtangazaji."
+
+#: apps/support/models.py
+msgid "Videos and sponsored viewing"
+msgstr "Video na utazamaji unaodhaminiwa"
+
+#: templates/memberships/plan_list.html
+msgid "View details"
+msgstr "Angalia maelezo"
+
+#: templates/payments/manual_claim.html
+msgid "View membership"
+msgstr "Angalia uanachama"
+
+#: templates/members/dashboard.html
+msgid "View payment"
+msgstr "Angalia malipo"
+
+#: templates/rewards/history.html
+msgid "View session"
+msgstr "Angalia kipindi"
+
+#: templates/components/manual_payment_status.html
+msgid "View submission"
+msgstr "Angalia taarifa zilizowasilishwa"
+
+#: templates/members/dashboard.html
+msgid "View your pending plan"
+msgstr "Angalia mpango wako unaosubiri"
+
+#: templates/members/activity.html templates/viewing/history.html templates/viewing/session.html
+msgid "Viewing history"
+msgstr "Historia ya utazamaji"
+
+#: templates/components/campaign_report.html
+msgid "Viewing sessions started"
+msgstr "Vipindi vya utazamaji vilivyoanza"
+
+#: templates/administration/campaigns/detail.html templates/advertising/campaign_detail.html
+msgid "Views per member"
+msgstr "Mitazamo kwa kila mwanachama"
+
+#: apps/reports/services.py apps/support/console.py apps/support/forms.py apps/support/models.py
+msgid "Waiting for customer"
+msgstr "Linasubiri mteja"
+
+#: apps/payments/models.py templates/memberships/my_membership.html
+msgid "Waiting for payment"
+msgstr "Unasubiri malipo"
+
+#: templates/members/dashboard.html
+msgid "Waiting for payment. Online payment is not available yet."
+msgstr "Unasubiri malipo. Malipo ya mtandaoni bado hayapatikani."
+
+#: templates/members/dashboard.html
+msgid "Waiting for payment. Payments are temporarily unavailable."
+msgstr "Unasubiri malipo. Malipo hayapatikani kwa muda."
+
+#: apps/support/models.py
+msgid "Waiting for your reply"
+msgstr "Linasubiri jibu lako"
+
+#: templates/administration/members/detail.html templates/administration/members/list.html templates/administration/wallets/detail.html templates/administration/wallets/list.html templates/components/member_sidebar.html templates/members/dashboard.html templates/wallets/wallet.html
+msgid "Wallet"
+msgstr "Pochi"
+
+#: templates/components/wallet_notice.html
+msgid "Wallet money is not active yet."
+msgstr "Fedha za pochi bado hazijawezeshwa."
+
+#: templates/members/dashboard.html
+msgid "Wallet money is not active yet. Demo rewards are never wallet money."
+msgstr "Fedha za pochi bado hazijawezeshwa. Zawadi za majaribio si fedha za pochi kamwe."
+
+#: templates/wallets/wallet.html
+msgid "Wallet number"
+msgstr "Namba ya pochi"
+
+#: templates/wallets/transaction.html
+msgid "Wallet transaction"
+msgstr "Muamala wa pochi"
+
+#: apps/administration/views.py
+msgid "Wallet updated."
+msgstr "Pochi imesasishwa."
+
+#: templates/members/dashboard.html
+msgid "Wallets are for verified member accounts."
+msgstr "Pochi ni za akaunti za wanachama zilizothibitishwa."
+
+#: templates/components/messages.html
+msgid "Warning"
+msgstr "Tahadhari"
+
+#: templates/components/member_sidebar.html
+msgid "Watch"
+msgstr "Tazama"
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "Watch (%(n)s left)"
+msgid_plural "Watch (%(n)s left)"
+msgstr[0] "Tazama (%(n)s umebaki)"
+msgstr[1] "Tazama (%(n)s imebaki)"
+
+#: templates/viewing/list.html
+msgid "Watch a sponsored video in full and, once ClipCash verifies the view, you earn the credits shown. Credits are non-cash: not money and cannot be withdrawn. Library videos earn no credits."
+msgstr "Tazama video inayodhaminiwa hadi mwisho na, ClipCash ikihakiki mtazamo, utapata krediti zilizoonyeshwa. Krediti si fedha na haziwezi kutolewa kama pesa. Video za maktaba hazitoi krediti."
+
+#: templates/viewing/campaign.html
+#, python-format
+msgid "Watch at least %(n)s second of the video from the start, without skipping ahead."
+msgid_plural "Watch at least %(n)s seconds of the video from the start, without skipping ahead."
+msgstr[0] "Tazama angalau sekunde %(n)s ya video kuanzia mwanzo bila kuruka mbele."
+msgstr[1] "Tazama angalau sekunde %(n)s za video kuanzia mwanzo bila kuruka mbele."
+
+#: templates/public/home.html
+msgid "Watch clips."
+msgstr "Tazama video."
+
+#: templates/members/dashboard.html
+msgid "Watch now"
+msgstr "Tazama sasa"
+
+#: templates/viewing/history.html
+msgid "Watched"
+msgstr "Umetazama"
+
+#: templates/videos/detail.html
+msgid "Watching requires an active membership that includes this video."
+msgstr "Kutazama kunahitaji uanachama unaotumika unaojumuisha video hii."
+
+#: templates/components/not_a_reward_notice.html
+msgid "Watching sponsored videos does not earn money yet. No balance, payment or reward is created."
+msgstr "Kutazama video zinazodhaminiwa bado hakuleti fedha. Hakuna salio, malipo au zawadi inayoundwa."
+
+#: templates/payments/manual_claim.html
+msgid "We could not confirm this payment."
+msgstr "Hatukuweza kuthibitisha malipo haya."
+
+#: templates/components/manual_payment_status.html
+msgid "We could not confirm your last payment:"
+msgstr "Hatukuweza kuthibitisha malipo yako ya mwisho:"
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "We could not confirm your payment (reference %(ref)s) on %(date)s:"
+msgstr "Hatukuweza kuthibitisha malipo yako (kumbukumbu %(ref)s) %(date)s:"
+
+#: apps/payments/manual.py
+#, python-format
+msgid "We could not confirm your payment for %(plan)s (reference %(ref)s): %(reason)s."
+msgstr "Hatukuweza kuthibitisha malipo yako ya %(plan)s (kumbukumbu %(ref)s): %(reason)s."
+
+#: templates/components/manual_payment_status.html
+#, python-format
+msgid "We received your payment details (%(amount)s, reference %(ref)s) and are checking them against our Airtel business records. Your membership starts once the payment is confirmed."
+msgstr "Tumepokea taarifa zako za malipo (%(amount)s, kumbukumbu %(ref)s) na tunazihakiki kwa kuzilinganisha na rekodi zetu za biashara za Airtel. Uanachama wako unaanza malipo yakithibitishwa."
+
+#: apps/payments/manual.py
+#, python-format
+msgid "We received your payment details for %(plan)s (%(amount)s, reference %(ref)s). Your membership starts after our team confirms the payment in our Airtel business records."
+msgstr "Tumepokea taarifa zako za malipo ya %(plan)s (%(amount)s, kumbukumbu %(ref)s). Uanachama wako unaanza baada ya timu yetu kuthibitisha malipo kwenye rekodi zetu za biashara za Airtel."
+
+#: apps/accounts/forms.py
+msgid "We will send a confirmation link there. Nothing changes until you use it."
+msgstr "Tutatuma kiungo cha uthibitisho huko. Hakuna kitakachobadilika mpaka ukitumie."
+
+#: templates/administration/advertisers/detail.html templates/advertising/profile.html
+msgid "Website"
+msgstr "Tovuti"
+
+#: apps/accounts/views.py
+msgid "Welcome to ClipCash. Your account is ready."
+msgstr "Karibu ClipCash. Akaunti yako iko tayari."
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "Welcome, %(name)s"
+msgstr "Karibu, %(name)s"
+
+#: templates/withdrawals/overview.html
+msgid "What a withdrawal will need"
+msgstr "Kinachohitajika kutoa pesa"
+
+#: templates/public/home.html
+msgid "What do I need to create an account?"
+msgstr "Ninahitaji nini kufungua akaunti?"
+
+#: templates/memberships/my_membership.html
+msgid "What this plan includes"
+msgstr "Vinavyojumuishwa kwenye mpango huu"
+
+#: templates/payments/manual_claim.html
+msgid "What you submitted"
+msgstr "Ulichowasilisha"
+
+#: templates/accounts/email_change_confirm.html
+msgid "When you confirm, you stay signed in here and every other device is signed out."
+msgstr "Ukithibitisha, utabaki umeingia hapa na vifaa vingine vyote vitaondolewa."
+
+#: templates/public/home.html
+msgid "Where applicable, review simulated rewards after policy and eligibility checks. They are not wallet money and cannot be withdrawn."
+msgstr "Inapohusika, angalia zawadi za kuigiza baada ya ukaguzi wa sera na ustahiki. Si fedha za pochi na haziwezi kutolewa kama pesa."
+
+#: templates/public/home.html
+msgid "Why can I not register or play a video?"
+msgstr "Kwa nini siwezi kujisajili au kucheza video?"
+
+#: templates/members/dashboard.html
+msgid "Why, and what is needed"
+msgstr "Sababu, na kinachohitajika"
+
+#: templates/payments/manual_claim.html
+msgid "Withdraw these details"
+msgstr "Ondoa taarifa hizi"
+
+#: templates/advertising/campaign_detail.html
+msgid "Withdraw to draft"
+msgstr "Rudisha kuwa rasimu"
+
+#: templates/administration/overview.html templates/administration/withdrawals/beneficiaries.html templates/administration/withdrawals/exceptions.html templates/administration/withdrawals/list.html templates/components/member_sidebar.html templates/members/dashboard.html templates/withdrawals/destinations.html templates/withdrawals/overview.html
+msgid "Withdrawals"
+msgstr "Utoaji wa pesa"
+
+#: templates/withdrawals/overview.html
+msgid "Withdrawals are not available yet."
+msgstr "Utoaji wa pesa bado haupatikani."
+
+#: templates/accounts/profile.html templates/administration/health.html templates/administration/plans/form.html
+msgid "Yes"
+msgstr "Ndiyo"
+
+#: templates/support/_conversation.html
+msgid "You"
+msgstr "Wewe"
+
+#: apps/memberships/views.py
+msgid "You already have a renewal scheduled."
+msgstr "Tayari una uhuishaji wa uanachama uliopangwa."
+
+#: templates/viewing/campaign.html
+msgid "You already have a verified view of this campaign today. Come back tomorrow."
+msgstr "Tayari una mtazamo uliohakikiwa wa kampeni hii leo. Rudi kesho."
+
+#: templates/accounts/email_change_confirm.html templates/public/home.html
+#, python-format
+msgid "You are signed in as <strong>%(email)s</strong>."
+msgstr "Umeingia kama <strong>%(email)s</strong>."
+
+#: apps/memberships/views.py
+#, python-format
+msgid "You can renew in the last %(n)s days of your membership."
+msgstr "Unaweza kuhuisha uanachama katika siku %(n)s za mwisho za uanachama wako."
+
+#: templates/memberships/my_membership.html
+msgid "You can renew now. A renewal starts when your current membership ends."
+msgstr "Unaweza kuhuisha sasa. Uanachama mpya unaanza ule wa sasa unapoisha."
+
+#: apps/payments/manual.py
+msgid "You can submit corrected details or contact support."
+msgstr "Unaweza kuwasilisha taarifa zilizorekebishwa au kuwasiliana na usaidizi."
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "You chose %(plan)s. It stays pending until it is activated."
+msgstr "Umechagua %(plan)s. Unabaki unasubiri mpaka uwezeshwe."
+
+#: templates/members/dashboard.html templates/memberships/my_membership.html
+msgid "You do not have an active membership."
+msgstr "Huna uanachama unaotumika."
+
+#: templates/payments/manual_claim.html
+msgid "You get a notification and an email when the payment is confirmed or if it cannot be matched."
+msgstr "Utapata taarifa na barua pepe malipo yakithibitishwa au yakishindwa kulinganishwa."
+
+#: templates/accounts/account_unavailable.html
+msgid "You have been signed out because this account is no longer active."
+msgstr "Umeondolewa kwa sababu akaunti hii haitumiki tena."
+
+#: templates/notifications/inbox.html
+msgid "You have no notifications yet. Updates about your membership, campaigns, reviews and demo activity will appear here."
+msgstr "Bado huna taarifa. Masasisho kuhusu uanachama wako, kampeni, ukaguzi na matukio ya majaribio yataonekana hapa."
+
+#: templates/support/ticket_list.html
+msgid "You have not asked for help yet. Open a ticket and ClipCash support will reply here."
+msgstr "Bado hujaomba msaada. Fungua ombi na usaidizi wa ClipCash utajibu hapa."
+
+#: templates/viewing/history.html
+msgid "You have not watched any sponsored videos yet."
+msgstr "Bado hujatazama video zozote zinazodhaminiwa."
+
+#: apps/advertising/views.py
+#, python-format
+msgid "You joined %(name)s."
+msgstr "Umejiunga na %(name)s."
+
+#: templates/members/dashboard.html
+msgid "You pay with Airtel Money (Lipa) and the ClipCash team checks the payment."
+msgstr "Unalipa kwa Airtel Money (Lipa) na timu ya ClipCash inahakiki malipo."
+
+#: apps/accounts/forms.py
+msgid "You sign in with this mobile number. Add an email address before removing it."
+msgstr "Unatumia namba hii ya simu kuingia. Ongeza anwani ya barua pepe kabla ya kuiondoa."
+
+#: templates/advertising/team.html
+msgid "You will lose access to this advertiser."
+msgstr "Utapoteza ufikiaji wa mtangazaji huyu."
+
+#: templates/payments/manual_claim.html
+msgid "You withdrew these payment details."
+msgstr "Uliondoa taarifa hizi za malipo."
+
+#: templates/components/manual_payment_status.html
+msgid "You withdrew your last payment details."
+msgstr "Uliondoa taarifa zako za malipo ya mwisho."
+
+#: templates/members/dashboard.html
+msgid "Your ClipCash"
+msgstr "ClipCash yako"
+
+#: templates/public/home.html
+msgid "Your Tanzanian mobile number and a password. Your account works straight away, and creating it is free. An email address is optional."
+msgstr "Namba yako ya simu ya Tanzania na nenosiri. Akaunti yako inafanya kazi mara moja, na kuifungua ni bure. Barua pepe si lazima."
+
+#: apps/accounts/forms.py
+msgid "Your Tanzanian mobile number, for example 0712 345 678. You will sign in with it."
+msgstr "Namba yako ya simu ya Tanzania, kwa mfano 0712 345 678. Utaitumia kuingia."
+
+#: templates/administration/layout.html templates/public/home.html
+msgid "Your account"
+msgstr "Akaunti yako"
+
+#: templates/accounts/layout.html
+msgid "Your account brings video discovery, membership access and viewing records together."
+msgstr "Akaunti yako inakusanya video, ufikiaji wa uanachama na rekodi za utazamaji pamoja."
+
+#: templates/accounts/activation_complete.html
+msgid "Your account is active. You can now sign in with your email address and new password."
+msgstr "Akaunti yako inatumika. Sasa unaweza kuingia kwa anwani yako ya barua pepe na nenosiri jipya."
+
+#: templates/advertising/_header.html
+msgid "Your advertiser application is awaiting review by ClipCash. You can prepare draft campaigns meanwhile; they can be submitted once you are approved."
+msgstr "Ombi lako la kuwa mtangazaji linasubiri ukaguzi wa ClipCash. Unaweza kuandaa rasimu za kampeni wakati huo; zinaweza kuwasilishwa ukikubaliwa."
+
+#: templates/advertising/home.html
+msgid "Your advertisers"
+msgstr "Watangazaji wako"
+
+#: templates/advertising/_header.html
+msgid "Your application was not approved."
+msgstr "Ombi lako halikukubaliwa."
+
+#: templates/memberships/my_membership.html
+msgid "Your choice below is waiting for payment."
+msgstr "Chaguo lako lililo hapa chini linasubiri malipo."
+
+#: templates/accounts/email_change_form.html
+#, python-format
+msgid "Your current address is <strong>%(email)s</strong>. We will also tell that address about this request."
+msgstr "Anwani yako ya sasa ni <strong>%(email)s</strong>. Tutaitaarifu pia anwani hiyo kuhusu ombi hili."
+
+#: apps/accounts/forms.py
+msgid "Your current password was entered incorrectly."
+msgstr "Nenosiri lako la sasa halijaingizwa kwa usahihi."
+
+#: templates/public/home.html
+msgid "Your dashboard shows your membership and your verified views. Cash rewards and withdrawals are not available."
+msgstr "Dashibodi yako inaonyesha uanachama wako na mitazamo yako iliyohakikiwa. Zawadi za fedha na utoaji wa pesa havipatikani."
+
+#: templates/memberships/my_membership.html
+msgid "Your earlier records are listed below."
+msgstr "Rekodi zako za awali zimeorodheshwa hapa chini."
+
+#: templates/accounts/email_change_complete.html
+msgid "Your email address has been changed and confirmed. Use it the next time you sign in."
+msgstr "Anwani yako ya barua pepe imebadilishwa na kuthibitishwa. Itumie unapoingia tena."
+
+#: templates/accounts/confirm_email_complete.html
+msgid "Your email address is confirmed."
+msgstr "Anwani yako ya barua pepe imethibitishwa."
+
+#: templates/accounts/activate_account.html
+msgid "Your email address is confirmed. Choose a password to activate your account."
+msgstr "Anwani yako ya barua pepe imethibitishwa. Chagua nenosiri ili kuwezesha akaunti yako."
+
+#: templates/components/demo_unconfirmed_notice.html
+msgid "Your email address is not confirmed, so memberships, wallets, payout destinations, payments and advertiser applications are not available to this account: they involve payments, financial records or business verification. Everything else in the demonstration stays open to you."
+msgstr "Barua pepe yako haijathibitishwa, hivyo uanachama, pochi, njia za kupokea malipo, malipo na maombi ya watangazaji havipatikani kwa akaunti hii: vinahusisha malipo, rekodi za fedha au uhakiki wa biashara. Sehemu nyingine zote za majaribio zinabaki wazi kwako."
+
+#: apps/memberships/views.py
+msgid "Your membership choice is saved and waiting for payment."
+msgstr "Chaguo lako la uanachama limehifadhiwa na linasubiri malipo."
+
+#: templates/memberships/my_membership.html
+msgid "Your membership controls access to included content. Dates and status below come from your current subscription records."
+msgstr "Uanachama wako unaamua ufikiaji wa maudhui yaliyojumuishwa. Tarehe na hali zilizo hapa chini zinatokana na rekodi zako za sasa za uanachama."
+
+#: templates/payments/manual_claim.html
+msgid "Your membership is not active yet. Submitting a reference does not activate it by itself."
+msgstr "Uanachama wako bado haujawezeshwa. Kuwasilisha kumbukumbu pekee hakuuwezeshi."
+
+#: apps/memberships/views.py apps/videos/views.py templates/memberships/my_membership.html templates/memberships/subscription_detail.html
+msgid "Your membership is suspended. Please contact support."
+msgstr "Uanachama wako umesimamishwa. Wasiliana na usaidizi."
+
+#: templates/memberships/my_membership.html
+msgid "Your membership records"
+msgstr "Rekodi zako za uanachama"
+
+#: templates/accounts/password_reset_complete.html
+msgid "Your password has been changed and you have been signed out everywhere."
+msgstr "Nenosiri lako limebadilishwa na umeondolewa kwenye akaunti katika vifaa vyote."
+
+#: templates/accounts/password_change_done.html
+msgid "Your password has been changed. Other devices have been signed out."
+msgstr "Nenosiri lako limebadilishwa. Vifaa vingine vimeondolewa kwenye akaunti."
+
+#: templates/memberships/my_membership.html
+msgid "Your payment below is being verified."
+msgstr "Malipo yako yaliyo hapa chini yanahakikiwa."
+
+#: apps/payments/views.py
+msgid "Your payment details were withdrawn."
+msgstr "Taarifa zako za malipo zimeondolewa."
+
+#: templates/members/dashboard.html
+msgid "Your payment is being verified."
+msgstr "Malipo yako yanahakikiwa."
+
+#: templates/members/dashboard.html
+#, python-format
+msgid "Your payment of %(amount)s (reference %(ref)s) was confirmed on %(date)s. %(plan)s is active until %(end)s."
+msgstr "Malipo yako ya %(amount)s (kumbukumbu %(ref)s) yamethibitishwa %(date)s. %(plan)s unatumika hadi %(end)s."
+
+#: apps/payments/manual.py
+#, python-format
+msgid "Your payment of %(amount)s (reference %(ref)s) was confirmed. Your %(plan)s membership is active until %(expires)s."
+msgstr "Malipo yako ya %(amount)s (kumbukumbu %(ref)s) yamethibitishwa. Uanachama wako wa %(plan)s unatumika hadi %(expires)s."
+
+#: templates/accounts/profile.html
+msgid "Your payout details are managed separately and do not change here."
+msgstr "Taarifa zako za kupokea malipo zinasimamiwa kando na hazibadilishwi hapa."
+
+#: apps/memberships/views.py
+msgid "Your pending membership choice was cancelled."
+msgstr "Chaguo lako la uanachama lililokuwa likisubiri limeghairiwa."
+
+#: templates/payments/manual_pay.html
+msgid "Your plan"
+msgstr "Mpango wako"
+
+#: apps/memberships/views.py
+msgid "Your plan choice is saved. Pay the amount below, then submit the payment details."
+msgstr "Chaguo lako la mpango limehifadhiwa. Lipa kiasi kilicho hapa chini, kisha wasilisha taarifa za malipo."
+
+#: templates/members/dashboard.html
+msgid "Your plan controls which videos you can play. A plan you choose stays pending until it is activated."
+msgstr "Mpango wako unaamua video unazoweza kucheza. Mpango unaochagua unabaki unasubiri mpaka uwezeshwe."
+
+#: templates/members/dashboard.html
+msgid "Your plan controls which videos you can play. Sponsored sessions are checked separately."
+msgstr "Mpango wako unaamua video unazoweza kucheza. Vipindi vinavyodhaminiwa huhakikiwa kando."
+
+#: apps/accounts/views.py
+msgid "Your profile was updated."
+msgstr "Wasifu wako umesasishwa."
+
+#: templates/members/activity.html
+msgid "Your recent account, membership, viewing, demo reward, payment and wallet events. Items marked Simulated involve no real money."
+msgstr "Matukio yako ya hivi karibuni ya akaunti, uanachama, utazamaji, zawadi za majaribio, malipo na pochi. Vipengele vilivyoandikwa Ya kuigiza havihusishi fedha halisi."
+
+#: templates/public/home.html
+msgid "Your records"
+msgstr "Rekodi zako"
+
+#: apps/support/forms.py
+msgid "Your reply"
+msgstr "Jibu lako"
+
+#: apps/support/views.py
+msgid "Your reply was sent."
+msgstr "Jibu lako limetumwa."
+
+#: apps/support/views.py
+#, python-format
+msgid "Your request %(reference)s was received. We will reply here."
+msgstr "Ombi lako %(reference)s limepokelewa. Tutajibu hapa."
+
+#: templates/advertising/home.html
+msgid "Your role"
+msgstr "Jukumu lako"
+
+#: templates/viewing/history.html
+msgid "Your sponsored viewing sessions"
+msgstr "Vipindi vyako vya utazamaji unaodhaminiwa"
+
+#: templates/support/ticket_list.html
+msgid "Your support tickets"
+msgstr "Maombi yako ya usaidizi"
+
+#: templates/wallets/wallet.html
+msgid "Your wallet is restricted while ClipCash completes a review. Please contact support if you have questions."
+msgstr "Pochi yako imewekewa mipaka wakati ClipCash inakamilisha ukaguzi. Wasiliana na usaidizi ikiwa una maswali."
+
+#: templates/withdrawals/overview.html
+msgid "Your wallet is under review, so withdrawals would be paused."
+msgstr "Pochi yako inakaguliwa, hivyo utoaji wa pesa ungesitishwa kwa muda."
+
+#: templates/components/wallet_notice.html
+msgid "Your wallet shows real balances only, and they are TZS 0. Demo rewards are simulated records and never appear here. Sandbox payments are tests and never appear here. Withdrawals are not available."
+msgstr "Pochi yako inaonyesha masalio halisi pekee, nayo ni TZS 0. Zawadi za majaribio ni rekodi za kuigiza na hazionekani hapa kamwe. Malipo ya majaribio ni vipimo na hayaonekani hapa kamwe. Utoaji wa pesa haupatikani."
+
+#: templates/advertising/campaign_detail.html
+#, python-format
+msgid "about %(n)s views"
+msgstr "takribani mitazamo %(n)s"
+
+#: apps/notifications/models.py
+msgid "account"
+msgstr "akaunti"
+
+#: apps/withdrawals/models.py
+msgid "account holder name"
+msgstr "jina la mmiliki wa akaunti"
+
+#: apps/wallets/models.py
+msgid "account type"
+msgstr "aina ya akaunti"
+
+#: apps/memberships/models.py
+msgid "activated by"
+msgstr "uliwezeshwa na"
+
+#: apps/accounts/models.py apps/advertising/models.py apps/payments/models.py apps/videos/models.py
+msgid "active"
+msgstr "unatumika"
+
+#: apps/advertising/models.py
+msgid "advertiser"
+msgstr "mtangazaji"
+
+#: apps/wallets/admin.py apps/wallets/models.py
+msgid "amount"
+msgstr "kiasi"
+
+#: templates/administration/campaigns/detail.html
+msgid "approved"
+msgstr "umekubaliwa"
+
+#: templates/advertising/campaign_detail.html
+#, python-format
+msgid "approved revision %(n)s"
+msgstr "toleo la %(n)s lililokubaliwa"
+
+#: apps/advertising/models.py
+msgid "archived"
+msgstr "imehifadhiwa kwenye kumbukumbu"
+
+#: templates/members/dashboard.html
+msgid "available (real ledger)"
+msgstr "zinazopatikana (leja halisi)"
+
+#: apps/withdrawals/models.py
+msgid "bank code"
+msgstr "msimbo wa benki"
+
+#: apps/memberships/models.py
+msgid "benefits"
+msgstr "faida"
+
+#: apps/advertising/models.py
+msgid "campaign"
+msgstr "kampeni"
+
+#: apps/administration/admin.py apps/advertising/models.py apps/payments/models.py
+msgid "cancelled"
+msgstr "umeghairiwa"
+
+#: apps/audit/models.py apps/notifications/models.py apps/support/models.py apps/videos/models.py apps/wallets/models.py
+msgid "category"
+msgstr "kategoria"
+
+#: apps/wallets/models.py
+msgid "check"
+msgstr "kagua"
+
+#: apps/payments/models.py
+msgid "claim reference"
+msgstr "kumbukumbu ya taarifa za malipo"
+
+#: apps/payments/models.py apps/viewing/models.py
+msgid "closed"
+msgstr "limefungwa"
+
+#: apps/advertising/models.py
+msgid "completed"
+msgstr "umekamilika"
+
+#: apps/advertising/models.py
+msgid "contact email"
+msgstr "barua pepe ya mawasiliano"
+
+#: apps/advertising/models.py
+msgid "country"
+msgstr "nchi"
+
+#: apps/wallets/models.py
+msgid "created"
+msgstr "imeundwa"
+
+#: templates/administration/rewards/campaign_credits.html
+msgid "credits"
+msgstr "krediti"
+
+#: templates/support/_conversation.html
+msgid "customer"
+msgstr "mteja"
+
+#: apps/wallets/models.py
+msgid "direction"
+msgstr "mwelekeo"
+
+#: templates/rewards/history.html
+msgid "earned in total"
+msgstr "jumla zilizopatikana"
+
+#: apps/advertising/models.py
+msgid "email"
+msgstr "barua pepe"
+
+#: apps/accounts/models.py
+msgid "email address"
+msgstr "anwani ya barua pepe"
+
+#: templates/administration/membership_payments/detail.html
+msgid "email confirmed"
+msgstr "barua pepe imethibitishwa"
+
+#: apps/advertising/models.py
+msgid "ends"
+msgstr "inaisha"
+
+#: apps/advertising/models.py apps/memberships/models.py apps/payments/models.py apps/viewing/models.py
+msgid "expires"
+msgstr "inaisha muda"
+
+#: templates/memberships/plan_detail.html
+#, python-format
+msgid "for %(days)s day"
+msgid_plural "for %(days)s days"
+msgstr[0] "kwa siku %(days)s"
+msgstr[1] "kwa siku %(days)s"
+
+#: apps/support/models.py
+msgid "from"
+msgstr "kuanzia"
+
+#: apps/advertising/models.py
+msgid "funding"
+msgstr "ufadhili"
+
+#: apps/support/models.py
+msgid "internal note"
+msgstr "dokezo la ndani"
+
+#: apps/advertising/models.py
+msgid "legal name"
+msgstr "jina la kisheria"
+
+#: apps/advertising/models.py apps/memberships/models.py
+msgid "membership plans"
+msgstr "mipango ya uanachama"
+
+#: apps/notifications/models.py apps/support/models.py
+msgid "message"
+msgstr "ujumbe"
+
+#: apps/advertising/models.py apps/core/models.py apps/memberships/models.py apps/videos/models.py apps/wallets/models.py
+msgid "name"
+msgstr "jina"
+
+#: apps/accounts/models.py
+msgid "new email address"
+msgstr "anwani mpya ya barua pepe"
+
+#: templates/accounts/profile.html
+msgid "not verified (SMS verification is not available yet)"
+msgstr "haijathibitishwa (uthibitisho wa SMS bado haupatikani)"
+
+#: apps/notifications/models.py
+msgid "notifications"
+msgstr "taarifa"
+
+#: apps/reports/services.py
+msgid "period"
+msgstr "kipindi"
+
+#: apps/payments/models.py
+msgid "plan"
+msgstr "mpango"
+
+#: templates/administration/rewards/campaign_credits.html
+msgid "plans"
+msgstr "mipango"
+
+#: apps/memberships/admin.py
+msgid "price"
+msgstr "bei"
+
+#: apps/payments/models.py
+msgid "purpose"
+msgstr "madhumuni"
+
+#: apps/wallets/models.py
+msgid "reason"
+msgstr "sababu"
+
+#: apps/payments/models.py
+msgid "recipient name"
+msgstr "jina la mpokeaji"
+
+#: apps/payments/models.py apps/support/models.py apps/wallets/models.py
+msgid "reference"
+msgstr "kumbukumbu"
+
+#: apps/advertising/models.py apps/withdrawals/models.py
+msgid "removed"
+msgstr "imeondolewa"
+
+#: apps/wallets/models.py
+msgid "resolved"
+msgstr "limetatuliwa"
+
+#: apps/payments/models.py
+msgid "retired"
+msgstr "umeondolewa"
+
+#: apps/rewards/models.py
+msgid "reversed"
+msgstr "zimebatilishwa"
+
+#: apps/advertising/models.py apps/payments/models.py apps/viewing/models.py
+msgid "reviewed"
+msgstr "ilikaguliwa"
+
+#: apps/advertising/models.py templates/administration/viewing/detail.html
+msgid "revision"
+msgstr "toleo"
+
+#: apps/accounts/models.py apps/advertising/models.py
+msgid "role"
+msgstr "jukumu"
+
+#: templates/viewing/session.html
+msgid "seconds"
+msgstr "sekunde"
+
+#: apps/payments/models.py
+msgid "settled"
+msgstr "yamekamilishwa"
+
+#: apps/viewing/models.py
+msgid "started"
+msgstr "ilianza"
+
+#: apps/advertising/models.py apps/memberships/models.py
+msgid "starts"
+msgstr "inaanza"
+
+#: apps/accounts/models.py apps/advertising/models.py apps/core/models.py apps/memberships/models.py apps/notifications/models.py apps/payments/models.py apps/rewards/models.py apps/support/models.py apps/wallets/models.py apps/withdrawals/models.py
+msgid "status"
+msgstr "hali"
+
+#: apps/support/models.py
+msgid "subject"
+msgstr "mada"
+
+#: apps/advertising/models.py
+msgid "submitted"
+msgstr "iliwasilishwa"
+
+#: apps/support/models.py
+msgid "support tickets"
+msgstr "maombi ya usaidizi"
+
+#: apps/support/models.py
+msgid "to"
+msgstr "hadi"
+
+#: apps/payments/models.py
+msgid "transaction reference"
+msgstr "kumbukumbu ya muamala"
+
+#: apps/withdrawals/models.py
+msgid "type"
+msgstr "aina"
+
+#: apps/advertising/models.py apps/withdrawals/models.py
+msgid "verification"
+msgstr "uhakiki"
+
+#: templates/accounts/profile.html
+msgid "verified"
+msgstr "imethibitishwa"
+
+#: apps/videos/models.py
+msgid "video"
+msgstr "video"
+
+#: apps/videos/models.py
+msgid "videos"
+msgstr "video"
+
+#: apps/advertising/models.py
+msgid "views per member"
+msgstr "mitazamo kwa kila mwanachama"
+
+#: apps/wallets/models.py
+msgid "wallet number"
+msgstr "namba ya pochi"
+
+#: apps/wallets/models.py
+msgid "wallet transaction"
+msgstr "muamala wa pochi"
+
+#: apps/advertising/models.py apps/core/models.py
+msgid "website"
+msgstr "tovuti"
+
+#: templates/payments/manual_pay.html
+msgid "with your Airtel transaction reference so our team can check it and arrange any refund."
+msgstr "ukiwa na kumbukumbu ya muamala wako wa Airtel ili timu yetu iikague na ipange kurejesha malipo inapohitajika."
+
+#: templates/advertising/team.html
+msgid "you"
+msgstr "wewe"

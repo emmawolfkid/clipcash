@@ -1,4 +1,5 @@
 from django import template
+from django.utils.translation import ngettext
 
 from ..money import MoneyError, format_amount
 
@@ -21,4 +22,4 @@ def credits(amount):
         value = int(amount)
     except (TypeError, ValueError):
         return ""
-    return f"{value:,} credit" + ("" if value == 1 else "s")
+    return ngettext("%(amount)s credit", "%(amount)s credits", value) % {"amount": f"{value:,}"}

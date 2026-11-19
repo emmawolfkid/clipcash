@@ -4,7 +4,7 @@
 {% block main %}
 <main id="content" class="auth-shell" tabindex="-1">
   <aside class="auth-introduction" aria-labelledby="auth-intro-title">
-    <p class="auth-eyebrow">{{ site_config.platform_name|default:"ClipCash" }}</p>
+    <p class="auth-eyebrow">{% include "components/wordmark.html" %}</p>
     <p class="auth-introduction__title" id="auth-intro-title">{% translate "A clear path to your next clip." %}</p>
     <p>{% translate "Your account brings video discovery, membership access and viewing records together." %}</p>
     {% if restricted_demo %}<ol><li>{% translate "Confirm your email address." %}</li><li>{% translate "Check your membership eligibility." %}</li><li>{% translate "Explore videos and understand what counts." %}</li></ol>

@@ -1,0 +1,11 @@
+/* Messages remain in normal flow until progressive enhancement is ready. */
+.toast-region.is-enhanced { position: fixed; inset-block-start: var(--space-4); inset-inline-end: var(--space-4); width: min(26rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); overflow-y: auto; z-index: 100; margin: 0; padding: var(--space-1); pointer-events: none; }
+.messages .toast { display: flex; align-items: start; gap: var(--space-3); padding: var(--space-3) var(--space-4); box-shadow: var(--shadow-card); pointer-events: auto; overflow-wrap: anywhere; }
+.toast__body { flex: 1; min-width: 0; }
+.toast__label { display: block; font-size: var(--text-sm); }
+.toast__text { display: block; }
+.toast__close { flex: none; min-width: var(--touch-target); min-height: var(--touch-target); border: 0; border-radius: var(--radius-sm); background: transparent; color: inherit; font: inherit; font-size: 1.5rem; cursor: pointer; }
+.toast__close:hover { background: var(--surface); }
+@media (max-width: 40rem) {
+  .toast-region.is-enhanced { inset-block-start: var(--space-2); inset-inline-end: var(--space-2); width: calc(100% - 1rem); max-height: 45dvh; }
+}

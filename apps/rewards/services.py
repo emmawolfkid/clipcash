@@ -25,6 +25,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import BigIntegerField, Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from django.utils.translation import gettext, gettext_noop
 
 from apps.advertising.models import Campaign, Organization
 from apps.audit.services import DENIED, record_business_event, record_security_event
@@ -595,17 +596,17 @@ def member_totals(member):
 
 
 REASON_MESSAGES = {
-    "eligible": "Credited at the rate shown when you started watching.",
-    "session_not_verified": "The view was not verified.",
-    "session_not_finalized": "The viewing session was not finished.",
-    "slot_missing": "The view was not counted.",
-    "campaign_cancelled": "The campaign was cancelled.",
-    "revision_mismatch": "The campaign changed after this view.",
-    "no_policy": "No credit rate applied when you started watching.",
-    "policy_amount_exceeds_campaign": "The policy exceeded the campaign's approved amount.",
-    "budget_exhausted": "The campaign's credit budget was used up.",
+    "eligible": gettext_noop("Credited at the rate shown when you started watching."),
+    "session_not_verified": gettext_noop("The view was not verified."),
+    "session_not_finalized": gettext_noop("The viewing session was not finished."),
+    "slot_missing": gettext_noop("The view was not counted."),
+    "campaign_cancelled": gettext_noop("The campaign was cancelled."),
+    "revision_mismatch": gettext_noop("The campaign changed after this view."),
+    "no_policy": gettext_noop("No credit rate applied when you started watching."),
+    "policy_amount_exceeds_campaign": gettext_noop("The policy exceeded the campaign's approved amount."),
+    "budget_exhausted": gettext_noop("The campaign's credit budget was used up."),
 }
 
 
 def reason_text(codes):
-    return " ".join(REASON_MESSAGES.get(code, code.replace("_", " ")) for code in codes or [])
+    return " ".join(gettext(REASON_MESSAGES.get(code, code.replace("_", " "))) for code in codes or [])

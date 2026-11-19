@@ -82,7 +82,7 @@ class DesignSystemTests(SimpleTestCase):
                 self.assertIn("css/core/tokens.css", html)
                 self.assertIn("css/components/forms.css", html)
                 self.assertIn('aria-controls="site-menu"', html)
-                self.assertIn("No money is paid out on this site", html)
+                self.assertIn(translation.gettext("No money is paid out on this site."), html)
                 self.assertNotIn("<style", html)
                 self.assertNotIn(" style=", html)
 
