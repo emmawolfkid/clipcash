@@ -22,7 +22,9 @@ class MemberPagesTests(MembershipTestCase):
         self.assertContains(response, "TZS 5,000")
         self.assertNotContains(response, hidden.name)
         detail = self.client.get(reverse("memberships:plan_detail", args=["monthly"]))
-        self.assertContains(detail, "Online payment is not available yet")
+        # PAY-LIVE-01C: payments are closed here, so exactly one "not open" explanation.
+        self.assertContains(detail, "Membership payments are not open yet", count=1)
+        self.assertNotContains(detail, "Choose this plan")
         self.assertContains(detail, "not an investment")
         for misleading in ("Pay now", "Pay Now", "Checkout"):
             self.assertNotContains(detail, misleading)
@@ -52,7 +54,8 @@ class MemberPagesTests(MembershipTestCase):
         self.assertRedirects(self.client.post(choose), MINE)
         page = self.client.get(MINE)
         self.assertContains(page, "Waiting for payment")
-        self.assertContains(page, "Online payment is not available yet")
+        # PAY-LIVE-01C: the real purchase state is closed here (only the choice gate is mocked).
+        self.assertContains(page, "Membership payments are not open yet", count=1)
 
     def test_members_see_only_their_own_records(self):
         mine = services.choose_plan(self.member, self.plan)

@@ -116,12 +116,13 @@ class Pay03AcceptanceTests(ManualPaymentTestCase):
         data = {"amount": "5000", "payer_phone": "0781234567", "transaction_reference": "MP11112222"}
         manual.retire_instruction(self.root)
         page = self.client.get(pay_url(pending))
-        self.assertContains(page, "has not published its payment methods", status_code=503)
+        closed = str(manual.PURCHASE_CLOSED_MESSAGE)  # PAY-LIVE-01C: one explanation for both cases.
+        self.assertContains(page, closed, status_code=503)
         self.assertEqual(self.client.post(pay_url(pending), data).status_code, 503)
         manual.publish_instruction(self.root, business_number=BUSINESS_NUMBER, recipient_name=RECIPIENT)
         with override_settings(MANUAL_MEMBERSHIP_PAYMENTS_ENABLED=False):
             page = self.client.get(pay_url(pending))
-            self.assertContains(page, "Membership payments are not available at the moment", status_code=503)
+            self.assertContains(page, closed, status_code=503)
             self.assertEqual(self.client.post(pay_url(pending), data).status_code, 503)
         self.assertFalse(ManualMembershipPayment.objects.exists())
 

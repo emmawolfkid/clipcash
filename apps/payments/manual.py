@@ -137,6 +137,27 @@ def manual_payments_ready():
     return manual_payments_enabled() and active_instruction() is not None
 
 
+# PAY-LIVE-01C: the one purchase state every page, message and purchase endpoint derives from.
+PURCHASE_OPEN = "open"                # Manual payments on and a payment method published.
+PURCHASE_UNPUBLISHED = "unpublished"  # Manual payments on, but no payment method published yet.
+PURCHASE_CLOSED = "closed"            # Manual payments off (live gateways are locked in code).
+PURCHASE_SANDBOX = "sandbox"          # Isolated test deployments only; never activates anything.
+PURCHASE_CHOOSABLE = frozenset({PURCHASE_OPEN, PURCHASE_SANDBOX})
+
+# The single explanation members see whenever purchases are not open (unpublished or closed).
+PURCHASE_CLOSED_MESSAGE = _("Membership payments are not open yet, so plans cannot be bought right now. "
+                            "Do not send any money.")
+
+
+def purchase_state():
+    """Whether members can buy a membership in this deployment, and how. Built only from the
+    existing gates (manual_payments_enabled, the published instructions and sandbox_active);
+    manual payments and the sandbox are mutually exclusive, so exactly one state applies."""
+    if manual_payments_enabled():
+        return PURCHASE_OPEN if active_instruction() is not None else PURCHASE_UNPUBLISHED
+    return PURCHASE_SANDBOX if sandbox_active() else PURCHASE_CLOSED
+
+
 def _staff(user):
     return bool(user is not None and getattr(user, "is_authenticated", False) and user.is_active
                 and user.is_staff and user.status == user.Status.ACTIVE)

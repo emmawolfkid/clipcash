@@ -16,6 +16,7 @@ from .manual_helpers import BUSINESS_NUMBER, RECIPIENT, ManualPaymentTestCase, s
 
 C = ManualMembershipPayment.Status
 OBSOLETE_NOTICE = "Online payment is not available yet"
+CLOSED = str(manual.PURCHASE_CLOSED_MESSAGE)  # PAY-LIVE-01C: the one "not open" explanation.
 
 
 def pay_url(subscription):
@@ -38,8 +39,10 @@ class MemberJourneyTests(ManualPaymentTestCase):
     def test_plan_pages_describe_the_real_payment_method(self):
         for url in (reverse("memberships:plans"), reverse("memberships:plan_detail", args=["monthly"])):
             response = self.client.get(url)
-            self.assertContains(response, "an available payment method")
+            self.assertContains(response, "pay its exact price with the payment details shown at checkout")
+            self.assertContains(response, "Airtel Money - Lipa")
             self.assertNotContains(response, OBSOLETE_NOTICE)
+            self.assertNotContains(response, CLOSED)
             self.assertNotContains(response, "Sandbox")
 
     def test_choose_pay_submit_and_follow_status(self):
@@ -156,7 +159,7 @@ class MemberJourneyTests(ManualPaymentTestCase):
         pending = self.choose()
         page = self.client.get(pay_url(pending))
         self.assertEqual(page.status_code, 503)
-        self.assertContains(page, "Membership payments are not available at the moment", status_code=503)
+        self.assertContains(page, CLOSED, status_code=503)
         self.assertNotContains(page, 'name="transaction_reference"', status_code=503)
         self.assertNotContains(page, BUSINESS_NUMBER, status_code=503)
         posted = self.client.post(pay_url(pending), {"amount": "5000", "payer_phone": "0781234567",
@@ -165,14 +168,17 @@ class MemberJourneyTests(ManualPaymentTestCase):
         self.assertFalse(ManualMembershipPayment.objects.exists())
         self.assertEqual(self.client.post(reverse("memberships:choose", args=["monthly"])).status_code, 302)
         mine = self.client.get(reverse("memberships:mine"))
-        self.assertContains(mine, OBSOLETE_NOTICE)
+        # PAY-LIVE-01C: the closed explanation, not the old "saves it as pending" notice. (The refused
+        # choice above left the same text as an unread flash message, so it may appear twice here.)
+        self.assertContains(mine, CLOSED)
+        self.assertNotContains(mine, OBSOLETE_NOTICE)
         self.assertNotContains(mine, "Airtel")
 
     def test_unpublished_details_show_a_clear_notice(self):
         pending = self.choose()
         manual.retire_instruction(self.root)
         page = self.client.get(pay_url(pending))
-        self.assertContains(page, "has not published its payment methods", status_code=503)
+        self.assertContains(page, CLOSED, status_code=503)
         self.assertNotContains(page, BUSINESS_NUMBER, status_code=503)
         self.assertNotContains(page, 'name="transaction_reference"', status_code=503)
         posted = self.client.post(pay_url(pending), {"amount": "5000", "payer_phone": "0781234567",

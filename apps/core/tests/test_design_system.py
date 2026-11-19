@@ -57,7 +57,8 @@ class DesignSystemTests(SimpleTestCase):
                 self.assertIn('aria-current="page" href="/memberships/mine/"', html)
         html = render_to_string("memberships/plan_list.html", self.context("/memberships/"))
         self.assertNotIn('id="member-menu"', html)
-        self.assertIn("Online payment is not available yet", html)
+        # PAY-LIVE-01C: without a purchase state the notice falls back to "not open" (safe default).
+        self.assertIn("Membership payments are not open yet", html)
 
     def test_shared_form_error_links_and_hidden_values(self):
         class SampleForm(forms.Form):

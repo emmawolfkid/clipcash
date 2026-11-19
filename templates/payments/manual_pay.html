@@ -1,4 +1,4 @@
-{% extends "members/layout.html" %}{% load static i18n money %}
+{% extends "members/layout.html" %}{% load static i18n money purchase_state %}
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/payments/manual.css' %}">{% endblock %}
 {% block title %}{% translate "Pay for your membership" %}{% endblock %}
 {% block crumb %}{% translate "Pay" %}{% endblock %}
@@ -43,10 +43,8 @@
   <p>{% translate "Submitting these details does not activate your membership by itself. We check every payment against the official provider records first." %}</p>
   {% include "components/form.html" with form=form button=_("Submit payment details") %}
 </section>
-{% elif not payments_enabled %}
-<p class="notice notice--warning" role="status">{% translate "Membership payments are not available at the moment, so payment details cannot be submitted. Do not send money now. Your plan choice is saved until the date above." %}</p>
-{% elif not methods %}
-<p class="notice notice--warning" role="status">{% translate "ClipCash has not published its payment methods yet, so payment details cannot be submitted. Do not send money now. Your plan choice is saved until the date above." %}</p>
+{% elif not payments_enabled or not methods %}{# PAY-LIVE-01C: one explanation whether payments are off or no method is published. #}
+<p class="notice notice--warning" role="status">{% purchase_closed_message %} {% translate "Your plan choice is kept until the date above." %}</p>
 {% endif %}
 
 {% if previous %}

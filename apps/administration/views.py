@@ -1019,7 +1019,9 @@ class PlanEditView(View):
             "counts": _plan_queryset().get(pk=plan.pk), "statuses": plan.Status,
             "history": AuditEvent.objects.filter(target_model="membershipplan", target_id=str(plan.pk))
                                          .order_by("-occurred_at")[:30],
-            "can": console_links(request.user), "nav": "plans"}, status=status)
+            "can": console_links(request.user), "nav": "plans",
+            # PAY-LIVE-01C: the members' purchase state (manual payments), not the gateway mode.
+            "purchase_state": manual_payments.purchase_state()}, status=status)
 
     def _form(self, plan, data=None):
         from apps.memberships.forms import ConsolePlanEditForm

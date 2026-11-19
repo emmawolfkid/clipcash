@@ -29,8 +29,6 @@ MESSAGES = {
                           "confirmation link and open it. Do not pay anything until then."),
     "payment_under_review": _("A payment for your current choice is being verified. You can change plans after "
                               "it is approved or rejected."),
-    "purchase_closed": _("Membership payments are not open yet. You can look at the plans; buying opens as soon as "
-                         "ClipCash starts accepting payments. Do not send any money now."),
     # PRD-01: a mobile number cannot be verified while SMS is unavailable.
     "contact_unverified": _("Before you buy a membership, add an email address in My account and open the "
                             "confirmation link we send. Do not pay anything until then."),
@@ -38,27 +36,29 @@ MESSAGES = {
 
 
 def payment_context():
+    """PAY-LIVE-01C: everything member pages say about paying comes from one purchase state
+    (apps.payments.manual.purchase_state), so no page can call purchases open and closed at once."""
     from apps.payments import manual
 
-    enabled = manual.manual_payments_enabled()
-    ready = enabled and manual.manual_payments_ready()
+    state = manual.purchase_state()
+    methods = (list(manual.active_instructions().values_list("provider_label", flat=True))
+               if state == manual.PURCHASE_OPEN else [])
     return {"payments_available": features.is_enabled("live_payments"),
+            "purchase_state": state, "payment_methods": methods,
             # PAY-01: real membership payments via Airtel Lipa, verified by staff.
-            "manual_payments": enabled, "manual_payments_ready": ready,
-            "purchase_open": purchase_open(ready)}
+            "manual_payments": state in (manual.PURCHASE_OPEN, manual.PURCHASE_UNPUBLISHED),
+            "manual_payments_ready": state == manual.PURCHASE_OPEN,
+            "purchase_open": purchase_open(state)}
 
 
-def purchase_open(manual_ready=None):
+def purchase_open(state=None):
     """PRD-04: may members choose (buy or renew) a plan? Only when a way to pay exists: approved manual
-    payments with published payment details (DJANGO_MANUAL_MEMBERSHIP_PAYMENTS on, not a restricted
-    demo, no sandbox), or the sandbox simulation of an isolated test deployment. Otherwise plans can
-    be browsed but not chosen, so nobody is left with a choice they cannot pay for."""
+    payments with published payment details (not a restricted demo, no sandbox), or the sandbox
+    simulation of an isolated test deployment. Otherwise plans can be browsed but not chosen, so
+    nobody is left with a choice they cannot pay for. The choose endpoint and every page use this."""
     from apps.payments import manual
-    from apps.payments.providers import sandbox_active
 
-    if manual_ready is None:
-        manual_ready = manual.manual_payments_enabled() and manual.manual_payments_ready()
-    return bool(manual_ready or sandbox_active())
+    return (state or manual.purchase_state()) in manual.PURCHASE_CHOOSABLE
 
 
 def manual_payment_state(subscription):
@@ -108,8 +108,10 @@ class ChoosePlanView(VerifiedAccountRequiredMixin, View):
 
     def post(self, request, code):
         plan = get_object_or_404(MembershipPlan, code=code, status=MembershipPlan.Status.ACTIVE, is_public=True)
+        from apps.payments import manual
+
         if not purchase_open():  # PRD-04: no choice is recorded while no way to pay is open.
-            messages.error(request, MESSAGES["purchase_closed"])
+            messages.error(request, manual.PURCHASE_CLOSED_MESSAGE)
             return redirect("memberships:plan_detail", code=plan.code)
         try:
             subscription = services.choose_plan(request.user, plan)
@@ -119,7 +121,7 @@ class ChoosePlanView(VerifiedAccountRequiredMixin, View):
                 message = DEMO_UNCONFIRMED_BLOCKED  # Approved restricted-demo accounts: the demo's own wording.
             messages.error(request, message)
             return redirect("memberships:mine")
-        if payment_context()["manual_payments_ready"]:
+        if manual.purchase_state() == manual.PURCHASE_OPEN:
             messages.success(request, _("Your plan choice is saved. Pay the amount below, then submit the payment "
                                         "details."))
             return redirect("payments:manual_pay", subscription_id=subscription.pk)

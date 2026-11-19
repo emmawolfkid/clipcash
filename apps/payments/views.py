@@ -158,8 +158,9 @@ MANUAL_STATE_MESSAGES = {
     "not_pending": _("This membership is not waiting for payment."),
     "choice_expired": _("This membership choice has expired. Choose the plan again to pay."),
     "plan_unavailable": _("This plan is no longer available. Choose another plan."),
-    "no_instructions": _("Payments are temporarily unavailable. Please try again later."),
-    "payments_disabled": _("Payments are temporarily unavailable. Please try again later."),
+    # PAY-LIVE-01C: the one "purchases closed" explanation members see everywhere.
+    "no_instructions": manual.PURCHASE_CLOSED_MESSAGE,
+    "payments_disabled": manual.PURCHASE_CLOSED_MESSAGE,
     "rate_limited": _("Too many payment submissions. Please wait an hour and try again."),
 }
 
