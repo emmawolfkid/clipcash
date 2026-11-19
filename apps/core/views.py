@@ -37,15 +37,22 @@ class MemberDashboardView(VerifiedAccountRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         summary = member_summary(self.request.user)
         recent_videos = []
+        videos_locked = False
         if features.is_enabled("videos"):
-            from apps.videos.services import library_queryset, thumbnail_url
+            from apps.videos.services import catalogue_access, member_catalogue, thumbnail_url
 
-            recent_videos = list(library_queryset().order_by("-published_at")[:4])
-            for video in recent_videos:
-                video.thumbnail = thumbnail_url(video)
+            # PAY-LIVE-01B: the same rule as the video library; no titles or signed
+            # thumbnails for members without a current membership.
+            access = catalogue_access(self.request.user)
+            videos_locked = not access
+            if access:
+                recent_videos = list(member_catalogue(access.subscription).order_by("-published_at")[:4])
+                for video in recent_videos:
+                    video.thumbnail = thumbnail_url(video)
         from apps.accounts.services import email_change_available
 
         context.update({"nav": "dashboard", "summary": summary, "recent_videos": recent_videos,
+                        "videos_locked": videos_locked,
                         # REG-04: the unconfirmed-email reminder offers a way to correct the address.
                         "email_change_available": email_change_available(self.request.user),
                         # Kept for templates and tests that read them directly.

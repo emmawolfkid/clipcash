@@ -489,6 +489,20 @@ def library_queryset():
     return qs
 
 
+def catalogue_access(user):
+    """PAY-LIVE-01B: may ``user`` browse the member video catalogue at all? The same
+    decision as playback (apps.memberships.access.check_access) without a specific
+    entitlement: an eligible account with a current, non-suspended membership. Pending
+    choices, queued, expired, suspended and cancelled memberships are refused."""
+    return check_access(user)
+
+
+def member_catalogue(subscription):
+    """Browsable videos the membership's plan includes. Videos needing an entitlement
+    the plan does not grant are not listed (their metadata and thumbnails stay hidden)."""
+    return library_queryset().filter(required_entitlement__in=list(subscription.entitlements or []))
+
+
 def authorize_playback(user, video):
     """(reason, Playback | None). ``reason`` is "ok" or why playback is refused."""
     if not features.is_enabled("videos"):

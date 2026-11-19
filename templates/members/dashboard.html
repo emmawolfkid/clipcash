@@ -131,8 +131,10 @@
 
 {% if features.videos %}
 <section class="section">
-  <div class="section__header"><h2>{% translate "Latest videos" %}</h2><a href="{% url 'videos:library' %}">{% translate "See all" %}</a></div>
-  {% if recent_videos %}
+  <div class="section__header"><h2>{% translate "Latest videos" %}</h2>{% if not videos_locked %}<a href="{% url 'videos:library' %}">{% translate "See all" %}</a>{% endif %}</div>
+  {% if videos_locked %}
+    <p class="empty-state">{% translate "Videos are available to members with an active membership." %}{% if features.memberships %} <a href="{% url 'memberships:plans' %}">{% translate "See membership plans" %}</a>{% endif %}</p>
+  {% elif recent_videos %}
     <ul class="video-grid">{% for video in recent_videos %}{% include "components/video_card.html" %}{% endfor %}</ul>
   {% else %}
     <p class="empty-state">{% translate "No videos have been published yet." %}</p>
