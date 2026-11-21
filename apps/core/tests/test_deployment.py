@@ -32,6 +32,10 @@ PRODUCTION_ENV = {
     "DJANGO_CSRF_TRUSTED_ORIGINS": "",
     "DJANGO_DEBUG": "False",
     "DJANGO_SECRET_KEY": "deployment-test-value-not-a-real-secret-0123456789abcdefghij",
+    # DB-01: a PostgreSQL production profile, whatever the developer's .env selects (settings
+    # read .env for every value not given here).
+    "DB_ENGINE": "postgresql",
+    "DB_TEST_NAME": "test_clipcash_db",
     "DATABASE_URL": "postgres://clipcash:example-password@clipcash-db.invalid:5432/clipcash",
     "DJANGO_DB_SSLMODE": "require",
     "RENDER_EXTERNAL_HOSTNAME": "clipcash-example.onrender.com",

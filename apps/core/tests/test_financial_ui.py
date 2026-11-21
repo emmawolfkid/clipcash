@@ -288,7 +288,9 @@ class PaymentPageTests(PaymentsTestCase):
             self.assertEqual(self.client.get(reverse("payments:history")).status_code, 404)
             self.assertEqual(self.client.get(reverse("payments:intent", args=[intent.pk])).status_code, 404)
             mine = self.client.get(reverse("memberships:mine"))
-            self.assertContains(mine, "Online payment is not available yet")
+            # PAY-LIVE-01C: no sandbox and no manual payments: the one "not open" explanation.
+            self.assertContains(mine, "Membership payments are not open yet", count=1)
+            self.assertNotContains(mine, "Online payment is not available yet")
             self.assertNotContains(mine, reverse("payments:history"))
 
 

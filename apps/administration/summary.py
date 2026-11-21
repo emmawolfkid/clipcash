@@ -26,6 +26,9 @@ from django.db.models import Count, OuterRef, Q, Subquery, Sum
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.mariadb_guards import expected_guard_triggers, guard_findings
+from apps.core.mariadb_logins import runtime_login_findings
+
 from .labels import code_label
 
 HEALTHY = "healthy"
@@ -307,11 +310,18 @@ def health(user):
                                   f"{drafts} drafts awaiting a second approver.", "administration:reward_policies"))
     if can["operations"]:
         findings = database_role_findings()
-        checks.append(HealthCheck(
-            "database_roles", "Database privilege separation", ATTENTION if findings else HEALTHY,
-            ("; ".join(findings) + ". The application's own login could switch off the database protections; "
-             "apply scripts/database/roles (audit CC-005).") if findings else
-            "The application's login owns no protected table and cannot change audit or ledger history."))
+        if connection.vendor == "mysql":  # DB-01
+            detail = ("; ".join(findings) + ". The database protections are not all in force for the application's "
+                      "own login: install every guard as the migration login and run ClipCash as a separate runtime "
+                      "login (docs/deployment/mariadb_port.md §4a; check_mariadb_logins; audit CC-005).") if findings \
+                else (f"The application's login holds only SELECT, INSERT, UPDATE and DELETE, and all "
+                      f"{len(expected_guard_triggers())} guard triggers are installed.")
+        else:
+            detail = ("; ".join(findings) + ". The application's own login could switch off the database "
+                      "protections; apply scripts/database/roles (audit CC-005).") if findings else \
+                "The application's login owns no protected table and cannot change audit or ledger history."
+        checks.append(HealthCheck("database_roles", "Database privilege separation",
+                                  ATTENTION if findings else HEALTHY, detail))
     return checks
 
 
@@ -327,6 +337,10 @@ PROTECTED_TABLES = ("audit_auditevent", "wallets_journalentry", "wallets_journal
 def database_role_findings():
     """Why the runtime database login is not separated from the owner ([] = separated).
     Read-only catalog queries about the current login."""
+    if connection.vendor == "mysql":
+        # DB-01, MariaDB: the login's grants from every source plus behavioural probes (no DDL
+        # probes in a request), and every guard trigger the migrations create.
+        return runtime_login_findings(connection, ddl_probes=False) + guard_findings(connection)
     with connection.cursor() as cursor:
         cursor.execute("SELECT rolsuper FROM pg_roles WHERE rolname = current_user")
         (superuser,) = cursor.fetchone()

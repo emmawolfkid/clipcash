@@ -1283,6 +1283,10 @@ msgstr "Gundua. Tazama. Elewa."
 msgid "Dismiss notification"
 msgstr "Funga taarifa"
 
+#: templates/components/messages.html
+msgid "Dismiss message"
+msgstr "Funga ujumbe"
+
 #: apps/payments/models.py
 msgid "Dismissed"
 msgstr "Imeondolewa"
@@ -4784,3 +4788,369 @@ msgstr "ukiwa na kumbukumbu ya muamala wako wa Airtel ili timu yetu iikague na i
 #: templates/advertising/team.html
 msgid "you"
 msgstr "wewe"
+
+#: templates/accounts/phone_verify.html
+msgid "%(number)s is verified."
+msgstr "%(number)s imethibitishwa."
+
+#: templates/accounts/password_reset_form.html
+msgid "A password can be reset only by email, to an email address you added and confirmed in My account. Password reset by SMS is not available, and ClipCash never resets a password just because someone gives a mobile number or a username."
+msgstr "Nenosiri linaweza kuwekwa upya kwa barua pepe pekee, kwenda kwenye anwani ya barua pepe uliyoongeza na kuthibitisha katika Akaunti yangu. Kuweka upya nenosiri kwa SMS hakupatikani, na ClipCash haiweki upya nenosiri kamwe kwa sababu tu mtu ametoa namba ya simu au jina la mtumiaji."
+
+#: templates/accounts/profile.html
+msgid "A password-reset link can only go to an email address you added and confirmed. Add an email address and open the confirmation link we send, so you can reset your password if you forget it, and so you can buy a membership."
+msgstr "Kiungo cha kuweka upya nenosiri kinaweza kutumwa tu kwenye anwani ya barua pepe uliyoongeza na kuthibitisha. Ongeza anwani ya barua pepe na ufungue kiungo cha uthibitisho tutakachotuma, ili uweze kuweka upya nenosiri lako ukilisahau, na ili uweze kununua uanachama."
+
+#: templates/accounts/profile.html
+msgid "A reset link can be sent to %(email)s."
+msgstr "Kiungo cha kuweka upya kinaweza kutumwa kwa %(email)s."
+
+#: templates/accounts/profile.html
+msgid "A username or a mobile number is never enough to reset a password, even a verified one: passwords are reset by email only."
+msgstr "Jina la mtumiaji au namba ya simu, hata iliyothibitishwa, haitoshi kamwe kuweka upya nenosiri: manenosiri huwekwa upya kwa barua pepe pekee."
+
+#: templates/accounts/profile.html
+msgid "A username or a mobile number is never enough to reset a password. Mobile numbers are not verified: SMS verification is not available."
+msgstr "Jina la mtumiaji au namba ya simu haitoshi kamwe kuweka upya nenosiri. Namba za simu hazithibitishwi: uthibitisho kwa SMS haupatikani."
+
+#: templates/accounts/phone_verify.html
+msgid "Add a mobile number"
+msgstr "Ongeza namba ya simu"
+
+#: templates/accounts/profile.html
+msgid "Add a recovery email address"
+msgstr "Ongeza anwani ya barua pepe ya kurejesha akaunti"
+
+#: templates/components/contact_verification_notice.html
+msgid "Add an email address to buy a membership"
+msgstr "Ongeza anwani ya barua pepe ili ununue uanachama"
+
+#: templates/accounts/profile.html templates/components/contact_verification_notice.html
+msgid "Adding an email address is not available right now. Please try again later or contact ClipCash support."
+msgstr "Kuongeza anwani ya barua pepe hakupatikani kwa sasa. Tafadhali jaribu tena baadaye au wasiliana na usaidizi wa ClipCash."
+
+#: templates/public/home.html
+msgid "An email address, a Tanzanian mobile number or a username, and a password. Your account works straight away, and creating it is free. Buying a membership needs a confirmed email address."
+msgstr "Anwani ya barua pepe, namba ya simu ya Tanzania au jina la mtumiaji, pamoja na nenosiri. Akaunti yako inafanya kazi mara moja, na kuifungua ni bure. Kununua uanachama kunahitaji anwani ya barua pepe iliyothibitishwa."
+
+#: templates/payments/manual_pay.html
+msgid "Check that the provider shows the recipient name above before you confirm. Pay the exact amount in one payment: partial or extra amounts cannot be matched automatically. Never share your payment PIN with anyone, including ClipCash staff."
+msgstr "Hakikisha mtoa huduma anaonyesha jina la mpokeaji lililo hapo juu kabla ya kuthibitisha. Lipa kiasi kamili kwa muamala mmoja: kiasi pungufu au cha ziada hakiwezi kulinganishwa kiotomatiki. Usimpe mtu yeyote PIN yako ya malipo, hata wafanyakazi wa ClipCash."
+
+#: templates/payments/manual_pay.html
+msgid "Choose a payment method"
+msgstr "Chagua njia ya malipo"
+
+#: templates/public/home.html
+msgid "Choose a plan from your dashboard. It stays pending until it is activated: pay with an available payment method, submit your transaction reference, and the ClipCash team activates it after checking the payment."
+msgstr "Chagua mpango kutoka kwenye dashibodi yako. Unabaki unasubiri mpaka uwezeshwe: lipa kwa njia ya malipo inayopatikana, wasilisha kumbukumbu ya muamala wako, na timu ya ClipCash itauwezesha baada ya kuhakiki malipo."
+
+#: templates/accounts/phone_verify.html
+msgid "ClipCash staff will never ask for this code. Never share it with anyone."
+msgstr "Wafanyakazi wa ClipCash hawatakuomba msimbo huu kamwe. Usimpe mtu yeyote."
+
+#: templates/memberships/my_membership.html templates/memberships/subscription_detail.html
+msgid "Complimentary access: no payment was made, and access ends on the date below. Nothing renews automatically."
+msgstr "Ufikiaji uliotolewa bure: hakuna malipo yaliyofanyika, na ufikiaji unaisha tarehe iliyo hapa chini. Hakuna kinachoongezewa muda kiotomatiki."
+
+#: templates/components/contact_verification_notice.html
+msgid "Confirm your email address to buy a membership"
+msgstr "Thibitisha anwani yako ya barua pepe ili ununue uanachama"
+
+#: templates/administration/membership_payments/detail.html templates/payments/manual_claim.html
+msgid "Contact phone"
+msgstr "Simu ya mawasiliano"
+
+#: templates/public/home.html
+msgid "Create an account with your email address, your mobile number or a username, and a password. It is free, and you can use it straight away."
+msgstr "Fungua akaunti kwa anwani yako ya barua pepe, namba yako ya simu au jina la mtumiaji, pamoja na nenosiri. Ni bure, na unaweza kuitumia mara moja."
+
+#: templates/accounts/layout.html
+msgid "Create your account with a username, a password and an email address or mobile number."
+msgstr "Fungua akaunti yako kwa jina la mtumiaji, nenosiri na anwani ya barua pepe au namba ya simu."
+
+#: templates/accounts/confirm_email_sign_in.html
+msgid "Did not create a ClipCash account? You can ignore this message: nothing changes until the account owner confirms."
+msgstr "Hukufungua akaunti ya ClipCash? Unaweza kupuuza ujumbe huu: hakuna kitakachobadilika mpaka mmiliki wa akaunti athibitishe."
+
+#: templates/payments/manual_claim.html
+msgid "Download the receipt you attached"
+msgstr "Pakua risiti uliyoambatisha"
+
+#: templates/accounts/phone_verify.html
+msgid "Enter the code we sent. It expires after %(minutes)s minutes and works once."
+msgstr "Weka msimbo tuliotuma. Unaisha muda baada ya dakika %(minutes)s na unafanya kazi mara moja tu."
+
+#: templates/accounts/password_reset_form.html
+msgid "Enter the email address you sign in with, or the confirmed email address on your account. We will send a link to choose a new password."
+msgstr "Weka anwani ya barua pepe unayoingia nayo, au anwani ya barua pepe iliyothibitishwa kwenye akaunti yako. Tutatuma kiungo cha kuchagua nenosiri jipya."
+
+#: templates/memberships/my_membership.html
+msgid "Extension, no payment"
+msgstr "Muda wa ziada, bila malipo"
+
+#: templates/accounts/confirm_email_sign_in.html
+msgid "For your security, an email address added to an existing account is confirmed only by the account owner. Sign in with your mobile number (or your username, if you have one), then open this link again or use the button below."
+msgstr "Kwa usalama wako, anwani ya barua pepe iliyoongezwa kwenye akaunti iliyopo inathibitishwa na mmiliki wa akaunti pekee. Ingia kwa namba yako ya simu (au jina lako la mtumiaji, ikiwa unalo), kisha fungua kiungo hiki tena au tumia kitufe kilicho hapa chini."
+
+#: templates/accounts/register.html
+msgid "Forgotten passwords are reset by email. If you sign up with a mobile number or a username, add an email address in My account so you can recover your account. Buying a membership needs a confirmed email address."
+msgstr "Manenosiri yaliyosahaulika huwekwa upya kwa barua pepe. Ukijiandikisha kwa namba ya simu au jina la mtumiaji, ongeza anwani ya barua pepe katika Akaunti yangu ili uweze kurejesha akaunti yako. Kununua uanachama kunahitaji anwani ya barua pepe iliyothibitishwa."
+
+#: templates/payments/manual_pay.html
+msgid "Get payment instructions"
+msgstr "Pata maelekezo ya malipo"
+
+#: templates/accounts/verification_required.html
+msgid "Go to the ClipCash home page"
+msgstr "Nenda kwenye ukurasa wa mwanzo wa ClipCash"
+
+#: templates/accounts/password_reset_done.html
+msgid "If that address is confirmed on an active account, we have sent it a link to choose a new password. The link expires in one hour and works once."
+msgstr "Ikiwa anwani hiyo imethibitishwa kwenye akaunti inayotumika, tumetuma kiungo cha kuchagua nenosiri jipya. Kiungo kitaisha muda baada ya saa moja na kinafanya kazi mara moja tu."
+
+#: templates/payments/manual_pay.html
+msgid "Instructions issued"
+msgstr "Maelekezo yalitolewa"
+
+#: templates/accounts/password_reset_form.html
+msgid "Locked out with no email on your account?"
+msgstr "Huwezi kuingia na akaunti yako haina barua pepe?"
+
+#: templates/public/home.html
+msgid "Membership fees are paid with an available payment method and checked by the ClipCash team before a membership starts."
+msgstr "Ada za uanachama hulipwa kwa njia ya malipo inayopatikana na kuhakikiwa na timu ya ClipCash kabla ya uanachama kuanza."
+
+#: templates/public/_footer.html
+msgid "Membership fees are paid with an available payment method and checked by the ClipCash team."
+msgstr "Ada za uanachama hulipwa kwa njia ya malipo inayopatikana na kuhakikiwa na timu ya ClipCash."
+
+#: templates/accounts/password_reset_done.html
+msgid "No email? Check your spam folder. If your account has no confirmed email address (for example, you signed up with a mobile number only), contact ClipCash support."
+msgstr "Hujapata barua pepe? Angalia folda ya barua taka (spam). Ikiwa akaunti yako haina anwani ya barua pepe iliyothibitishwa (kwa mfano, ulijiandikisha kwa namba ya simu pekee), wasiliana na usaidizi wa ClipCash."
+
+#: templates/public/home.html
+msgid "No. Your choice stays pending until it is activated. Pay the plan price with an available payment method using the details on the payment page, then submit your transaction reference. The ClipCash team checks the payment, activates the membership and sends you a notification. ClipCash staff will never ask for your PIN."
+msgstr "Hapana. Chaguo lako linabaki linasubiri mpaka liwezeshwe. Lipa bei ya mpango kwa njia ya malipo inayopatikana ukitumia taarifa kwenye ukurasa wa malipo, kisha wasilisha kumbukumbu ya muamala wako. Timu ya ClipCash huhakiki malipo, huwezesha uanachama na kukutumia taarifa. Wafanyakazi wa ClipCash hawatakuomba PIN yako kamwe."
+
+#: templates/administration/membership_payments/detail.html templates/payments/manual_claim.html
+msgid "None attached"
+msgstr "Hakuna kilichoambatishwa"
+
+#: templates/accounts/profile.html
+msgid "Not yet (optional; needed to buy a membership)"
+msgstr "Bado (si lazima; inahitajika ili kununua uanachama)"
+
+#: templates/accounts/register_done.html
+msgid "Nothing arrived after a few minutes? Check your spam folder, or ask for a new link. Mistyped the address? Simply sign up again with the right one."
+msgstr "Hakuna kilichofika baada ya dakika chache? Angalia folda ya barua taka (spam), au omba kiungo kipya. Uliandika anwani vibaya? Jiandikishe tena tu kwa anwani sahihi."
+
+#: templates/payments/manual_claim.html
+msgid "Nothing else is needed from you. Never share your payment PIN with anyone."
+msgstr "Hakuna kingine kinachohitajika kutoka kwako. Usimpe mtu yeyote PIN yako ya malipo."
+
+#: templates/components/contact_verification_notice.html
+msgid "Or add an email address"
+msgstr "Au ongeza anwani ya barua pepe"
+
+#: templates/payments/manual_claim.html
+msgid "Our team finds your payment in ClipCash's provider business records and checks the reference, the exact amount and that it reached our receiving account. This usually takes up to one working day."
+msgstr "Timu yetu hutafuta malipo yako kwenye rekodi za biashara za ClipCash kwa mtoa huduma na kuhakiki kumbukumbu, kiasi kamili na kama yamefika kwenye akaunti yetu ya kupokea malipo. Kwa kawaida hili huchukua hadi siku moja ya kazi."
+
+#: templates/members/dashboard.html
+msgid "Pay with an available payment method and submit your transaction reference; the ClipCash team activates the membership after checking the payment."
+msgstr "Lipa kwa njia ya malipo inayopatikana na uwasilishe kumbukumbu ya muamala wako; timu ya ClipCash inawezesha uanachama baada ya kuhakiki malipo."
+
+#: templates/members/dashboard.html
+msgid "Pay with an available payment method to start this membership."
+msgstr "Lipa kwa njia ya malipo inayopatikana ili kuanza uanachama huu."
+
+#: templates/payments/manual_pay.html
+msgid "Pay with your selected payment provider, then tell us the transaction details. Your membership starts after our team confirms the payment in the provider records, usually within one working day."
+msgstr "Lipa kupitia mtoa huduma wa malipo uliyemchagua, kisha tuambie taarifa za muamala. Uanachama wako unaanza baada ya timu yetu kuthibitisha malipo katika rekodi za mtoa huduma, kwa kawaida ndani ya siku moja ya kazi."
+
+#: templates/components/membership_payment_notice.html
+msgid "Payment methods:"
+msgstr "Njia za malipo:"
+
+#: templates/payments/manual_pay.html
+msgid "Payment provider"
+msgstr "Mtoa huduma wa malipo"
+
+#: templates/components/contact_verification_notice.html
+msgid "Payments need a confirmed email address, so we can reach you about them. Ask for a confirmation link for <strong>%(email)s</strong> and open it while signed in."
+msgstr "Malipo yanahitaji anwani ya barua pepe iliyothibitishwa, ili tuweze kuwasiliana nawe kuhusu malipo hayo. Omba kiungo cha uthibitisho kwa <strong>%(email)s</strong> na ukifungue ukiwa umeingia."
+
+#: templates/components/contact_verification_notice.html
+msgid "Payments need a confirmed email address, so we can reach you about them. It also lets you reset a forgotten password. Add one and open the confirmation link we send."
+msgstr "Malipo yanahitaji anwani ya barua pepe iliyothibitishwa, ili tuweze kuwasiliana nawe kuhusu malipo hayo. Pia inakuwezesha kuweka upya nenosiri ulilosahau. Ongeza anwani na ufungue kiungo cha uthibitisho tutakachotuma."
+
+#: templates/components/contact_verification_notice.html
+msgid "Payments need a contact we have verified, so we can reach you about them. We will send a code to your mobile number by text message."
+msgstr "Malipo yanahitaji njia ya mawasiliano tuliyoithibitisha, ili tuweze kuwasiliana nawe kuhusu malipo hayo. Tutatuma msimbo kwenye namba yako ya simu kwa ujumbe mfupi (SMS)."
+
+#: templates/accounts/phone_verify.html
+msgid "Phone verification by SMS is not available yet. To buy a membership, confirm an email address instead."
+msgstr "Uthibitisho wa simu kwa SMS bado haupatikani. Ili kununua uanachama, thibitisha anwani ya barua pepe badala yake."
+
+#: templates/public/home.html
+msgid "Public registration may be closed. Video access can depend on your membership and its entitlements, feature availability and content readiness. The relevant account or video page explains the next step."
+msgstr "Usajili wa umma unaweza kuwa umefungwa. Ufikiaji wa video unaweza kutegemea uanachama wako na haki zake, upatikanaji wa huduma na utayari wa maudhui. Ukurasa husika wa akaunti au video unaeleza hatua inayofuata."
+
+#: templates/payments/manual_claim.html
+msgid "Receipt"
+msgstr "Risiti"
+
+#: templates/administration/membership_payments/instructions.html templates/payments/manual_pay.html
+msgid "Receiving number"
+msgstr "Namba ya kupokea malipo"
+
+#: templates/public/home.html
+msgid "Registration is not open yet. When it opens, you will need an email address, a mobile number or a username, and a password."
+msgstr "Usajili bado haujafunguliwa. Ukifunguliwa, utahitaji anwani ya barua pepe, namba ya simu au jina la mtumiaji, pamoja na nenosiri."
+
+#: templates/accounts/profile.html
+msgid "Resetting a forgotten password"
+msgstr "Kuweka upya nenosiri lililosahaulika"
+
+#: templates/accounts/phone_verify.html
+msgid "Send a new code"
+msgstr "Tuma msimbo mpya"
+
+#: templates/accounts/phone_verify.html
+msgid "Send code"
+msgstr "Tuma msimbo"
+
+#: templates/accounts/profile.html templates/components/contact_verification_notice.html
+msgid "Send confirmation link"
+msgstr "Tuma kiungo cha uthibitisho"
+
+#: templates/accounts/confirm_email_sign_in.html
+msgid "Sign in and confirm"
+msgstr "Ingia na uthibitishe"
+
+#: templates/accounts/confirm_email_sign_in.html
+msgid "Sign in to confirm your email"
+msgstr "Ingia ili kuthibitisha barua pepe yako"
+
+#: templates/accounts/password_reset_form.html
+msgid "Signed up with a mobile number or a username?"
+msgstr "Ulijiandikisha kwa namba ya simu au jina la mtumiaji?"
+
+#: templates/accounts/verification_required.html
+msgid "Staff accounts need a confirmed email address before they can open member or staff pages. Follow the link we sent to %(email)s, or ask for a new one."
+msgstr "Akaunti za wafanyakazi zinahitaji anwani ya barua pepe iliyothibitishwa kabla ya kufungua kurasa za wanachama au za wafanyakazi. Fuata kiungo tulichotuma kwa %(email)s, au omba kipya."
+
+#: templates/accounts/password_reset_form.html
+msgid "Still signed in somewhere? Add a recovery email now in My account and open the confirmation link we send."
+msgstr "Bado umeingia mahali fulani? Ongeza barua pepe ya kurejesha akaunti sasa katika Akaunti yangu na ufungue kiungo cha uthibitisho tutakachotuma."
+
+#: templates/payments/manual_pay.html
+msgid "Submitting these details does not activate your membership by itself. We check every payment against the official provider records first."
+msgstr "Kuwasilisha taarifa hizi pekee hakuwezeshi uanachama wako. Kwanza tunahakiki kila malipo kwa kuyalinganisha na rekodi rasmi za mtoa huduma."
+
+#: templates/accounts/register.html
+msgid "Tell us your name, choose a password, and sign up with your email address, your mobile number or a username. Your account is ready at once. Creating an account is free."
+msgstr "Tuambie jina lako, chagua nenosiri, na ujiandikishe kwa anwani yako ya barua pepe, namba yako ya simu au jina la mtumiaji. Akaunti yako iko tayari mara moja. Kufungua akaunti ni bure."
+
+#: templates/accounts/verification_required.html
+msgid "The address is wrong or no longer yours? Contact ClipCash support: they will check that the account is yours before changing it."
+msgstr "Anwani si sahihi au si yako tena? Wasiliana na usaidizi wa ClipCash: watahakikisha kuwa akaunti ni yako kabla ya kuibadilisha."
+
+#: templates/components/membership_payment_notice.html
+msgid "To buy a membership, choose a plan, pay its exact price with the payment details shown at checkout, then submit your transaction reference. Your membership starts only after our team confirms the payment in the official provider records."
+msgstr "Ili kununua uanachama, chagua mpango, lipa bei yake kamili ukitumia taarifa za malipo zinazoonyeshwa wakati wa kulipa, kisha wasilisha kumbukumbu ya muamala wako. Uanachama wako unaanza tu baada ya timu yetu kuthibitisha malipo katika rekodi rasmi za mtoa huduma."
+
+#: templates/components/contact_verification_notice.html
+msgid "Use a different address"
+msgstr "Tumia anwani nyingine"
+
+#: templates/accounts/login.html
+msgid "Use the email address, mobile number (for example 0712 345 678) or username you signed up with, and your password."
+msgstr "Tumia anwani ya barua pepe, namba ya simu (kwa mfano 0712 345 678) au jina la mtumiaji ulilotumia kujiandikisha, pamoja na nenosiri lako."
+
+#: templates/payments/manual_pay.html
+msgid "Use the issued receiving number and registered name below. These details stay with your submission even if the method changes."
+msgstr "Tumia namba ya kupokea malipo iliyotolewa na jina lililosajiliwa hapa chini. Taarifa hizi zinabaki na uwasilishaji wako hata kama njia ya malipo itabadilika."
+
+#: apps/accounts/forms.py templates/accounts/profile.html
+msgid "Username"
+msgstr "Jina la mtumiaji"
+
+#: templates/accounts/profile.html
+msgid "Verify by SMS"
+msgstr "Thibitisha kwa SMS"
+
+#: templates/components/contact_verification_notice.html
+msgid "Verify my mobile number"
+msgstr "Thibitisha namba yangu ya simu"
+
+#: templates/accounts/phone_verify.html
+msgid "Verify number"
+msgstr "Thibitisha namba"
+
+#: templates/accounts/phone_verify.html
+msgid "Verify your mobile number"
+msgstr "Thibitisha namba yako ya simu"
+
+#: templates/components/contact_verification_notice.html
+msgid "Verify your mobile number to buy a membership"
+msgstr "Thibitisha namba yako ya simu ili ununue uanachama"
+
+#: templates/members/dashboard.html
+msgid "Videos are available to members with an active membership."
+msgstr "Video zinapatikana kwa wanachama wenye uanachama unaotumika."
+
+#: templates/accounts/register_done.html
+msgid "We have sent a link to the address you gave. Open it within %(hours)s hour to activate your account, then sign in with that address and your password."
+msgid_plural "We have sent a link to the address you gave. Open it within %(hours)s hours to activate your account, then sign in with that address and your password."
+msgstr[0] "Tumetuma kiungo kwenye anwani uliyotoa. Kifungue ndani ya saa %(hours)s ili kuwezesha akaunti yako, kisha ingia kwa anwani hiyo na nenosiri lako."
+msgstr[1] "Tumetuma kiungo kwenye anwani uliyotoa. Kifungue ndani ya saa %(hours)s ili kuwezesha akaunti yako, kisha ingia kwa anwani hiyo na nenosiri lako."
+
+#: templates/components/manual_payment_status.html
+msgid "We received your payment details (%(amount)s, reference %(ref)s) and are checking them against the provider records. Your membership starts once the payment is confirmed."
+msgstr "Tumepokea taarifa zako za malipo (%(amount)s, kumbukumbu %(ref)s) na tunazihakiki kwa kuzilinganisha na rekodi za mtoa huduma. Uanachama wako unaanza malipo yakithibitishwa."
+
+#: templates/accounts/phone_verify.html
+msgid "We will send a 6-digit code by text message to <strong>%(number)s</strong>. Verifying it lets you buy a membership with this number. It does not change how you sign in."
+msgstr "Tutatuma msimbo wa tarakimu 6 kwa ujumbe mfupi (SMS) kwenda <strong>%(number)s</strong>. Kuithibitisha namba hii kunakuwezesha kununua uanachama ukitumia namba hii. Hakubadilishi jinsi unavyoingia."
+
+#: templates/accounts/phone_verify.html
+msgid "Wrong number? Change it first"
+msgstr "Namba si sahihi? Ibadilishe kwanza"
+
+#: templates/members/dashboard.html
+msgid "You pay with an available payment method and the ClipCash team checks the payment."
+msgstr "Unalipa kwa njia ya malipo inayopatikana na timu ya ClipCash inahakiki malipo."
+
+#: templates/accounts/register_done.html
+msgid "Your account cannot be used until you open the link. If that address already has a ClipCash account, we have emailed it instead, and no second account was created."
+msgstr "Akaunti yako haiwezi kutumika mpaka ufungue kiungo. Ikiwa anwani hiyo tayari ina akaunti ya ClipCash, tumeitumia barua pepe badala yake, na hakuna akaunti ya pili iliyofunguliwa."
+
+#: templates/accounts/phone_verify.html
+msgid "Your account has no mobile number yet."
+msgstr "Akaunti yako bado haina namba ya simu."
+
+#: templates/accounts/confirm_email_complete.html
+msgid "Your email address is confirmed and your account is active. Sign in with that address and the password you chose."
+msgstr "Anwani yako ya barua pepe imethibitishwa na akaunti yako inatumika. Ingia kwa anwani hiyo na nenosiri ulilochagua."
+
+#: templates/accounts/confirm_email_complete.html
+msgid "Your email address is confirmed. You can now use it to sign in and to reset a forgotten password."
+msgstr "Anwani yako ya barua pepe imethibitishwa. Sasa unaweza kuitumia kuingia na kuweka upya nenosiri ulilosahau."
+
+#: templates/payments/manual_pay.html
+msgid "Your plan choice is kept until the date above."
+msgstr "Chaguo lako la mpango linahifadhiwa hadi tarehe iliyo hapo juu."
+
+#: templates/accounts/profile.html
+msgid "not verified"
+msgstr "haijathibitishwa"
+
+#: templates/accounts/profile.html
+msgid "not verified (SMS verification is not available)"
+msgstr "haijathibitishwa (uthibitisho wa SMS haupatikani)"
+
+#: templates/payments/manual_pay.html
+msgid "with your provider transaction reference so our team can check it and arrange any refund."
+msgstr "ukiwa na kumbukumbu ya muamala wako kutoka kwa mtoa huduma ili timu yetu iikague na ipange kurejesha malipo inapohitajika."

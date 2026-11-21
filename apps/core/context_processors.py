@@ -7,6 +7,7 @@ from .services import get_site_configuration
 def site(request):
     config = getattr(request, "site_configuration", None) or get_site_configuration()
     from apps.accounts.access import demo_unconfirmed, demo_verification_optional
+    from apps.accounts.sms import delivery_available as sms_delivery_available
     from apps.payments.providers import sandbox_active
 
     user = getattr(request, "user", None)
@@ -18,4 +19,6 @@ def site(request):
             # show only in the restricted demonstration; payments, cash rewards and
             # withdrawals are described as available only when their feature is on.
             "restricted_demo": settings.RESTRICTED_DEMO_MODE,
+            # PAY-LIVE-01F-B: offer "Verify your mobile number" only when an SMS transport exists.
+            "sms_verification_available": sms_delivery_available(),
             "financial_locked": not any(states[key] for key in FINANCIAL_FEATURES)}

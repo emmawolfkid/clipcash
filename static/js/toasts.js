@@ -1,73 +1,105 @@
-/* Enhance backend-confirmed Django messages only; never infer action success. */
+/* Action feedback: the one controller for backend-confirmed Django messages
+   (templates/components/messages.html). It never infers that an action succeeded.
+   Successes the server marks data-feedback-auto expire unless they hold a link or control;
+   errors, warnings, information and persistent successes stay until dismissed. */
 (function () {
   "use strict";
-  var regions = document.querySelectorAll(".toast-region");
+  var regions = Array.prototype.slice.call(document.querySelectorAll("[data-feedback]"));
   if (!regions.length) { return; }
   var region = regions[0];
-  // A repeated include must not produce a second stack or repeated announcements.
-  Array.prototype.forEach.call(regions, function (other) {
-    if (other !== region) {
-      while (other.firstChild) { region.appendChild(other.firstChild); }
-      other.remove();
-    }
-  });
-  var seen = new Map();
-  Array.prototype.forEach.call(region.querySelectorAll(".toast"), function (toast) {
-    var key = toast.dataset.level + ":" + toast.querySelector(".toast__text").textContent.trim();
-    if (seen.has(key)) {
-      if (toast.dataset.persistent) { seen.get(key).dataset.persistent = "true"; }
-      toast.remove();
-      return;
-    }
-    seen.set(key, toast);
-  });
-  Array.prototype.forEach.call(region.querySelectorAll(".toast"), function (toast) {
-    if (toast.dataset.ready) { return; }
-    toast.dataset.ready = "true";
-    var close = toast.querySelector(".toast__close");
-    close.hidden = false;
-    var timer;
-    var remaining = 7000;
-    var started;
-    var hovered = false;
-    var focused = false;
-    // Links and explicitly persistent successes require a decision from the user.
-    var automatic = toast.dataset.level === "success" && !toast.dataset.persistent && !toast.querySelector("a, input, select, textarea");
-    function dismiss() {
-      window.clearTimeout(timer);
-      if (toast.contains(document.activeElement)) {
-        var items = Array.prototype.slice.call(region.querySelectorAll(".toast"));
-        var next = items[items.indexOf(toast) + 1] || items[items.indexOf(toast) - 1];
-        var destination = next ? next.querySelector(".toast__close") : document.getElementById("content");
-        if (destination) { destination.focus(); }
+  if (region.hasAttribute("data-feedback-ready")) { return; }
+  region.setAttribute("data-feedback-ready", "");
+  var list = region.querySelector(".messages");
+  var DELAY = 8000;
+
+  function text(card) { return card.querySelector(".messages__text").textContent.trim(); }
+  function level(card) { return card.getAttribute("data-level"); }
+  function children(element) { return Array.prototype.slice.call(element.children); }
+
+  // A repeated include must not produce a second stack or repeated announcements; if any copy
+  // of a repeated message is persistent, the kept card is persistent too.
+  var seen = Object.create(null);
+  regions.forEach(function (other, index) {
+    children(other.querySelector(".messages")).forEach(function (card) {
+      var key = level(card) + "\n" + text(card);
+      if (seen[key]) {
+        if (!card.hasAttribute("data-feedback-auto")) { seen[key].removeAttribute("data-feedback-auto"); }
+        card.remove();
+        return;
       }
-      toast.remove();
-      if (!region.querySelector(".toast")) { region.remove(); }
+      seen[key] = card;
+      if (index) { list.appendChild(card); }
+    });
+    if (index) { other.remove(); }
+  });
+
+  var cards = children(list);
+  // Fill live regions that were already present after load; never move focus to them.
+  // Errors are announced urgently (role="alert"); everything else politely (role="status").
+  var polite = region.querySelector("[data-feedback-announcer]");
+  var urgent = region.querySelector("[data-feedback-urgent]");
+  window.setTimeout(function () {
+    function joined(errors) {
+      return cards.filter(function (card) { return (level(card) === "error") === errors; }).map(text).join(" ");
     }
+    if (urgent) { urgent.textContent = joined(true); }
+    polite.textContent = urgent ? joined(false) : cards.map(text).join(" ");
+  }, 100);
+
+  var lastTaskFocus = null;
+  document.addEventListener("focusin", function (event) {
+    if (!region.contains(event.target)) { lastTaskFocus = event.target; }
+  });
+
+  cards.forEach(function (card) {
+    var close = card.querySelector("[data-feedback-close]");
+    var timer = null;
+    var hovered = false;
+    var remaining = DELAY;
+    var started = null;
+    var eligible = card.hasAttribute("data-feedback-auto") && level(card) === "success" &&
+      !card.querySelector("a, input, select, textarea, button:not([data-feedback-close])");
     function pause() {
-      if (timer) {
-        window.clearTimeout(timer);
-        timer = null;
-        remaining = Math.max(0, remaining - (Date.now() - started));
+      window.clearTimeout(timer);
+      timer = null;
+      if (started !== null) { remaining = Math.max(0, remaining - (Date.now() - started)); started = null; }
+    }
+    function dismiss() {
+      if (!card.isConnected) { return; }
+      pause();
+      var hadFocus = card.contains(document.activeElement);
+      var next = card.nextElementSibling || card.previousElementSibling;
+      card.remove();
+      if (hadFocus) {
+        if (next) { next.querySelector("[data-feedback-close]").focus(); }
+        else if (lastTaskFocus && lastTaskFocus.isConnected) { lastTaskFocus.focus(); }
+        else {
+          // Explicit dismissal only: keep keyboard position by the closed card.
+          list.tabIndex = -1;
+          list.focus();
+        }
       }
     }
     function resume() {
-      if (!automatic || hovered || focused || document.hidden || timer) { return; }
-      started = Date.now();
-      timer = window.setTimeout(dismiss, remaining);
+      pause();
+      if (eligible && card.isConnected && !hovered && !document.hidden &&
+          !card.contains(document.activeElement)) {
+        started = Date.now();
+        timer = window.setTimeout(dismiss, remaining);
+      }
     }
+    close.hidden = false;
     close.addEventListener("click", dismiss);
-    toast.addEventListener("keydown", function (event) {
+    card.addEventListener("keydown", function (event) {
       if (event.key === "Escape") { event.preventDefault(); dismiss(); }
     });
-    toast.addEventListener("mouseenter", function () { hovered = true; pause(); });
-    toast.addEventListener("mouseleave", function () { hovered = false; resume(); });
-    toast.addEventListener("focusin", function () { focused = true; pause(); });
-    toast.addEventListener("focusout", function (event) {
-      if (!toast.contains(event.relatedTarget)) { focused = false; resume(); }
-    });
-    document.addEventListener("visibilitychange", function () { if (document.hidden) { pause(); } else { resume(); } });
+    card.addEventListener("pointerenter", function () { hovered = true; pause(); });
+    card.addEventListener("pointerleave", function () { hovered = false; resume(); });
+    card.addEventListener("focusin", pause);
+    card.addEventListener("focusout", function () { window.setTimeout(resume, 0); });
+    document.addEventListener("visibilitychange", resume);
+    // History restoration must not replay already-consumed server feedback.
+    window.addEventListener("pagehide", dismiss);
     resume();
   });
-  region.classList.add("is-enhanced");
 }());

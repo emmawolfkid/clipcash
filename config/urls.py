@@ -1,10 +1,11 @@
 from django.contrib import admin
 from django.urls import include, path
 
-from apps.core.views import HomeView, MemberActivityView, MemberDashboardView
+from apps.core.views import HomeView, MemberActivityView, MemberDashboardView, favicon
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
+    path("favicon.ico", favicon, name="favicon"),
     path("admin/", admin.site.urls),
     path("accounts/", include("apps.accounts.urls")),
     path("memberships/", include("apps.memberships.urls")),

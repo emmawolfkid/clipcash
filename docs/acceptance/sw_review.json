@@ -1,0 +1,135 @@
+[
+ {
+  "msgid": "A password can be reset only by email, to an email address you added and confirmed in My account. Password reset by SMS is not available, and ClipCash never resets a password just because someone gives a mobile number or a username.",
+  "msgstr": "Nenosiri linaweza kuwekwa upya kwa barua pepe pekee, kwenda kwenye anwani ya barua pepe uliyoongeza na kuthibitisha katika Akaunti yangu. Kuweka upya nenosiri kwa SMS hakupatikani, na ClipCash haiweki upya nenosiri kamwe kwa sababu tu mtu ametoa namba ya simu au jina la mtumiaji.",
+  "note": "Security: account-recovery rule."
+ },
+ {
+  "msgid": "A password-reset link can only go to an email address you added and confirmed. Add an email address and open the confirmation link we send, so you can reset your password if you forget it, and so you can buy a membership.",
+  "msgstr": "Kiungo cha kuweka upya nenosiri kinaweza kutumwa tu kwenye anwani ya barua pepe uliyoongeza na kuthibitisha. Ongeza anwani ya barua pepe na ufungue kiungo cha uthibitisho tutakachotuma, ili uweze kuweka upya nenosiri lako ukilisahau, na ili uweze kununua uanachama.",
+  "note": "Security: account-recovery rule."
+ },
+ {
+  "msgid": "A username or a mobile number is never enough to reset a password, even a verified one: passwords are reset by email only.",
+  "msgstr": "Jina la mtumiaji au namba ya simu, hata iliyothibitishwa, haitoshi kamwe kuweka upya nenosiri: manenosiri huwekwa upya kwa barua pepe pekee.",
+  "note": "Security: account-recovery rule."
+ },
+ {
+  "msgid": "A username or a mobile number is never enough to reset a password. Mobile numbers are not verified: SMS verification is not available.",
+  "msgstr": "Jina la mtumiaji au namba ya simu haitoshi kamwe kuweka upya nenosiri. Namba za simu hazithibitishwi: uthibitisho kwa SMS haupatikani.",
+  "note": "Security: account-recovery rule."
+ },
+ {
+  "msgid": "Check that the provider shows the recipient name above before you confirm. Pay the exact amount in one payment: partial or extra amounts cannot be matched automatically. Never share your payment PIN with anyone, including ClipCash staff.",
+  "msgstr": "Hakikisha mtoa huduma anaonyesha jina la mpokeaji lililo hapo juu kabla ya kuthibitisha. Lipa kiasi kamili kwa muamala mmoja: kiasi pungufu au cha ziada hakiwezi kulinganishwa kiotomatiki. Usimpe mtu yeyote PIN yako ya malipo, hata wafanyakazi wa ClipCash.",
+  "note": "Payment + security: recipient check, exact amount, PIN warning. Adapted from the reviewed Airtel-only sentence."
+ },
+ {
+  "msgid": "ClipCash staff will never ask for this code. Never share it with anyone.",
+  "msgstr": "Wafanyakazi wa ClipCash hawatakuomba msimbo huu kamwe. Usimpe mtu yeyote.",
+  "note": "Security: one-time code warning (anti-social-engineering)."
+ },
+ {
+  "msgid": "Complimentary access: no payment was made, and access ends on the date below. Nothing renews automatically.",
+  "msgstr": "Ufikiaji uliotolewa bure: hakuna malipo yaliyofanyika, na ufikiaji unaisha tarehe iliyo hapa chini. Hakuna kinachoongezewa muda kiotomatiki.",
+  "note": "Ambiguous: 'renews automatically' rendered as 'extended automatically'."
+ },
+ {
+  "msgid": "Did not create a ClipCash account? You can ignore this message: nothing changes until the account owner confirms.",
+  "msgstr": "Hukufungua akaunti ya ClipCash? Unaweza kupuuza ujumbe huu: hakuna kitakachobadilika mpaka mmiliki wa akaunti athibitishe.",
+  "note": "Security: unsolicited-confirmation guidance."
+ },
+ {
+  "msgid": "Enter the code we sent. It expires after %(minutes)s minutes and works once.",
+  "msgstr": "Weka msimbo tuliotuma. Unaisha muda baada ya dakika %(minutes)s na unafanya kazi mara moja tu.",
+  "note": "Security: code lifetime and single use."
+ },
+ {
+  "msgid": "For your security, an email address added to an existing account is confirmed only by the account owner. Sign in with your mobile number (or your username, if you have one), then open this link again or use the button below.",
+  "msgstr": "Kwa usalama wako, anwani ya barua pepe iliyoongezwa kwenye akaunti iliyopo inathibitishwa na mmiliki wa akaunti pekee. Ingia kwa namba yako ya simu (au jina lako la mtumiaji, ikiwa unalo), kisha fungua kiungo hiki tena au tumia kitufe kilicho hapa chini.",
+  "note": "Security: email-ownership rule."
+ },
+ {
+  "msgid": "Forgotten passwords are reset by email. If you sign up with a mobile number or a username, add an email address in My account so you can recover your account. Buying a membership needs a confirmed email address.",
+  "msgstr": "Manenosiri yaliyosahaulika huwekwa upya kwa barua pepe. Ukijiandikisha kwa namba ya simu au jina la mtumiaji, ongeza anwani ya barua pepe katika Akaunti yangu ili uweze kurejesha akaunti yako. Kununua uanachama kunahitaji anwani ya barua pepe iliyothibitishwa.",
+  "note": "Security: account-recovery rule."
+ },
+ {
+  "msgid": "If that address is confirmed on an active account, we have sent it a link to choose a new password. The link expires in one hour and works once.",
+  "msgstr": "Ikiwa anwani hiyo imethibitishwa kwenye akaunti inayotumika, tumetuma kiungo cha kuchagua nenosiri jipya. Kiungo kitaisha muda baada ya saa moja na kinafanya kazi mara moja tu.",
+  "note": "Security: reset-link lifetime and single use (extends a reviewed sentence)."
+ },
+ {
+  "msgid": "Instructions issued",
+  "msgstr": "Maelekezo yalitolewa",
+  "note": "Label followed by a date ('Instructions issued: <date>')."
+ },
+ {
+  "msgid": "No. Your choice stays pending until it is activated. Pay the plan price with an available payment method using the details on the payment page, then submit your transaction reference. The ClipCash team checks the payment, activates the membership and sends you a notification. ClipCash staff will never ask for your PIN.",
+  "msgstr": "Hapana. Chaguo lako linabaki linasubiri mpaka liwezeshwe. Lipa bei ya mpango kwa njia ya malipo inayopatikana ukitumia taarifa kwenye ukurasa wa malipo, kisha wasilisha kumbukumbu ya muamala wako. Timu ya ClipCash huhakiki malipo, huwezesha uanachama na kukutumia taarifa. Wafanyakazi wa ClipCash hawatakuomba PIN yako kamwe.",
+  "note": "Payment + security: PIN warning."
+ },
+ {
+  "msgid": "Nothing else is needed from you. Never share your payment PIN with anyone.",
+  "msgstr": "Hakuna kingine kinachohitajika kutoka kwako. Usimpe mtu yeyote PIN yako ya malipo.",
+  "note": "Security: PIN warning (adapted from the reviewed Airtel-only sentence)."
+ },
+ {
+  "msgid": "Our team finds your payment in ClipCash's provider business records and checks the reference, the exact amount and that it reached our receiving account. This usually takes up to one working day.",
+  "msgstr": "Timu yetu hutafuta malipo yako kwenye rekodi za biashara za ClipCash kwa mtoa huduma na kuhakiki kumbukumbu, kiasi kamili na kama yamefika kwenye akaunti yetu ya kupokea malipo. Kwa kawaida hili huchukua hadi siku moja ya kazi.",
+  "note": "Payment verification process (adapted from the reviewed Airtel-only sentence)."
+ },
+ {
+  "msgid": "Pay with your selected payment provider, then tell us the transaction details. Your membership starts after our team confirms the payment in the provider records, usually within one working day.",
+  "msgstr": "Lipa kupitia mtoa huduma wa malipo uliyemchagua, kisha tuambie taarifa za muamala. Uanachama wako unaanza baada ya timu yetu kuthibitisha malipo katika rekodi za mtoa huduma, kwa kawaida ndani ya siku moja ya kazi.",
+  "note": "Payment process and timing."
+ },
+ {
+  "msgid": "Receiving number",
+  "msgstr": "Namba ya kupokea malipo",
+  "note": "Payment detail label shown next to the number members pay to."
+ },
+ {
+  "msgid": "Staff accounts need a confirmed email address before they can open member or staff pages. Follow the link we sent to %(email)s, or ask for a new one.",
+  "msgstr": "Akaunti za wafanyakazi zinahitaji anwani ya barua pepe iliyothibitishwa kabla ya kufungua kurasa za wanachama au za wafanyakazi. Fuata kiungo tulichotuma kwa %(email)s, au omba kipya.",
+  "note": "Security: staff access rule."
+ },
+ {
+  "msgid": "Submitting these details does not activate your membership by itself. We check every payment against the official provider records first.",
+  "msgstr": "Kuwasilisha taarifa hizi pekee hakuwezeshi uanachama wako. Kwanza tunahakiki kila malipo kwa kuyalinganisha na rekodi rasmi za mtoa huduma.",
+  "note": "Payment verification rule (adapted from the reviewed Airtel-only sentence)."
+ },
+ {
+  "msgid": "The address is wrong or no longer yours? Contact ClipCash support: they will check that the account is yours before changing it.",
+  "msgstr": "Anwani si sahihi au si yako tena? Wasiliana na usaidizi wa ClipCash: watahakikisha kuwa akaunti ni yako kabla ya kuibadilisha.",
+  "note": "Security: ownership check before change."
+ },
+ {
+  "msgid": "To buy a membership, choose a plan, pay its exact price with the payment details shown at checkout, then submit your transaction reference. Your membership starts only after our team confirms the payment in the official provider records.",
+  "msgstr": "Ili kununua uanachama, chagua mpango, lipa bei yake kamili ukitumia taarifa za malipo zinazoonyeshwa wakati wa kulipa, kisha wasilisha kumbukumbu ya muamala wako. Uanachama wako unaanza tu baada ya timu yetu kuthibitisha malipo katika rekodi rasmi za mtoa huduma.",
+  "note": "Payment process: exact price, activation only after confirmation."
+ },
+ {
+  "msgid": "Use the issued receiving number and registered name below. These details stay with your submission even if the method changes.",
+  "msgstr": "Tumia namba ya kupokea malipo iliyotolewa na jina lililosajiliwa hapa chini. Taarifa hizi zinabaki na uwasilishaji wako hata kama njia ya malipo itabadilika.",
+  "note": "Payment: which number and name to pay to."
+ },
+ {
+  "msgid": "We have sent a link to the address you gave. Open it within %(hours)s hour to activate your account, then sign in with that address and your password.",
+  "msgstr": [
+   "Tumetuma kiungo kwenye anwani uliyotoa. Kifungue ndani ya saa %(hours)s ili kuwezesha akaunti yako, kisha ingia kwa anwani hiyo na nenosiri lako.",
+   "Tumetuma kiungo kwenye anwani uliyotoa. Kifungue ndani ya saa %(hours)s ili kuwezesha akaunti yako, kisha ingia kwa anwani hiyo na nenosiri lako."
+  ],
+  "note": "Plural: Swahili 'saa' is the same in singular and plural, so both forms are identical."
+ },
+ {
+  "msgid": "We will send a 6-digit code by text message to <strong>%(number)s</strong>. Verifying it lets you buy a membership with this number. It does not change how you sign in.",
+  "msgstr": "Tutatuma msimbo wa tarakimu 6 kwa ujumbe mfupi (SMS) kwenda <strong>%(number)s</strong>. Kuithibitisha namba hii kunakuwezesha kununua uanachama ukitumia namba hii. Hakubadilishi jinsi unavyoingia.",
+  "note": "Ambiguous: English 'Verifying it' may mean the number or the code; translated as verifying the number."
+ },
+ {
+  "msgid": "with your provider transaction reference so our team can check it and arrange any refund.",
+  "msgstr": "ukiwa na kumbukumbu ya muamala wako kutoka kwa mtoa huduma ili timu yetu iikague na ipange kurejesha malipo inapohitajika.",
+  "note": "Payment: refund handling (adapted from the reviewed Airtel-only sentence)."
+ }
+]

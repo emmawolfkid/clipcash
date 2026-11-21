@@ -27,6 +27,7 @@ from django.utils import timezone
 
 from apps.audit.services import DENIED, record_business_event, record_security_event
 from apps.core import features
+from apps.core.locking import lock_own_rows
 from apps.core.money import to_amount
 from apps.memberships.access import check_access
 from apps.memberships.models import MembershipPlan
@@ -319,7 +320,9 @@ def invite_member(user, organization, email, role=ROLE.MANAGER):
 
 
 def pending_invitations_for(user):
-    if advertiser_account_reason(user) != "ok":
+    # PRD-03A: an invitation is addressed to an inbox, so only a CONFIRMED address may claim it
+    # (sign-up no longer confirms addresses; anyone can type someone else's).
+    if advertiser_account_reason(user) != "ok" or not user.has_verified_email:
         return AdvertiserInvitation.objects.none()
     return (AdvertiserInvitation.objects.select_related("organization")
             .filter(email__iexact=user.email, status=AdvertiserInvitation.Status.PENDING,
@@ -327,8 +330,10 @@ def pending_invitations_for(user):
 
 
 def _locked_invitation_for(user, invitation_id):
-    invitation = (AdvertiserInvitation.objects.select_for_update().filter(pk=invitation_id, email__iexact=user.email)
-                  .first())
+    invitation = None
+    if user.has_verified_email:  # PRD-03A: see pending_invitations_for.
+        invitation = (AdvertiserInvitation.objects.select_for_update()
+                      .filter(pk=invitation_id, email__iexact=user.email).first())
     if invitation is None:
         raise NotFound("Invitation not found.")
     if invitation.status != AdvertiserInvitation.Status.PENDING or invitation.expires_at <= timezone.now():
@@ -519,9 +524,8 @@ def _check_budget_covers_awards(campaign, budget):
 
 
 def _lock_campaign(campaign):
-    return (Campaign.objects.select_for_update(of=("self",)).select_related("organization", "video",
-                                                                            "video__category")
-            .get(pk=campaign.pk))
+    return lock_own_rows(Campaign.objects.select_related("organization", "video", "video__category")).get(
+        pk=campaign.pk)
 
 
 def update_campaign(user, campaign, changes, *, expected_revision, target_plans=None):
@@ -637,7 +641,9 @@ def _notify_invitee(invitation):
     for addresses without an account)."""
     from apps.notifications import inbox
 
-    invitee = get_user_model().objects.filter(email__iexact=invitation.email, is_active=True).first()
+    # PRD-03A: only an account that has CONFIRMED the invited address hears about it.
+    invitee = get_user_model().objects.filter(email__iexact=invitation.email, email_verified=True,
+                                              is_active=True).first()
     inbox.notify(invitee, "advertiser.invitation", category=inbox.Category.ADVERTISING,
                  title="You were invited to an advertiser team",
                  message=f"{invitation.organization.display_name} invited you as "
@@ -870,7 +876,7 @@ def run_schedule(now=None, limit=200):
     now = now or timezone.now()
     counts = {"activated": 0, "completed": 0}
     with transaction.atomic():
-        ended = (Campaign.objects.select_for_update(skip_locked=True, of=("self",))
+        ended = (lock_own_rows(Campaign.objects, skip_locked=True)
                  .filter(status__in=[S.SCHEDULED, S.ACTIVE, S.PAUSED], ends_at__lte=now).order_by("ends_at")[:limit])
         for campaign in ended:
             old = campaign.status
@@ -879,8 +885,8 @@ def run_schedule(now=None, limit=200):
             campaign.save()
             _event("completed", None, campaign, old)
             counts["completed"] += 1
-        due = (Campaign.objects.select_for_update(skip_locked=True, of=("self",))
-               .select_related("organization", "video", "video__category")
+        due = (lock_own_rows(Campaign.objects.select_related("organization", "video", "video__category"),
+                             skip_locked=True)
                .filter(status=S.SCHEDULED, starts_at__lte=now, ends_at__gt=now).order_by("starts_at")[:limit])
         for campaign in due:
             counts["activated"] += _activate_if_due(campaign, now)

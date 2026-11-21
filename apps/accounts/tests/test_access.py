@@ -23,8 +23,13 @@ class AccessControlTests(AccountsTestCase):
         self.assert_status(reverse("probe_staff"), 403)
         self.assert_status(reverse("probe_super_admin"), 403)
 
-    def test_unverified_member_sent_to_verification(self):
+    def test_unverified_member_opens_member_pages(self):
+        # PRD-03A: an unconfirmed email no longer keeps a member out of member pages.
         self.client.force_login(make_user(verified=False))
+        self.assertEqual(self.client.get(reverse("probe_member")).status_code, 200)
+
+    def test_unverified_staff_still_sent_to_verification(self):
+        self.client.force_login(make_user("cm@example.com", role=User.Role.CONTENT_MANAGER, verified=False))
         self.assertRedirects(
             self.client.get(reverse("probe_member")), reverse("accounts:verification_required")
         )

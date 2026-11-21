@@ -83,7 +83,7 @@ class AuthenticationAuditTests(AccountsTestCase):
 class AccountLifecycleAuditTests(AccountsTestCase):
     @override_settings(RESTRICTED_DEMO_MODE=False, PUBLIC_REGISTRATION_APPROVED=True)
     def test_phone_registration_is_recorded_without_the_password(self):
-        self.client.post(reverse("accounts:register"), {"phone_number": "0712345678", "password1": NEW_PASSWORD,
+        self.client.post(reverse("accounts:register"), {"first_name": "Amina", "last_name": "Juma", "contact_method": "phone", "phone_number": "0712345678", "password1": NEW_PASSWORD,
                                                         "password2": NEW_PASSWORD})
         user = User.objects.get(phone_number="+255712345678")
         event = events("account.registered").get()
@@ -106,7 +106,7 @@ class AccountLifecycleAuditTests(AccountsTestCase):
     @override_settings(RESTRICTED_DEMO_MODE=False, PUBLIC_REGISTRATION_APPROVED=True)
     def test_duplicate_registration_is_recorded_once(self):
         User.objects.create_user(None, PASSWORD, phone_number="+255712345678", status=User.Status.ACTIVE)
-        self.client.post(reverse("accounts:register"), {"phone_number": "+255 712 345 678",
+        self.client.post(reverse("accounts:register"), {"first_name": "Amina", "last_name": "Juma", "contact_method": "phone", "phone_number": "+255 712 345 678",
                                                         "password1": NEW_PASSWORD, "password2": NEW_PASSWORD})
         self.assertEqual(events("account.registration.duplicate").get().metadata, {"method": "phone"})
         self.assertFalse(events("account.registered").exists())

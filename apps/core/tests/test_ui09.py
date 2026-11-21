@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import translation
 
 from apps.accounts.forms import RegistrationForm
-from apps.payments.models import ManualMembershipPayment
+from apps.payments.models import MANUAL_METHOD_AIRTEL_LIPA, ManualMembershipPayment
 from apps.payments.tests.manual_helpers import ManualPaymentTestCase
 from . import test_design_system
 
@@ -34,23 +34,54 @@ class BrandingAndFeedbackTests(SimpleTestCase):
                 Message(constants.WARNING, 'Review required'),
                 Message(constants.INFO, 'Waiting'),
             ]})
-        self.assertEqual(html.count('toast__text'), 4)
+        self.assertEqual(html.count('class="messages__text"'), 4)
         self.assertEqual(html.count('Saved &lt;script&gt;'), 1)
-        self.assertIn('messages__item--error toast', html)
+        self.assertIn('messages__item--error" data-level="error"', html)
+        # Severity is spoken, not shown by colour alone.
+        for label in ('Error: ', 'Warning: ', 'Success: ', 'Information: '):
+            self.assertEqual(html.count(f'<span class="visually-hidden">{label}</span>'), 1, label)
+        # Two live regions present before the script fills them: errors urgent, the rest polite.
         self.assertEqual(html.count('role="alert"'), 1)
-        self.assertEqual(html.count('role="status"'), 3)
-        self.assertEqual(html.count('aria-label="Dismiss notification" hidden'), 4)
+        self.assertIn('role="alert" aria-atomic="true" data-feedback-urgent></div>', html)
+        self.assertEqual(html.count('role="status"'), 1)
+        self.assertEqual(html.count('data-feedback-close hidden aria-label="Dismiss message"'), 4)
 
     def test_success_can_be_explicitly_persistent(self):
-        html = render_to_string('components/messages.html', {'messages': [
-            Message(constants.SUCCESS, 'Next step needed'),
-            Message(constants.SUCCESS, 'Next step needed', extra_tags='persistent'),
-        ]})
-        self.assertIn('data-persistent="true"', html)
-        self.assertEqual(html.count('toast__text'), 1)
+        for tag in ('persistent', 'feedback-persist'):
+            with self.subTest(tag=tag):
+                html = render_to_string('components/messages.html', {'messages': [
+                    Message(constants.SUCCESS, 'Next step needed'),
+                    Message(constants.SUCCESS, 'Next step needed', extra_tags=tag),
+                ]})
+                self.assertEqual(html.count('class="messages__text"'), 1)
+                self.assertNotIn('data-feedback-auto', html)
 
     def test_no_feedback_markup_when_no_messages(self):
-        self.assertNotIn('toast-region', render_to_string('components/messages.html', {}))
+        self.assertNotIn('data-feedback', render_to_string('components/messages.html', {}))
+
+    def test_no_byte_order_mark_in_rendered_feedback(self):
+        path = settings.BASE_DIR / 'templates/components/messages.html'
+        self.assertFalse(path.read_bytes().startswith(b'\xef\xbb\xbf'))
+        html = render_to_string('components/messages.html', {'messages': [Message(constants.INFO, 'Hi')]})
+        self.assertNotIn('﻿', html)
+
+    def test_no_double_encoded_text_in_sources(self):
+        """UTF-8 read as Windows-1252 and saved again turns “ ” into â€œ â€ in member-facing text."""
+        signature = 'â€'
+        damaged = sorted(str(path.relative_to(settings.BASE_DIR))
+                         for folder in ('apps', 'templates', 'static', 'config')
+                         for path in (settings.BASE_DIR / folder).rglob('*')
+                         if path.suffix in {'.py', '.html', '.txt', '.js', '.css'}
+                         and signature in path.read_text(encoding='utf-8', errors='replace')
+                         and path.name != 'test_ui09.py')
+        self.assertEqual(damaged, [])
+
+    def test_one_feedback_controller(self):
+        """static/js/toasts.js is the only script that drives components/messages.html."""
+        scripts = settings.BASE_DIR / 'static/js'
+        drivers = sorted(path.name for path in scripts.glob('*.js')
+                         if '[data-feedback]' in path.read_text(encoding='utf-8'))
+        self.assertEqual(drivers, ['toasts.js'])
 
     def test_catalogue_is_current_and_interpolation_safe(self):
         path = settings.BASE_DIR / 'scripts/verify_i18n.py'
@@ -156,9 +187,18 @@ class SwahiliManualPaymentTests(ManualPaymentTestCase):
         subscription = self.choose()
         response = self.client.get(reverse('payments:manual_pay', args=[subscription.pk]))
         self.assertContains(response, 'Lipia uanachama wako')
-        self.assertContains(response, 'Airtel Money (Lipa)')
+        # The provider's display name is staff-configured data (PRD-04), shown as configured,
+        # never translated or replaced by a fixed label; the method underneath is unchanged.
+        self.assertEqual(self.instruction.method, MANUAL_METHOD_AIRTEL_LIPA)
+        label = self.instruction.provider_label
+        self.assertContains(response, f'<h2 class="panel__title" id="pay-how">{label}</h2>', html=True)
+        self.assertContains(response, f'<option value="{self.instruction.pk}">{label}</option>', html=True)
+        self.assertContains(response, self.instruction.business_number)
+        self.assertContains(response, self.instruction.recipient_name)
         self.assertContains(response, 'Kuwasilisha taarifa hizi pekee hakuwezeshi uanachama wako.')
-        self.assertContains(response, 'Usimpe mtu yeyote PIN yako ya Airtel')
+        self.assertContains(response, 'Hakikisha mtoa huduma anaonyesha jina la mpokeaji lililo hapo juu kabla ya kuthibitisha.')
+        self.assertContains(response, 'Lipa kiasi kamili kwa muamala mmoja')
+        self.assertContains(response, 'Usimpe mtu yeyote PIN yako ya malipo, hata wafanyakazi wa ClipCash.')
         self.assertNotContains(response, 'malipo ya kuigiza')
 
     def test_pending_and_approved_payments_have_distinct_translations(self):

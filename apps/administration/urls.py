@@ -3,6 +3,7 @@ from django.urls import path
 from apps.reports import views as reports
 from apps.support import console as support
 
+from . import memberships as membership_console
 from . import views
 
 app_name = "administration"
@@ -13,6 +14,9 @@ urlpatterns = [
     path("members/", views.MemberDirectoryView.as_view(), name="members"),
     path("members/<uuid:pk>/", views.MemberDetailView.as_view(), name="member"),
     path("members/<uuid:pk>/complimentary/", views.ComplimentaryGrantView.as_view(), name="member_complimentary"),
+    # PAY-LIVE-01D: suspend, reinstate, cancel or extend one of the member's memberships.
+    path("members/<uuid:pk>/memberships/<uuid:subscription_id>/<str:action>/",
+         membership_console.MembershipActionView.as_view(), name="member_membership_action"),
     path("security/", views.SecurityView.as_view(), name="security"),
     path("analytics/", reports.AnalyticsView.as_view(), name="analytics"),
     path("reports/", reports.ReportListView.as_view(), name="reports"),

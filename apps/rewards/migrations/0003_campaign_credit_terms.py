@@ -12,9 +12,13 @@ CR-01: staff-owned credit terms per sponsored campaign (non-cash credits).
   pinned (RG-03).
 """
 
+from importlib import import_module
+
 import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
+
+from apps.core.migration_ops import MariaDBRunSQL, PostgreSQLRunSQL
 
 SEARCH_PATH = "pg_catalog, public, pg_temp"
 
@@ -43,6 +47,31 @@ FORWARD = BUDGET_GUARD.format(path=SEARCH_PATH, lookup=(
     "        END IF;"))
 REVERSE = BUDGET_GUARD.format(path=SEARCH_PATH, lookup=(
     "SELECT demo_budget_amount INTO allocated FROM advertising_campaign WHERE id = NEW.campaign_id;"))
+
+
+# DB-01: the same rule on MariaDB. rewards.0002 split rewards_budget_guard into one trigger per
+# event; both consumption checks are rebuilt from 0002's text with only the allocation lookup
+# changed: the staff credit budget when terms exist (credit_budget is NOT NULL, so COALESCE is
+# PostgreSQL's IF NOT FOUND), else the campaign's approved demo budget, as before. The reverse
+# restores 0002's triggers exactly.
+PREVIOUS = import_module("apps.rewards.migrations.0002_integrity").MARIADB_FORWARD
+BUDGET_TRIGGERS = ("rewards_budget_insert", "rewards_budget_update")
+LEGACY_LOOKUP = "SELECT demo_budget_amount INTO allocated FROM advertising_campaign WHERE id = NEW.campaign_id;"
+TERMS_LOOKUP = ("SET allocated = COALESCE(\n"
+                "        (SELECT credit_budget FROM rewards_campaigncreditterms WHERE campaign_id = NEW.campaign_id),\n"
+                "        (SELECT demo_budget_amount FROM advertising_campaign WHERE id = NEW.campaign_id));")
+
+
+def previous_trigger(name):
+    (statement,) = [s for s in PREVIOUS if s.startswith(f"CREATE TRIGGER {name} ")]
+    assert statement.count(LEGACY_LOOKUP) == 1
+    return statement
+
+
+MARIADB_REVERSE = [f"DROP TRIGGER IF EXISTS {name}" for name in BUDGET_TRIGGERS] + [
+    previous_trigger(name) for name in BUDGET_TRIGGERS]
+MARIADB_FORWARD = [f"DROP TRIGGER IF EXISTS {name}" for name in BUDGET_TRIGGERS] + [
+    previous_trigger(name).replace(LEGACY_LOOKUP, TERMS_LOOKUP) for name in BUDGET_TRIGGERS]
 
 
 def seed_terms(apps, schema_editor):
@@ -82,5 +111,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.RunPython(seed_terms, migrations.RunPython.noop),
-        migrations.RunSQL(FORWARD, REVERSE),
+        PostgreSQLRunSQL(FORWARD, REVERSE),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
     ]

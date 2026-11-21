@@ -1,0 +1,34 @@
+{% extends "members/layout.html" %}{% load i18n static %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/accounts/settings.css' %}">{% endblock %}
+{% block title %}{% translate "Verify your mobile number" %}{% endblock %}
+{% block crumb %}{% translate "Verify your mobile number" %}{% endblock %}
+{% block member_content %}
+<h1 class="page-title">{% translate "Verify your mobile number" %}</h1>
+<section class="panel account-form">
+{% if not user.phone_number %}
+  <p>{% translate "Your account has no mobile number yet." %}</p>
+  <ul class="links"><li><a href="{% url 'accounts:profile_edit' %}">{% translate "Add a mobile number" %}</a></li></ul>
+{% elif user.phone_verified %}
+  <p class="notice" role="status">{% blocktranslate with number=user.phone_number %}{{ number }} is verified.{% endblocktranslate %}</p>
+{% elif not available %}
+  <p class="notice notice--warning" role="status">{% translate "Phone verification by SMS is not available yet. To buy a membership, confirm an email address instead." %}</p>
+  <ul class="links"><li><a href="{% url 'accounts:profile' %}">{% translate "Back to my account" %}</a></li></ul>
+{% else %}
+  <p>{% blocktranslate with number=user.phone_number %}We will send a 6-digit code by text message to <strong>{{ number }}</strong>. Verifying it lets you buy a membership with this number. It does not change how you sign in.{% endblocktranslate %}</p>
+  {% if challenge %}
+  <p>{% blocktranslate %}Enter the code we sent. It expires after {{ minutes }} minutes and works once.{% endblocktranslate %}</p>
+  <form class="form" method="post" novalidate>{% csrf_token %}
+    <input type="hidden" name="action" value="confirm">
+    {{ form.code.as_field_group }}
+    <button type="submit" class="button">{% translate "Verify number" %}</button>
+  </form>
+  {% endif %}
+  <form method="post" class="section">{% csrf_token %}
+    <input type="hidden" name="action" value="send">
+    <button type="submit" class="button{% if challenge %} button--secondary{% endif %}">{% if challenge %}{% translate "Send a new code" %}{% else %}{% translate "Send code" %}{% endif %}</button>
+  </form>
+  <p class="helptext">{% translate "ClipCash staff will never ask for this code. Never share it with anyone." %}</p>
+  <ul class="links"><li><a href="{% url 'accounts:profile_edit' %}">{% translate "Wrong number? Change it first" %}</a></li><li><a href="{% url 'accounts:profile' %}">{% translate "Back to my account" %}</a></li></ul>
+{% endif %}
+</section>
+{% endblock %}

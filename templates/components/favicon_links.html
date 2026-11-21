@@ -1,0 +1,4 @@
+{% load static %}{# FAV-01: one set of icon links for every page (site and Django admin). The ICO and the Apple touch icon serve browsers and devices that ignore SVG icons; regenerate them with scripts/generate_favicons.py when favicon.svg changes. #}
+<link rel="icon" href="{% static 'images/favicon.ico' %}" sizes="32x32">
+<link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{% static 'images/apple-touch-icon.png' %}">

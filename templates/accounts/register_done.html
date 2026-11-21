@@ -2,10 +2,11 @@
 {% block title %}{% translate "Check your email" %}{% endblock %}
 {% block auth_content %}
 <h1>{% translate "Check your email" %}</h1>
-<p>{% translate "If this address can be registered, we have sent it a link. Open it within 24 hours to confirm your email and choose your password." %}</p>
-<p class="lead">{% translate "Already have an account? We will have emailed you instead." %}</p>
+<p>{% blocktranslate count hours=valid_hours|default:24 %}We have sent a link to the address you gave. Open it within {{ hours }} hour to activate your account, then sign in with that address and your password.{% plural %}We have sent a link to the address you gave. Open it within {{ hours }} hours to activate your account, then sign in with that address and your password.{% endblocktranslate %}</p>
+<p>{% translate "Your account cannot be used until you open the link. If that address already has a ClipCash account, we have emailed it instead, and no second account was created." %}</p>
+<p class="auth-recovery-note">{% translate "Nothing arrived after a few minutes? Check your spam folder, or ask for a new link. Mistyped the address? Simply sign up again with the right one." %}</p>
 <ul class="links">
-  <li><a href="{% url 'accounts:resend_verification' %}">{% translate "Did not receive it? Send a new link" %}</a></li>
+  <li><a href="{% url 'accounts:resend_verification' %}">{% translate "Send a new link" %}</a></li>
   <li><a href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a></li>
 </ul>
 {% endblock %}

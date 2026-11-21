@@ -2,11 +2,10 @@
 {% block title %}{% translate "Sign in" %}{% endblock %}
 {% block auth_content %}
 <h1>{% translate "Sign in" %}</h1>
-<p class="lead">{% translate "Use your mobile number (for example 0712 345 678) or your email address." %}</p>
+<p class="lead">{% translate "Use the email address, mobile number (for example 0712 345 678) or username you signed up with, and your password." %}</p>
 {% include "components/form.html" with button=_("Sign in") %}
 <ul class="links">
   <li><a href="{% url 'accounts:password_reset' %}">{% translate "Forgot your password?" %}</a></li>
-  <li><a href="{% url 'accounts:resend_verification' %}">{% translate "Need a new verification link?" %}</a></li>
 </ul>
 {% if features.registration %}<div class="auth-alternative"><p>{% translate "New to ClipCash?" %}</p><a class="button button--secondary" href="{% url 'accounts:register' %}">{% translate "Create account" %}</a></div>{% endif %}
 {% endblock %}

@@ -3,6 +3,25 @@
   "use strict";
   var shell = document.querySelector(".auth-shell");
   if (!shell) { return; }
+  // PRD-03A registration: show only the box for the chosen identifier (email, mobile number or
+  // username). Without JavaScript all stay visible; the server uses only the chosen one either way.
+  var identifierFields = { email: "id_email", phone: "id_phone_number", username: "id_username" };
+  var methodInputs = shell.querySelectorAll('input[name="contact_method"]');
+  function syncIdentifierFields() {
+    var chosen = shell.querySelector('input[name="contact_method"]:checked');
+    Object.keys(identifierFields).forEach(function (method) {
+      var input = document.getElementById(identifierFields[method]);
+      var group = input && input.closest(".form-field");
+      if (!group) { return; }
+      group.hidden = Boolean(chosen) && chosen.value !== method;
+    });
+  }
+  if (methodInputs.length) {
+    Array.prototype.forEach.call(methodInputs, function (radio) {
+      radio.addEventListener("change", syncIdentifierFields);
+    });
+    syncIdentifierFields();
+  }
   Array.prototype.forEach.call(shell.querySelectorAll("[data-password-target]"), function (toggle) {
     var input = document.getElementById(toggle.dataset.passwordTarget);
     if (!input || input.type !== "password") { return; }
@@ -44,5 +63,6 @@
     });
     var status = document.getElementById("auth-submit-status");
     if (status) { status.hidden = true; }
+    if (methodInputs.length) { syncIdentifierFields(); }
   });
 }());

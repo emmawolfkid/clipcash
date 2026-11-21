@@ -1,6 +1,7 @@
 import json
 from datetime import timedelta
 
+from django.contrib.auth.models import AnonymousUser
 from django.db import connection
 from django.test import Client, override_settings
 from django.test.utils import CaptureQueriesContext
@@ -18,6 +19,12 @@ LIBRARY = reverse("videos:library")
 
 
 class LibraryTests(VideoTestCase):
+    def setUp(self):
+        super().setUp()
+        # PAY-LIVE-01B: browsing needs a current membership (see CatalogueAccessTests).
+        self.active_membership()
+        self.client.force_login(self.member)
+
     def test_library_lists_only_published_ready_videos(self):
         shown = self.published_video("Shown clip")
         self.make_video("Draft clip")
@@ -70,14 +77,15 @@ class PlaybackTests(VideoTestCase):
         self.url = reverse("videos:detail", args=[self.video.slug])
 
     def assert_refused(self, reason, user=None):
-        if user:
+        """Playback's own authorization is unchanged (PAY-LIVE-01B adds a catalogue gate in
+        front of the page; CatalogueAccessTests covers the pages themselves)."""
+        self.assertEqual(services.authorize_playback(user if user is not None else AnonymousUser(), self.video),
+                         (reason, None))
+        if user is not None:
             self.client.force_login(user)
         response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["playback_reason"], reason)
-        self.assertIsNone(response.context["playback"])
-        self.assertNotContains(response, "player.mediadelivery.net")
-        self.assertNotContains(response, "token=")
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn("player.mediadelivery.net", response.get("Location", ""))
 
     def test_anonymous_and_no_membership(self):
         self.assert_refused("not_authenticated")
@@ -111,14 +119,15 @@ class PlaybackTests(VideoTestCase):
         self.assert_refused("membership_suspended", self.member)
         memberships.reinstate(self.root, subscription)
         memberships.process_expiry(now=timezone.now() + timedelta(days=400))
-        self.assert_refused("no_membership")
+        self.assert_refused("no_membership", self.member)
 
     def test_entitlement_required(self):
         premium = self.published_video("Premium clip", required_entitlement="videos.premium")
         self.active_membership()
+        self.assertEqual(services.authorize_playback(self.member, premium), ("entitlement_missing", None))
         self.client.force_login(self.member)
         response = self.client.get(reverse("videos:detail", args=[premium.slug]))
-        self.assertEqual(response.context["playback_reason"], "entitlement_missing")
+        self.assertRedirects(response, reverse("memberships:plans"))
 
 
 @DEMO
@@ -139,7 +148,9 @@ class DashboardTests(VideoTestCase):
         self.assertEqual(self.client.get(reverse("dashboard")).status_code, 302)
         self.client.force_login(self.member)
         response = self.client.get(reverse("dashboard"))
-        self.assertContains(response, "Latest clip")
+        # PAY-LIVE-01B: no membership, so no video titles; a way to the plans instead.
+        self.assertNotContains(response, "Latest clip")
+        self.assertContains(response, "Videos are available to members with an active membership.")
         self.assertContains(response, "You do not have an active membership")
         # Phases 06-10 replaced every Coming-soon item; real money is still described as unavailable.
         self.assertContains(response, "Real rewards are not available yet")
@@ -150,7 +161,10 @@ class DashboardTests(VideoTestCase):
         self.assertNotContains(response, reverse("administration:overview"))
 
     def test_content_security_policy(self):
+        self.active_membership()
+        self.client.force_login(self.member)
         response = self.client.get(LIBRARY)
+        self.assertEqual(response.status_code, 200)
         policy = response["Content-Security-Policy"]
         self.assertIn("default-src 'self'", policy)
         self.assertIn("frame-src https://player.mediadelivery.net", policy)

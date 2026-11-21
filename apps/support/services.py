@@ -26,6 +26,7 @@ from django.utils import timezone
 from apps.accounts.throttling import Throttle
 from apps.advertising.models import AdvertiserMembership
 from apps.audit.services import DENIED, record_business_event, record_security_event
+from apps.core.locking import lock_own_rows
 
 from .models import MAX_BODY, MAX_SUBJECT, Ticket, TicketEvent, TicketMessage
 
@@ -172,7 +173,7 @@ def _event(ticket, actor, action, from_value="", to_value=""):
 
 
 def _locked(ticket):
-    return Ticket.objects.select_for_update(of=("self",)).select_related("requester", "organization", "assignee").get(pk=ticket.pk)
+    return lock_own_rows(Ticket.objects.select_related("requester", "organization", "assignee")).get(pk=ticket.pk)
 
 
 def _set_status(ticket, actor, new_status, now):

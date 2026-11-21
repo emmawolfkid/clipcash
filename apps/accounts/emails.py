@@ -29,6 +29,7 @@ ALREADY_REGISTERED = "accounts.already_registered"
 EMAIL_CHANGE_CONFIRM = "accounts.email_change_confirm"
 EMAIL_CHANGE_REQUESTED = "accounts.email_change_requested"
 EMAIL_CHANGED = "accounts.email_changed"
+PASSWORD_CHANGED = "accounts.password_changed"
 
 
 def _render(template_prefix, context):
@@ -69,6 +70,8 @@ def _hours(setting_name):
 def build_activation(email):
     User = get_user_model()
     user = _account(email, statuses=[User.Status.PENDING])
+    if user.email_ownership_required:
+        raise SkipEmail("sign_up_uses_confirmation")  # PRD-01: the member already chose a password.
     token = _token_at_issue(verification_token_generator, user, email.token_issued_at)
     path = reverse("accounts:activate", kwargs={"uidb64": _uid(user), "token": token})
     return _render("activate_account", {"url": email.context["base_url"] + path,
@@ -76,11 +79,15 @@ def build_activation(email):
 
 
 def build_confirm_email(email):
+    """Confirm an ACTIVE account's address, or (PRD-01) activate an email sign-up still PENDING."""
     User = get_user_model()
-    user = _account(email, statuses=[User.Status.ACTIVE], verified=False)
+    user = _account(email, statuses=[User.Status.ACTIVE, User.Status.PENDING], verified=False)
+    activating = user.status == User.Status.PENDING
+    if activating and not user.email_ownership_required:
+        raise SkipEmail("legacy_pending_uses_activation")  # Those choose a password: build_activation.
     token = _token_at_issue(verification_token_generator, user, email.token_issued_at)
     path = reverse("accounts:confirm_email", kwargs={"uidb64": _uid(user), "token": token})
-    return _render("confirm_email", {"url": email.context["base_url"] + path,
+    return _render("confirm_email", {"url": email.context["base_url"] + path, "activating": activating,
                                      "valid_hours": _hours("ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT")})
 
 
@@ -132,7 +139,17 @@ def build_email_changed(email):
     return _render("email_changed", {})
 
 
+def build_password_changed(email):
+    """PRD-01: security notice to the CONFIRMED address after a password change or reset. Holds
+    no link that acts on the account (only the reset page, in case it was not the owner)."""
+    User = get_user_model()
+    _account(email, statuses=[User.Status.ACTIVE], verified=True)
+    return _render("password_changed", {"reset_url": email.context["base_url"] + reverse("accounts:password_reset")})
+
+
 def register_kinds():
+    register_email_kind(PASSWORD_CHANGED, builder=build_password_changed,
+                        ttl_seconds=lambda: settings.NOTIFICATIONS_DEFAULT_EMAIL_TTL)
     register_email_kind(EMAIL_CHANGE_CONFIRM, builder=build_email_change_confirm,
                         ttl_seconds=lambda: settings.ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT,
                         context_keys=("base_url", "change"))

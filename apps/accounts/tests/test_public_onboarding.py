@@ -18,7 +18,14 @@ from django.urls import reverse
 
 from apps.memberships.tests.helpers import enable_memberships
 
-from .helpers import NEW_PASSWORD, PASSWORD, AccountsTestCase, User, links_in_last_email, make_user
+from .helpers import (
+    NEW_PASSWORD,
+    PASSWORD,
+    AccountsTestCase,
+    User,
+    links_in_last_email,
+    make_user,
+)
 
 HOME = reverse("home")
 LOGIN = reverse("accounts:login")
@@ -74,7 +81,7 @@ class EntryPointTests(AccountsTestCase):
                 self.assertEqual(self.register_links(self.client.get(HOME)), [])
                 self.assertEqual(self.register_links(self.client.get(LOGIN)), [])
                 self.assertEqual(self.client.get(REGISTER).status_code, 403)
-                response = self.client.post(REGISTER, {"phone_number": "0712345678", "password1": NEW_PASSWORD,
+                response = self.client.post(REGISTER, {"first_name": "Amina", "last_name": "Juma", "contact_method": "phone", "phone_number": "0712345678", "password1": NEW_PASSWORD,
                                                        "password2": NEW_PASSWORD})
                 self.assertEqual(response.status_code, 403)
                 self.assertFalse(User.objects.filter(phone_number="+255712345678").exists())
@@ -226,7 +233,7 @@ class BrowserOriginTests(AccountsTestCase):
         browser = self.browser()
         page = browser.get(REGISTER)
         token = re.search(r'name="csrfmiddlewaretoken" value="([^"]+)"', page.content.decode()).group(1)
-        response = browser.post(REGISTER, {"phone_number": "0712345678", "password1": NEW_PASSWORD,
+        response = browser.post(REGISTER, {"first_name": "Amina", "last_name": "Juma", "contact_method": "phone", "phone_number": "0712345678", "password1": NEW_PASSWORD,
                                            "password2": NEW_PASSWORD, "csrfmiddlewaretoken": token},
                                 HTTP_ORIGIN="null")
         self.assertEqual(response.status_code, 403)
@@ -280,7 +287,7 @@ class PublicCopyTests(AccountsTestCase):
         self.assertNotIn("airtel", text)
         with override_settings(MANUAL_MEMBERSHIP_PAYMENTS_ENABLED=True):
             text = self.visible_text(self.client.get(HOME))
-        self.assertIn("airtel money (lipa)", text)
+        self.assertIn("an available payment method", text)
         self.assertNotIn("membership payments are not open yet", text)
         self.assertIn("withdrawals and payouts are not available", text)
 

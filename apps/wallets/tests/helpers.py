@@ -26,8 +26,15 @@ def key():
 
 
 def check_deferred_now():
-    """Run commit-time ledger checks immediately (TestCase never commits)."""
+    """Run commit-time ledger checks immediately (TestCase never commits).
+
+    DB-01, MariaDB: there are no commit-time checks; the equivalent is the explicit
+    finalization step, so every open draft entry is finalized here (directly in SQL, as a
+    bypassing writer would) and the database verifies each one."""
     with connection.cursor() as cursor:
+        if connection.vendor == "mysql":
+            cursor.execute("UPDATE wallets_journalentry SET status = 'POSTED' WHERE status = 'DRAFT'")
+            return
         cursor.execute("SET CONSTRAINTS ALL IMMEDIATE")
         cursor.execute("SET CONSTRAINTS ALL DEFERRED")
 

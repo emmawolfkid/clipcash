@@ -137,12 +137,37 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Hosted deployments (Render) provide one DATABASE_URL; local development uses
-# the separate DB_* values. The URL is read here only and never kept as a setting.
+# DB-01: PostgreSQL (default) or MariaDB 10.11+ (the NetPoa port, in progress; see
+# docs/deployment/mariadb_port.md). Hosted deployments (Render) provide one
+# DATABASE_URL (PostgreSQL only); local development and MariaDB use the separate DB_*
+# values. The URL is read here only and never kept as a setting.
+DB_ENGINE = env("DB_ENGINE", default="postgresql")
+MARIADB_ENGINE = "config.db_backends.mariadb"
+if DB_ENGINE not in ("postgresql", "mariadb"):
+    raise ImproperlyConfigured("DB_ENGINE must be postgresql or mariadb.")
 if env("DATABASE_URL", default=""):
+    if DB_ENGINE != "postgresql":
+        raise ImproperlyConfigured("DATABASE_URL is for PostgreSQL; configure MariaDB with the DB_* values.")
     _database = env.db_url("DATABASE_URL")
     if _database["ENGINE"] != "django.db.backends.postgresql":
         raise ImproperlyConfigured("DATABASE_URL must be a PostgreSQL URL (postgres:// or postgresql://).")
+elif DB_ENGINE == "mariadb":
+    _database = {
+        "ENGINE": MARIADB_ENGINE,
+        "NAME": env("DB_NAME"),
+        "USER": env("DB_USER"),
+        "PASSWORD": env("DB_PASSWORD"),
+        "HOST": env("DB_HOST", default="127.0.0.1"),
+        "PORT": env.int("DB_PORT", default=3306),
+        "OPTIONS": {
+            # Full Unicode (MariaDB's "utf8" is the 3-byte utf8mb3), PostgreSQL's isolation
+            # level, strict writes (errors, never silent truncation) and UTC for NOW().
+            "charset": "utf8mb4",
+            "isolation_level": "read committed",
+            "init_command": "SET sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,"
+                            "NO_ENGINE_SUBSTITUTION', time_zone = '+00:00'",
+        },
+    }
 else:
     _database = {
         "ENGINE": "django.db.backends.postgresql",
@@ -156,16 +181,40 @@ _database.update({
     "CONN_MAX_AGE": 60,
     "CONN_HEALTH_CHECKS": True,
     # Disposable test database, provisioned by
-    # scripts/database/create_test_database.sql. The test runner refuses
-    # any non-PostgreSQL engine or a name that is not a distinct test_* database.
+    # scripts/database/create_test_database.sql. The test runner refuses any
+    # engine other than PostgreSQL or ClipCash's MariaDB backend, and a name that
+    # is not a distinct test_* database.
     "TEST": {"NAME": env("DB_TEST_NAME", default="test_clipcash_db")},
 })
+if DB_ENGINE == "mariadb":
+    _database["TEST"].update({"CHARSET": "utf8mb4", "COLLATION": "utf8mb4_unicode_ci"})
 # TLS to the database: require (encrypted) or verify-full (encrypted, server
 # certificate checked). Unset keeps libpq's default ("prefer"); check --deploy
 # warns (core.W002) when a remote database is used without it.
 if env("DJANGO_DB_SSLMODE", default=""):
+    if DB_ENGINE != "postgresql":
+        raise ImproperlyConfigured("DJANGO_DB_SSLMODE is not supported for MariaDB yet (DB-01 pending).")
     _database.setdefault("OPTIONS", {})["sslmode"] = env("DJANGO_DB_SSLMODE")
 DATABASES = {"default": _database}
+if DB_ENGINE == "mariadb" and env("DB_RUNTIME_USER", default=""):
+    # DB-01 login separation, verification and tests only. "default" is then the MIGRATION
+    # login (owner: creates tables and the guard triggers, which run with its rights) and
+    # "runtime" is the least-privileged login the application runs as in production
+    # (production simply sets DB_USER to the runtime login). `manage.py check_mariadb_logins`
+    # verifies both; in tests "runtime" is a mirror of the test database, never flushed.
+    DATABASES["runtime"] = {
+        **{key: value for key, value in _database.items() if key != "TEST"},
+        "USER": env("DB_RUNTIME_USER"),
+        "PASSWORD": env("DB_RUNTIME_PASSWORD"),
+        "CONN_MAX_AGE": 0,
+        "TEST": {"MIRROR": "default", "NAME": _database["TEST"]["NAME"]},
+    }
+if DB_ENGINE == "mariadb":
+    # config.db_backends.mariadb creates the partial (W036), functional (W044) and NULLS
+    # NOT DISTINCT (W047) unique constraints these checks call unsupported (see its
+    # schema.py; apps/core/tests/test_mariadb_port.py proves every one exists).
+    # W037: partial non-unique indexes become full indexes (speed only, no rule).
+    SILENCED_SYSTEM_CHECKS = ["models.W036", "models.W037", "models.W044", "models.W047"]
 
 TEST_RUNNER = "config.test_runner.PostgreSQLTestRunner"
 
@@ -175,17 +224,24 @@ TEST_RUNNER = "config.test_runner.PostgreSQLTestRunner"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
+        # REG-03: also compared with the username and the mobile number people sign in with.
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'OPTIONS': {'user_attributes': ('username', 'first_name', 'last_name', 'email', 'phone_number')},
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {'min_length': 10},
+        # REG-03: members at least 8 characters; staff (and unknown accounts) keep 10.
+        'NAME': 'apps.accounts.password_validation.RoleMinimumLengthValidator',
+        'OPTIONS': {'member_min_length': 8, 'staff_min_length': 10},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+    {
+        # REG-03: members need a letter and a number (spaces allowed, so passphrases work).
+        'NAME': 'apps.accounts.password_validation.LetterAndNumberValidator',
     },
 ]
 
@@ -203,6 +259,17 @@ LOGOUT_REDIRECT_URL = "accounts:login"
 ACCOUNTS_PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
 ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT = 60 * 60 * 24  # 24 hours
 PASSWORD_RESET_TIMEOUT = max(ACCOUNTS_PASSWORD_RESET_TIMEOUT, ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT)
+
+# PAY-LIVE-01F-B: proving ownership of a mobile number with a one-time SMS code
+# (apps.accounts.phone_verification). No real SMS provider exists yet, so delivery is
+# "disabled" and nothing can be verified. "fake" is a test and local-development transport
+# that keeps messages in memory; it works only when SMS_FAKE_TRANSPORT_ALLOWED, which is
+# DEBUG and deliberately has no environment variable (check --deploy refuses "fake").
+SMS_BACKEND = env("DJANGO_SMS_BACKEND", default="disabled")
+SMS_FAKE_TRANSPORT_ALLOWED = DEBUG
+PHONE_VERIFICATION_CODE_TTL_SECONDS = 5 * 60
+PHONE_VERIFICATION_MAX_ATTEMPTS = 5
+PHONE_VERIFICATION_RESEND_SECONDS = 60
 # RG-03: how recently this session must have confirmed the current password before an
 # email-address change can be completed without asking again (apps.accounts.reauth).
 ACCOUNTS_REAUTHENTICATION_SECONDS = 5 * 60
@@ -386,6 +453,12 @@ PAYMENTS_CALLBACKS_PER_MINUTE = 120
 MANUAL_MEMBERSHIP_PAYMENTS_ENABLED = env.bool("DJANGO_MANUAL_MEMBERSHIP_PAYMENTS", default=False)
 # Members: payment claims per account per hour (repeated or abusive submissions).
 MANUAL_PAYMENTS_CLAIMS_PER_HOUR = 5
+# PRD-04: optional receipt evidence for a payment claim (JPEG, PNG or PDF, recognised by content).
+# Stored PRIVATELY: never under STATIC_ROOT or MEDIA_ROOT, served only through an authorized view.
+# In production (manual payments on) it must be outside the application directory, which every
+# release replaces (check --deploy payments.E005); e.g. /home/<account>/clipcash/private/payment_evidence.
+PAYMENTS_EVIDENCE_ROOT = env("DJANGO_PAYMENTS_EVIDENCE_ROOT", default=str(BASE_DIR / "private" / "payment_evidence"))
+PAYMENTS_EVIDENCE_MAX_BYTES = 5 * 1024 * 1024
 
 # Withdrawals (apps.withdrawals). Real withdrawals are LOCKED (financial feature
 # "withdrawals" plus database triggers); these limits apply to the eligibility
@@ -405,6 +478,11 @@ WITHDRAWALS_PAYOUT_STUCK_MINUTES = 60
 # Free memberships granted by a Super Administrator. Off unless a business
 # policy approves them.
 MEMBERSHIPS_COMPLIMENTARY_GRANTS_ENABLED = env.bool("DJANGO_MEMBERSHIPS_COMPLIMENTARY_GRANTS", default=False)
+# PAY-LIVE-01E: complimentary grants in a production (not restricted-demo) deployment. A separate,
+# owner-approved switch, off by default and ignored in a restricted demonstration (which uses the
+# demo switch above). Super Administrators only, at most 365 days, never a payment.
+MEMBERSHIPS_PRODUCTION_COMPLIMENTARY_GRANTS_ENABLED = env.bool(
+    "DJANGO_MEMBERSHIPS_PRODUCTION_COMPLIMENTARY_GRANTS", default=False)
 
 # Advertiser reports: non-zero counts below this are shown as "fewer than N" to
 # advertisers (owner decision D12: 5; also hides figures a count could be derived

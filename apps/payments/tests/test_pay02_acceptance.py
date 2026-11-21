@@ -69,15 +69,21 @@ class EndToEndAcceptanceTests(ManualPaymentTestCase):
         self.client.logout()
 
         # --- Registration, activation, login, logout, password reset -----------------------------
-        # REG-02: phone-first sign-up (active at once); email recovery is covered by
-        # apps.accounts.tests.test_reg02_phone_first.
+        # PRD-03A: email sign-up is signed in at once; nothing is emailed. Paying needs a confirmed
+        # address, which the member asks for (phone/username sign-ups: test_prd01_email_first).
         mail.outbox.clear()
         self.assertRedirects(self.client.post(reverse("accounts:register"), {
-            "phone_number": "0712 345 678", "password1": NEW_PASSWORD, "password2": NEW_PASSWORD}),
-            reverse("dashboard"))
-        member = User.objects.get(phone_number="+255712345678")
-        self.assertEqual((member.status, member.email), (User.Status.ACTIVE, None))
-        login = {"username": "+255712345678", "password": NEW_PASSWORD}
+            "first_name": "Amina", "last_name": "Juma", "contact_method": "email", "email": "amina@example.com",
+            "password1": NEW_PASSWORD, "password2": NEW_PASSWORD}), reverse("dashboard"), fetch_redirect_response=False)
+        member = User.objects.get(email="amina@example.com")
+        self.assertEqual((member.status, member.email_verified), (User.Status.ACTIVE, False))
+        self.assertEqual(mail.outbox, [])
+        self.client.post(reverse("accounts:resend_verification"))
+        link = next(word for message in mail.outbox for word in message.body.split() if "/accounts/confirm-email/" in word)
+        self.client.post("/" + link.split("://", 1)[1].split("/", 1)[1])
+        member.refresh_from_db()
+        self.assertEqual((member.status, member.email_verified), (User.Status.ACTIVE, True))
+        login = {"username": "amina@example.com", "password": NEW_PASSWORD}
         self.client.post(reverse("accounts:logout"))
         self.assertEqual(self.client.get(reverse("dashboard")).status_code, 302)  # Signed out.
         self.assertEqual(self.client.post(reverse("accounts:login"), login).status_code, 302)
@@ -118,7 +124,7 @@ class EndToEndAcceptanceTests(ManualPaymentTestCase):
         # --- Unauthorized staff and the member cannot decide -------------------------------------
         review = reverse("administration:membership_payment", args=[first.pk])
         approve = {"action": "approve", "verified_amount": "25000", "verified_reference": FICTIONAL_REFERENCE,
-                   "receipt_confirmed": "on", "recipient_confirmed": "on"}
+                   "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": FICTIONAL_NUMBER, "verified_recipient_name": FICTIONAL_RECIPIENT}
         for user, expected in ((self.plain_staff, 403), (self.viewer, 403), (member, 302)):
             self.client.force_login(user)
             self.assertEqual(self.client.post(review, approve).status_code, expected, user.email)

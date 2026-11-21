@@ -21,6 +21,16 @@ Limitation: the table owner or a superuser can disable these triggers.
 
 from django.db import migrations
 
+from apps.core.migration_ops import (
+    MariaDBRunSQL,
+    PostgreSQLRunSQL,
+    changed,
+    check_error,
+    drop_triggers,
+    privilege_error,
+    trigger,
+)
+
 FORWARD = r"""
 CREATE OR REPLACE FUNCTION payments_no_delete() RETURNS trigger
 LANGUAGE plpgsql AS $$
@@ -154,7 +164,91 @@ DROP FUNCTION IF EXISTS payments_no_delete();
 """
 
 
+# DB-01: the same rules on MariaDB (one trigger per event).
+INTENT_TERMS = ("reference", "environment", "purpose", "funds_domain", "payer_id", "organization_id",
+                "subscription_id", "amount", "currency", "provider", "idempotency_key", "created_at")
+ALLOCATION_OWNER = f"""
+    DECLARE owner UUID;
+    SELECT organization_id INTO owner FROM advertising_campaign WHERE id = NEW.campaign_id;
+    IF NOT (owner <=> NEW.organization_id) THEN
+        {privilege_error("funds can only be allocated to the advertiser's own campaign")}
+    END IF;"""
+DECIDED_ONCE = """
+    IF BINARY OLD.status NOT IN ('REQUESTED', 'OPEN') AND NOT (BINARY NEW.status <=> BINARY OLD.status) THEN
+        SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = '{table} decisions are final';
+    END IF;"""
+APPEND_ONLY = {  # (trigger name, table): events refused
+    ("payments_posting", "payments_sandboxposting"): ("UPDATE", "DELETE"),
+    ("payments_event", "payments_providerevent"): ("DELETE",),
+    ("payments_preview", "payments_membershipactivationpreview"): ("UPDATE", "DELETE"),
+}
+NO_DELETE = ("payments_paymentintent", "payments_sandboxadvertiserfunds", "payments_sandboxcampaignallocation",
+             "payments_refundrequest", "payments_paymentdispute", "payments_reconciliationexception",
+             "payments_sandboxprovidertransaction")
+
+MARIADB_FORWARD = [
+    trigger("payments_intent_insert", "BEFORE INSERT", "payments_paymentintent", f"""
+    IF NOT (BINARY NEW.status <=> 'CREATED') OR NEW.confirmed_at IS NOT NULL OR NEW.reconciled_at IS NOT NULL
+       OR NEW.settled_at IS NOT NULL OR NEW.provider_reference <> '' THEN
+        {check_error("payment intents must be created empty")}
+    END IF;"""),
+    trigger("payments_intent_update", "BEFORE UPDATE", "payments_paymentintent", f"""
+    DECLARE message VARCHAR(200);
+    IF {changed(*INTENT_TERMS)} THEN
+        {privilege_error("payment intent terms cannot change")}
+    END IF;
+    IF OLD.provider_reference <> '' AND {changed("provider_reference")} THEN
+        {privilege_error("a provider reference cannot change")}
+    END IF;
+    IF OLD.provider_amount IS NOT NULL AND {changed("provider_amount", "provider_currency")} THEN
+        {privilege_error("provider evidence cannot change")}
+    END IF;
+    IF {changed("status")} AND NOT (
+        (BINARY OLD.status = 'CREATED' AND BINARY NEW.status IN ('PENDING', 'CANCELLED', 'EXPIRED', 'FAILED'))
+        OR (BINARY OLD.status = 'PENDING' AND BINARY NEW.status IN ('PROVIDER_CONFIRMED', 'FAILED', 'EXPIRED', 'CANCELLED'))
+        OR (BINARY OLD.status = 'PROVIDER_CONFIRMED' AND BINARY NEW.status IN ('RECONCILED', 'FAILED'))
+        OR (BINARY OLD.status = 'RECONCILED' AND BINARY NEW.status = 'SETTLED')
+        OR (BINARY OLD.status = 'SETTLED' AND BINARY NEW.status IN ('DISPUTED', 'REFUNDED'))
+        OR (BINARY OLD.status = 'DISPUTED' AND BINARY NEW.status IN ('SETTLED', 'REFUNDED'))
+    ) THEN
+        SET message = CONCAT('invalid payment status change ', OLD.status, ' -> ', NEW.status);
+        SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+    END IF;"""),
+    trigger("payments_allocation_insert", "BEFORE INSERT", "payments_sandboxcampaignallocation", ALLOCATION_OWNER + f"""
+    IF NOT (BINARY NEW.status <=> 'ACTIVE') THEN
+        {check_error("allocations are created active")}
+    END IF;"""),
+    trigger("payments_allocation_update", "BEFORE UPDATE", "payments_sandboxcampaignallocation", ALLOCATION_OWNER + f"""
+    IF {changed("amount", "campaign_id", "organization_id")} THEN
+        {privilege_error("allocation terms cannot change")}
+    END IF;
+    IF {changed("status")} AND NOT (BINARY OLD.status = 'ACTIVE' AND BINARY NEW.status = 'RELEASED') THEN
+        {check_error("invalid allocation status change")}
+    END IF;"""),
+] + [
+    trigger(f"{name}_decided", "BEFORE UPDATE", table, DECIDED_ONCE.format(table=table))
+    for name, table in (("payments_refund", "payments_refundrequest"), ("payments_dispute", "payments_paymentdispute"),
+                        ("payments_exception", "payments_reconciliationexception"))
+] + [
+    trigger(f"{name}_{event.lower()}", f"BEFORE {event}", table, privilege_error(f"{table} rows are append-only"))
+    for (name, table), events in APPEND_ONLY.items() for event in events
+] + [
+    trigger(f"{table}_no_delete", "BEFORE DELETE", table, privilege_error(f"{table} rows cannot be deleted"))
+    for table in NO_DELETE
+]
+
+MARIADB_REVERSE = drop_triggers(*reversed([
+    "payments_intent_insert", "payments_intent_update", "payments_allocation_insert", "payments_allocation_update",
+    "payments_refund_decided", "payments_dispute_decided", "payments_exception_decided",
+    *[f"{name}_{event.lower()}" for (name, _table), events in APPEND_ONLY.items() for event in events],
+    *[f"{table}_no_delete" for table in NO_DELETE],
+]))
+
+
 class Migration(migrations.Migration):
     dependencies = [("payments", "0001_initial"), ("advertising", "0002_integrity")]
 
-    operations = [migrations.RunSQL(FORWARD, REVERSE)]
+    operations = [
+        PostgreSQLRunSQL(FORWARD, REVERSE),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
+    ]

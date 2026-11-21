@@ -31,6 +31,8 @@ that actually exist, so a future migration that adds a function must pin it too.
 
 from django.db import migrations
 
+from apps.core.migration_ops import MariaDBRunSQL, PostgreSQLRunSQL, trigger
+
 SEARCH_PATH = "pg_catalog, public, pg_temp"
 
 # Every non-extension function in schema public, as regprocedure signatures.
@@ -77,6 +79,41 @@ FUNCTIONS = (
 
 FORWARD = "\n".join(f"ALTER FUNCTION public.{signature} SET search_path = {SEARCH_PATH};" for signature in FUNCTIONS)
 
+# DB-01, MariaDB (no search_path to pin; temporary-table shadowing is closed by the runtime
+# login's privileges instead). Two support objects, created by the migration (owner) login:
+#
+# * clipcash_guard_triggers: MariaDB shows a trigger in information_schema only to logins that
+#   hold TRIGGER on its table, which the runtime login must not. This SQL SECURITY DEFINER view
+#   evaluates the inventory with the owner's visibility, so the application's own login can
+#   still report missing or unexpected guards (health page, demo_readiness) with plain SELECT.
+# * core_transaction_lock: transaction-scoped named locks (apps.core.locking.transaction_lock),
+#   the counterpart of PostgreSQL's pg_advisory_xact_lock. A transaction upserts the key's row
+#   and holds its exclusive lock until COMMIT or ROLLBACK (GET_LOCK would outlive both).
+MARIADB_FORWARD = [
+    """CREATE SQL SECURITY DEFINER VIEW clipcash_guard_triggers AS
+       SELECT TRIGGER_NAME AS trigger_name, EVENT_OBJECT_TABLE AS table_name,
+              ACTION_TIMING AS timing, EVENT_MANIPULATION AS event
+         FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE()""",
+    """CREATE TABLE core_transaction_lock (
+           lock_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL PRIMARY KEY,
+           first_locked_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
+       ) ENGINE = InnoDB""",
+]
+# Freeze the mutex digest in this historical migration. Every writer, including
+# direct SQL and admin, participates without needing changes to its application code.
+PERMISSION_MUTEX = "1995bcf61dea23f91b218a06b6120d232b9a6737b6fd403036aa9db1d96acd6a"
+MARIADB_FORWARD += [
+    trigger(f"authorization_permissions_{event.lower()}", f"BEFORE {event}",
+            "auth_group_permissions",
+            f"INSERT INTO core_transaction_lock (lock_key) VALUES ('{PERMISSION_MUTEX}') "
+            "ON DUPLICATE KEY UPDATE lock_key = lock_key;")
+    for event in ("INSERT", "UPDATE", "DELETE")
+]
+MARIADB_REVERSE = [
+    f"DROP TRIGGER IF EXISTS authorization_permissions_{event}"
+    for event in ("insert", "update", "delete")
+] + ["DROP TABLE IF EXISTS core_transaction_lock", "DROP VIEW IF EXISTS clipcash_guard_triggers"]
+
 
 class Migration(migrations.Migration):
     # After every migration that creates or replaces one of these functions.
@@ -95,5 +132,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(FORWARD, reverse_sql=None),
+        PostgreSQLRunSQL(FORWARD, reverse_sql=None),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
     ]

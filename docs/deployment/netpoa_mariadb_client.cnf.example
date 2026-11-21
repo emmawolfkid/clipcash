@@ -1,0 +1,10 @@
+# ClipCash on NetPoa: MariaDB client option file for backups and restore drills (PRD-00B).
+# Template for ~/clipcash/secrets/backup.cnf (chmod 600, outside the application directory and
+# public_html). Used by scripts/database/mariadb/backup.sh and restore_check.sh through
+# CLIPCASH_DB_OPTION_FILE, so the password is never on a command line or in a crontab.
+# The MIGRATION login: it owns the guard triggers, so the dump includes them, and it can
+# re-create them when restoring into a scratch database.
+[client]
+user=<account>_ccmigrate
+password=<migration password>
+host=localhost

@@ -114,19 +114,22 @@ class ResendVerificationTests(AccountsTestCase):
     def test_signed_in_unverified_user_resends_to_own_address(self):
         self.client.force_login(make_user("active@example.com", verified=False))
         response = self.client.post(RESEND_URL, {"email": "someone-else@example.com"})
-        self.assertRedirects(response, REQUIRED_URL)
+        self.assertRedirects(response, PROFILE_URL)  # PRD-03A: optional confirmation, back to the account.
         self.assertEqual(mail.outbox[0].to, ["active@example.com"])
 
 
 class VerificationRequiredTests(AccountsTestCase):
-    def test_active_unverified_user_redirected_from_member_area(self):
+    def test_active_unverified_member_uses_the_member_area(self):
+        # PRD-03A: members are not sent to "Confirm your email"; confirming stays available.
         self.client.force_login(make_user(verified=False))
-        self.assertRedirects(self.client.get(PROFILE_URL), REQUIRED_URL)
-        self.assertEqual(self.client.get(REQUIRED_URL).status_code, 200)
+        page = self.client.get(PROFILE_URL)
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "Send confirmation link")
+        self.assertRedirects(self.client.get(REQUIRED_URL), reverse("dashboard"))  # PRD-03B
 
     def test_verified_user_skips_page(self):
         self.client.force_login(make_user())
-        self.assertRedirects(self.client.get(REQUIRED_URL), PROFILE_URL)
+        self.assertRedirects(self.client.get(REQUIRED_URL), reverse("dashboard"))  # PRD-03B
 
     def test_anonymous_redirected_to_login(self):
         self.assertRedirects(
@@ -142,4 +145,6 @@ class VerificationRequiredTests(AccountsTestCase):
         # ends this session; once signed in again, the new address must be confirmed.
         self.assertRedirects(self.client.get(PROFILE_URL), f"{reverse('accounts:login')}?next={PROFILE_URL}")
         self.client.force_login(user)
-        self.assertRedirects(self.client.get(PROFILE_URL), REQUIRED_URL)
+        # PRD-03A: the member keeps using the account; the new address is simply unconfirmed.
+        self.assertEqual(self.client.get(PROFILE_URL).status_code, 200)
+        self.assertFalse(User.objects.get(pk=user.pk).email_verified)

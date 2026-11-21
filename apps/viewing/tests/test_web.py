@@ -37,7 +37,8 @@ class MemberPagesTests(ViewingTestCase):
     def test_anonymous_and_unverified(self):
         self.assertEqual(self.client.get(reverse("viewing:list")).status_code, 302)
         self.client.force_login(make_user("u@x.example", verified=False))
-        self.assertRedirects(self.client.get(reverse("viewing:list")), reverse("accounts:verification_required"))
+        # PRD-03A: the page opens; watching still needs an eligible account and a membership.
+        self.assertEqual(self.client.get(reverse("viewing:list")).status_code, 200)
 
     def test_finished_session_shows_outcome(self):
         session = self.watch(self.start(), 95)

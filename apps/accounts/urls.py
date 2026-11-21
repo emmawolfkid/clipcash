@@ -44,6 +44,7 @@ urlpatterns = [
         name="password_change_done",
     ),
     path("profile/edit/", views.ProfileEditView.as_view(), name="profile_edit"),
+    path("phone/verify/", views.PhoneVerificationView.as_view(), name="phone_verify"),  # PAY-LIVE-01F-B
     path("email-change/", views.EmailChangeRequestView.as_view(), name="email_change"),
     path("email-change/cancel/", views.EmailChangeCancelView.as_view(), name="email_change_cancel"),
     # RG-03: the emailed link only moves its token into the session; the change is

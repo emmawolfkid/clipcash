@@ -35,7 +35,8 @@ class AccessTests(MemberExperienceTestCase):
         self.assertEqual(self.client.get(DASHBOARD).status_code, 302)
         self.assertEqual(self.client.get(ACTIVITY).status_code, 302)
         self.client.force_login(make_user("u@x.example", verified=False))
-        self.assertRedirects(self.client.get(DASHBOARD), reverse("accounts:verification_required"))
+        self.assertEqual(self.client.get(DASHBOARD).status_code, 200)  # PRD-03A: no confirmation needed.
+        self.assertFalse(Wallet.objects.exists())  # Wallets still need a confirmed address (member_eligibility).
         self.client.force_login(self.manager)  # Staff: page works, no member wallet is implied.
         page = self.client.get(DASHBOARD)
         self.assertContains(page, "Wallets are for verified member accounts")

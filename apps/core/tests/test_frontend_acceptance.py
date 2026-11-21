@@ -43,7 +43,12 @@ class LanguageSwitcherTests(SimpleTestCase):
 
 class SharedFrontendTests(SimpleTestCase):
     def test_favicon_is_linked_and_uses_the_brand_colours(self):
-        self.assertIn("images/favicon.svg", (TEMPLATES / "base.html").read_text(encoding="utf-8"))
+        # FAV-01: base.html (and the admin) include one shared set of icon links.
+        self.assertIn('{% include "components/favicon_links.html" %}',
+                      (TEMPLATES / "base.html").read_text(encoding="utf-8"))
+        links = (TEMPLATES / "components/favicon_links.html").read_text(encoding="utf-8")
+        for name in ("images/favicon.svg", "images/favicon.ico", "images/apple-touch-icon.png"):
+            self.assertIn(name, links)
         icon = (STATIC / "images/favicon.svg").read_text(encoding="utf-8")
         self.assertIn("#FFCF19", icon)
         self.assertIn("#111B46", icon)
@@ -105,7 +110,10 @@ class MemberPageTests(WithdrawalsTestCase):
         self.assertContains(response, 'class="site-header"', status_code=404)
 
     def test_restricted_member_sees_why_a_video_cannot_play(self):
+        # PAY-LIVE-01B: without a membership the video page is not shown at all; the member
+        # lands on the plans with the reason.
         self.client.force_login(make_user("no-plan@example.com"))
-        response = self.client.get(reverse("videos:detail", args=[self.ad_video.slug]))
-        self.assertContains(response, "An active membership is needed to watch this video.")
-        self.assertContains(response, reverse("memberships:plans"))
+        response = self.client.get(reverse("videos:detail", args=[self.ad_video.slug]), follow=True)
+        self.assertEqual(response.redirect_chain, [(reverse("memberships:plans"), 302)])
+        self.assertContains(response, "Videos are available to members with an active membership.")
+        self.assertNotContains(response, self.ad_video.title)

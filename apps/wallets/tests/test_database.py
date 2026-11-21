@@ -13,13 +13,15 @@ from .helpers import LedgerTestCase, check_deferred_now, postings_enabled
 
 
 def raw_entry(total, *, reverses=None, posting_type="test.raw"):
+    # DB-01: MariaDB entries start as drafts; check_deferred_now() finalizes them.
+    status = "DRAFT" if connection.vendor == "mysql" else "POSTED"
     entry_id = uuid.uuid4()
     with connection.cursor() as cursor:
         cursor.execute(
             "INSERT INTO wallets_journalentry (id, posting_type, status, description, currency, total_amount,"
             " posted_at, source_type, source_id, external_reference, related_entry_id, reverses_id,"
             " idempotency_key, fingerprint, actor_id, request_id)"
-            " VALUES (%s, %s, 'POSTED', 'raw', 'TZS', %s, now(), 'raw', '', '', NULL, %s, %s, 'x', NULL, '')",
+            f" VALUES (%s, %s, '{status}', 'raw', 'TZS', %s, now(), 'raw', '', '', NULL, %s, %s, 'x', NULL, '')",
             [entry_id, posting_type, total, reverses, f"raw-{entry_id}"],
         )
     return entry_id

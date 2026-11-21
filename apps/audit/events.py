@@ -89,16 +89,24 @@ EVENT_TYPES = {
         # Account lifecycle
         _event("account.registration.started", Category.ACCOUNT, BUSINESS),
         # REG-02: phone-first sign-up creates an ACTIVE member at once.
-        _event("account.registered", Category.ACCOUNT, BUSINESS, ["method"]),
+        # REG-04: username-first sign-up also records which contact was given (email or phone).
+        _event("account.registered", Category.ACCOUNT, BUSINESS, ["method", "contact"]),
         _event("account.registration.duplicate", Category.ACCOUNT, SECURITY, ["method"]),
+        # REG-04: an existing member added a username to the same account.
+        _event("account.username_added", Category.ACCOUNT, BUSINESS),
         _event("account.registration.repeated", Category.ACCOUNT, SECURITY, ["account_status"]),
-        _event("account.activated", Category.ACCOUNT, BUSINESS),
+        _event("account.activated", Category.ACCOUNT, BUSINESS, ["method"]),  # PRD-01: "email" sign-up.
         _event("account.email_confirmed", Category.ACCOUNT, BUSINESS),
         _event("account.profile_updated", Category.ACCOUNT, BUSINESS, ["changed_fields"]),
         _event("account.email_change.requested", Category.ACCOUNT, BUSINESS, ["new_address_hash", "address_available"]),
         _event("account.email_change.denied", Category.ACCOUNT, SECURITY, ["reason"]),
         _event("account.email_change.cancelled", Category.ACCOUNT, BUSINESS),
         _event("account.email_changed", Category.ACCOUNT, BUSINESS, ["previous_address_hash", "new_address_hash"]),
+        # PAY-LIVE-01F-B: SMS phone verification. Never the code or the number.
+        _event("account.phone_verification.requested", Category.ACCOUNT, BUSINESS),
+        _event("account.phone_verification.refused", Category.ACCOUNT, SECURITY, ["reason"]),
+        _event("account.phone_verification.failed", Category.ACCOUNT, SECURITY, ["reason", "attempts"]),
+        _event("account.phone_verified", Category.ACCOUNT, BUSINESS),
         _event("account.created_by_staff", Category.ACCOUNT, BUSINESS, ["role", "status"]),
         _event("account.role_changed", Category.ACCOUNT, BUSINESS, ["from_role", "to_role"]),
         _event("account.status_changed", Category.ACCOUNT, BUSINESS, ["from_status", "to_status"]),
@@ -136,12 +144,19 @@ EVENT_TYPES = {
                ["fields", "version", "price_amount", "new_version"]),
         _event("membership.plan.status_changed", Category.MEMBERSHIP, BUSINESS, ["from_status", "to_status"]),
         _event("membership.subscription.created", Category.MEMBERSHIP, BUSINESS,
-               ["plan_code", "price_amount", "renewal"]),
+               ["plan_code", "price_amount", "renewal", "amount_paid", "extension_of"]),
+        # PAY-LIVE-01D: "note" is the administrator's own words for a console change; "cascade_of"
+        # names the period whose suspension, reinstatement or cancellation an extension followed.
         *[_event(f"membership.subscription.{name}", Category.MEMBERSHIP, BUSINESS,
-                 ["from_status", "to_status", "reason", "plan_code", "source", "queued"])
+                 ["from_status", "to_status", "reason", "plan_code", "source", "queued", "note", "cascade_of"])
           for name in ("activated", "cancelled", "suspended", "reinstated", "expired")],
+        _event("membership.subscription.extended", Category.MEMBERSHIP, BUSINESS,
+               ["member", "extended_subscription", "plan_code", "days", "reason", "previous_expires_at",
+                "new_expires_at", "adjustment", "amount_paid", "operation"]),
+        # PAY-LIVE-01E: "mode" is demo or production; the grant is never a payment (amount_paid 0).
         _event("membership.complimentary.granted", Category.MEMBERSHIP, BUSINESS,
-               ["member", "plan_code", "starts_at", "expires_at", "reason", "operation"]),
+               ["member", "plan_code", "starts_at", "expires_at", "reason", "operation", "mode", "duration_minutes",
+                "plan_version", "amount_paid"]),
         _event("membership.action.denied", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
         _event("membership.activation.rejected", Category.MEMBERSHIP, SECURITY, ["reason", "subscription"]),
         # PAY-01: manual (Airtel Lipa) membership payments. Phone numbers are never recorded.
@@ -153,9 +168,15 @@ EVENT_TYPES = {
                 "recipient", "expires_at"]),
         _event("membership.manual_payment.rejected", Category.MEMBERSHIP, BUSINESS, ["reference", "reason"]),
         _event("membership.manual_payment.refused", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
+        # PRD-04: a staff member opened a member's receipt evidence (personal and financial data).
+        _event("membership.manual_payment.evidence_viewed", Category.MEMBERSHIP, BUSINESS, ["reference"]),
         _event("membership.payment_instructions.published", Category.MEMBERSHIP, BUSINESS,
-               ["method", "business_number", "recipient_name", "replaced"]),
+               ["method", "provider_label", "business_number", "recipient_name", "replaced"]),
         _event("membership.payment_instructions.retired", Category.MEMBERSHIP, BUSINESS, ["method"]),
+        _event("membership.payment_instructions.issued", Category.MEMBERSHIP, BUSINESS,
+               ["method", "instruction", "subscription", "amount"]),
+        _event("membership.payment_instructions.enabled", Category.MEMBERSHIP, BUSINESS,
+               ["method", "previous"]),
         # Video content (routine playback is not audited)
         _event("video.category.created", Category.CONTENT, BUSINESS, ["slug"]),
         _event("video.category.updated", Category.CONTENT, BUSINESS, ["slug", "fields"]),

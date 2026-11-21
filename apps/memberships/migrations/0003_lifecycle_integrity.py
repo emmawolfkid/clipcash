@@ -20,6 +20,16 @@ Limitation: the table owner or a superuser can disable these triggers.
 
 from django.db import migrations
 
+from apps.core.migration_ops import (
+    MariaDBRunSQL,
+    PostgreSQLRunSQL,
+    changed,
+    check_error,
+    drop_triggers,
+    privilege_error,
+    trigger,
+)
+
 FORWARD = r"""
 CREATE OR REPLACE FUNCTION membership_subscription_guard() RETURNS trigger
 LANGUAGE plpgsql AS $$
@@ -120,7 +130,91 @@ DROP FUNCTION IF EXISTS membership_subscription_guard();
 """
 
 
+# DB-01: the same rules on MariaDB, plus sub_no_overlapping_periods (a PostgreSQL
+# exclusion constraint, which MariaDB cannot express; config.db_backends.mariadb skips
+# it). Periods are half-open [starts_at, expires_at), like tstzrange's default, and a
+# NULL bound is unbounded. Unlike the exclusion constraint this check cannot see other
+# transactions' uncommitted rows: concurrent activations are serialized by the member
+# lock that every activation path takes first (apps.memberships.services).
+SUBSCRIPTION_SNAPSHOT = ("member_id", "plan_id", "plan_version_id", "plan_name", "price_amount", "currency",
+                         "duration_days", "benefits", "entitlements", "pending_until", "renewal_of_id", "created_at")
+SUBSCRIPTION_ACTIVATION = ("activated_at", "activation_source", "payment_reference", "amount_paid", "starts_at",
+                           "expires_at", "activated_by_id")
+
+MARIADB_FORWARD = [
+    trigger("membership_subscription_insert", "BEFORE INSERT", "memberships_subscription", f"""
+    IF BINARY NEW.status <> 'PENDING' OR NEW.activated_at IS NOT NULL OR NEW.activation_source <> ''
+       OR NEW.payment_reference <> '' OR NEW.amount_paid IS NOT NULL
+       OR NEW.starts_at IS NOT NULL OR NEW.expires_at IS NOT NULL THEN
+        {check_error("subscriptions must be created PENDING without activation data")}
+    END IF;"""),
+    trigger("membership_subscription_update", "BEFORE UPDATE", "memberships_subscription", f"""
+    DECLARE message VARCHAR(200);
+    IF {changed(*SUBSCRIPTION_SNAPSHOT)} THEN
+        {privilege_error("subscription snapshots are immutable")}
+    END IF;
+    IF {changed(*SUBSCRIPTION_ACTIVATION)}
+       AND NOT (BINARY OLD.status = 'PENDING' AND BINARY NEW.status = 'ACTIVE' AND OLD.activated_at IS NULL) THEN
+        {privilege_error("activation data can only be set when a pending subscription is activated")}
+    END IF;
+    IF {changed("status")} AND NOT (
+        (BINARY OLD.status = 'PENDING' AND BINARY NEW.status IN ('ACTIVE', 'CANCELLED')) OR
+        (BINARY OLD.status = 'ACTIVE' AND BINARY NEW.status IN ('SUSPENDED', 'EXPIRED', 'CANCELLED')) OR
+        (BINARY OLD.status = 'SUSPENDED' AND BINARY NEW.status IN ('ACTIVE', 'EXPIRED', 'CANCELLED'))
+    ) THEN
+        SET message = CONCAT('invalid subscription transition ', OLD.status, ' -> ', NEW.status);
+        SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+    END IF;
+    -- DB-01 ledger phase: an Airtel Lipa activation needs the FINALIZED ledger posting of that
+    -- Airtel transaction for the amount paid (a draft entry activates nothing).
+    IF BINARY OLD.status = 'PENDING' AND BINARY NEW.status = 'ACTIVE'
+       AND NEW.payment_reference LIKE BINARY 'AIRTEL-LIPA:%' AND NOT EXISTS (
+        SELECT 1 FROM wallets_journalentry e
+         WHERE BINARY e.status = 'POSTED' AND BINARY e.posting_type = 'membership.manual_payment_received'
+           AND BINARY e.source_type = 'manual_membership_payment'
+           AND BINARY e.external_reference = BINARY SUBSTRING(NEW.payment_reference, 13)
+           AND e.total_amount = NEW.amount_paid) THEN
+        {check_error("an Airtel Lipa activation needs its finalized ledger posting")}
+    END IF;
+    IF BINARY NEW.status IN ('ACTIVE', 'SUSPENDED') AND EXISTS (
+        SELECT 1 FROM memberships_subscription other
+         WHERE other.member_id = NEW.member_id AND other.id <> NEW.id
+           AND BINARY other.status IN ('ACTIVE', 'SUSPENDED')
+           AND (other.starts_at IS NULL OR NEW.expires_at IS NULL OR other.starts_at < NEW.expires_at)
+           AND (NEW.starts_at IS NULL OR other.expires_at IS NULL OR NEW.starts_at < other.expires_at)
+           AND (other.starts_at IS NULL OR other.expires_at IS NULL OR other.starts_at < other.expires_at)
+           AND (NEW.starts_at IS NULL OR NEW.expires_at IS NULL OR NEW.starts_at < NEW.expires_at)
+    ) THEN
+        {check_error("sub_no_overlapping_periods: membership periods of one member cannot overlap")}
+    END IF;"""),
+    trigger("membership_subscription_delete", "BEFORE DELETE", "memberships_subscription",
+            privilege_error("subscriptions cannot be deleted")),
+    trigger("membership_plan_version_update", "BEFORE UPDATE", "memberships_membershipplanversion",
+            privilege_error("plan versions are append-only")),
+    trigger("membership_plan_version_delete", "BEFORE DELETE", "memberships_membershipplanversion",
+            privilege_error("plan versions are append-only")),
+    trigger("membership_plan_update", "BEFORE UPDATE", "memberships_membershipplan", f"""
+    IF {changed("code")} THEN
+        {privilege_error("membership plan codes are immutable")}
+    END IF;
+    IF BINARY OLD.status = 'ARCHIVED' AND BINARY NEW.status <> 'ARCHIVED' THEN
+        {check_error("archived plans cannot be reactivated")}
+    END IF;"""),
+    trigger("membership_plan_delete", "BEFORE DELETE", "memberships_membershipplan",
+            privilege_error("membership plans cannot be deleted; archive them")),
+]
+
+MARIADB_REVERSE = drop_triggers(
+    "membership_plan_delete", "membership_plan_update", "membership_plan_version_delete",
+    "membership_plan_version_update", "membership_subscription_delete", "membership_subscription_update",
+    "membership_subscription_insert",
+)
+
+
 class Migration(migrations.Migration):
     dependencies = [("memberships", "0002_plans_and_subscriptions")]
 
-    operations = [migrations.RunSQL(FORWARD, REVERSE)]
+    operations = [
+        PostgreSQLRunSQL(FORWARD, REVERSE),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
+    ]

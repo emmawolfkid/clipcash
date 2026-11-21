@@ -8,7 +8,7 @@
 {% if current %}
   <div class="status-panel">
     <div class="membership-status"><div><span class="membership-status__label">{% translate "Current plan" %}</span><strong>{{ current.plan_name }}</strong></div><span class="badge badge--{{ current.status|lower }}">{{ current.get_status_display }}</span></div>
-    {% if current.activation_source == "COMPLIMENTARY" %}<p class="notice">{% translate "Complimentary demonstration access: no payment was made, and access ends on the date below." %}</p>{% endif %}
+    {% if current.activation_source == "COMPLIMENTARY" %}<p class="notice">{% if restricted_demo %}{% translate "Complimentary demonstration access: no payment was made, and access ends on the date below." %}{% else %}{% translate "Complimentary access: no payment was made, and access ends on the date below. Nothing renews automatically." %}{% endif %}</p>{% endif %}
     <dl class="details">
       <dt>{% translate "Started" %}</dt><dd>{{ current.starts_at|date:"DATETIME_FORMAT" }}</dd>
       <dt>{% translate "Ends" %}</dt><dd>{{ current.expires_at|date:"DATETIME_FORMAT" }}</dd>
@@ -62,7 +62,7 @@
     <tr>
       <td><a href="{% url 'memberships:subscription_detail' item.pk %}">{{ item.plan_name }}</a></td>
       <td><span class="badge badge--{{ item.status|lower }}">{{ item.get_status_display }}</span></td>
-      <td>{% if item.activation_source == "COMPLIMENTARY" %}{% translate "Complimentary, no payment" %}{% else %}<span class="financial-amount">{{ item.price_amount|tzs }}</span>{% endif %}</td>
+      <td>{% if item.activation_source == "COMPLIMENTARY" %}{% translate "Complimentary, no payment" %}{% elif item.activation_source == "EXTENSION" %}{% translate "Extension, no payment" %}{% else %}<span class="financial-amount">{{ item.price_amount|tzs }}</span>{% endif %}</td>
       <td>{% if item.starts_at %}{{ item.starts_at|date:"DATE_FORMAT" }} – {{ item.expires_at|date:"DATE_FORMAT" }}{% else %}—{% endif %}</td>
     </tr>
   {% endfor %}

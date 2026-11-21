@@ -48,18 +48,23 @@ class OpenWorkflowTests(DemoWorkflowTestCase):
     def test_browsing_pages_open(self):
         for url in (reverse("dashboard"), reverse("activity"), reverse("accounts:profile"),
                     reverse("memberships:plans"), reverse("memberships:plan_detail", args=[self.plan.code]),
-                    reverse("memberships:mine"), reverse("videos:library"),
-                    reverse("videos:detail", args=[self.ad_video.slug]), reverse("viewing:list"),
+                    reverse("memberships:mine"), reverse("viewing:list"),
                     reverse("viewing:history"), reverse("viewing:campaign", args=[self.campaign.pk]),
                     reverse("rewards:history"), reverse("wallets:wallet"), reverse("withdrawals:overview"),
                     reverse("withdrawals:destinations"), reverse("advertising:home")):
             with self.subTest(url=url):
                 self.assertEqual(self.client.get(url).status_code, 200)
+        # PAY-LIVE-01B: the video catalogue needs a current membership; the demo account has
+        # none, so it is sent to the plans (never to email verification).
+        for url in (reverse("videos:library"), reverse("videos:detail", args=[self.ad_video.slug])):
+            with self.subTest(url=url):
+                self.assertRedirects(self.client.get(url), reverse("memberships:plans"))
 
     def test_access_decisions_give_the_real_reason(self):
         self.assertEqual(check_access(self.demo).reason, "no_membership")  # Not "email_unverified".
-        page = self.client.get(reverse("videos:detail", args=[self.ad_video.slug]))
-        self.assertEqual(page.context["playback_reason"], "no_membership")
+        page = self.client.get(reverse("videos:detail", args=[self.ad_video.slug]), follow=True)
+        self.assertEqual(page.redirect_chain, [(reverse("memberships:plans"), 302)])
+        self.assertContains(page, "Videos are available to members with an active membership")
         self.assertNotContains(page, reverse("accounts:verification_required"))
 
     def test_blocked_workflows_are_explained_not_offered(self):
@@ -90,9 +95,12 @@ class BlockedWorkflowTests(DemoWorkflowTestCase):
         self.assertIn(str(DEMO_UNCONFIRMED_BLOCKED), [str(m) for m in response.wsgi_request._messages])
 
     def test_choosing_a_membership(self):
+        # PRD-04: a restricted demonstration has no way to pay, so choosing is closed for everyone.
         before = self.records()
-        self.assert_blocked(self.client.post(reverse("memberships:choose", args=[self.plan.code])),
-                            reverse("memberships:mine"))
+        response = self.client.post(reverse("memberships:choose", args=[self.plan.code]))
+        self.assertRedirects(response, reverse("memberships:plan_detail", args=[self.plan.code]),
+                             fetch_redirect_response=False)
+        self.assertIn("Membership payments are not open yet", " ".join(str(m) for m in response.wsgi_request._messages))
         self.assertEqual(self.records(), before)
 
     def test_opening_a_wallet(self):
@@ -152,17 +160,20 @@ class WaiverOffTests(DemoWorkflowTestCase):
             with self.subTest(**change), self.settings(**change):
                 self.assertFalse(demo_unconfirmed(self.demo))
                 self.assertEqual(check_access(self.demo).reason, "email_unverified")
-                self.assertRedirects(self.client.get(reverse("wallets:wallet")),
-                                     reverse("accounts:verification_required"))
-                self.assertRedirects(self.client.get(reverse("advertising:home")),
-                                     reverse("accounts:verification_required"))
+                # PRD-03A: the pages open, but nothing financial or advertiser-related is allowed.
+                self.assertEqual(self.client.get(reverse("advertising:home")).status_code, 200)
+                self.client.post(reverse("wallets:wallet"))
+                self.assertFalse(Wallet.objects.filter(member=self.demo).exists())
+                self.assertEqual(advertising.advertiser_account_reason(self.demo), "email_unverified")
 
     def test_unlisted_accounts_get_no_waiver_anywhere(self):
         other = make_user("other@example.com", verified=False)
         self.client.force_login(other)
         self.assertFalse(demo_unconfirmed(other))
         self.assertEqual(check_access(other).reason, "email_unverified")
-        self.assertRedirects(self.client.get(reverse("dashboard")), reverse("accounts:verification_required"))
+        self.assertEqual(self.client.get(reverse("dashboard")).status_code, 200)  # PRD-03A: pages open.
+        with self.assertRaises(memberships.NotEligible):  # Paying still needs a confirmed address.
+            memberships.choose_plan(other, self.plan)
 
     def test_verified_members_are_unaffected(self):
         self.client.force_login(self.member)  # Verified, not on the list.

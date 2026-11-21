@@ -1,6 +1,7 @@
 import logging
 from functools import wraps
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login, update_session_auth_hash
 from django.contrib.auth import views as auth_views
@@ -30,10 +31,11 @@ from apps.audit.services import (
 from apps.core import features
 
 from . import reauth, services
-from .access import VerifiedAccountRequiredMixin, identity_ready
+from .access import VerifiedAccountRequiredMixin, account_ready
 from .forms import (
     AccountPasswordChangeForm,
     AccountPasswordResetForm,
+    AccountSetPasswordForm,
     EmailChangeConfirmForm,
     EmailChangeForm,
     EmailRequestForm,
@@ -47,6 +49,7 @@ from .throttling import (
     EMAIL_CHANGE_REQUESTS_PER_ADDRESS,
     EMAIL_REQUESTS_PER_ACCOUNT,
     EMAIL_REQUESTS_PER_IP,
+    REGISTRATIONS_PER_IDENTIFIER,
     REGISTRATIONS_PER_IP,
     REGISTRATIONS_PER_PHONE,
     client_ip_for_limits,
@@ -59,6 +62,11 @@ User = get_user_model()
 
 TOO_MANY_REQUESTS = _("Too many requests. Please wait a while and try again.")
 INVALID_LINK_TEMPLATE = "accounts/link_invalid.html"
+# PRD-03A: instant sign-up cannot hide that an identifier is taken; attempts are rate-limited.
+DUPLICATE_REGISTRATION = {
+    "email": _("An account already uses this email address. Sign in instead, or reset your password."),
+    "username": _("This username is already taken. Please choose another one."),
+}
 DUPLICATE_PHONE_REGISTRATION = _("An account already uses this mobile number. Sign in instead, or contact "
                                  "support if it is yours and you cannot sign in.")
 
@@ -149,7 +157,7 @@ class AnonymousOnlyMixin:
 class RegisterView(AnonymousOnlyMixin, FormView):
     template_name = "accounts/register.html"
     form_class = RegistrationForm
-    success_url = reverse_lazy("accounts:register_done")
+    success_url = reverse_lazy("dashboard")
 
     def dispatch(self, request, *args, **kwargs):
         # Checked on GET and POST; existing PENDING accounts can still activate.
@@ -158,21 +166,30 @@ class RegisterView(AnonymousOnlyMixin, FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        ip = client_ip_for_limits(self.request)  # None: unknown client; the per-number limit still applies.
-        phone = form.cleaned_data["phone_number"]
-        if (ip and REGISTRATIONS_PER_IP.is_limited(ip)) or REGISTRATIONS_PER_PHONE.is_limited(phone):
+        ip = client_ip_for_limits(self.request)  # None: unknown client; the per-identifier limit still applies.
+        method, contact = form.contact
+        # Numbers keep their own limit (REG-02); email addresses use the identifier limit (REG-03).
+        limit = REGISTRATIONS_PER_PHONE if method == "phone" else REGISTRATIONS_PER_IDENTIFIER
+        if (ip and REGISTRATIONS_PER_IP.is_limited(ip)) or limit.is_limited(contact):
             security_log.warning("registration_throttled ip=%s", ip or "-")
             form.add_error(None, TOO_MANY_REQUESTS)
             return self.form_invalid(form)
         if ip:
             REGISTRATIONS_PER_IP.hit(ip)
-        REGISTRATIONS_PER_PHONE.hit(phone)
+        limit.hit(contact)
         try:
-            user = services.register_with_phone(phone_number=phone, password=form.cleaned_data["password1"])
+            user = services.register_member(
+                contact_method=method, contact=contact, password=form.cleaned_data["password1"],
+                first_name=form.cleaned_data["first_name"], last_name=form.cleaned_data["last_name"],
+                request=self.request)
         except services.DuplicatePhoneNumber:
-            # Unavoidable for instant sign-up: the number is taken. Attempts are rate-limited.
             form.add_error("phone_number", ValidationError(DUPLICATE_PHONE_REGISTRATION, code="duplicate"))
             return self.form_invalid(form)
+        except services.DuplicateIdentifier as duplicate:
+            form.add_error(services.REGISTRATION_FIELDS[duplicate.method],
+                           ValidationError(DUPLICATE_REGISTRATION[duplicate.method], code="duplicate"))
+            return self.form_invalid(form)
+        # PRD-03A: every sign-up is signed in at once; nothing is emailed and nothing must be confirmed.
         login(self.request, user, backend="apps.accounts.backends.AccountStatusBackend")
         record_security_event("auth.login.succeeded", outcome=SUCCESS, actor=user, target=user,
                               metadata={"interface": "registration"})
@@ -181,7 +198,13 @@ class RegisterView(AnonymousOnlyMixin, FormView):
 
 
 class RegisterDoneView(TemplateView):
+    """PRD-01 legacy page ("Check your email"); PRD-03A sign-up no longer redirects here."""
+
     template_name = "accounts/register_done.html"
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(valid_hours=max(1, settings.ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT // 3600),
+                                        **kwargs)
 
 
 @method_decorator([never_cache, no_referrer], name="dispatch")
@@ -193,13 +216,16 @@ class ActivateAccountView(auth_views.PasswordResetConfirmView):
     """
 
     template_name = "accounts/activate_account.html"
+    form_class = AccountSetPasswordForm
     token_generator = verification_token_generator
     success_url = reverse_lazy("accounts:activation_complete")
     post_reset_login = False
 
     def get_user(self, uidb64):
         user = super().get_user(uidb64)
-        return user if user is not None and user.status == User.Status.PENDING else None
+        # PRD-01: email sign-ups already chose a password; they activate through confirm_email.
+        return (user if user is not None and user.status == User.Status.PENDING
+                and not user.email_ownership_required else None)
 
     def form_valid(self, form):
         token = self.request.session.pop(INTERNAL_RESET_SESSION_TOKEN, None)
@@ -224,23 +250,49 @@ class ConfirmEmailView(View):
         user = auth_views.PasswordResetConfirmView().get_user(uidb64)
         if (
             user is None
-            or user.status != User.Status.ACTIVE
+            or not (user.status == User.Status.ACTIVE or services.is_awaiting_email_confirmation(user))
             or user.email_verified
             or not verification_token_generator.check_token(user, token)
         ):
             return None
         return user
 
+    @staticmethod
+    def _needs_owner(request, user):
+        """REG-04/PRD-01: when an account created by public sign-up has ANOTHER way to sign in
+        (a mobile number or a username), its address is confirmed only by the signed-in owner,
+        so whoever reads a mistyped address cannot attach it to the account. An email sign-up
+        (PENDING, the address is its only identifier) is confirmed by the link itself: opening
+        it proves the inbox, which is exactly what is being verified."""
+        if not user.email_ownership_required or services.is_awaiting_email_confirmation(user):
+            return False
+        return not request.user.is_authenticated or request.user.pk != user.pk
+
+    def _sign_in_first(self, request):
+        return render(request, "accounts/confirm_email_sign_in.html", {"next": request.path}, status=403)
+
     def get(self, request, uidb64, token):
-        if self._user(uidb64, token) is None:
+        user = self._user(uidb64, token)
+        if user is None:
             return render(request, INVALID_LINK_TEMPLATE, status=400)
+        if self._needs_owner(request, user):
+            return self._sign_in_first(request)
         return render(request, self.template_name)
 
     def post(self, request, uidb64, token):
         user = self._user(uidb64, token)
-        if user is None or services.confirm_email(user.pk, token) is None:
+        if user is None:
             return render(request, INVALID_LINK_TEMPLATE, status=400)
-        return render(request, "accounts/confirm_email_complete.html")
+        if self._needs_owner(request, user):
+            return self._sign_in_first(request)
+        activating = services.is_awaiting_email_confirmation(user)
+        if services.confirm_email(user.pk, token) is None:
+            return render(request, INVALID_LINK_TEMPLATE, status=400)
+        if request.user.is_authenticated and request.user.pk == user.pk:
+            messages.success(request, _("Your email address is confirmed."))
+            return redirect("dashboard")
+        # PRD-01: never signed in by a link; the member signs in with the address and password.
+        return render(request, "accounts/confirm_email_complete.html", {"activated": activating})
 
 
 class ResendVerificationView(FormView):
@@ -255,8 +307,9 @@ class ResendVerificationView(FormView):
                 request, request.user.email
             ):
                 services.send_verification_email(request.user, request)
-            messages.info(request, _("If your email still needs verification, a new link is on its way."))
-            return redirect("accounts:verification_required")
+            messages.info(request, _("If your email address still needs confirming, a link is on its way."))
+            # Optional confirmation (PRD-03A): members go back to their account page.
+            return redirect("accounts:profile" if account_ready(request.user) else "accounts:verification_required")
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -270,13 +323,19 @@ class ResendVerificationDoneView(TemplateView):
     template_name = "accounts/resend_verification_done.html"
 
 
+@method_decorator(never_cache, name="dispatch")
 class VerificationRequiredView(LoginRequiredMixin, TemplateView):
+    """PRD-03A/03B: only staff without a confirmed address (or mobile number) are held here.
+    Everyone who may use the site (every member) is sent straight to the dashboard, so an old
+    bookmark, a stale ?next= or a cached link to this URL can never trap them. Never cached."""
+
     template_name = "accounts/verification_required.html"
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and identity_ready(request.user):
-            return redirect("accounts:profile")
+        if request.user.is_authenticated and account_ready(request.user):
+            return redirect("dashboard")
         return super().dispatch(request, *args, **kwargs)
+
 
 
 # --- Sign in and out ------------------------------------------------------------
@@ -340,18 +399,24 @@ class PasswordResetDoneView(auth_views.PasswordResetDoneView):
 @method_decorator([never_cache, no_referrer], name="dispatch")
 class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
     template_name = "accounts/password_reset_confirm.html"
+    form_class = AccountSetPasswordForm
     token_generator = password_reset_token_generator
     success_url = reverse_lazy("accounts:password_reset_complete")
     post_reset_login = False
 
     def get_user(self, uidb64):
         user = super().get_user(uidb64)
-        return user if user is not None and user.status == User.Status.ACTIVE else None
+        # PRD-03A: the address must still be one that may recover the account when the link is used.
+        return (user if user is not None and user.status == User.Status.ACTIVE and user.email_recovers_account
+                else None)
 
     def form_valid(self, form):
         with transaction.atomic():
             response = super().form_valid(form)  # Saves the new password.
             services.discard_email_change(form.user)
+            # PRD-03A: the link reached this inbox, so the address is now proven (no-op if it was).
+            services.confirm_email_by_reset(form.user)
+            services.email_password_changed(form.user, self.request)
             record_business_event("auth.password_reset.completed", actor=form.user, target=form.user)
             services.notify_account(form.user, "password_reset", "Your password was reset",
                                     "If you did not do this, reset your password again now and contact ClipCash.",
@@ -374,6 +439,7 @@ class PasswordChangeView(auth_views.PasswordChangeView):
         with transaction.atomic():
             response = super().form_valid(form)  # Saves the password, keeps this session.
             services.discard_email_change(self.request.user)
+            services.email_password_changed(self.request.user, self.request)
             record_business_event("auth.password.changed", target=self.request.user)
             services.notify_account(self.request.user, "password_changed", "Your password was changed",
                                     "Other sessions were signed out. If this was not you, reset your password now.",
@@ -564,3 +630,76 @@ class EmailChangeReviewView(LoginRequiredMixin, EmailChangeAvailableMixin, FormV
             return render(self.request, INVALID_LINK_TEMPLATE, status=400)
         update_session_auth_hash(self.request, account)  # Keep this session; every other one ends.
         return render(self.request, "accounts/email_change_complete.html")
+
+
+# --- PAY-LIVE-01F-B: SMS phone verification -------------------------------------------------
+
+
+@method_decorator([never_cache, sensitive_post_parameters("code")], name="dispatch")
+class PhoneVerificationView(VerifiedAccountRequiredMixin, View):
+    """Send a code to the account's own mobile number, then enter it. Every rule (expiry,
+    single use, attempts, cooldown, limits, the exact current number) is enforced by
+    apps.accounts.phone_verification. Codes never appear in pages, messages or logs."""
+
+    template_name = "accounts/phone_verify.html"
+
+    def _render(self, request, form=None, status=200):
+        from .forms import PhoneCodeForm
+        from .phone_verification import active_challenge, sms_delivery_available
+
+        user = request.user
+        challenge = active_challenge(user) if user.phone_number and not user.phone_verified else None
+        return render(request, self.template_name, {
+            "nav": "profile", "available": sms_delivery_available(), "challenge": challenge,
+            "form": form or PhoneCodeForm(),
+            "minutes": max(1, settings.PHONE_VERIFICATION_CODE_TTL_SECONDS // 60),
+            "breadcrumbs": [("Dashboard", "dashboard"), ("Profile and security", "accounts:profile")],
+        }, status=status)
+
+    def get(self, request):
+        return self._render(request)
+
+    def post(self, request):
+        from . import phone_verification as pv
+        from .forms import PhoneCodeForm
+
+        action = request.POST.get("action")
+        if action == "send":
+            try:
+                pv.request_phone_verification(request.user, request)
+            except pv.RateLimited as error:
+                if error.retry_after:
+                    messages.error(request, _("Please wait %(s)s seconds before asking for another code.")
+                                   % {"s": error.retry_after})
+                else:
+                    messages.error(request, _("Too many codes were requested. Please try again later."))
+                return self._render(request, status=429)
+            except pv.NothingToVerify as error:
+                messages.info(request, _("This mobile number is already verified.") if error.code == "already_verified"
+                              else _("Add a mobile number to your account first."))
+                return redirect("accounts:profile")
+            except pv.PhoneVerificationUnavailable:
+                messages.error(request, _("We could not send a code by SMS. Please try again later."))
+                return self._render(request, status=503)
+            messages.success(request, _("If your mobile number can receive text messages, a code is on its way. "
+                                        "It expires in %(m)s minutes.")
+                             % {"m": max(1, settings.PHONE_VERIFICATION_CODE_TTL_SECONDS // 60)})
+            return redirect("accounts:phone_verify")
+        if action == "confirm":
+            form = PhoneCodeForm(request.POST)
+            if not form.is_valid():
+                return self._render(request, form, status=400)
+            try:
+                pv.confirm_phone_verification(request.user, form.cleaned_data["code"], request)
+            except pv.RateLimited:
+                messages.error(request, _("Too many attempts. Please try again later."))
+                return self._render(request, status=429)
+            except pv.AttemptsExhausted:
+                messages.error(request, _("Too many incorrect codes. Ask for a new code."))
+                return self._render(request, status=400)
+            except pv.InvalidCode:
+                form.add_error("code", _("That code is not valid or has expired. Check it, or ask for a new code."))
+                return self._render(request, form, status=400)
+            messages.success(request, _("Your mobile number is verified."))
+            return redirect("accounts:profile")
+        return self._render(request, status=400)

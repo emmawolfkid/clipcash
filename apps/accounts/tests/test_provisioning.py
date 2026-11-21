@@ -179,6 +179,15 @@ class ProvisioningConcurrencyTests(TransactionTestCase):
     permissions; the allowlist check therefore still holds at commit (PostgreSQL)."""
 
     def test_group_permission_changes_wait_for_apply(self):
+        self.assert_permission_write_waits("insert")
+
+    def test_group_permission_updates_wait_for_apply(self):
+        self.assert_permission_write_waits("update")
+
+    def test_group_permission_deletes_wait_for_apply(self):
+        self.assert_permission_write_waits("delete")
+
+    def assert_permission_write_waits(self, mutation):
         import threading
 
         from django.db import OperationalError, connections, transaction
@@ -214,8 +223,19 @@ class ProvisioningConcurrencyTests(TransactionTestCase):
             try:
                 with transaction.atomic():
                     with connection.cursor() as cursor:
-                        cursor.execute("SET LOCAL lock_timeout = '300ms'")
-                    Group.objects.get(name=MEMBER_GROUP).permissions.add(extra)
+                        if connection.vendor == "mysql":
+                            cursor.execute("SET SESSION innodb_lock_wait_timeout = 1")
+                        else:
+                            cursor.execute("SET LOCAL lock_timeout = '300ms'")
+                    if mutation == "insert":
+                        Group.objects.get(name=MEMBER_GROUP).permissions.add(extra)
+                    else:
+                        links = Group.permissions.through.objects.filter(
+                            group__name=CM_GROUP, permission=perm("videos.publish_videos"))
+                        if mutation == "update":
+                            links.update(permission=extra)
+                        else:
+                            links.delete()
                 outcome["mutate"] = "inserted"
             except OperationalError:
                 outcome["mutate"] = "blocked"
@@ -235,3 +255,24 @@ class ProvisioningConcurrencyTests(TransactionTestCase):
         Group.objects.get(name=MEMBER_GROUP).permissions.add(extra)  # Lock released at commit.
         with self.assertRaises(CommandError):  # And the next run refuses the now-unapproved permission.
             run("--apply")
+
+
+    def test_concurrent_provisioning_and_retries_preserve_exact_grants(self):
+        from apps.accounts.roles import ROLE_GROUP_NAMES, ROLE_PERMISSIONS
+        from apps.memberships.tests.test_concurrency import run_threads
+
+        users = [make_user(f"provision{i}@example.com", role=User.Role.CONTENT_MANAGER) for i in range(3)]
+        for user in users:
+            user.groups.clear()
+        results = run_threads(4, lambda _: run("--apply"))
+        self.assertTrue(all(isinstance(result, str) for result in results), results)
+        for _ in range(2):
+            run("--apply")
+        for role, name in ROLE_GROUP_NAMES.items():
+            group = Group.objects.get(name=name)
+            held = {f"{p.content_type.app_label}.{p.codename}"
+                    for p in group.permissions.select_related("content_type")}
+            self.assertEqual(held, set(ROLE_PERMISSIONS[role]))
+            self.assertEqual(group.permissions.through.objects.filter(group=group).count(), len(held))
+        for user in users:
+            self.assertEqual(list(user.groups.values_list("name", flat=True)), [CM_GROUP])

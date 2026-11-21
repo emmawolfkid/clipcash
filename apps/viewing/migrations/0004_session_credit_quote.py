@@ -14,6 +14,8 @@ from importlib import import_module
 import django.db.models.deletion
 from django.db import migrations, models
 
+from apps.core.migration_ops import MariaDBRunSQL, PostgreSQLRunSQL, changed
+
 SEARCH_PATH = "pg_catalog, public, pg_temp"
 PREVIOUS = import_module("apps.viewing.migrations.0003_revocation").FORWARD
 HEADER = "CREATE OR REPLACE FUNCTION viewing_session_guard() RETURNS trigger\nLANGUAGE plpgsql AS $$"
@@ -27,6 +29,18 @@ QUOTED_IDENTITY = ("OR NEW.required_ms IS DISTINCT FROM OLD.required_ms OR NEW.c
 assert PREVIOUS.count(HEADER) == 1 and PREVIOUS.count(IDENTITY) == 1
 REVERSE = PREVIOUS.replace(HEADER, PINNED_HEADER)
 FORWARD = REVERSE.replace(IDENTITY, QUOTED_IDENTITY)
+
+# DB-01: on MariaDB, viewing_session_update (from viewing.0003) gets the same two identity
+# columns; everything else in it is unchanged. The reverse restores 0003's trigger exactly.
+MARIADB_PREVIOUS = import_module("apps.viewing.migrations.0003_revocation")
+MARIADB_IDENTITY = changed(*MARIADB_PREVIOUS.SESSION_IDENTITY)
+MARIADB_QUOTED_IDENTITY = changed(*MARIADB_PREVIOUS.SESSION_IDENTITY, "quoted_policy_id", "quoted_credits")
+(MARIADB_SESSION_UPDATE,) = [s for s in MARIADB_PREVIOUS.MARIADB_FORWARD
+                             if s.startswith("CREATE TRIGGER viewing_session_update ")]
+assert MARIADB_SESSION_UPDATE.count(MARIADB_IDENTITY) == 1
+MARIADB_REVERSE = ["DROP TRIGGER IF EXISTS viewing_session_update", MARIADB_SESSION_UPDATE]
+MARIADB_FORWARD = ["DROP TRIGGER IF EXISTS viewing_session_update",
+                   MARIADB_SESSION_UPDATE.replace(MARIADB_IDENTITY, MARIADB_QUOTED_IDENTITY)]
 
 
 class Migration(migrations.Migration):
@@ -48,5 +62,6 @@ class Migration(migrations.Migration):
             name='quoted_policy',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='+', to='rewards.rewardpolicy'),
         ),
-        migrations.RunSQL(FORWARD, REVERSE),
+        PostgreSQLRunSQL(FORWARD, REVERSE),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
     ]

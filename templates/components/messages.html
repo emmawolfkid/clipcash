@@ -1,8 +1,17 @@
-{% load i18n feedback_tags %}{% if messages %}
-  <ul class="messages toast-region" aria-label="{% translate 'Action feedback' %}">
-    {% for message in messages|unique_feedback %}<li class="messages__item messages__item--{{ message.level_tag|default:'info' }} toast" data-level="{{ message.level_tag|default:'info' }}"{% if 'persistent' in message.extra_tags %} data-persistent="true"{% endif %}>
-      <div class="toast__body" role="{% if message.level >= 40 %}alert{% else %}status{% endif %}" aria-atomic="true"><strong class="toast__label">{% if message.level >= 40 %}{% translate "Error" %}{% elif message.level == 30 %}{% translate "Warning" %}{% elif message.level == 25 %}{% translate "Success" %}{% else %}{% translate "Information" %}{% endif %}</strong><span class="toast__text">{{ message }}</span></div>
-      <button class="toast__close" type="button" aria-label="{% translate 'Dismiss notification' %}" hidden><span aria-hidden="true">×</span></button>
-    </li>{% endfor %}
-  </ul>
+{% load i18n feedback_tags %}
+{% if messages %}
+  {# One controller: static/js/toasts.js. Live regions exist before it fills them after load. #}
+  <div class="feedback" data-feedback>
+    <div class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-feedback-announcer></div>
+    <div class="visually-hidden" role="alert" aria-atomic="true" data-feedback-urgent></div>
+    <ul class="messages" aria-label="{% translate 'Action feedback' %}">
+      {% for message in messages|unique_feedback %}
+      <li class="messages__item messages__item--{{ message.level_tag|default:'info' }}" data-level="{{ message.level_tag|default:'info' }}"{% if message|feedback_auto %} data-feedback-auto{% endif %}>
+        <span class="visually-hidden">{% if message.level >= 40 %}{% translate "Error" %}{% elif message.level == 30 %}{% translate "Warning" %}{% elif message.level == 25 %}{% translate "Success" %}{% else %}{% translate "Information" %}{% endif %}: </span>
+        <span class="messages__text">{{ message }}</span>
+        <button type="button" class="messages__close" data-feedback-close hidden aria-label="{% translate 'Dismiss message' %}"><span aria-hidden="true">&times;</span></button>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
 {% endif %}

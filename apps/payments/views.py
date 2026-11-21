@@ -8,6 +8,7 @@ cannot simulate, approve or activate anything.
 
 import uuid
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import Http404, JsonResponse
@@ -157,8 +158,9 @@ MANUAL_STATE_MESSAGES = {
     "not_pending": _("This membership is not waiting for payment."),
     "choice_expired": _("This membership choice has expired. Choose the plan again to pay."),
     "plan_unavailable": _("This plan is no longer available. Choose another plan."),
-    "no_instructions": _("Payments are temporarily unavailable. Please try again later."),
-    "payments_disabled": _("Payments are temporarily unavailable. Please try again later."),
+    # PAY-LIVE-01C: the one "purchases closed" explanation members see everywhere.
+    "no_instructions": manual.PURCHASE_CLOSED_MESSAGE,
+    "payments_disabled": manual.PURCHASE_CLOSED_MESSAGE,
     "rate_limited": _("Too many payment submissions. Please wait an hour and try again."),
 }
 
@@ -181,11 +183,40 @@ class ManualPayView(VerifiedAccountRequiredMixin, View):
         return get_object_or_404(Subscription.objects.select_related("plan"), pk=subscription_id,
                                  member=request.user)
 
-    def _render(self, request, subscription, form, status=200):
+    def _quote(self, request, subscription):
+        from .models import ManualPaymentQuote
+        key = request.POST.get("quote") or request.GET.get("quote")
+        if key:
+            try:
+                return get_object_or_404(ManualPaymentQuote.objects.select_related("instruction"),
+                                         pk=key, subscription=subscription)
+            except (ValueError, ValidationError):
+                raise Http404 from None
+        return None
+
+    def _render(self, request, subscription, form, status=200, quote=None):
         enabled = manual.manual_payments_enabled()
+        quote = (quote or self._quote(request, subscription)) if enabled else None
+        methods = manual.active_instructions() if enabled else []
+        if enabled and quote is None and len(methods) == 1 and subscription.status == Subscription.Status.PENDING:
+            try:
+                quote = manual.issue_instructions(request.user, subscription, methods[0])
+            except manual.ManualPaymentError:
+                pass
+        if quote is not None and not form.is_bound:
+            form.initial["quote"] = quote.pk
+        if quote is not None and quote.instruction.is_bank:  # PRD-04: a bank transfer has no paying phone.
+            form.fields["payer_phone"].label = _("Your phone number")
+            form.fields["payer_phone"].help_text = _("So our team can contact you about this bank transfer. The "
+                                                     "transfer itself is checked in the bank's records.")
+        if not form.is_bound and request.user.phone_number:
+            # REG-03: a convenience only. Every current method is mobile money, so the number paid
+            # from is asked here, at checkout; accounts without a number (username or email only)
+            # simply type it, and members who paid from another number change it.
+            form.initial.setdefault("payer_phone", request.user.phone_number)
         return render(request, self.template_name, {
             "nav": "membership", "subscription": subscription, "form": form, "payments_enabled": enabled,
-            "instruction": manual.active_instruction() if enabled else None,
+            "instruction": quote.instruction if quote else None, "quote": quote, "methods": methods,
             "previous": subscription.manual_payments.exclude(status=ManualMembershipPayment.Status.PENDING_VERIFICATION)
                                                     .order_by("-created_at")[:10],
             "breadcrumbs": [("My membership", "memberships:mine")]}, status=status)
@@ -198,13 +229,37 @@ class ManualPayView(VerifiedAccountRequiredMixin, View):
         if subscription.status != Subscription.Status.PENDING:
             messages.info(request, MANUAL_STATE_MESSAGES["not_pending"])
             return redirect("memberships:mine")
-        status = 200 if manual.manual_payments_ready() else 503
-        return self._render(request, subscription, ManualPaymentForm(), status=status)
+        quote = self._quote(request, subscription)
+        status = 200 if manual.manual_payments_enabled() and (quote or manual.manual_payments_ready()) else 503
+        return self._render(request, subscription, ManualPaymentForm(), status=status, quote=quote)
 
     def post(self, request, subscription_id):
         subscription = self._subscription(request, subscription_id)
-        form = ManualPaymentForm(request.POST)
-        if not manual.manual_payments_ready():  # Disabled or no Lipa details: nothing is recorded.
+        if request.POST.get("action") == "choose_method":
+            from .models import ManualPaymentInstruction
+            try:
+                instruction = get_object_or_404(ManualPaymentInstruction, pk=request.POST.get("instruction"), is_active=True)
+            except (ValueError, ValidationError):
+                raise Http404 from None
+            try:
+                quote = manual.issue_instructions(request.user, subscription, instruction)
+            except manual.ManualPaymentError as error:
+                messages.error(request, str(error))
+                return redirect("payments:manual_pay", subscription_id=subscription.pk)
+            from django.urls import reverse
+            return redirect(reverse("payments:manual_pay", args=[subscription.pk]) + "?quote=" + str(quote.pk))
+        # PRD-04: refuse an oversized upload before reading it (the form fields are small; 64 KB margin).
+        try:
+            declared = int(request.META.get("CONTENT_LENGTH") or 0)
+        except ValueError:
+            declared = 0
+        if declared > settings.PAYMENTS_EVIDENCE_MAX_BYTES + 64 * 1024:
+            messages.error(request, _("The receipt is too large. The limit is %(mb)s MB. Nothing was submitted.")
+                           % {"mb": max(1, settings.PAYMENTS_EVIDENCE_MAX_BYTES // (1024 * 1024))})
+            return self._render(request, subscription, ManualPaymentForm(), status=413)
+        form = ManualPaymentForm(request.POST, request.FILES)
+        quote = self._quote(request, subscription)
+        if not manual.manual_payments_enabled() or (quote is None and not manual.manual_payments_ready()):  # Disabled or no Lipa details: nothing is recorded.
             return self._render(request, subscription, form, status=503)
         if not form.is_valid():
             return self._render(request, subscription, form, status=400)
@@ -259,6 +314,36 @@ class ManualClaimView(VerifiedAccountRequiredMixin, ManualPaymentsRequiredMixin,
         except manual.ManualPaymentError:
             messages.error(request, _("These payment details can no longer be withdrawn."))
         return redirect("payments:manual_claim", pk=claim.pk)
+
+
+class ManualEvidenceView(VerifiedAccountRequiredMixin, View):
+    """PRD-04: download a claim's receipt evidence. Only the claim's own member and staff who may
+    view manual payments; anyone else gets 404 (the claim's existence is not revealed). Always a
+    download with a fixed name and type, never rendered inline by the site, never cached. Staff
+    downloads are audited."""
+
+    def get(self, request, pk):
+        from django.http import FileResponse
+
+        from apps.audit.services import record_business_event
+
+        claim = ManualMembershipPayment.objects.select_related("evidence").filter(pk=pk).first()
+        evidence = getattr(claim, "evidence", None) if claim is not None else None
+        if evidence is None or not manual.can_download_evidence(request.user, claim):
+            raise Http404
+        if claim.member_id != request.user.pk:
+            record_business_event("membership.manual_payment.evidence_viewed", actor=request.user, target=claim,
+                                  metadata={"reference": claim.reference})
+        try:
+            handle = manual.payment_evidence.open_file(evidence)
+        except OSError:
+            raise Http404 from None
+        response = FileResponse(handle, as_attachment=True, content_type=evidence.content_type,
+                                filename=f"payment-evidence-{claim.reference}.{evidence.extension}")
+        response["X-Content-Type-Options"] = "nosniff"
+        response["Cache-Control"] = "private, no-store"
+        response["Content-Security-Policy"] = "sandbox; default-src 'none'"
+        return response
 
 
 def _form_errors(form, error):
