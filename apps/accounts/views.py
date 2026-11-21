@@ -630,3 +630,76 @@ class EmailChangeReviewView(LoginRequiredMixin, EmailChangeAvailableMixin, FormV
             return render(self.request, INVALID_LINK_TEMPLATE, status=400)
         update_session_auth_hash(self.request, account)  # Keep this session; every other one ends.
         return render(self.request, "accounts/email_change_complete.html")
+
+
+# --- PAY-LIVE-01F-B: SMS phone verification -------------------------------------------------
+
+
+@method_decorator([never_cache, sensitive_post_parameters("code")], name="dispatch")
+class PhoneVerificationView(VerifiedAccountRequiredMixin, View):
+    """Send a code to the account's own mobile number, then enter it. Every rule (expiry,
+    single use, attempts, cooldown, limits, the exact current number) is enforced by
+    apps.accounts.phone_verification. Codes never appear in pages, messages or logs."""
+
+    template_name = "accounts/phone_verify.html"
+
+    def _render(self, request, form=None, status=200):
+        from .forms import PhoneCodeForm
+        from .phone_verification import active_challenge, sms_delivery_available
+
+        user = request.user
+        challenge = active_challenge(user) if user.phone_number and not user.phone_verified else None
+        return render(request, self.template_name, {
+            "nav": "profile", "available": sms_delivery_available(), "challenge": challenge,
+            "form": form or PhoneCodeForm(),
+            "minutes": max(1, settings.PHONE_VERIFICATION_CODE_TTL_SECONDS // 60),
+            "breadcrumbs": [("Dashboard", "dashboard"), ("Profile and security", "accounts:profile")],
+        }, status=status)
+
+    def get(self, request):
+        return self._render(request)
+
+    def post(self, request):
+        from . import phone_verification as pv
+        from .forms import PhoneCodeForm
+
+        action = request.POST.get("action")
+        if action == "send":
+            try:
+                pv.request_phone_verification(request.user, request)
+            except pv.RateLimited as error:
+                if error.retry_after:
+                    messages.error(request, _("Please wait %(s)s seconds before asking for another code.")
+                                   % {"s": error.retry_after})
+                else:
+                    messages.error(request, _("Too many codes were requested. Please try again later."))
+                return self._render(request, status=429)
+            except pv.NothingToVerify as error:
+                messages.info(request, _("This mobile number is already verified.") if error.code == "already_verified"
+                              else _("Add a mobile number to your account first."))
+                return redirect("accounts:profile")
+            except pv.PhoneVerificationUnavailable:
+                messages.error(request, _("We could not send a code by SMS. Please try again later."))
+                return self._render(request, status=503)
+            messages.success(request, _("If your mobile number can receive text messages, a code is on its way. "
+                                        "It expires in %(m)s minutes.")
+                             % {"m": max(1, settings.PHONE_VERIFICATION_CODE_TTL_SECONDS // 60)})
+            return redirect("accounts:phone_verify")
+        if action == "confirm":
+            form = PhoneCodeForm(request.POST)
+            if not form.is_valid():
+                return self._render(request, form, status=400)
+            try:
+                pv.confirm_phone_verification(request.user, form.cleaned_data["code"], request)
+            except pv.RateLimited:
+                messages.error(request, _("Too many attempts. Please try again later."))
+                return self._render(request, status=429)
+            except pv.AttemptsExhausted:
+                messages.error(request, _("Too many incorrect codes. Ask for a new code."))
+                return self._render(request, status=400)
+            except pv.InvalidCode:
+                form.add_error("code", _("That code is not valid or has expired. Check it, or ask for a new code."))
+                return self._render(request, form, status=400)
+            messages.success(request, _("Your mobile number is verified."))
+            return redirect("accounts:profile")
+        return self._render(request, status=400)

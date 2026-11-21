@@ -441,3 +441,52 @@ class PendingEmailChange(BaseModel):
     def is_expired(self):
         lifetime = timedelta(seconds=settings.ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT)
         return timezone.now() >= self.created_at + lifetime
+
+
+class PhoneVerificationChallenge(BaseModel):
+    """
+    PAY-LIVE-01F-B: one SMS code sent to prove ownership of a mobile number
+    (apps.accounts.phone_verification).
+
+    The code itself is never stored: only a keyed hash (HMAC-SHA256 with the site secret)
+    bound to this challenge and to ``phone_number``, the exact number it was sent to. A
+    challenge verifies that number only, and only while it is still the account's number.
+    At most one challenge per account is ACTIVE; a new request supersedes it. Closed
+    challenges are kept briefly for throttling and audit context, then deleted by a job.
+    """
+
+    class Status(models.TextChoices):
+        ACTIVE = "ACTIVE", _("Waiting for the code")
+        VERIFIED = "VERIFIED", _("Verified")
+        EXPIRED = "EXPIRED", _("Expired")
+        EXHAUSTED = "EXHAUSTED", _("Too many attempts")
+        SUPERSEDED = "SUPERSEDED", _("Replaced or no longer valid")
+        UNDELIVERED = "UNDELIVERED", _("Could not be sent")
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="phone_challenges")
+    phone_number = models.CharField(_("phone number"), max_length=16, validators=[validate_e164])
+    code_hash = models.CharField(_("code hash"), max_length=64, editable=False)
+    expires_at = models.DateTimeField(_("expires at"))
+    attempts = models.PositiveSmallIntegerField(_("attempts"), default=0)
+    status = models.CharField(_("status"), max_length=12, choices=Status.choices, default=Status.ACTIVE)
+    closed_at = models.DateTimeField(_("closed at"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("phone verification challenge")
+        verbose_name_plural = _("phone verification challenges")
+        indexes = [
+            models.Index(fields=["user", "-created_at"], name="phone_challenge_user_idx"),
+            models.Index(fields=["status", "expires_at"], name="phone_challenge_status_idx"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(status__in=["ACTIVE", "VERIFIED", "EXPIRED", "EXHAUSTED", "SUPERSEDED", "UNDELIVERED"]),
+                name="phone_challenge_status_valid"),
+            models.CheckConstraint(condition=Q(code_hash__regex=r"^[0-9a-f]{64}$"), name="phone_challenge_hash_hex"),
+            models.CheckConstraint(condition=Q(status="ACTIVE", closed_at__isnull=True)
+                                   | (~Q(status="ACTIVE") & Q(closed_at__isnull=False)),
+                                   name="phone_challenge_closed_recorded"),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} [{self.status}]"  # Never the number or the hash.

@@ -117,6 +117,13 @@ EMAIL_REQUESTS_PER_ACCOUNT = Throttle("email-request-account", limit=3, window_s
 # guess the password. Phone attempts: a duplicate number is refused, so attempts are limited.
 CURRENT_PASSWORD_FAILURES = Throttle("current-password", limit=5, window_seconds=15 * 60)
 PHONE_CHANGE_ATTEMPTS = Throttle("phone-change", limit=10, window_seconds=60 * 60)
+# PAY-LIVE-01F-B: SMS verification codes. Sending costs money and can be abused to message a
+# third party, so codes are limited per account, per number (whichever account asks) and per IP;
+# guessing is limited per challenge (PHONE_VERIFICATION_MAX_ATTEMPTS) and per IP.
+PHONE_CODES_PER_ACCOUNT = Throttle("phone-code-account", limit=5, window_seconds=60 * 60)
+PHONE_CODES_PER_NUMBER = Throttle("phone-code-number", limit=5, window_seconds=60 * 60)
+PHONE_CODES_PER_IP = Throttle("phone-code-ip", limit=20, window_seconds=60 * 60)
+PHONE_CODE_CHECKS_PER_IP = Throttle("phone-code-check-ip", limit=30, window_seconds=60 * 60)
 # The per-address limit has its own scope: otherwise a member could use up someone
 # else's password-reset allowance by naming their address here.
 EMAIL_CHANGE_REQUESTS_PER_ACCOUNT = Throttle("email-change-account", limit=5, window_seconds=60 * 60)

@@ -32,6 +32,9 @@ MESSAGES = {
     # PRD-01: a mobile number cannot be verified while SMS is unavailable.
     "contact_unverified": _("Before you buy a membership, add an email address in My account and open the "
                             "confirmation link we send. Do not pay anything until then."),
+    # PAY-LIVE-01F-B: once SMS verification exists, a member with a mobile number can verify it instead.
+    "contact_unverified_sms": _("Before you buy a membership, verify your mobile number (or confirm an email "
+                                "address) in My account. Do not pay anything until then."),
 }
 
 
@@ -119,6 +122,11 @@ class ChoosePlanView(VerifiedAccountRequiredMixin, View):
             message = MESSAGES.get(error.code, _("This membership cannot be selected right now."))
             if error.code == "email_unverified" and demo_unconfirmed(request.user):
                 message = DEMO_UNCONFIRMED_BLOCKED  # Approved restricted-demo accounts: the demo's own wording.
+            if error.code == "contact_unverified" and request.user.phone_number:
+                from apps.accounts.phone_verification import sms_delivery_available
+
+                if sms_delivery_available():
+                    message = MESSAGES["contact_unverified_sms"]
             messages.error(request, message)
             return redirect("memberships:mine")
         if manual.purchase_state() == manual.PURCHASE_OPEN:

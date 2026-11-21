@@ -259,6 +259,17 @@ LOGOUT_REDIRECT_URL = "accounts:login"
 ACCOUNTS_PASSWORD_RESET_TIMEOUT = 60 * 60  # 1 hour
 ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT = 60 * 60 * 24  # 24 hours
 PASSWORD_RESET_TIMEOUT = max(ACCOUNTS_PASSWORD_RESET_TIMEOUT, ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT)
+
+# PAY-LIVE-01F-B: proving ownership of a mobile number with a one-time SMS code
+# (apps.accounts.phone_verification). No real SMS provider exists yet, so delivery is
+# "disabled" and nothing can be verified. "fake" is a test and local-development transport
+# that keeps messages in memory; it works only when SMS_FAKE_TRANSPORT_ALLOWED, which is
+# DEBUG and deliberately has no environment variable (check --deploy refuses "fake").
+SMS_BACKEND = env("DJANGO_SMS_BACKEND", default="disabled")
+SMS_FAKE_TRANSPORT_ALLOWED = DEBUG
+PHONE_VERIFICATION_CODE_TTL_SECONDS = 5 * 60
+PHONE_VERIFICATION_MAX_ATTEMPTS = 5
+PHONE_VERIFICATION_RESEND_SECONDS = 60
 # RG-03: how recently this session must have confirmed the current password before an
 # email-address change can be completed without asking again (apps.accounts.reauth).
 ACCOUNTS_REAUTHENTICATION_SECONDS = 5 * 60

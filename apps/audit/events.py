@@ -102,6 +102,11 @@ EVENT_TYPES = {
         _event("account.email_change.denied", Category.ACCOUNT, SECURITY, ["reason"]),
         _event("account.email_change.cancelled", Category.ACCOUNT, BUSINESS),
         _event("account.email_changed", Category.ACCOUNT, BUSINESS, ["previous_address_hash", "new_address_hash"]),
+        # PAY-LIVE-01F-B: SMS phone verification. Never the code or the number.
+        _event("account.phone_verification.requested", Category.ACCOUNT, BUSINESS),
+        _event("account.phone_verification.refused", Category.ACCOUNT, SECURITY, ["reason"]),
+        _event("account.phone_verification.failed", Category.ACCOUNT, SECURITY, ["reason", "attempts"]),
+        _event("account.phone_verified", Category.ACCOUNT, BUSINESS),
         _event("account.created_by_staff", Category.ACCOUNT, BUSINESS, ["role", "status"]),
         _event("account.role_changed", Category.ACCOUNT, BUSINESS, ["from_role", "to_role"]),
         _event("account.status_changed", Category.ACCOUNT, BUSINESS, ["from_status", "to_status"]),

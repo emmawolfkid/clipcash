@@ -425,3 +425,20 @@ class AccessChangeFormMixin:
             status=cleaned_data.get("status", self.instance.status),
         )
         return cleaned_data
+
+
+class _NoEchoInput(forms.TextInput):
+    """PAY-LIVE-01F-B: a one-time code is never written back into a page."""
+
+    def format_value(self, value):
+        return None
+
+
+class PhoneCodeForm(forms.Form):
+    """The 6-digit SMS code (apps.accounts.phone_verification checks it)."""
+
+    code = forms.CharField(
+        label=_("Verification code"), max_length=12, strip=True,
+        widget=_NoEchoInput(attrs={"inputmode": "numeric", "autocomplete": "one-time-code", "pattern": "[0-9 ]*"}),
+        help_text=_("The 6-digit code in the text message we sent you."),
+    )

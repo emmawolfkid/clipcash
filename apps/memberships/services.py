@@ -133,13 +133,13 @@ def member_eligibility(member, *, demo_waiver=False):
 
 
 def new_payment_eligibility(member):
-    """(eligible, reason) for STARTING a new paid membership: choosing a plan (including a
-    renewal), getting payment details and submitting a payment. PRD-01: on top of
-    member_eligibility, the member must have a verified contact (a confirmed email address;
-    no mobile number can be verified while SMS is unavailable), so a payer can always be
-    reached and can recover the account. Deliberately NOT applied when staff approve a
-    payment already submitted, or to existing memberships: money already paid is never
-    stranded and nobody loses access they have."""
+    """(eligible, reason) for STARTING a new paid membership, i.e. choosing a plan (including a
+    renewal); choose_plan() applies it. PRD-01: on top of member_eligibility, the member must
+    have a verified contact (a confirmed email address or, PAY-LIVE-01F-B, a mobile number
+    verified by SMS), so a payer can always be reached. Deliberately NOT applied to a choice
+    that already exists (getting its payment details, submitting its payment), when staff
+    approve a payment already submitted, or to existing memberships: money already paid is
+    never stranded and nobody loses access they have."""
     from apps.accounts.access import has_verified_contact
 
     eligible, reason = member_eligibility(member)
