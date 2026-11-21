@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from apps.accounts.tests.helpers import PASSWORD, make_user
 from apps.audit.models import AuditEvent
+from apps.memberships import services as memberships
 from apps.memberships.models import Subscription
 from apps.payments import manual
 from apps.payments.models import ManualMembershipPayment, ManualPaymentInstruction
@@ -15,6 +16,7 @@ from .manual_helpers import BUSINESS_NUMBER, RECIPIENT, ManualPaymentTestCase, s
 
 C = ManualMembershipPayment.Status
 OBSOLETE_NOTICE = "Online payment is not available yet"
+CLOSED = str(manual.PURCHASE_CLOSED_MESSAGE)  # PAY-LIVE-01C: the one "not open" explanation.
 
 
 def pay_url(subscription):
@@ -37,8 +39,10 @@ class MemberJourneyTests(ManualPaymentTestCase):
     def test_plan_pages_describe_the_real_payment_method(self):
         for url in (reverse("memberships:plans"), reverse("memberships:plan_detail", args=["monthly"])):
             response = self.client.get(url)
-            self.assertContains(response, "Airtel Money (Lipa)")
+            self.assertContains(response, "pay its exact price with the payment details shown at checkout")
+            self.assertContains(response, "Airtel Money - Lipa")
             self.assertNotContains(response, OBSOLETE_NOTICE)
+            self.assertNotContains(response, CLOSED)
             self.assertNotContains(response, "Sandbox")
 
     def test_choose_pay_submit_and_follow_status(self):
@@ -123,7 +127,7 @@ class MemberJourneyTests(ManualPaymentTestCase):
                     reverse("administration:payment_instructions")):
             response = self.client.post(url, {"action": "approve", "verified_amount": "5000",
                                               "verified_reference": claim.transaction_reference,
-                                              "receipt_confirmed": "on", "recipient_confirmed": "on"})
+                                              "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
             self.assertEqual(response.status_code, 302)
             self.assertIn(reverse("admin:login"), response["Location"])
         claim.refresh_from_db()
@@ -134,8 +138,11 @@ class MemberJourneyTests(ManualPaymentTestCase):
         unverified = make_user("unverified@example.com", verified=False)
         self.client.force_login(unverified)
         pending_url = reverse("payments:manual_pay", args=["00000000-0000-0000-0000-000000000001"])
-        self.assertRedirects(self.client.get(pending_url), reverse("accounts:verification_required"),
-                             fetch_redirect_response=False)
+        # PRD-03A: no redirect to "Confirm your email"; without a confirmed address the member
+        # cannot choose a plan, so there is never a payable choice of theirs to open.
+        self.assertEqual(self.client.get(pending_url).status_code, 404)
+        with self.assertRaises(memberships.NotEligible):
+            memberships.choose_plan(unverified, self.plan)
 
     def test_csrf_is_enforced(self):
         pending = self.choose()
@@ -152,7 +159,7 @@ class MemberJourneyTests(ManualPaymentTestCase):
         pending = self.choose()
         page = self.client.get(pay_url(pending))
         self.assertEqual(page.status_code, 503)
-        self.assertContains(page, "Membership payments are not available at the moment", status_code=503)
+        self.assertContains(page, CLOSED, status_code=503)
         self.assertNotContains(page, 'name="transaction_reference"', status_code=503)
         self.assertNotContains(page, BUSINESS_NUMBER, status_code=503)
         posted = self.client.post(pay_url(pending), {"amount": "5000", "payer_phone": "0781234567",
@@ -161,14 +168,17 @@ class MemberJourneyTests(ManualPaymentTestCase):
         self.assertFalse(ManualMembershipPayment.objects.exists())
         self.assertEqual(self.client.post(reverse("memberships:choose", args=["monthly"])).status_code, 302)
         mine = self.client.get(reverse("memberships:mine"))
-        self.assertContains(mine, OBSOLETE_NOTICE)
+        # PAY-LIVE-01C: the closed explanation, not the old "saves it as pending" notice. (The refused
+        # choice above left the same text as an unread flash message, so it may appear twice here.)
+        self.assertContains(mine, CLOSED)
+        self.assertNotContains(mine, OBSOLETE_NOTICE)
         self.assertNotContains(mine, "Airtel")
 
     def test_unpublished_details_show_a_clear_notice(self):
         pending = self.choose()
         manual.retire_instruction(self.root)
         page = self.client.get(pay_url(pending))
-        self.assertContains(page, "has not published its Airtel Lipa payment details", status_code=503)
+        self.assertContains(page, CLOSED, status_code=503)
         self.assertNotContains(page, BUSINESS_NUMBER, status_code=503)
         self.assertNotContains(page, 'name="transaction_reference"', status_code=503)
         posted = self.client.post(pay_url(pending), {"amount": "5000", "payer_phone": "0781234567",
@@ -192,7 +202,7 @@ class ConsoleTests(ManualPaymentTestCase):
         self.assertContains(queue, "MP31313131")
         self.assertContains(queue, "TZS 5,000")
         self.assertContains(queue, "Pending verification")
-        self.assertContains(queue, "official Airtel business records")
+        self.assertContains(queue, "official provider business records")
         self.assertContains(self.client.get(reverse("administration:overview")),
                             "Membership payments awaiting verification")
         detail = self.client.get(review_url(claim))
@@ -208,18 +218,18 @@ class ConsoleTests(ManualPaymentTestCase):
         self.assertEqual(response.status_code, 400)  # Receipt not confirmed.
         response = self.client.post(review_url(claim), {"action": "approve", "verified_amount": "4000",
                                                         "verified_reference": "MP31313131",
-                                                        "receipt_confirmed": "on", "recipient_confirmed": "on"})
+                                                        "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
         self.assertContains(response, "differs from the plan price", status_code=400)
         response = self.client.post(review_url(claim), {"action": "approve", "verified_amount": "5000",
                                                         "verified_reference": "MP31313131",
-                                                        "receipt_confirmed": "on", "recipient_confirmed": "on"})
+                                                        "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
         self.assertRedirects(response, review_url(claim))
         claim.refresh_from_db()
         self.assertEqual(claim.status, C.APPROVED)
         self.assertEqual(Subscription.objects.get(pk=claim.subscription_id).status, "ACTIVE")
         # A second click changes nothing.
         self.client.post(review_url(claim), {"action": "approve", "verified_amount": "5000",
-                                             "verified_reference": "MP31313131", "receipt_confirmed": "on", "recipient_confirmed": "on"})
+                                             "verified_reference": "MP31313131", "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
         self.assertEqual(JournalEntry.objects.count(), 1)
         page = self.client.get(review_url(claim))
         self.assertContains(page, "Ledger entry")
@@ -244,7 +254,7 @@ class ConsoleTests(ManualPaymentTestCase):
         self.assertContains(detail, "You can view this payment but not approve or reject it.")
         response = self.client.post(review_url(claim), {"action": "approve", "verified_amount": "5000",
                                                         "verified_reference": claim.transaction_reference,
-                                                        "receipt_confirmed": "on", "recipient_confirmed": "on"})
+                                                        "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
         self.assertEqual(response.status_code, 403)
         self.assertEqual(self.client.get(reverse("administration:payment_instructions")).status_code, 403)
         plain = staff_with("plain@example.com")
@@ -260,7 +270,7 @@ class ConsoleTests(ManualPaymentTestCase):
         client.force_login(self.verifier)
         response = client.post(review_url(claim), {"action": "approve", "verified_amount": "5000",
                                                    "verified_reference": claim.transaction_reference,
-                                                   "receipt_confirmed": "on", "recipient_confirmed": "on"})
+                                                   "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
         self.assertEqual(response.status_code, 403)
         claim.refresh_from_db()
         self.assertEqual(claim.status, C.PENDING_VERIFICATION)

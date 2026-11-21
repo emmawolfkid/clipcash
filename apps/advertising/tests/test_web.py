@@ -59,8 +59,13 @@ class TenantIsolationTests(AdvertisingTestCase):
     def test_unverified_and_anonymous(self):
         url = reverse("advertising:home")
         self.assertEqual(self.client.get(url).status_code, 302)
-        self.client.force_login(make_user("u@x.example", verified=False))
-        self.assertRedirects(self.client.get(url), reverse("accounts:verification_required"))
+        unverified = make_user("u@x.example", verified=False)
+        self.client.force_login(unverified)
+        # PRD-03A: the page opens, but advertiser actions still need a confirmed address.
+        self.assertEqual(self.client.get(url).status_code, 200)
+        from apps.advertising.services import advertiser_account_reason
+
+        self.assertEqual(advertiser_account_reason(unverified), "email_unverified")
 
 
 class AdvertiserFlowTests(AdvertisingTestCase):

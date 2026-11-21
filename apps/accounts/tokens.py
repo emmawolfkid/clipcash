@@ -35,6 +35,16 @@ class AccountVerificationTokenGenerator(_TimedAccountTokenGenerator):
     key_salt = "apps.accounts.tokens.AccountVerificationTokenGenerator"
     timeout_setting = "ACCOUNTS_EMAIL_VERIFICATION_TIMEOUT"
 
+    def _make_hash_value(self, user, timestamp):
+        # REG-04: on the username-first path only the signed-in owner can confirm, so signing in
+        # (on another device, after a session ends) must not spoil the emailed link; like the
+        # email-change link, leave out the sign-in time there. Confirming flips email_verified, so
+        # the link stays single-use. Accounts from before REG-04 keep the exact hash, so links
+        # already sent stay valid.
+        if getattr(user, "email_ownership_required", False):
+            return f"{user.pk}{user.password}{timestamp}{user.email or ''}{user.status}{user.email_verified}"
+        return super()._make_hash_value(user, timestamp)
+
 
 class AccountPasswordResetTokenGenerator(_TimedAccountTokenGenerator):
     key_salt = "apps.accounts.tokens.AccountPasswordResetTokenGenerator"

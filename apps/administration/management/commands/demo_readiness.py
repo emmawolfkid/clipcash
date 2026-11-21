@@ -21,6 +21,7 @@ from apps.administration import summary
 from apps.advertising import services as advertising
 from apps.advertising.models import Campaign
 from apps.core import features
+from apps.core.mariadb_guards import expected_guard_triggers, guard_findings
 from apps.memberships import services as memberships
 from apps.memberships.models import MembershipPlan, Subscription
 from apps.payments.providers import sandbox_active
@@ -121,21 +122,34 @@ def readiness():
         "(decision D2).", severity=WARN)
 
     # Financial safety (must always hold).
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT count(*) FROM pg_trigger WHERE tgname = ANY(%s) AND tgenabled = 'O'",
-                       [list(LOCK_TRIGGERS)])
-        (triggers,) = cursor.fetchone()
-        cursor.execute("SELECT count(*) FROM pg_constraint WHERE conname = ANY(%s)", [list(LOCK_CONSTRAINTS)])
-        (constraints,) = cursor.fetchone()
-    add(triggers == len(LOCK_TRIGGERS) and constraints == len(LOCK_CONSTRAINTS), "Financial locks",
-        f"All {len(LOCK_TRIGGERS)} lock triggers enabled and {len(LOCK_CONSTRAINTS)} lock constraints present.",
-        f"Lock triggers {triggers}/{len(LOCK_TRIGGERS)}, constraints {constraints}/{len(LOCK_CONSTRAINTS)}.")
+    if connection.vendor == "mysql":
+        # DB-01, MariaDB: every guard trigger the migrations create, read through the definer
+        # inventory view (the runtime login cannot see triggers itself), and the lock constraints.
+        findings = guard_findings(connection)
+        add(not findings, "Financial locks",
+            f"All {len(expected_guard_triggers())} guard triggers installed and {len(LOCK_CONSTRAINTS)} lock "
+            "constraints present.", "; ".join(findings) + ".")
+    else:
+        triggers, constraints = _postgresql_locks()
+        add(triggers == len(LOCK_TRIGGERS) and constraints == len(LOCK_CONSTRAINTS), "Financial locks",
+            f"All {len(LOCK_TRIGGERS)} lock triggers enabled and {len(LOCK_CONSTRAINTS)} lock constraints present.",
+            f"Lock triggers {triggers}/{len(LOCK_TRIGGERS)}, constraints {constraints}/{len(LOCK_CONSTRAINTS)}.")
     locked = not any(features.is_enabled(key) for key in features.FINANCIAL_FEATURES)
     add(locked, "Real money", "Real payments, rewards and withdrawals are locked.", "A financial feature is enabled.")
     results.append((PASS, "Sandbox payments",
                     "Active: sandbox payment and payout stories can be shown." if sandbox_active() else
                     "Disabled: payment and payout simulations are not part of this demo."))
     return results
+
+
+def _postgresql_locks():
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT count(*) FROM pg_trigger WHERE tgname = ANY(%s) AND tgenabled = 'O'",
+                       [list(LOCK_TRIGGERS)])
+        (triggers,) = cursor.fetchone()
+        cursor.execute("SELECT count(*) FROM pg_constraint WHERE conname = ANY(%s)", [list(LOCK_CONSTRAINTS)])
+        (constraints,) = cursor.fetchone()
+    return triggers, constraints
 
 
 class Command(BaseCommand):

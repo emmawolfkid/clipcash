@@ -1,5 +1,5 @@
-{% load i18n %}{# PAY-01: how a membership is paid in this deployment. Context: payment_context(). #}
-{% if manual_payments and manual_payments_ready %}<p class="notice" role="status">{% translate "Pay with Airtel Money (Lipa) after choosing a plan, then submit the transaction details. Your membership starts once our team confirms the payment in our Airtel business records." %}</p>
-{% elif manual_payments %}<p class="notice notice--warning" role="status">{% translate "Payments are temporarily unavailable. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
-{% elif not payments_available %}<p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
+{% load i18n purchase_state %}{# PAY-LIVE-01C: how a membership is paid in this deployment: exactly one message, from payment_context().purchase_state. Anything but "open" or "sandbox" is treated as closed. #}
+{% if purchase_state == "open" %}<p class="notice" role="status">{% translate "To buy a membership, choose a plan, pay its exact price with the payment details shown at checkout, then submit your transaction reference. Your membership starts only after our team confirms the payment in the official provider records." %}{% if payment_methods %} {% translate "Payment methods:" %} {{ payment_methods|join:", " }}.{% endif %}</p>
+{% elif purchase_state == "sandbox" %}<p class="notice" role="status">{% translate "Online payment is not available yet. Choosing a plan saves it as pending; your membership starts only after a payment is confirmed." %}</p>
+{% else %}<p class="notice notice--warning" role="status">{% purchase_closed_message %}</p>
 {% endif %}

@@ -14,4 +14,6 @@ urlpatterns = [
     # PAY-01: manual membership payments (Airtel Lipa).
     path("membership/<uuid:subscription_id>/pay/", views.ManualPayView.as_view(), name="manual_pay"),
     path("membership/submissions/<uuid:pk>/", views.ManualClaimView.as_view(), name="manual_claim"),
+    # PRD-04: private receipt evidence (member and authorized staff only).
+    path("membership/submissions/<uuid:pk>/evidence/", views.ManualEvidenceView.as_view(), name="manual_evidence"),
 ]

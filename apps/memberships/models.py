@@ -130,6 +130,9 @@ class Subscription(BaseModel):
     class Source(models.TextChoices):
         PAYMENT = "PAYMENT", _("Verified payment")
         COMPLIMENTARY = "COMPLIMENTARY", _("Complimentary grant")
+        # PAY-LIVE-01D: an administrator's extension, appended as its own period after the
+        # member's last one (periods are immutable). Not a payment: amount paid 0, no reference.
+        EXTENSION = "EXTENSION", _("Administrative extension (no payment)")
 
     class Reason(models.TextChoices):
         MEMBER_REQUEST = "MEMBER_REQUEST", _("Member request")
@@ -218,7 +221,8 @@ class Subscription(BaseModel):
                 condition=Q(activated_at__isnull=True, activation_source="", payment_reference="",
                             amount_paid__isnull=True)
                 | Q(activation_source="PAYMENT", amount_paid=F("price_amount")) & ~Q(payment_reference="")
-                | Q(activation_source="COMPLIMENTARY", amount_paid=0, payment_reference=""),
+                | Q(activation_source="COMPLIMENTARY", amount_paid=0, payment_reference="")
+                | Q(activation_source="EXTENSION", amount_paid=0, payment_reference=""),
                 name="sub_activation_source_consistent"),
         ]
 

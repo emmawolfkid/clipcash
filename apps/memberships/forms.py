@@ -56,7 +56,7 @@ class ConsolePlanForm(MembershipPlanForm):
         super().__init__(*args, **kwargs)
         self.fields["price_amount"].help_text = _("Whole Tanzanian shillings. Members pay exactly this amount.")
         self.fields["duration_days"].help_text = _("How long a paid membership lasts, in days (1 to 3660).")
-        self.fields["is_public"].help_text = _("Listed for members. Only active, listed plans can be bought.")
+        self.fields["is_public"].help_text = _("Listed for members. Active status and listing do not enable payments.")
 
 
 class ConsolePlanEditForm(ConsolePlanForm):

@@ -16,6 +16,16 @@ Limitation: the table owner or a superuser can disable these triggers.
 
 from django.db import migrations
 
+from apps.core.migration_ops import (
+    MariaDBRunSQL,
+    PostgreSQLRunSQL,
+    changed,
+    check_error,
+    drop_triggers,
+    privilege_error,
+    trigger,
+)
+
 FORWARD = r"""
 CREATE OR REPLACE FUNCTION support_ticket_guard() RETURNS trigger
 LANGUAGE plpgsql AS $$
@@ -74,7 +84,46 @@ DROP FUNCTION IF EXISTS support_ticket_guard();
 """
 
 
+# DB-01: the same rules on MariaDB (one trigger per event).
+MARIADB_FORWARD = [
+    trigger("support_ticket_insert", "BEFORE INSERT", "support_ticket", f"""
+    IF NOT (BINARY NEW.status <=> 'OPEN') OR NEW.resolved_at IS NOT NULL OR NEW.closed_at IS NOT NULL THEN
+        {check_error("support tickets are created open")}
+    END IF;"""),
+    trigger("support_ticket_update", "BEFORE UPDATE", "support_ticket", f"""
+    DECLARE message VARCHAR(200);
+    IF {changed("reference", "requester_id", "organization_id", "submission_key", "created_at")} THEN
+        {privilege_error("support ticket identity cannot change")}
+    END IF;
+    IF {changed("status")} AND NOT (
+        (BINARY OLD.status IN ('OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER')
+            AND BINARY NEW.status IN ('OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'RESOLVED', 'CLOSED'))
+        OR (BINARY OLD.status = 'RESOLVED' AND BINARY NEW.status IN ('OPEN', 'IN_PROGRESS', 'CLOSED'))
+    ) THEN
+        SET message = CONCAT('invalid support ticket status change ', OLD.status, ' -> ', NEW.status);
+        SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+    END IF;
+    IF BINARY OLD.status = 'CLOSED' THEN
+        {check_error("closed support tickets cannot change")}
+    END IF;"""),
+    trigger("support_ticket_delete", "BEFORE DELETE", "support_ticket",
+            privilege_error("support tickets cannot be deleted")),
+] + [
+    trigger(f"support_{name}_{event.lower()}", f"BEFORE {event}", table, privilege_error(f"{table} rows are append-only"))
+    for name, table in (("message", "support_ticketmessage"), ("event", "support_ticketevent"))
+    for event in ("UPDATE", "DELETE")
+]
+
+MARIADB_REVERSE = drop_triggers(
+    "support_event_delete", "support_event_update", "support_message_delete", "support_message_update",
+    "support_ticket_delete", "support_ticket_update", "support_ticket_insert",
+)
+
+
 class Migration(migrations.Migration):
     dependencies = [("support", "0001_initial")]
 
-    operations = [migrations.RunSQL(FORWARD, REVERSE)]
+    operations = [
+        PostgreSQLRunSQL(FORWARD, REVERSE),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
+    ]

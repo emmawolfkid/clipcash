@@ -19,6 +19,16 @@ Limitation: the table owner or a superuser can disable these triggers.
 
 from django.db import migrations
 
+from apps.core.migration_ops import (
+    MariaDBRunSQL,
+    PostgreSQLRunSQL,
+    changed,
+    check_error,
+    drop_triggers,
+    privilege_error,
+    trigger,
+)
+
 FORWARD = r"""
 CREATE OR REPLACE FUNCTION wallets_block_member_postings() RETURNS trigger
 LANGUAGE plpgsql AS $$
@@ -142,7 +152,76 @@ DROP FUNCTION IF EXISTS wallets_block_member_postings();
 """
 
 
+# DB-01: the same rules on MariaDB (one trigger per event). The zero-money lock is a second
+# BEFORE INSERT trigger on journal lines, after the ledger's own (0002).
+MARIADB_FORWARD = [
+    f"""CREATE TRIGGER wallets_block_member_postings BEFORE INSERT ON wallets_journalline FOR EACH ROW
+FOLLOWS ledger_line_insert
+BEGIN
+    IF EXISTS (SELECT 1 FROM wallets_wallet w
+               WHERE w.available_account_id = NEW.account_id OR w.pending_account_id = NEW.account_id
+                  OR w.reserved_account_id = NEW.account_id) THEN
+        {privilege_error("member wallet postings are not permitted: wallets hold no money in this phase")}
+    END IF;
+END""",
+    trigger("wallets_wallet_insert", "BEFORE INSERT", "wallets_wallet", f"""
+    IF (SELECT COUNT(*) FROM wallets_ledgeraccount a
+         WHERE (a.id = NEW.available_account_id AND BINARY a.account_type = 'REWARD_LIABILITY')
+            OR (a.id = NEW.pending_account_id AND BINARY a.account_type = 'MEMBER_REWARD_PENDING')
+            OR (a.id = NEW.reserved_account_id AND BINARY a.account_type = 'MEMBER_WITHDRAWAL_RESERVED')) <> 3
+       OR EXISTS (SELECT 1 FROM wallets_ledgeraccount a
+                   WHERE a.id IN (NEW.available_account_id, NEW.pending_account_id, NEW.reserved_account_id)
+                     AND (NOT (BINARY a.scope_type <=> 'MEMBER') OR NOT (BINARY a.scope_id <=> CAST(NEW.member_id AS CHAR))
+                          OR a.debit_balance <> 0)) THEN
+        {check_error("a wallet must link its own member's empty accounts of the right types")}
+    END IF;"""),
+    trigger("wallets_wallet_update", "BEFORE UPDATE", "wallets_wallet", f"""
+    IF {changed("number", "member_id", "currency", "available_account_id", "pending_account_id",
+                "reserved_account_id", "created_at")} THEN
+        {privilege_error("wallet identity cannot change")}
+    END IF;"""),
+    trigger("wallets_wallet_delete", "BEFORE DELETE", "wallets_wallet", privilege_error("wallets cannot be deleted")),
+    *[trigger(f"wallets_transactions_locked_{event.lower()}", f"BEFORE {event}", "wallets_wallettransaction",
+              privilege_error("wallet transactions are not active in this phase"))
+      for event in ("INSERT", "UPDATE", "DELETE")],
+    trigger("wallets_restriction_insert", "BEFORE INSERT", "wallets_walletrestriction", f"""
+    IF NOT (BINARY NEW.status <=> 'ACTIVE') THEN
+        {check_error("restrictions are created active")}
+    END IF;"""),
+    trigger("wallets_restriction_update", "BEFORE UPDATE", "wallets_walletrestriction", f"""
+    DECLARE message VARCHAR(200);
+    IF {changed("wallet_id", "kind", "reason", "placed_by_id", "created_at")} THEN
+        {privilege_error("restriction details cannot change")}
+    END IF;
+    IF {changed("status")} AND NOT (
+        (BINARY OLD.status = 'ACTIVE' AND BINARY NEW.status = 'LIFT_REQUESTED')
+        OR (BINARY OLD.status = 'LIFT_REQUESTED' AND BINARY NEW.status IN ('LIFTED', 'ACTIVE'))
+    ) THEN
+        SET message = CONCAT('invalid restriction change ', OLD.status, ' -> ', NEW.status);
+        SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+    END IF;"""),
+    trigger("wallets_restriction_delete", "BEFORE DELETE", "wallets_walletrestriction",
+            privilege_error("wallet restrictions cannot be deleted")),
+    trigger("wallets_discrepancy_update", "BEFORE UPDATE", "wallets_walletdiscrepancy", f"""
+    IF BINARY OLD.status = 'RESOLVED' AND {changed("status", "resolved_by_id")} THEN
+        {check_error("resolved discrepancies are final")}
+    END IF;"""),
+    trigger("wallets_discrepancy_delete", "BEFORE DELETE", "wallets_walletdiscrepancy",
+            privilege_error("wallet discrepancies cannot be deleted")),
+]
+
+MARIADB_REVERSE = drop_triggers(
+    "wallets_discrepancy_delete", "wallets_discrepancy_update", "wallets_restriction_delete",
+    "wallets_restriction_update", "wallets_restriction_insert", "wallets_transactions_locked_delete",
+    "wallets_transactions_locked_update", "wallets_transactions_locked_insert", "wallets_wallet_delete",
+    "wallets_wallet_update", "wallets_wallet_insert", "wallets_block_member_postings",
+)
+
+
 class Migration(migrations.Migration):
     dependencies = [("wallets", "0004_member_wallets")]
 
-    operations = [migrations.RunSQL(FORWARD, REVERSE)]
+    operations = [
+        PostgreSQLRunSQL(FORWARD, REVERSE),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
+    ]

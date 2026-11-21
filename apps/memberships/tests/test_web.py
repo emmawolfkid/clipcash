@@ -1,3 +1,5 @@
+from unittest import mock
+
 from django.contrib.auth.models import Permission
 from django.test import Client
 from django.urls import reverse
@@ -20,7 +22,9 @@ class MemberPagesTests(MembershipTestCase):
         self.assertContains(response, "TZS 5,000")
         self.assertNotContains(response, hidden.name)
         detail = self.client.get(reverse("memberships:plan_detail", args=["monthly"]))
-        self.assertContains(detail, "Online payment is not available yet")
+        # PAY-LIVE-01C: payments are closed here, so exactly one "not open" explanation.
+        self.assertContains(detail, "Membership payments are not open yet", count=1)
+        self.assertNotContains(detail, "Choose this plan")
         self.assertContains(detail, "not an investment")
         for misleading in ("Pay now", "Pay Now", "Checkout"):
             self.assertNotContains(detail, misleading)
@@ -33,18 +37,25 @@ class MemberPagesTests(MembershipTestCase):
             with self.subTest(url=url):
                 self.assertEqual(self.client.get(url).status_code, 404)
 
-    def test_choosing_requires_verified_sign_in_and_post(self):
+    # PRD-04: these tests are about the choice itself; the purchase gate is tested in
+    # apps.payments.tests.test_prd04_manual_workflow.PurchaseGateTests.
+    @mock.patch("apps.memberships.views.purchase_open", return_value=True)
+    def test_choosing_requires_verified_sign_in_and_post(self, _open):
         choose = reverse("memberships:choose", args=["monthly"])
         self.assertEqual(self.client.post(choose).status_code, 302)  # To login.
         self.assertFalse(Subscription.objects.exists())
         self.client.force_login(make_user("unverified@example.com", verified=False))
-        self.assertRedirects(self.client.post(choose), reverse("accounts:verification_required"))
+        # PRD-03A: the member reaches plans, but a choice (a payment) needs a confirmed address.
+        refused = self.client.post(choose, follow=True)
+        self.assertContains(refused, "confirm your email address")
+        self.assertFalse(Subscription.objects.exists())
         self.client.force_login(self.member)
         self.assertEqual(self.client.get(choose).status_code, 405)
         self.assertRedirects(self.client.post(choose), MINE)
         page = self.client.get(MINE)
         self.assertContains(page, "Waiting for payment")
-        self.assertContains(page, "Online payment is not available yet")
+        # PAY-LIVE-01C: the real purchase state is closed here (only the choice gate is mocked).
+        self.assertContains(page, "Membership payments are not open yet", count=1)
 
     def test_members_see_only_their_own_records(self):
         mine = services.choose_plan(self.member, self.plan)
@@ -158,7 +169,8 @@ class MembershipAdminTests(MembershipTestCase):
 
 
 class SignInFlowTests(MembershipTestCase):
-    def test_signed_in_member_reaches_plans_and_membership_pages(self):
+    @mock.patch("apps.memberships.views.purchase_open", return_value=True)
+    def test_signed_in_member_reaches_plans_and_membership_pages(self, _open):
         self.client.post(reverse("accounts:login"), {"username": "member@example.com", "password": PASSWORD})
         self.assertContains(self.client.get(reverse("memberships:plan_detail", args=["monthly"])), "Choose this plan")
         self.assertEqual(self.client.get(MINE).status_code, 200)

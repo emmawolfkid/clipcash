@@ -4,7 +4,7 @@
 {% block member_content %}
 <h1 class="page-title">{{ subscription.plan_name }}</h1>
 <p><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></p>
-{% if subscription.activation_source == "COMPLIMENTARY" %}<p class="notice">{% translate "Complimentary demonstration access: no payment was made, and access ends on the date below." %}</p>
+{% if subscription.activation_source == "COMPLIMENTARY" %}<p class="notice">{% if restricted_demo %}{% translate "Complimentary demonstration access: no payment was made, and access ends on the date below." %}{% else %}{% translate "Complimentary access: no payment was made, and access ends on the date below. Nothing renews automatically." %}{% endif %}</p>
 {% elif subscription.status == "EXPIRED" %}<p class="notice" role="status">{% translate "This membership has ended, so it no longer gives access to included content." %}</p>
 {% elif subscription.status == "CANCELLED" %}<p class="notice" role="status">{% translate "This membership choice was cancelled. It does not give access to included content." %}</p>
 {% elif subscription.status == "SUSPENDED" %}<p class="notice notice--warning" role="status">{% translate "Your membership is suspended. Please contact support." %}</p>
@@ -14,7 +14,7 @@
 <section class="panel">
 <div class="membership-status"><span class="membership-status__label">{% translate "Status" %}</span><span class="badge badge--{{ subscription.status|lower }}">{{ subscription.get_status_display }}</span></div>
 <dl class="details">
-  {% if subscription.activation_source == "COMPLIMENTARY" %}<dt>{% translate "Listed plan price" %}</dt><dd><span class="financial-amount">{{ subscription.price_amount|tzs }}</span></dd>
+  {% if subscription.activation_source == "COMPLIMENTARY" or subscription.activation_source == "EXTENSION" %}<dt>{% translate "Listed plan price" %}</dt><dd><span class="financial-amount">{{ subscription.price_amount|tzs }}</span></dd>
   <dt>{% translate "Amount paid" %}</dt><dd><span class="financial-amount">{{ subscription.amount_paid|tzs }}</span></dd>
   {% else %}<dt>{% translate "Price" %}</dt><dd><span class="financial-amount">{{ subscription.price_amount|tzs }}</span></dd>{% endif %}
   <dt>{% translate "Duration" %}</dt><dd>{% blocktranslate count days=subscription.duration_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</dd>

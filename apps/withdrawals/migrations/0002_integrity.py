@@ -23,6 +23,16 @@ Limitation: the table owner or a superuser can disable these triggers.
 
 from django.db import migrations
 
+from apps.core.migration_ops import (
+    MariaDBRunSQL,
+    PostgreSQLRunSQL,
+    changed,
+    check_error,
+    drop_triggers,
+    privilege_error,
+    trigger,
+)
+
 FORWARD = r"""
 CREATE OR REPLACE FUNCTION withdrawals_locked() RETURNS trigger
 LANGUAGE plpgsql AS $$
@@ -167,7 +177,92 @@ DROP FUNCTION IF EXISTS withdrawals_locked();
 """
 
 
+# DB-01: the same rules on MariaDB (one trigger per event). The real-withdrawal lock refuses
+# every write to withdrawals_withdrawalrequest, as on PostgreSQL.
+BENEFICIARY_DESTINATION = ("member_id", "kind", "network", "bank_code", "holder_name", "identifier_last4",
+                           "identifier_fingerprint", "created_at")
+DEMO_TERMS = ("reference", "member_id", "beneficiary_id", "destination_kind", "destination_provider",
+              "destination_last4", "destination_fingerprint", "destination_holder", "simulated_amount", "currency",
+              "created_by_id", "idempotency_key", "high_risk", "flags", "created_at")
+NO_DELETE = {
+    "withdrawals_event_no_delete": "withdrawals_payoutevent",
+    "withdrawals_beneficiary_no_delete": "withdrawals_payoutbeneficiary",
+    "withdrawals_demo_no_delete": "withdrawals_demowithdrawal",
+    "withdrawals_exception_no_delete": "withdrawals_withdrawalexception",
+    "withdrawals_payout_no_delete": "withdrawals_sandboxpayout",
+}
+
+MARIADB_FORWARD = [
+    *[trigger(f"withdrawals_request_locked_{event.lower()}", f"BEFORE {event}", "withdrawals_withdrawalrequest",
+              privilege_error("real withdrawals are not active in this phase"))
+      for event in ("INSERT", "UPDATE", "DELETE")],
+    trigger("withdrawals_beneficiary_insert", "BEFORE INSERT", "withdrawals_payoutbeneficiary", f"""
+    IF NOT (BINARY NEW.status <=> 'ACTIVE') OR NOT (BINARY NEW.verification <=> 'UNVERIFIED') THEN
+        {check_error("beneficiaries are created active and unverified")}
+    END IF;"""),
+    trigger("withdrawals_beneficiary_update", "BEFORE UPDATE", "withdrawals_payoutbeneficiary", f"""
+    IF {changed(*BENEFICIARY_DESTINATION)} THEN
+        {privilege_error("payout destination details cannot change; add a new destination")}
+    END IF;
+    IF {changed("status")} AND NOT (BINARY OLD.status = 'ACTIVE' AND BINARY NEW.status = 'DEACTIVATED') THEN
+        {check_error("invalid beneficiary status change")}
+    END IF;
+    IF {changed("verification")}
+       AND NOT (BINARY OLD.verification = 'UNVERIFIED' AND BINARY NEW.verification = 'DEMO_VERIFIED') THEN
+        {check_error("invalid beneficiary verification change")}
+    END IF;"""),
+    trigger("withdrawals_demo_insert", "BEFORE INSERT", "withdrawals_demowithdrawal", f"""
+    IF NOT (BINARY NEW.status <=> 'DEMO_REQUESTED') OR NEW.approved_by_id IS NOT NULL OR NEW.payout_reference <> '' THEN
+        {check_error("demo withdrawals are created as new requests")}
+    END IF;"""),
+    trigger("withdrawals_demo_update", "BEFORE UPDATE", "withdrawals_demowithdrawal", f"""
+    DECLARE message VARCHAR(200);
+    IF {changed(*DEMO_TERMS)} THEN
+        {privilege_error("demo withdrawal terms cannot change")}
+    END IF;
+    IF (OLD.approved_by_id IS NOT NULL AND {changed("approved_by_id")})
+       OR (OLD.second_approved_by_id IS NOT NULL AND {changed("second_approved_by_id")})
+       OR (OLD.payout_initiated_by_id IS NOT NULL AND {changed("payout_initiated_by_id")})
+       OR (OLD.payout_reference <> '' AND {changed("payout_reference")}) THEN
+        {privilege_error("approvals and payout references are written once")}
+    END IF;
+    IF {changed("status")} AND NOT (
+        (BINARY OLD.status = 'DEMO_REQUESTED'
+            AND BINARY NEW.status IN ('DEMO_UNDER_REVIEW', 'DEMO_REJECTED', 'DEMO_CANCELLED', 'DEMO_EXPIRED'))
+        OR (BINARY OLD.status = 'DEMO_UNDER_REVIEW'
+            AND BINARY NEW.status IN ('DEMO_APPROVED', 'DEMO_REJECTED', 'DEMO_CANCELLED', 'DEMO_EXPIRED'))
+        OR (BINARY OLD.status = 'DEMO_APPROVED'
+            AND BINARY NEW.status IN ('DEMO_PAYOUT_PENDING', 'DEMO_REJECTED', 'DEMO_CANCELLED'))
+        OR (BINARY OLD.status = 'DEMO_PAYOUT_PENDING' AND BINARY NEW.status IN ('DEMO_UNCERTAIN', 'DEMO_PAID', 'DEMO_FAILED'))
+        OR (BINARY OLD.status = 'DEMO_UNCERTAIN' AND BINARY NEW.status IN ('DEMO_PAID', 'DEMO_FAILED'))
+        OR (BINARY OLD.status = 'DEMO_PAID' AND BINARY NEW.status = 'DEMO_RETURNED')
+    ) THEN
+        SET message = CONCAT('invalid demo withdrawal status change ', OLD.status, ' -> ', NEW.status);
+        SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+    END IF;"""),
+    trigger("withdrawals_exception_update", "BEFORE UPDATE", "withdrawals_withdrawalexception", f"""
+    IF BINARY OLD.status = 'RESOLVED' AND {changed("status")} THEN
+        {check_error("resolved exceptions are final")}
+    END IF;"""),
+    *[trigger(f"withdrawals_decision_{event.lower()}", f"BEFORE {event}", "withdrawals_demowithdrawaldecision",
+              privilege_error("withdrawals_demowithdrawaldecision rows are append-only"))
+      for event in ("UPDATE", "DELETE")],
+    *[trigger(name, "BEFORE DELETE", table, privilege_error(f"{table} rows cannot be deleted"))
+      for name, table in NO_DELETE.items()],
+]
+
+MARIADB_REVERSE = drop_triggers(*reversed([
+    "withdrawals_request_locked_insert", "withdrawals_request_locked_update", "withdrawals_request_locked_delete",
+    "withdrawals_beneficiary_insert", "withdrawals_beneficiary_update", "withdrawals_demo_insert",
+    "withdrawals_demo_update", "withdrawals_exception_update", "withdrawals_decision_update",
+    "withdrawals_decision_delete", *NO_DELETE,
+]))
+
+
 class Migration(migrations.Migration):
     dependencies = [("withdrawals", "0001_initial")]
 
-    operations = [migrations.RunSQL(FORWARD, REVERSE)]
+    operations = [
+        PostgreSQLRunSQL(FORWARD, REVERSE),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
+    ]

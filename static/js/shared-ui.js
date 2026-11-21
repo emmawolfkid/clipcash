@@ -45,3 +45,70 @@
   var summary = document.querySelector(".error-summary");
   if (summary) { summary.focus(); }
 }());
+
+/* Progressive action feedback. Successes expire unless explicitly persistent; other levels stay available. */
+(function () {
+  "use strict";
+  Array.prototype.forEach.call(document.querySelectorAll("[data-feedback]"), function (region) {
+    var list = region.querySelector(".messages");
+    var announcer = region.querySelector("[data-feedback-announcer]");
+    var lastTaskFocus = null;
+    document.addEventListener("focusin", function (event) {
+      if (!region.contains(event.target)) { lastTaskFocus = event.target; }
+    });
+    var cards = Array.prototype.slice.call(list.children);
+    // Populate an already-present live region after page load; never focus it.
+    window.setTimeout(function () {
+      announcer.textContent = cards.map(function (card) {
+        return card.querySelector(".messages__text").textContent.trim();
+      }).join(" ");
+    }, 100);
+    cards.forEach(function (card) {
+      var close = card.querySelector("[data-feedback-close]");
+      var timer;
+      var hovered = false;
+      var remaining = 8000;
+      var started = null;
+      var eligible = card.hasAttribute("data-feedback-auto") &&
+        card.classList.contains("messages__item--success") &&
+        !card.querySelector("a, input, select, textarea, button:not([data-feedback-close])");
+      function pause() {
+        window.clearTimeout(timer);
+        if (started !== null) { remaining = Math.max(0, remaining - (Date.now() - started)); started = null; }
+      }
+      function dismiss() {
+        pause();
+        var hadFocus = card.contains(document.activeElement);
+        var next = card.nextElementSibling || card.previousElementSibling;
+        card.remove();
+        if (hadFocus) {
+          if (next) { next.querySelector("[data-feedback-close]").focus(); }
+          else if (lastTaskFocus && lastTaskFocus.isConnected) { lastTaskFocus.focus(); }
+          else {
+            // Explicit dismissal only: keep keyboard position by the closed card.
+            list.tabIndex = -1;
+            list.focus();
+          }
+        }
+      }
+      function resume() {
+        pause();
+        if (eligible && card.isConnected && !hovered && !document.hidden &&
+            !card.contains(document.activeElement)) {
+          started = Date.now();
+          timer = window.setTimeout(dismiss, remaining);
+        }
+      }
+      close.hidden = false;
+      close.addEventListener("click", dismiss);
+      card.addEventListener("pointerenter", function () { hovered = true; pause(); });
+      card.addEventListener("pointerleave", function () { hovered = false; resume(); });
+      card.addEventListener("focusin", pause);
+      card.addEventListener("focusout", function () { window.setTimeout(resume, 0); });
+      document.addEventListener("visibilitychange", resume);
+      // History restoration must not replay already-consumed server feedback.
+      window.addEventListener("pagehide", dismiss);
+      resume();
+    });
+  });
+}());

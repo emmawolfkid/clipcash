@@ -16,13 +16,14 @@ reversals, staff revocations and campaign cancellation do.
 from dataclasses import dataclass, field
 
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from apps.advertising.models import Campaign, Organization
 from apps.audit.services import DENIED, record_business_event, record_security_event
 from apps.core import features
+from apps.core.locking import lock_own_rows
 from apps.core.money import to_amount
 from apps.viewing.models import WatchSession
 
@@ -108,7 +109,7 @@ def create_policy(actor, campaign, *, reward_amount, notes=""):
     except (ValueError, TypeError):
         raise ValidationError({"reward_amount": "Enter a whole number of shillings."}) from None
     with transaction.atomic():
-        campaign = Campaign.objects.select_for_update(of=("self",)).get(pk=campaign.pk)
+        campaign = lock_own_rows(Campaign.objects).get(pk=campaign.pk)
         _check_policy_campaign(campaign, amount)
         version = (RewardPolicy.objects.filter(campaign=campaign).order_by("-version")
                    .values_list("version", flat=True).first() or 0) + 1
@@ -163,7 +164,7 @@ def approve_policy(actor, policy, *, expected_status=P.DRAFT):
     if policy.created_by_id == actor.pk:
         _require(lambda user: False, actor, "policy.approve", policy, reason="four_eyes")
     with transaction.atomic():
-        campaign = Campaign.objects.select_for_update(of=("self",)).get(pk=policy.campaign_id)
+        campaign = lock_own_rows(Campaign.objects).get(pk=policy.campaign_id)
         policy = RewardPolicy.objects.select_for_update().get(pk=policy.pk)
         if policy.status == P.APPROVED and expected_status == P.APPROVED:
             return policy
@@ -297,8 +298,23 @@ def reward_eligibility(session, now=None):
 
 
 def _locked_budget(campaign_id):
-    CampaignRewardBudget.objects.get_or_create(campaign_id=campaign_id)
+    if connection.vendor == "mysql":
+        _ensure_budget_row_mariadb(campaign_id)
+    else:
+        CampaignRewardBudget.objects.get_or_create(campaign_id=campaign_id)
     return CampaignRewardBudget.objects.select_for_update().get(campaign_id=campaign_id)
+
+
+def _ensure_budget_row_mariadb(campaign_id):
+    """DB-01. On MariaDB a duplicate-key INSERT (get_or_create's race path) leaves a shared
+    lock, and concurrent awards then deadlock upgrading it to the row lock. An upsert
+    takes the exclusive lock at once, so concurrent awards for one campaign queue up
+    instead. It never changes an existing row."""
+    table = CampaignRewardBudget._meta.db_table
+    key = CampaignRewardBudget._meta.pk.get_db_prep_value(campaign_id, connection)
+    with connection.cursor() as cursor:
+        cursor.execute(f"INSERT INTO {table} (campaign_id, demo_consumed, updated_at) VALUES (%s, 0, NOW(6)) "
+                       "ON DUPLICATE KEY UPDATE campaign_id = campaign_id", [key])
 
 
 def demo_allocated(campaign):
@@ -309,8 +325,8 @@ def evaluate_session(session_id, *, actor=None):
     """Record the one demo reward decision for a session. Idempotent: returns the existing
     decision if there is one, or None while a retry-later condition holds."""
     with transaction.atomic():
-        session = (WatchSession.objects.select_for_update(of=("self",))
-                   .select_related("campaign", "campaign__organization").get(pk=session_id))
+        session = lock_own_rows(WatchSession.objects.select_related("campaign", "campaign__organization")).get(
+            pk=session_id)
         existing = DemoReward.objects.filter(session=session).first()
         if existing is not None:
             if actor is not None:

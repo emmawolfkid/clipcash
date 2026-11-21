@@ -72,7 +72,8 @@ class Pay03AcceptanceTests(ManualPaymentTestCase):
         client = client or self.client
         data = {"action": "approve", "verified_amount": str(claim.amount),
                 "verified_reference": claim.transaction_reference, "receipt_confirmed": "on",
-                "recipient_confirmed": "on", **overrides}
+                "recipient_confirmed": "on", "verified_receiving_number": claim.instruction.business_number,
+                "verified_recipient_name": claim.instruction.recipient_name, **overrides}
         return client.post(review_url(claim), {k: v for k, v in data.items() if v is not None})
 
     # 1. Member payment ------------------------------------------------------------------
@@ -115,12 +116,13 @@ class Pay03AcceptanceTests(ManualPaymentTestCase):
         data = {"amount": "5000", "payer_phone": "0781234567", "transaction_reference": "MP11112222"}
         manual.retire_instruction(self.root)
         page = self.client.get(pay_url(pending))
-        self.assertContains(page, "has not published its Airtel Lipa payment details", status_code=503)
+        closed = str(manual.PURCHASE_CLOSED_MESSAGE)  # PAY-LIVE-01C: one explanation for both cases.
+        self.assertContains(page, closed, status_code=503)
         self.assertEqual(self.client.post(pay_url(pending), data).status_code, 503)
         manual.publish_instruction(self.root, business_number=BUSINESS_NUMBER, recipient_name=RECIPIENT)
         with override_settings(MANUAL_MEMBERSHIP_PAYMENTS_ENABLED=False):
             page = self.client.get(pay_url(pending))
-            self.assertContains(page, "Membership payments are not available at the moment", status_code=503)
+            self.assertContains(page, closed, status_code=503)
             self.assertEqual(self.client.post(pay_url(pending), data).status_code, 503)
         self.assertFalse(ManualMembershipPayment.objects.exists())
 
@@ -146,7 +148,7 @@ class Pay03AcceptanceTests(ManualPaymentTestCase):
         for name, overrides in cases.items():
             with self.subTest(name):
                 self.assertEqual(self.staff_approve(claim, **overrides).status_code, 400)
-        with self.assertRaisesMessage(ValidationError, "received into the Lipa account"):
+        with self.assertRaisesMessage(ValidationError, "received into the receiving account"):
             manual.approve(self.verifier, claim, verified_amount=5_000, verified_reference=claim.transaction_reference,
                            receipt_confirmed=True)  # Recipient confirmation missing.
         claim.refresh_from_db()

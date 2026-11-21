@@ -1,0 +1,31 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{{ spec.title }}{% endblock %}
+{% block crumb %}{{ member.sign_in_identifier }}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><h1 class="page-title">{{ spec.title }}</h1><a href="{% url 'administration:member' member.pk %}">{% translate "Back to member" %}</a></div>
+<p class="notice notice--warning" role="note">{{ spec.explain }}</p>
+
+<section><h2 class="workspace-section__title">{% translate "Membership" %}</h2><dl class="details">
+  <dt>{% translate "Member" %}</dt><dd>{{ member.sign_in_identifier }} · {{ member.get_status_display }}</dd>
+  <dt>{% translate "Plan" %}</dt><dd>{{ subscription.plan_name }}</dd>
+  <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ subscription.status|lower }}">{{ subscription.get_status_display }}</span></dd>
+  <dt>{% translate "Origin" %}</dt><dd>{% if subscription.activation_source %}{{ subscription.get_activation_source_display }}{% else %}{% translate "Not activated" %}{% endif %}</dd>
+  {% if subscription.starts_at %}<dt>{% translate "This period" %}</dt><dd>{{ subscription.starts_at|date:"DATETIME_FORMAT" }} – {{ subscription.expires_at|date:"DATETIME_FORMAT" }}</dd>{% endif %}
+  {% if membership_end %}<dt>{% translate "Access currently ends" %}</dt><dd>{{ membership_end|date:"DATETIME_FORMAT" }}</dd>{% endif %}
+</dl>
+{% if following_extensions and action != "extend" %}<p class="notice notice--warning" role="note">{% blocktranslate count n=following_extensions|length %}{{ n }} later administrative extension follows this change: it is suspended, reinstated or cancelled together with this membership, so it cannot restore access on its own.{% plural %}{{ n }} later administrative extensions follow this change: they are suspended, reinstated or cancelled together with this membership, so they cannot restore access on their own.{% endblocktranslate %}</p>{% endif %}
+{% if scheduled_periods and action != "extend" %}<p class="notice" role="note">{% blocktranslate count n=scheduled_periods|length %}This member also has {{ n }} other later period scheduled (for example a paid renewal). It is not changed here; manage it separately in the membership history.{% plural %}This member also has {{ n }} other later periods scheduled (for example paid renewals). They are not changed here; manage them separately in the membership history.{% endblocktranslate %}</p>{% endif %}
+{% if action == "extend" %}<p class="helptext">{% translate "The extension starts when access currently ends and adds the number of days you enter, on the same plan and entitlements." %}</p>{% endif %}
+</section>
+
+<section><h2 class="workspace-section__title">{% translate "Reason and confirmation" %}</h2>
+  <form class="form" method="post" novalidate>{% csrf_token %}
+    {% if form.non_field_errors %}<ul class="errorlist nonfield" role="alert">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+    {% for field in form.visible_fields %}{{ field.as_field_group }}{% endfor %}
+    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+    {% if form.operation.errors or form.expected_end.errors %}<ul class="errorlist" role="alert"><li>{% translate "The form expired. Reload the page and try again." %}</li></ul>{% endif %}
+    <div class="actions"><button type="submit" class="button">{{ spec.button }}</button>
+      <a class="button button--secondary" href="{% url 'administration:member' member.pk %}">{% translate "Keep it unchanged" %}</a></div>
+  </form>
+</section>
+{% endblock %}

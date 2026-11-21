@@ -150,6 +150,8 @@ class MemberDetailView(View):
         from apps.memberships.access import check_access
         from apps.wallets.models import Wallet
 
+        from . import memberships as membership_console
+
         return render(request, "administration/members/detail.html", {
             "member": member, "membership": check_access(member).subscription,
             "subscriptions": member.subscriptions.order_by("-created_at")[:5],
@@ -160,6 +162,8 @@ class MemberDetailView(View):
             "activity": member_activity(member, limit=15),
             "can_change": request.user.has_perm("accounts.change_user"), "can": can, "nav": "members",
             "can_grant": memberships.can_grant_complimentary(request.user),
+            # PAY-LIVE-01D: membership details, history, audit trail and permitted actions.
+            **membership_console.member_detail_context(request.user, member, can),
             "breadcrumbs": [("Overview", "administration:overview"), ("Members", "administration:members")]})
 
 
@@ -184,9 +188,14 @@ class ComplimentaryGrantView(View):
         from apps.memberships.access import current_subscription
         from apps.memberships.models import Subscription
 
+        from apps.memberships.admin_forms import adapt_grant_form
+
         eligible, reason = memberships.member_eligibility(member)
+        mode = memberships.complimentary_grant_mode()  # PAY-LIVE-01E: demo or production wording.
         return render(request, self.template_name, {
-            "member": member, "form": form, "review": review, "eligible": eligible, "eligibility_reason": reason,
+            "grant_mode": mode, "max_days": memberships.PRODUCTION_GRANT_MAX_DAYS,
+            "member": member, "form": adapt_grant_form(form, mode), "review": review, "eligible": eligible,
+            "eligibility_reason": reason,
             "current": current_subscription(member),
             "pending": Subscription.objects.filter(member=member, status=Subscription.Status.PENDING).first(),
             "time_zone": timezone.get_current_timezone_name(), "can": console_links(request.user),
@@ -964,7 +973,8 @@ def _plan_queryset():
 
 
 PLAN_ERRORS = {"stale_edit": _("Another administrator changed this plan's price or duration while you were "
-                               "editing. The form now shows the current terms; check them and save again.")}
+                               "editing. Your changes were not saved. The current terms are shown above the "
+                               "form; check them and save again.")}
 
 
 @console
@@ -1005,7 +1015,7 @@ class PlanCreateView(View):
         except ValidationError as error:
             _form_errors(form, error)
             return self._render(request, form, status=400)
-        messages.success(request, _("Plan created. It is active and can be bought now if it is listed."))
+        messages.success(request, _("%(plan)s plan created") % {"plan": plan.name}, extra_tags="feedback-auto")
         return redirect("administration:plan", pk=plan.pk)
 
 
@@ -1019,7 +1029,9 @@ class PlanEditView(View):
             "counts": _plan_queryset().get(pk=plan.pk), "statuses": plan.Status,
             "history": AuditEvent.objects.filter(target_model="membershipplan", target_id=str(plan.pk))
                                          .order_by("-occurred_at")[:30],
-            "can": console_links(request.user), "nav": "plans"}, status=status)
+            "can": console_links(request.user), "nav": "plans",
+            # PAY-LIVE-01C: the members' purchase state (manual payments), not the gateway mode.
+            "purchase_state": manual_payments.purchase_state()}, status=status)
 
     def _form(self, plan, data=None):
         from apps.memberships.forms import ConsolePlanEditForm
@@ -1053,8 +1065,8 @@ class PlanEditView(View):
                 return self._render(request, original, form, status=400)
             values = form.plan_values()
             changes = {name: value for name, value in values.items() if getattr(original, name) != value}
-            memberships.update_plan(request.user, original, changes,
-                                    expected_version=form.cleaned_data["expected_version"])
+            saved_plan = memberships.update_plan(request.user, original, changes,
+                                                 expected_version=form.cleaned_data["expected_version"])
         except memberships.NotAuthorized:
             raise PermissionDenied from None
         except ValidationError as error:
@@ -1065,11 +1077,17 @@ class PlanEditView(View):
             return self._render(request, MembershipPlan.objects.get(pk=pk), form, status=400)
         except memberships.MembershipError as error:
             messages.error(request, PLAN_ERRORS.get(error.code, str(error)))
-            if error.code == "stale_edit" or action == "status":
+            if action == "status":
                 return redirect("administration:plan", pk=pk)
-            return self._render(request, MembershipPlan.objects.get(pk=pk), form, status=400)
-        messages.success(request, _("Plan saved. New choices use these terms; existing choices, payments and "
-                                    "memberships keep the price and duration they were quoted."))
+            current = MembershipPlan.objects.get(pk=pk)
+            if error.code == "stale_edit":
+                # Keep the administrator's input, but acknowledge the current version so a deliberate
+                # second save (after checking the current terms shown above the form) can succeed.
+                data = request.POST.copy()
+                data["expected_version"] = current.version
+                form = self._form(current, data)
+            return self._render(request, current, form, status=400)
+        messages.success(request, _("%(plan)s plan saved.") % {"plan": saved_plan.name})
         return redirect("administration:plan", pk=pk)
 
 
@@ -1117,10 +1135,13 @@ class MembershipPaymentDetailView(View):
         from apps.payments.forms import ApproveManualPaymentForm, RejectManualPaymentForm
         from apps.wallets.models import JournalEntry
 
-        same_reference = (ManualMembershipPayment.objects.filter(reference_key=claim.reference_key)
+        same_reference = (ManualMembershipPayment.objects.filter(method=claim.method, reference_key=claim.reference_key)
                           .exclude(pk=claim.pk).select_related("member").order_by("-created_at")[:10])
+        evidence = getattr(claim, "evidence", None)  # PRD-04: optional receipt; never proof.
         return render(request, self.template_name, {
             "claim": claim, "subscription": claim.subscription, "member": claim.member,
+            "evidence": evidence,
+            "evidence_duplicates": list(manual_payments.evidence_duplicates(evidence)[:10]) if evidence else [],
             "approve_form": approve_form or ApproveManualPaymentForm(instruction=claim.instruction),
             "reject_form": reject_form or RejectManualPaymentForm(),
             "can_verify": manual_payments.can_verify(request.user) and claim.member_id != request.user.pk,
@@ -1187,13 +1208,14 @@ class MembershipPaymentDetailView(View):
 
 @console
 class PaymentInstructionsView(View):
-    """Super Administrators publish the Airtel Lipa details members pay to."""
+    """Super Administrators manage versioned manual payment methods."""
 
     def _render(self, request, form, status=200):
         from apps.payments.models import ManualPaymentInstruction
 
         return render(request, "administration/membership_payments/instructions.html", {
             "form": form, "instruction": manual_payments.active_instruction(),
+            "methods": manual_payments.active_instructions(),
             "history": ManualPaymentInstruction.objects.select_related("created_by", "retired_by")
                                                    .order_by("-created_at")[:20],
             "enabled": manual_payments.manual_payments_enabled(),
@@ -1204,32 +1226,53 @@ class PaymentInstructionsView(View):
 
         if not manual_payments.can_manage_instructions(request.user):
             raise PermissionDenied
-        current = manual_payments.active_instruction()
-        initial = ({"business_number": current.business_number, "recipient_name": current.recipient_name,
+        from apps.payments.models import ManualPaymentInstruction
+        current = None
+        if request.GET.get("edit"):
+            try:
+                current = get_object_or_404(ManualPaymentInstruction, pk=request.GET["edit"])
+            except (ValueError, ValidationError):
+                raise Http404 from None
+        initial = ({"instruction_id": current.pk, "method": current.method, "provider_label": current.provider_label,
+                    "business_number": current.business_number, "recipient_name": current.recipient_name,
                     "instructions": current.instructions} if current else None)
-        return self._render(request, PaymentInstructionForm(initial=initial))
+        form = PaymentInstructionForm(initial=initial)
+        if current:
+            form.fields["method"].disabled = True
+        return self._render(request, form)
 
     def post(self, request):
         from apps.payments.forms import PaymentInstructionForm
-
+        from apps.payments.models import ManualPaymentInstruction
         if not manual_payments.can_manage_instructions(request.user):
             raise PermissionDenied
-        if request.POST.get("action") == "retire":
-            if manual_payments.retire_instruction(request.user):
-                messages.success(request, _("Payment details retired. Members cannot submit new payments until "
-                                            "new details are published."))
+        action = request.POST.get("action")
+        row = None
+        if request.POST.get("instruction_id"):
+            try:
+                row = get_object_or_404(ManualPaymentInstruction, pk=request.POST["instruction_id"])
+            except (ValueError, ValidationError):
+                raise Http404 from None
+        if action in ("retire", "enable"):
+            if action == "retire":
+                manual_payments.retire_instruction(request.user, row.method if row else "AIRTEL_LIPA")
+            elif row:
+                manual_payments.enable_instruction(request.user, row)
             return redirect("administration:payment_instructions")
         form = PaymentInstructionForm(request.POST)
         if not form.is_valid():
             return self._render(request, form, status=400)
+        values = dict(form.cleaned_data)
+        values.pop("instruction_id")
+        values["method"] = row.method if row else values["method"] or "AIRTEL_LIPA"
         try:
-            manual_payments.publish_instruction(request.user, **form.cleaned_data)
+            manual_payments.publish_instruction(request.user, **values)
         except manual_payments.NotAuthorized:
             raise PermissionDenied from None
         except ValidationError as error:
             _form_errors(form, error)
             return self._render(request, form, status=400)
-        messages.success(request, _("Payment details published. Members now see them on the payment page."))
+        messages.success(request, _("Payment details published. New instructions use these details."))
         return redirect("administration:payment_instructions")
 
 

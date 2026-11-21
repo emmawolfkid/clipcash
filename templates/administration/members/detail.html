@@ -6,18 +6,46 @@
 <div class="console-split">
 <section><h2 class="workspace-section__title">{% translate "Account" %}</h2><dl class="details">
   <dt>{% translate "Status" %}</dt><dd>{{ member.get_status_display }}</dd>
+  <dt>{% translate "Sign-in active" %}</dt><dd>{{ member.is_active|yesno:_("Yes,No") }}</dd>
   <dt>{% translate "Email confirmed" %}</dt><dd>{{ member.email_verified|yesno:_("Yes,No") }}</dd>
   <dt>{% translate "Joined" %}</dt><dd>{{ member.date_joined|date:"DATE_FORMAT" }}</dd>
   <dt>{% translate "Membership" %}</dt><dd>{% if membership %}{{ membership.plan_name }} · {{ membership.get_status_display }}{% if membership.activation_source == "COMPLIMENTARY" %} · {% translate "Complimentary (no payment)" %}{% endif %} · {% blocktranslate with d=membership.expires_at|date:"DATETIME_FORMAT" %}until {{ d }}{% endblocktranslate %}{% else %}{% translate "None current" %}{% endif %}</dd>
   {% if can.wallets %}<dt>{% translate "Wallet" %}</dt><dd>{% if wallet %}<a href="{% url 'administration:wallet' wallet.pk %}">{{ wallet.number }}</a> · {{ wallet.get_status_display }}{% else %}{% translate "Not opened" %}{% endif %}</dd>{% endif %}
 </dl>
 {% if can_change %}<p><a class="button button--secondary" href="{% url 'admin:accounts_user_change' member.pk %}">{% translate "Manage account (admin)" %}</a></p>{% endif %}
-{% if can_grant %}<p><a class="button button--secondary" href="{% url 'administration:member_complimentary' member.pk %}">{% translate "Grant complimentary demo membership" %}</a></p>{% endif %}
-<p class="lead">{% translate "Account status and membership changes use the existing reviewed workflows; this page changes nothing." %}</p></section>
-<section><h2 class="workspace-section__title">{% translate "Recent memberships" %}</h2>
-  {% if subscriptions %}<ul class="list-plain">{% for s in subscriptions %}<li>{{ s.plan_name }} · {{ s.get_status_display }}{% if s.activation_source == "COMPLIMENTARY" %} · {% translate "Complimentary" %}{% endif %} · {{ s.created_at|date:"SHORT_DATE_FORMAT" }}{% if s.expires_at %} · {% blocktranslate with d=s.expires_at|date:"SHORT_DATE_FORMAT" %}ends {{ d }}{% endblocktranslate %}{% endif %}</li>{% endfor %}</ul>{% else %}<p class="lead">{% translate "None." %}</p>{% endif %}
+{% if can_grant %}<p><a class="button button--secondary" href="{% url 'administration:member_complimentary' member.pk %}">{% if grant_mode == "production" %}{% translate "Grant complimentary membership" %}{% else %}{% translate "Grant complimentary demo membership" %}{% endif %}</a></p>{% endif %}
+<p class="lead">{% translate "Account status changes use the reviewed account workflow. Membership changes are made from the membership history below, each with a reason and a confirmation." %}</p></section>
+<section><h2 class="workspace-section__title">{% translate "Current membership" %}</h2>
+  {% if current_period %}<dl class="details">
+    <dt>{% translate "Plan" %}</dt><dd>{{ current_period.plan_name }}</dd>
+    <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ current_period.status|lower }}">{{ current_period.get_status_display }}</span>{% if current_period.status == "SUSPENDED" %} {% translate "No access while suspended." %}{% endif %}</dd>
+    <dt>{% translate "Origin" %}</dt><dd>{{ current_period.get_activation_source_display }}</dd>
+    <dt>{% translate "Activated" %}</dt><dd>{{ current_period.activated_at|date:"DATETIME_FORMAT" }}</dd>
+    <dt>{% translate "This period" %}</dt><dd>{{ current_period.starts_at|date:"DATETIME_FORMAT" }} – {{ current_period.expires_at|date:"DATETIME_FORMAT" }}</dd>
+    {% if current_period.suspended_at %}<dt>{% translate "Suspended" %}</dt><dd>{{ current_period.suspended_at|date:"DATETIME_FORMAT" }} · {{ current_period.get_suspension_reason_display }}</dd>{% endif %}
+    <dt>{% translate "Access ends" %}</dt><dd>{{ membership_end|date:"DATETIME_FORMAT" }} ({% blocktranslate with left=membership_end|timeuntil:now %}{{ left }} left{% endblocktranslate %}){% if scheduled_periods %} · {% blocktranslate count n=scheduled_periods|length %}includes {{ n }} later period{% plural %}includes {{ n }} later periods{% endblocktranslate %}{% endif %}</dd>
+  </dl>{% else %}<p class="lead">{% translate "No current membership." %}</p>{% endif %}
   {% if manual_claims is not None %}<h3>{% translate "Membership payments" %}</h3>
   {% if manual_claims %}<ul class="list-plain">{% for c in manual_claims %}<li><a href="{% url 'administration:membership_payment' c.pk %}">{{ c.reference }}</a> · {{ c.plan_name }} · {{ c.amount|tzs }} · {{ c.get_status_display }} · {{ c.created_at|date:"SHORT_DATE_FORMAT" }}</li>{% endfor %}</ul>{% else %}<p class="lead">{% translate "None." %}</p>{% endif %}{% endif %}</section>
 </div>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Membership history" %}</h2>
+  {% if membership_history %}
+  <table class="table workspace-table hide-narrow-3 hide-narrow-4">
+    <caption>{% translate "Newest first. Each period keeps the terms and origin it was activated with." %}</caption>
+    <thead><tr><th scope="col">{% translate "Plan" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Origin" %}</th><th scope="col">{% translate "Period" %}</th><th scope="col">{% translate "Actions" %}</th></tr></thead>
+    <tbody>{% for s in membership_history %}<tr>
+      <td>{{ s.plan_name }}</td>
+      <td><span class="badge badge--{{ s.status|lower }}">{{ s.get_status_display }}</span>{% if s.cancellation_reason %} · {{ s.get_cancellation_reason_display }}{% elif s.status == "SUSPENDED" and s.suspension_reason %} · {{ s.get_suspension_reason_display }}{% endif %}</td>
+      <td>{% if s.activation_source %}{{ s.get_activation_source_display }}{% else %}{% translate "Not activated" %}{% endif %}</td>
+      <td>{% if s.starts_at %}{{ s.starts_at|date:"SHORT_DATETIME_FORMAT" }} – {{ s.expires_at|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% blocktranslate with d=s.created_at|date:"SHORT_DATE_FORMAT" %}Chosen {{ d }}{% endblocktranslate %}{% endif %}</td>
+      <td>{% for action in s.console_actions %}<a class="button button--link" href="{% url 'administration:member_membership_action' member.pk s.pk action %}">{% if action == "suspend" %}{% translate "Suspend" %}{% elif action == "reinstate" %}{% translate "Reinstate" %}{% elif action == "cancel" %}{% translate "Cancel" %}{% else %}{% translate "Extend" %}{% endif %}</a> {% empty %}—{% endfor %}</td>
+    </tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p class="lead">{% translate "None." %}</p>{% endif %}
+</section>
+{% if show_membership_audit %}<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Membership audit trail" %}</h2>
+  {% if membership_audit %}<ul class="list-plain">{% for e in membership_audit %}<li>{{ e.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ e.action }} · {{ e.get_outcome_display }} · {% if e.actor_email %}{{ e.actor_email }}{% else %}{% translate "System" %}{% endif %}{% if e.metadata.reason %} · {{ e.metadata.reason }}{% endif %}{% if e.metadata.note %} · {{ e.metadata.note }}{% endif %}{% if e.metadata.days %} · {% blocktranslate count n=e.metadata.days %}{{ n }} day{% plural %}{{ n }} days{% endblocktranslate %}{% endif %}</li>{% endfor %}</ul>
+  {% else %}<p class="lead">{% translate "No membership events yet." %}</p>{% endif %}
+</section>{% endif %}
 <section class="workspace-section"><h2 class="workspace-section__title">{% translate "Recent activity (safe summaries)" %}</h2>{% include "members/_activity_list.html" %}</section>
 {% endblock %}

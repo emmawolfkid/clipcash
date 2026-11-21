@@ -1,0 +1,26 @@
+{% load i18n %}{% comment %}
+PRD-03A: shown where a member is about to PAY (plan pages), never as a general banner. Paying for
+a membership needs a confirmed email address (no mobile number can be verified while SMS is
+unavailable); using the site does not. Expects user; email_change_available optional.
+PAY-LIVE-01F-B: when SMS verification exists, a member with a mobile number is offered that first.
+{% endcomment %}{% if user.is_authenticated and not user.has_verified_contact %}
+<section class="notice dashboard-email-reminder" aria-labelledby="contact-reminder-title">
+  {% if user.phone_number and sms_verification_available %}
+  <h2 id="contact-reminder-title">{% translate "Verify your mobile number to buy a membership" %}</h2>
+  <p>{% translate "Payments need a contact we have verified, so we can reach you about them. We will send a code to your mobile number by text message." %}</p>
+  <div class="actions"><a class="button button--secondary" href="{% url 'accounts:phone_verify' %}">{% translate "Verify my mobile number" %}</a>
+    {% if email_change_available and not user.email %}<a href="{% url 'accounts:email_change' %}">{% translate "Or add an email address" %}</a>{% endif %}</div>
+  {% elif user.email %}
+  <h2 id="contact-reminder-title">{% translate "Confirm your email address to buy a membership" %}</h2>
+  <p>{% blocktranslate with email=user.email %}Payments need a confirmed email address, so we can reach you about them. Ask for a confirmation link for <strong>{{ email }}</strong> and open it while signed in.{% endblocktranslate %}</p>
+  <div class="actions">
+    <form method="post" action="{% url 'accounts:resend_verification' %}">{% csrf_token %}<button type="submit" class="button button--secondary">{% translate "Send confirmation link" %}</button></form>
+    {% if email_change_available %}<a href="{% url 'accounts:email_change' %}">{% translate "Use a different address" %}</a>{% endif %}
+  </div>
+  {% else %}
+  <h2 id="contact-reminder-title">{% translate "Add an email address to buy a membership" %}</h2>
+  <p>{% translate "Payments need a confirmed email address, so we can reach you about them. It also lets you reset a forgotten password. Add one and open the confirmation link we send." %}</p>
+  {% if email_change_available %}<div class="actions"><a class="button button--secondary" href="{% url 'accounts:email_change' %}">{% translate "Add an email address" %}</a></div>{% else %}<p>{% translate "Adding an email address is not available right now. Please try again later or contact ClipCash support." %}</p>{% endif %}
+  {% endif %}
+</section>
+{% endif %}

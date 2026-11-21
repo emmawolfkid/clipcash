@@ -1,5 +1,14 @@
+{% load i18n %}
 {% if messages %}
-  <ul class="messages" role="status">
-    {% for message in messages %}<li class="messages__item messages__item--{{ message.tags|default:'info' }}">{{ message }}</li>{% endfor %}
-  </ul>
+  <div class="feedback" data-feedback>
+    <div class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-feedback-announcer></div>
+    <ul class="messages" aria-label="{% translate 'Action feedback' %}">
+      {% for message in messages %}
+      <li class="messages__item messages__item--{{ message.level_tag|default:'info' }}"{% if message.level_tag == 'success' and 'feedback-persist' not in message.extra_tags %} data-feedback-auto{% endif %}>
+        <span class="messages__text">{{ message }}</span>
+        <button type="button" class="messages__close" data-feedback-close hidden aria-label="{% translate 'Dismiss message' %}"><span aria-hidden="true">&times;</span></button>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
 {% endif %}

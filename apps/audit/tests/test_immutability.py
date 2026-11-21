@@ -1,3 +1,5 @@
+from unittest import skipUnless
+
 from django.db import DatabaseError, connection, transaction
 from django.test import TestCase
 
@@ -37,6 +39,9 @@ class ImmutabilityTests(TestCase):
             cursor.execute("DELETE FROM audit_auditevent WHERE id = %s", [self.event.pk])
         self.assertTrue(AuditEvent.objects.filter(pk=self.event.pk).exists())
 
+    # DB-01: PostgreSQL's SET LOCAL flag; the MariaDB purge path (owner login, session flag,
+    # minimum retention) is covered in apps/core/tests/test_mariadb_port.py.
+    @skipUnless(connection.vendor == "postgresql", "PostgreSQL purge flag (DB-01: see test_mariadb_port).")
     def test_purge_flag_allows_delete_but_never_update(self):
         with transaction.atomic(), connection.cursor() as cursor:
             cursor.execute("SET LOCAL clipcash.audit_purge = 'on'")

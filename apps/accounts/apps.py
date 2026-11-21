@@ -7,6 +7,7 @@ class AccountsConfig(AppConfig):
 
     def ready(self):
         from . import checks  # noqa: F401  (registers system checks)
+        from . import jobs  # noqa: F401  (registers the phone-challenge cleanup job and schedule)
         from django.db.models.signals import post_migrate
 
         from .emails import register_kinds

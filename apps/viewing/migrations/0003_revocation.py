@@ -8,7 +8,18 @@ transaction (apps.rewards). Evidence stays frozen; nothing else changes.
 Replaces the viewing_session_guard() function body; the trigger is unchanged.
 """
 
+from importlib import import_module
+
 from django.db import migrations
+
+from apps.core.migration_ops import (
+    MariaDBRunSQL,
+    PostgreSQLRunSQL,
+    changed,
+    check_error,
+    privilege_error,
+    trigger,
+)
 
 FORWARD = r"""
 
@@ -170,7 +181,72 @@ $$;
 """
 
 
+# DB-01: on MariaDB, replace the update trigger the same way (reverse restores 0002's).
+SESSION_IDENTITY = ("member_id", "campaign_id", "campaign_revision", "video_id", "video_duration_ms", "required_ms",
+                    "created_at")
+SESSION_EVIDENCE = ("credited_ms", "coverage_ms", "last_sequence", "event_count", "last_position_ms", "seek_count",
+                    "seek_forward_ms", "speed_anomaly_count", "gap_count", "out_of_order_count",
+                    "duplicate_event_count", "rejected_event_count", "rate_rejection_count", "flags", "reasons",
+                    "finalized_at")
+
+MARIADB_FORWARD = [
+    "DROP TRIGGER IF EXISTS viewing_session_update",
+    trigger("viewing_session_update", "BEFORE UPDATE", "viewing_watchsession", f"""
+        DECLARE message VARCHAR(200);
+        IF {changed(*SESSION_IDENTITY)} THEN
+            {privilege_error("watch session identity cannot change")}
+        END IF;
+        IF {changed("state")} AND NOT (
+            (BINARY OLD.state = 'CREATED' AND BINARY NEW.state IN ('IN_PROGRESS', 'EXPIRED', 'INVALIDATED'))
+            OR (BINARY OLD.state = 'IN_PROGRESS' AND BINARY NEW.state IN ('FINALIZED', 'INVALIDATED'))
+        ) THEN
+            SET message = CONCAT('invalid watch session state change ', OLD.state, ' -> ', NEW.state);
+            SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+        END IF;
+        IF {changed("outcome")} AND NOT (
+            BINARY OLD.outcome = 'PENDING'
+            OR (BINARY OLD.outcome = 'SUSPICIOUS_REVIEW' AND BINARY NEW.outcome IN ('VERIFIED_EVIDENCE', 'REJECTED'))
+            OR (BINARY OLD.outcome = 'VERIFIED_EVIDENCE' AND BINARY NEW.outcome = 'REJECTED')
+        ) THEN
+            SET message = CONCAT('invalid watch session outcome change ', OLD.outcome, ' -> ', NEW.outcome);
+            SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+        END IF;
+        IF {changed("review_status")} AND NOT (
+            (BINARY OLD.review_status = 'NONE' AND BINARY NEW.review_status = 'PENDING' AND BINARY OLD.outcome = 'PENDING')
+            OR (BINARY OLD.review_status = 'PENDING' AND BINARY NEW.review_status IN ('CONFIRMED', 'REJECTED'))
+            OR (BINARY OLD.review_status IN ('NONE', 'CONFIRMED') AND BINARY NEW.review_status = 'REJECTED'
+                AND BINARY OLD.outcome = 'VERIFIED_EVIDENCE' AND BINARY NEW.outcome = 'REJECTED')
+        ) THEN
+            SET message = CONCAT('invalid watch session review change ', OLD.review_status, ' -> ', NEW.review_status);
+            SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+        END IF;
+        IF BINARY OLD.state IN ('CREATED', 'IN_PROGRESS') THEN
+            IF NEW.credited_ms < OLD.credited_ms OR NEW.coverage_ms < OLD.coverage_ms
+               OR NEW.last_sequence < OLD.last_sequence OR NEW.event_count < OLD.event_count THEN
+                {check_error("watch evidence only grows")}
+            END IF;
+        ELSEIF {changed(*SESSION_EVIDENCE)} THEN
+            {check_error("evidence of a closed watch session cannot change")}
+        END IF;
+        IF {changed("qualifying_slot")} AND NOT (
+            (OLD.qualifying_slot IS NULL AND BINARY OLD.outcome = 'PENDING')
+            OR (NEW.qualifying_slot IS NULL AND BINARY NEW.outcome = 'REJECTED'
+                AND BINARY OLD.outcome IN ('SUSPICIOUS_REVIEW', 'VERIFIED_EVIDENCE'))
+        ) THEN
+            {check_error("a counted view cannot be reassigned")}
+        END IF;"""),
+]
+
+MARIADB_REVERSE = [
+    "DROP TRIGGER IF EXISTS viewing_session_update",
+    import_module("apps.viewing.migrations.0002_integrity").MARIADB_SESSION_UPDATE,
+]
+
+
 class Migration(migrations.Migration):
     dependencies = [("viewing", "0002_integrity")]
 
-    operations = [migrations.RunSQL(FORWARD, REVERSE)]
+    operations = [
+        PostgreSQLRunSQL(FORWARD, REVERSE),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
+    ]

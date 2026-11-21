@@ -1,4 +1,9 @@
-"""Restricted demo: optional email verification for approved demo accounts only."""
+"""Restricted demo: optional email verification for approved demo accounts only.
+
+PRD-03A: members no longer need a confirmed email address to open member pages in any mode, so
+the waiver no longer changes page access for members. These tests now check who is waived
+(email_verification_waived), that staff without a confirmed address are still redirected, and
+that money stays disabled."""
 
 from django.contrib.auth import get_user
 from django.core.exceptions import PermissionDenied
@@ -66,8 +71,8 @@ class ApprovedDemoAccountTests(DemoTestCase):
 
     def test_verification_flow_still_available(self):
         self.client.force_login(self.demo)
-        self.assertEqual(self.client.get(VERIFY).status_code, 200)
-        self.assertRedirects(self.client.post(reverse("accounts:resend_verification")), VERIFY)
+        self.assertRedirects(self.client.get(VERIFY), DASHBOARD)  # PRD-03A/03B: members are not held there.
+        self.assertRedirects(self.client.post(reverse("accounts:resend_verification")), PROFILE)
 
     def test_notice_shown(self):  # Task 4
         self.assertContains(self.client.get(reverse("home")), BANNER)
@@ -77,9 +82,11 @@ class ApprovedDemoAccountTests(DemoTestCase):
 
 @DEMO
 class UnauthorizedAccountTests(DemoTestCase):
-    def test_unlisted_unverified_member_still_redirected(self):  # 2
-        self.client.force_login(make_user("other@example.com", verified=False))
-        self.assert_member_pages(allowed=False)
+    def test_unlisted_unverified_member_is_not_waived(self):  # 2
+        other = make_user("other@example.com", verified=False)
+        self.client.force_login(other)
+        self.assert_member_pages(allowed=True)  # PRD-03A: page access needs no confirmation.
+        self.assertFalse(email_verification_waived(other))
 
     def test_unlisted_unverified_super_admin_still_redirected(self):
         self.client.force_login(make_user("root@example.com", role=User.Role.SUPER_ADMIN, verified=False))
@@ -109,7 +116,8 @@ class ProductionVerificationTests(DemoTestCase):
                        DEMO_ACCOUNTS=[DEMO_EMAIL])
     def test_normal_mode_requires_verification(self):  # 4
         self.client.force_login(self.demo)
-        self.assert_member_pages(allowed=False)
+        self.assert_member_pages(allowed=True)  # PRD-03A
+        self.assertFalse(email_verification_waived(self.demo))
         self.assertNotContains(self.client.get(reverse("home")), BANNER)
 
     @override_settings(RESTRICTED_DEMO_MODE=False, DEMO_EMAIL_VERIFICATION_OPTIONAL=True,
@@ -117,7 +125,8 @@ class ProductionVerificationTests(DemoTestCase):
     def test_flag_alone_does_not_bypass(self):  # 5
         self.assertFalse(demo_verification_optional())
         self.client.force_login(self.demo)
-        self.assert_member_pages(allowed=False)
+        self.assert_member_pages(allowed=True)  # PRD-03A
+        self.assertFalse(email_verification_waived(self.demo))
         self.assertNotContains(self.client.get(reverse("home")), BANNER)
 
     @override_settings(DEBUG=False, RESTRICTED_DEMO_MODE=False, DEMO_EMAIL_VERIFICATION_OPTIONAL=True)
@@ -130,7 +139,8 @@ class ProductionVerificationTests(DemoTestCase):
                        PAYMENTS_MODE="disabled")
     def test_empty_allowlist_waives_nobody(self):
         self.client.force_login(self.demo)
-        self.assert_member_pages(allowed=False)
+        self.assert_member_pages(allowed=True)  # PRD-03A
+        self.assertFalse(email_verification_waived(self.demo))
 
     @override_settings(RESTRICTED_DEMO_MODE=True, DEMO_EMAIL_VERIFICATION_OPTIONAL=True,
                        DEMO_ACCOUNTS=[DEMO_EMAIL], PAYMENTS_MODE="sandbox", PAYMENTS_SANDBOX_ALLOWED=True)
@@ -138,18 +148,22 @@ class ProductionVerificationTests(DemoTestCase):
         self.assertTrue(sandbox_active())
         self.assertFalse(demo_verification_optional())
         self.client.force_login(self.demo)
-        self.assert_member_pages(allowed=False)
+        self.assert_member_pages(allowed=True)  # PRD-03A
+        self.assertFalse(email_verification_waived(self.demo))
 
     def test_turning_the_flag_off_restores_verification_immediately(self):  # 10
         self.client.force_login(self.demo)
         with DEMO:
             self.assert_member_pages(allowed=True)
+        # PRD-03A: pages stay open either way; turning the waiver off removes the waiver itself.
+        with DEMO:
+            self.assertTrue(email_verification_waived(self.demo))
         with DEMO, self.settings(DEMO_EMAIL_VERIFICATION_OPTIONAL=False):
-            self.assert_member_pages(allowed=False)
+            self.assertFalse(email_verification_waived(self.demo))
         with DEMO, self.settings(RESTRICTED_DEMO_MODE=False):
-            self.assert_member_pages(allowed=False)
+            self.assertFalse(email_verification_waived(self.demo))
         with DEMO, self.settings(DEMO_ACCOUNTS=[]):
-            self.assert_member_pages(allowed=False)
+            self.assertFalse(email_verification_waived(self.demo))
         self.assertTrue(get_user(self.client).is_authenticated)  # Same session throughout.
 
 

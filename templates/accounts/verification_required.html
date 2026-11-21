@@ -1,9 +1,16 @@
 {% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Confirm your email" %}{% endblock %}
 {% block auth_content %}
+{% comment %}PRD-03B: only staff accounts without a confirmed address (or a mobile number) are held here;
+members are sent on to their account page by the view. Always offers a way out.{% endcomment %}
 <h1>{% translate "Confirm your email" %}</h1>
-<p>{% blocktranslate with email=user.email %}Confirm {{ email }} before using your account. Follow the link we sent to that address.{% endblocktranslate %}</p>
+<p>{% blocktranslate with email=user.email %}Staff accounts need a confirmed email address before they can open member or staff pages. Follow the link we sent to {{ email }}, or ask for a new one.{% endblocktranslate %}</p>
 <form method="post" action="{% url 'accounts:resend_verification' %}">{% csrf_token %}
   <button type="submit" class="button">{% translate "Send a new link" %}</button>
 </form>
+<p class="auth-recovery-note">{% translate "The address is wrong or no longer yours? Contact ClipCash support: they will check that the account is yours before changing it." %}</p>
+<ul class="links">
+  <li><a href="{% url 'home' %}">{% translate "Go to the ClipCash home page" %}</a></li>
+  <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit" class="button--link">{% translate "Sign out" %}</button></form></li>
+</ul>
 {% endblock %}

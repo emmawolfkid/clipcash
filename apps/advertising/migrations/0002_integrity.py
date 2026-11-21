@@ -25,6 +25,16 @@ Limitation: the table owner or a superuser can disable these triggers.
 
 from django.db import migrations
 
+from apps.core.migration_ops import (
+    MariaDBRunSQL,
+    PostgreSQLRunSQL,
+    changed,
+    check_error,
+    drop_triggers,
+    privilege_error,
+    trigger,
+)
+
 FORWARD = r"""
 CREATE OR REPLACE FUNCTION advertising_no_delete() RETURNS trigger
 LANGUAGE plpgsql AS $$
@@ -127,7 +137,80 @@ DROP FUNCTION IF EXISTS advertising_no_delete();
 """
 
 
+# DB-01: the same rules on MariaDB (one trigger per event). The reviewed-details rule
+# also freezes the demo budget an approved campaign's rewards are checked against.
+REVIEWED_DETAILS = ("name", "description", "video_id", "starts_at", "ends_at", "kind", "max_views_per_member",
+                    "demo_budget_amount", "demo_reward_per_view")
+NO_DELETE_TABLES = {
+    "advertising_organization_delete": "advertising_organization",
+    "advertising_membership_delete": "advertising_advertisermembership",
+    "advertising_invitation_delete": "advertising_advertiserinvitation",
+    "advertising_video_grant_delete": "advertising_advertiservideo",
+    "advertising_campaign_delete": "advertising_campaign",
+}
+
+MARIADB_FORWARD = [
+    trigger("advertising_organization_insert", "BEFORE INSERT", "advertising_organization", f"""
+    IF BINARY NEW.verification_status <> 'PENDING' OR NEW.reviewed_at IS NOT NULL THEN
+        {check_error("advertisers must be created PENDING")}
+    END IF;"""),
+    trigger("advertising_organization_update", "BEFORE UPDATE", "advertising_organization", """
+    DECLARE message VARCHAR(200);
+    IF NOT (BINARY NEW.verification_status <=> BINARY OLD.verification_status) AND NOT (
+        (BINARY OLD.verification_status = 'PENDING' AND BINARY NEW.verification_status IN ('APPROVED', 'REJECTED'))
+        OR (BINARY OLD.verification_status = 'APPROVED' AND BINARY NEW.verification_status = 'SUSPENDED')
+        OR (BINARY OLD.verification_status = 'SUSPENDED' AND BINARY NEW.verification_status = 'APPROVED')
+        OR (BINARY OLD.verification_status = 'REJECTED' AND BINARY NEW.verification_status = 'PENDING')
+    ) THEN
+        SET message = CONCAT('invalid advertiser verification change ', OLD.verification_status, ' -> ',
+                             NEW.verification_status);
+        SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+    END IF;"""),
+    trigger("advertising_campaign_insert", "BEFORE INSERT", "advertising_campaign", f"""
+    IF BINARY NEW.status <> 'DRAFT' OR NEW.approved_revision IS NOT NULL OR BINARY NEW.funding_status <> 'UNFUNDED' THEN
+        {check_error("campaigns must be created as unfunded drafts")}
+    END IF;"""),
+    trigger("advertising_campaign_update", "BEFORE UPDATE", "advertising_campaign", f"""
+    DECLARE message VARCHAR(200);
+    IF {changed("organization_id")} THEN
+        {privilege_error("a campaign cannot move to another advertiser")}
+    END IF;
+    IF NEW.revision < OLD.revision THEN
+        {check_error("campaign revisions only increase")}
+    END IF;
+    IF {changed("status")} AND NOT (
+        (BINARY OLD.status = 'DRAFT' AND BINARY NEW.status IN ('SUBMITTED', 'CANCELLED'))
+        OR (BINARY OLD.status = 'SUBMITTED' AND BINARY NEW.status IN ('DRAFT', 'SCHEDULED', 'REJECTED', 'CANCELLED'))
+        OR (BINARY OLD.status = 'REJECTED' AND BINARY NEW.status IN ('DRAFT', 'CANCELLED', 'ARCHIVED'))
+        OR (BINARY OLD.status = 'SCHEDULED'
+            AND BINARY NEW.status IN ('ACTIVE', 'PAUSED', 'COMPLETED', 'CANCELLED', 'DRAFT'))
+        OR (BINARY OLD.status = 'ACTIVE' AND BINARY NEW.status IN ('PAUSED', 'COMPLETED', 'CANCELLED'))
+        OR (BINARY OLD.status = 'PAUSED'
+            AND BINARY NEW.status IN ('ACTIVE', 'SCHEDULED', 'COMPLETED', 'CANCELLED', 'DRAFT'))
+        OR (BINARY OLD.status IN ('COMPLETED', 'CANCELLED') AND BINARY NEW.status = 'ARCHIVED')
+    ) THEN
+        SET message = CONCAT('invalid campaign status change ', OLD.status, ' -> ', NEW.status);
+        SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+    END IF;
+    IF BINARY OLD.status NOT IN ('DRAFT', 'REJECTED') AND NEW.revision = OLD.revision
+       AND {changed(*REVIEWED_DETAILS)} THEN
+        {check_error("reviewed campaign details cannot change without a new revision")}
+    END IF;"""),
+] + [
+    trigger(name, "BEFORE DELETE", table, privilege_error(f"{table} rows cannot be deleted"))
+    for name, table in NO_DELETE_TABLES.items()
+]
+
+MARIADB_REVERSE = drop_triggers(
+    *reversed(NO_DELETE_TABLES), "advertising_campaign_update", "advertising_campaign_insert",
+    "advertising_organization_update", "advertising_organization_insert",
+)
+
+
 class Migration(migrations.Migration):
     dependencies = [("advertising", "0001_initial")]
 
-    operations = [migrations.RunSQL(FORWARD, REVERSE)]
+    operations = [
+        PostgreSQLRunSQL(FORWARD, REVERSE),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
+    ]

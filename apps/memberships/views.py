@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
-from apps.accounts.access import DEMO_UNCONFIRMED_BLOCKED, VerifiedAccountRequiredMixin
+from apps.accounts.access import DEMO_UNCONFIRMED_BLOCKED, VerifiedAccountRequiredMixin, demo_unconfirmed
 from apps.core import features
 from apps.core.features import feature_required
 
@@ -24,19 +24,44 @@ MESSAGES = {
     "already_renewed": _("You already have a renewal scheduled."),
     "membership_suspended": _("Your membership is suspended. Please contact support."),
     "plan_unavailable": _("This plan is no longer available."),
-    "email_unverified": DEMO_UNCONFIRMED_BLOCKED,  # Only approved demo accounts get this far unverified.
+    # PRD-03A: members reach plans without confirming anything; paying needs a confirmed address.
+    "email_unverified": _("Before you buy a membership, confirm your email address: in My account, ask for a "
+                          "confirmation link and open it. Do not pay anything until then."),
     "payment_under_review": _("A payment for your current choice is being verified. You can change plans after "
                               "it is approved or rejected."),
+    # PRD-01: a mobile number cannot be verified while SMS is unavailable.
+    "contact_unverified": _("Before you buy a membership, add an email address in My account and open the "
+                            "confirmation link we send. Do not pay anything until then."),
+    # PAY-LIVE-01F-B: once SMS verification exists, a member with a mobile number can verify it instead.
+    "contact_unverified_sms": _("Before you buy a membership, verify your mobile number (or confirm an email "
+                                "address) in My account. Do not pay anything until then."),
 }
 
 
 def payment_context():
+    """PAY-LIVE-01C: everything member pages say about paying comes from one purchase state
+    (apps.payments.manual.purchase_state), so no page can call purchases open and closed at once."""
     from apps.payments import manual
 
-    enabled = manual.manual_payments_enabled()
+    state = manual.purchase_state()
+    methods = (list(manual.active_instructions().values_list("provider_label", flat=True))
+               if state == manual.PURCHASE_OPEN else [])
     return {"payments_available": features.is_enabled("live_payments"),
+            "purchase_state": state, "payment_methods": methods,
             # PAY-01: real membership payments via Airtel Lipa, verified by staff.
-            "manual_payments": enabled, "manual_payments_ready": enabled and manual.manual_payments_ready()}
+            "manual_payments": state in (manual.PURCHASE_OPEN, manual.PURCHASE_UNPUBLISHED),
+            "manual_payments_ready": state == manual.PURCHASE_OPEN,
+            "purchase_open": purchase_open(state)}
+
+
+def purchase_open(state=None):
+    """PRD-04: may members choose (buy or renew) a plan? Only when a way to pay exists: approved manual
+    payments with published payment details (not a restricted demo, no sandbox), or the sandbox
+    simulation of an isolated test deployment. Otherwise plans can be browsed but not chosen, so
+    nobody is left with a choice they cannot pay for. The choose endpoint and every page use this."""
+    from apps.payments import manual
+
+    return (state or manual.purchase_state()) in manual.PURCHASE_CHOOSABLE
 
 
 def manual_payment_state(subscription):
@@ -70,9 +95,14 @@ class PlanDetailView(DetailView):
         return MembershipPlan.objects.filter(status=MembershipPlan.Status.ACTIVE, is_public=True)
 
     def get_context_data(self, **kwargs):
+        from apps.accounts.services import email_change_available
+
         plan = self.object
+        user = self.request.user
         return {**super().get_context_data(**kwargs), **payment_context(),
-                "entitlement_labels": [label(code) for code in plan.entitlements]}
+                "entitlement_labels": [label(code) for code in plan.entitlements],
+                # PRD-01: members without a verified contact are offered to add an email instead.
+                "email_change_available": user.is_authenticated and email_change_available(user)}
 
 
 @method_decorator(feature_required("memberships"), name="dispatch")
@@ -81,12 +111,25 @@ class ChoosePlanView(VerifiedAccountRequiredMixin, View):
 
     def post(self, request, code):
         plan = get_object_or_404(MembershipPlan, code=code, status=MembershipPlan.Status.ACTIVE, is_public=True)
+        from apps.payments import manual
+
+        if not purchase_open():  # PRD-04: no choice is recorded while no way to pay is open.
+            messages.error(request, manual.PURCHASE_CLOSED_MESSAGE)
+            return redirect("memberships:plan_detail", code=plan.code)
         try:
             subscription = services.choose_plan(request.user, plan)
         except services.MembershipError as error:
-            messages.error(request, MESSAGES.get(error.code, _("This membership cannot be selected right now.")))
+            message = MESSAGES.get(error.code, _("This membership cannot be selected right now."))
+            if error.code == "email_unverified" and demo_unconfirmed(request.user):
+                message = DEMO_UNCONFIRMED_BLOCKED  # Approved restricted-demo accounts: the demo's own wording.
+            if error.code == "contact_unverified" and request.user.phone_number:
+                from apps.accounts.phone_verification import sms_delivery_available
+
+                if sms_delivery_available():
+                    message = MESSAGES["contact_unverified_sms"]
+            messages.error(request, message)
             return redirect("memberships:mine")
-        if payment_context()["manual_payments_ready"]:
+        if manual.purchase_state() == manual.PURCHASE_OPEN:
             messages.success(request, _("Your plan choice is saved. Pay the amount below, then submit the payment "
                                         "details."))
             return redirect("payments:manual_pay", subscription_id=subscription.pk)

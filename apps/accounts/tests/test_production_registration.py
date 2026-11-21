@@ -37,7 +37,7 @@ class RegistrationGateTests(AccountsTestCase):
                 self.assertEqual(features.is_enabled("registration"), open_)
                 response = self.client.get(REGISTER_URL)
                 self.assertEqual(response.status_code, 200 if open_ else 403)
-                response = self.client.post(REGISTER_URL, {"phone_number": "0712345678", "password1": NEW_PASSWORD,
+                response = self.client.post(REGISTER_URL, {"first_name": "Amina", "last_name": "Juma", "contact_method": "phone", "phone_number": "0712345678", "password1": NEW_PASSWORD,
                                                            "password2": NEW_PASSWORD})
                 self.assertIn(response.status_code, (302, 200) if open_ else (403,))
         self.assertEqual(User.objects.filter(phone_number="+255712345678").count(), 1)
@@ -60,7 +60,7 @@ class ProductionRegistrationJourneyTests(AccountsTestCase):
         enable_memberships()
 
     def register(self, phone="0712 345 678", password=NEW_PASSWORD):
-        return self.client.post(REGISTER_URL, {"phone_number": phone, "password1": password, "password2": password})
+        return self.client.post(REGISTER_URL, {"first_name": "Amina", "last_name": "Juma", "contact_method": "phone", "phone_number": phone, "password1": password, "password2": password})
 
     def test_register_sign_in_and_start_without_membership(self):
         # REG-02: phone-first, active at once, no paid privileges.

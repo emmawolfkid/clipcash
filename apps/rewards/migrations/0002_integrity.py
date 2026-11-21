@@ -16,6 +16,16 @@ Limitation: the table owner or a superuser can disable these triggers.
 
 from django.db import migrations
 
+from apps.core.migration_ops import (
+    MariaDBRunSQL,
+    PostgreSQLRunSQL,
+    changed,
+    check_error,
+    drop_triggers,
+    privilege_error,
+    trigger,
+)
+
 FORWARD = r"""
 CREATE OR REPLACE FUNCTION rewards_no_delete() RETURNS trigger
 LANGUAGE plpgsql AS $$
@@ -130,7 +140,87 @@ DROP FUNCTION IF EXISTS rewards_no_delete();
 """
 
 
+# DB-01: the same rules on MariaDB (one trigger per event). The budget check reads the
+# campaign's allocation; concurrent awards are serialized by the budget row lock that
+# apps.rewards.services takes before reading demo_consumed.
+POLICY_TERMS = ("campaign_id", "campaign_revision", "version", "reward_amount", "currency", "created_by_id",
+                "created_at")
+REWARD_DECISION = ("session_id", "member_id", "campaign_id", "campaign_revision", "policy_id", "policy_version",
+                   "amount", "currency", "decided_at", "reasons")
+BUDGET_CHECK = f"""
+    DECLARE allocated BIGINT;
+    SELECT demo_budget_amount INTO allocated FROM advertising_campaign WHERE id = NEW.campaign_id;
+    IF NEW.demo_consumed > allocated THEN
+        {check_error("simulated consumption exceeds the campaign demo budget")}
+    END IF;"""
+
+MARIADB_FORWARD = [
+    trigger("rewards_policy_insert", "BEFORE INSERT", "rewards_rewardpolicy", f"""
+    IF BINARY NEW.status <> 'DRAFT' OR NEW.decided_by_id IS NOT NULL OR NEW.effective_from IS NOT NULL THEN
+        {check_error("reward policies must be created as drafts")}
+    END IF;"""),
+    trigger("rewards_policy_update", "BEFORE UPDATE", "rewards_rewardpolicy", f"""
+    DECLARE message VARCHAR(200);
+    IF {changed(*POLICY_TERMS)} THEN
+        {privilege_error("reward policy terms cannot change; create a new version")}
+    END IF;
+    IF OLD.decided_by_id IS NOT NULL AND {changed("decided_by_id", "decided_at", "effective_from")} THEN
+        {privilege_error("reward policy decisions cannot change")}
+    END IF;
+    IF OLD.effective_until IS NOT NULL AND {changed("effective_until")} THEN
+        {privilege_error("reward policy end dates cannot change")}
+    END IF;
+    IF {changed("status")} AND NOT (
+        (BINARY OLD.status = 'DRAFT' AND BINARY NEW.status IN ('APPROVED', 'REJECTED'))
+        OR (BINARY OLD.status = 'APPROVED' AND BINARY NEW.status = 'RETIRED')
+    ) THEN
+        SET message = CONCAT('invalid reward policy status change ', OLD.status, ' -> ', NEW.status);
+        SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+    END IF;"""),
+    trigger("rewards_policy_delete", "BEFORE DELETE", "rewards_rewardpolicy",
+            privilege_error("rewards_rewardpolicy rows cannot be deleted")),
+    trigger("rewards_demo_reward_insert", "BEFORE INSERT", "rewards_demoreward", f"""
+    IF BINARY NEW.status NOT IN ('DEMO_QUALIFIED', 'DEMO_REJECTED') OR NEW.reversed_at IS NOT NULL THEN
+        {check_error("demo rewards are created qualified or rejected")}
+    END IF;"""),
+    trigger("rewards_demo_reward_update", "BEFORE UPDATE", "rewards_demoreward", f"""
+    DECLARE message VARCHAR(200);
+    IF {changed(*REWARD_DECISION)} THEN
+        {privilege_error("demo reward decisions cannot change")}
+    END IF;
+    IF {changed("status")} AND NOT (BINARY OLD.status = 'DEMO_QUALIFIED' AND BINARY NEW.status = 'DEMO_REVERSED') THEN
+        SET message = CONCAT('invalid demo reward status change ', OLD.status, ' -> ', NEW.status);
+        SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = 4025, MESSAGE_TEXT = message;
+    END IF;
+    IF BINARY OLD.status = 'DEMO_REVERSED' AND {changed("reversed_at", "reversed_by_id")} THEN
+        {privilege_error("demo reward reversals cannot change")}
+    END IF;"""),
+    trigger("rewards_demo_reward_delete", "BEFORE DELETE", "rewards_demoreward",
+            privilege_error("rewards_demoreward rows cannot be deleted")),
+    trigger("rewards_budget_insert", "BEFORE INSERT", "rewards_campaignrewardbudget", BUDGET_CHECK),
+    trigger("rewards_budget_update", "BEFORE UPDATE", "rewards_campaignrewardbudget", f"""
+    DECLARE allocated BIGINT;
+    IF NEW.demo_consumed > OLD.demo_consumed THEN
+        SELECT demo_budget_amount INTO allocated FROM advertising_campaign WHERE id = NEW.campaign_id;
+        IF NEW.demo_consumed > allocated THEN
+            {check_error("simulated consumption exceeds the campaign demo budget")}
+        END IF;
+    END IF;"""),
+    trigger("rewards_budget_delete", "BEFORE DELETE", "rewards_campaignrewardbudget",
+            privilege_error("rewards_campaignrewardbudget rows cannot be deleted")),
+]
+
+MARIADB_REVERSE = drop_triggers(
+    "rewards_budget_delete", "rewards_budget_update", "rewards_budget_insert", "rewards_demo_reward_delete",
+    "rewards_demo_reward_update", "rewards_demo_reward_insert", "rewards_policy_delete", "rewards_policy_update",
+    "rewards_policy_insert",
+)
+
+
 class Migration(migrations.Migration):
     dependencies = [("rewards", "0001_initial"), ("advertising", "0002_integrity")]
 
-    operations = [migrations.RunSQL(FORWARD, REVERSE)]
+    operations = [
+        PostgreSQLRunSQL(FORWARD, REVERSE),
+        MariaDBRunSQL(MARIADB_FORWARD, MARIADB_REVERSE),
+    ]

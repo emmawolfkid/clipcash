@@ -49,7 +49,7 @@ POSTING_TYPES = {
         # verified by staff in the official Airtel records. The money is already in the
         # mobile-money float (CASH), so there is no provider clearing step. Posted only by
         # apps.payments.manual, once per Airtel transaction (external reference).
-        _type("membership.manual_payment_received", "Membership fee received (Airtel Lipa, staff-verified)",
+        _type("membership.manual_payment_received", "Membership fee received (manual, staff-verified)",
               ["CASH"], ["MEMBERSHIP_DEFERRED_REVENUE"], "manual_membership_payments",
               requires_external_reference=True),
         # Advertiser funding

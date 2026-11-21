@@ -18,7 +18,7 @@
         <p>{{ playback_message }}</p>
         {% if playback_reason == "not_authenticated" %}<a class="button" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">{% translate "Sign in" %}</a>
         {% elif playback_reason == "no_membership" or playback_reason == "entitlement_missing" %}{% if features.memberships %}<a class="button" href="{% url 'memberships:plans' %}">{% translate "See membership plans" %}</a>{% endif %}
-        {% elif playback_reason == "email_unverified" %}<a class="button" href="{% url 'accounts:verification_required' %}">{% translate "Confirm email" %}</a>{% endif %}
+        {% elif playback_reason == "email_unverified" %}<a class="button" href="{% url 'accounts:profile' %}">{% translate "Confirm email" %}</a>{% endif %}
       </div>
     {% endif %}
   </div>

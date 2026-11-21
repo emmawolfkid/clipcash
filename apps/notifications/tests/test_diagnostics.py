@@ -63,10 +63,24 @@ class EmailDiagnosticsTests(TestCase):
         self.assertFalse(OutboundEmail.objects.exists())
 
 
+@override_settings(DEFAULT_FROM_EMAIL="ClipCash <no-reply@clipcash.co.tz>")
 class EmailDeployCheckTests(TestCase):
-    @override_settings(DEBUG=False, EMAIL_BACKEND="django.core.mail.backends.dummy.EmailBackend")
-    def test_non_delivering_backend_warns_in_production(self):
+    @override_settings(DEBUG=False, RESTRICTED_DEMO_MODE=True,
+                       EMAIL_BACKEND="django.core.mail.backends.dummy.EmailBackend")
+    def test_non_delivering_backend_warns_in_the_restricted_demo(self):
         self.assertEqual([m.id for m in check_email_delivery(None)], ["notifications.W001"])
+
+    @override_settings(DEBUG=False, RESTRICTED_DEMO_MODE=False,
+                       EMAIL_BACKEND="django.core.mail.backends.dummy.EmailBackend")
+    def test_non_delivering_backend_fails_in_public_production(self):
+        """PRD-01: email sign-ups are activated, and passwords reset, only through emailed links."""
+        self.assertEqual([m.id for m in check_email_delivery(None)], ["notifications.E004"])
+
+    @override_settings(DEBUG=False, RESTRICTED_DEMO_MODE=False, EMAIL_BACKEND=SMTP)
+    def test_placeholder_sender_fails_in_public_production(self):
+        for sender in ("ClipCash <no-reply@localhost>", "webmaster@localhost", "no-reply@example.com", "nobody"):
+            with self.subTest(sender), override_settings(DEFAULT_FROM_EMAIL=sender):
+                self.assertEqual([m.id for m in check_email_delivery(None)], ["notifications.E005"])
 
     def test_backends_that_record_account_links_fail_in_production(self):
         """RG-03: console, locmem and file backends would keep every token link."""

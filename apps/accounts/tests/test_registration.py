@@ -23,14 +23,16 @@ OPEN = override_settings(RESTRICTED_DEMO_MODE=False, PUBLIC_REGISTRATION_APPROVE
 class PhoneRegistrationTests(AccountsTestCase):
     def register(self, phone="0712 345 678", password=NEW_PASSWORD, confirm=None, client=None, **extra):
         return (client or self.client).post(REGISTER_URL, {
-            "phone_number": phone, "password1": password,
+            "first_name": "Amina", "last_name": "Juma", "contact_method": "phone", "phone_number": phone, "password1": password,
             "password2": password if confirm is None else confirm, **extra})
 
-    def test_form_asks_for_mobile_number_and_password_only(self):
+    def test_form_asks_for_name_one_identifier_and_password_only(self):
+        # PRD-01: names, the choice of email or mobile number and its inputs; never access fields.
         response = self.client.get(REGISTER_URL)
-        for name in ("phone_number", "password1", "password2"):
+        for name in ("first_name", "last_name", "contact_method", "phone_number", "email",
+                     "password1", "password2"):
             self.assertContains(response, f'name="{name}"')
-        for name in ("email", "role", "status", "is_staff"):
+        for name in ("role", "status", "is_staff", "is_superuser", "groups"):
             self.assertNotContains(response, f'name="{name}"')
 
     def test_creates_active_member_signed_in_on_the_dashboard(self):
@@ -118,7 +120,7 @@ class PhoneRegistrationTests(AccountsTestCase):
 @override_settings(RESTRICTED_DEMO_MODE=True, PUBLIC_REGISTRATION_APPROVED=True)
 class ClosedRegistrationTests(AccountsTestCase):
     def test_restricted_demo_refuses_registration(self):
-        response = self.client.post(REGISTER_URL, {"phone_number": "0712345678", "password1": NEW_PASSWORD,
+        response = self.client.post(REGISTER_URL, {"first_name": "Amina", "last_name": "Juma", "contact_method": "phone", "phone_number": "0712345678", "password1": NEW_PASSWORD,
                                                    "password2": NEW_PASSWORD})
         self.assertEqual(response.status_code, 403)
         self.assertFalse(User.objects.exists())

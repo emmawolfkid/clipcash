@@ -7,19 +7,46 @@ from django.contrib.auth import logout
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
+from django.utils.cache import add_never_cache_headers
 from django.utils.translation import gettext_lazy as _
 
 
 def identity_ready(user):
-    """REG-02: may this ACTIVE account use member pages, choose a plan and pay?
+    """REG-02/REG-03: may this ACTIVE account take part in member features that rely on who it
+    is (memberships, wallets, advertiser actions; apps.memberships.services.member_eligibility)?
 
-    Members register with a mobile number and a password and use the account at once;
-    the number is their sign-in identifier (unique, Tanzanian mobile format). Accounts
-    that sign in with an email address only still need that address confirmed (the
-    pre-REG-02 rule). Phone *ownership* (``phone_verified``) is tracked separately and is
-    not required here; it is never accepted as proof for account recovery. Real-money
-    steps stay protected by staff verification of every payment."""
-    return bool(getattr(user, "email_verified", False) or getattr(user, "phone_number", None))
+    Members who sign up with a mobile number or a username qualify at once (that identifier is
+    unique and is what they sign in with). Accounts whose only identifier is an email address
+    still need that address confirmed, because an unconfirmed address may belong to someone
+    else. PRD-03A: this is no longer required just to sign in or open member pages (see
+    account_ready); it stays on the financial and identity-sensitive paths.
+
+    Starting a paid membership additionally needs a VERIFIED contact (has_verified_contact).
+    Phone ownership (``phone_verified``) is never accepted as proof for account recovery."""
+    # REG-04: a username counts for MEMBERS only, so staff keep needing a verified email or a
+    # mobile number, as before REG-03.
+    return bool(getattr(user, "email_verified", False) or getattr(user, "phone_number", None)
+                or (getattr(user, "username", None) and getattr(user, "role", None) == "MEMBER"))
+
+
+def account_ready(user):
+    """PRD-03A: may this ACTIVE account open member pages (dashboard, profile, plans, library)?
+    Members: yes, whatever they signed up with; nothing has to be confirmed first. Staff keep
+    the stricter rule (a confirmed email or a mobile number), because their access is
+    privileged. Financial and identity-sensitive actions check more (identity_ready,
+    has_verified_contact) inside their services."""
+    if getattr(user, "role", None) == "MEMBER":
+        return bool(getattr(user, "email", None) or getattr(user, "phone_number", None)
+                    or getattr(user, "username", None))
+    return identity_ready(user)
+
+
+def has_verified_contact(user):
+    """PRD-01: proven ownership of a confirmed email address or an SMS-verified mobile number.
+    Required before a member starts a NEW paid membership (choosing a plan, getting payment
+    details, submitting a payment). Not required to sign in or to have an already submitted
+    payment reviewed, so no money already paid is stranded."""
+    return bool(getattr(user, "is_authenticated", False) and getattr(user, "has_verified_contact", False))
 
 
 def demo_verification_optional():
@@ -48,7 +75,7 @@ def email_verification_waived(user):
     if not (user.is_authenticated and user.status == user.Status.ACTIVE and demo_verification_optional()):
         return False
     approved = {email.strip().lower() for email in settings.DEMO_ACCOUNTS if email.strip()}
-    return user.email.lower() in approved
+    return (user.email or "").lower() in approved  # Phone- and username-only accounts have no email.
 
 
 # Shown where a workflow stays closed to waived accounts (see demo_unconfirmed).
@@ -74,8 +101,13 @@ def _deny_or_redirect(request, *, require_verified_email, roles=None):
         # Defensive: the authentication backend already rejects these sessions.
         logout(request)
         return redirect_to_login(request.get_full_path())
-    if require_verified_email and not identity_ready(user) and not email_verification_waived(user):
-        return redirect("accounts:verification_required")
+    # PRD-03A: members are never sent to "Confirm your email" to use the site; staff still are.
+    if require_verified_email and not account_ready(user) and not email_verification_waived(user):
+        # PRD-03B: this decision depends on the account's current state, so no browser or proxy may
+        # keep the redirect: once the rule or the account changes, the next request decides afresh.
+        response = redirect("accounts:verification_required")
+        add_never_cache_headers(response)
+        return response
     if roles is not None and user.role not in roles:
         raise PermissionDenied
     return None

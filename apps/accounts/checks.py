@@ -127,3 +127,21 @@ def _check_proxy_boundary(proxies):
             id="accounts.W003",
         ))
     return messages
+
+
+@register(Tags.security, deploy=True)
+def check_sms_transport(app_configs, **kwargs):
+    """PAY-LIVE-01F-B: no real SMS provider exists yet. "disabled" is the only production value;
+    "fake" (in-memory, for tests and local development) never works outside DEBUG."""
+    from .sms import BACKENDS
+
+    backend = settings.SMS_BACKEND
+    if backend not in BACKENDS:
+        return [Error(f"Unknown SMS backend {backend!r}.",
+                      hint="Use 'disabled' until a reviewed SMS provider is added to apps.accounts.sms.",
+                      id="accounts.E009")]
+    if backend == "fake" and not settings.DEBUG:
+        return [Error("The fake SMS transport is configured outside DEBUG.",
+                      hint="It never sends real messages and is refused here: set DJANGO_SMS_BACKEND=disabled.",
+                      id="accounts.E009")]
+    return []
