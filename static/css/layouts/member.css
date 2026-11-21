@@ -181,3 +181,16 @@ a.app-nav__link:hover,
   }
 
 }
+
+/* UI-10: with a mouse on wide screens, denser menu rows keep the whole console menu in view.
+   Touch screens keep the full touch target. */
+@media (min-width: 52.01rem) and (pointer: fine) {
+  .app-nav__link {
+    min-height: 2.25rem;
+    padding-block: 0.3rem;
+  }
+
+  .app-nav__group {
+    margin-top: var(--space-4);
+  }
+}

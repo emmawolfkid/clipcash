@@ -39,8 +39,8 @@
 {% if plan %}
 <section class="workspace-section"><h2 class="workspace-section__title">{% translate "Price and length history" %}</h2>
 <table class="table workspace-table"><caption class="visually-hidden">{% translate "Plan versions" %}</caption>
-<thead><tr><th scope="col">{% translate "Version" %}</th><th scope="col">{% translate "Price" %}</th><th scope="col">{% translate "Length" %}</th><th scope="col">{% translate "From" %}</th></tr></thead>
-<tbody>{% for v in versions %}<tr><td>v{{ v.version }}</td><td class="financial-amount">{{ v.price_amount|tzs }}</td><td>{{ v.duration_days }}</td><td>{{ v.created_at|date:"SHORT_DATETIME_FORMAT" }}</td></tr>{% endfor %}</tbody></table>
+<thead><tr><th scope="col">{% translate "Version" %}</th><th scope="col" class="table__numeric">{% translate "Price" %}</th><th scope="col">{% translate "Length" %}</th><th scope="col">{% translate "From" %}</th></tr></thead>
+<tbody>{% for v in versions %}<tr><td>v{{ v.version }}</td><td class="table__numeric"><span class="financial-amount">{{ v.price_amount|tzs }}</span></td><td>{{ v.duration_days }}</td><td>{{ v.created_at|date:"SHORT_DATETIME_FORMAT" }}</td></tr>{% endfor %}</tbody></table>
 </section>
 <section class="workspace-section"><h2 class="workspace-section__title">{% translate "Audit history" %}</h2><ul class="list">{% for event in history %}<li class="list__item"><span>{{ event.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ event.action|code_label }}<code class="audit-code">{{ event.action }}</code></span><span>{{ event.actor_email|default:"system" }}</span></li>{% empty %}<li>—</li>{% endfor %}</ul></section>
 {% endif %}

@@ -22,8 +22,9 @@
       </ul>{% endif %}
       {% if can.membership_payments or can.payment_instructions %}<p class="app-nav__group" id="console-membership-payments">{% translate "Membership payments" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-membership-payments">
-        {% if can.membership_payments %}<li><a class="app-nav__link{% if nav == 'membership_payments' %} is-current{% endif %}"{% if nav == 'membership_payments' %} aria-current="page"{% endif %} href="{% url 'administration:membership_payments' %}">{% translate "Verification queue" %}</a></li>{% endif %}
-        {% if can.payment_instructions %}<li><a class="app-nav__link" href="{% url 'administration:payment_instructions' %}">{% translate "Payment methods" %}</a></li>{% endif %}
+        {# UI-10: both pages pass nav="membership_payments"; the URL name tells them apart. #}
+        {% if can.membership_payments %}{% if nav == 'membership_payments' and request.resolver_match.url_name != 'payment_instructions' %}<li><a class="app-nav__link is-current" aria-current="page" href="{% url 'administration:membership_payments' %}">{% else %}<li><a class="app-nav__link" href="{% url 'administration:membership_payments' %}">{% endif %}{% translate "Verification queue" %}</a></li>{% endif %}
+        {% if can.payment_instructions %}{% if request.resolver_match.url_name == 'payment_instructions' %}<li><a class="app-nav__link is-current" aria-current="page" href="{% url 'administration:payment_instructions' %}">{% else %}<li><a class="app-nav__link" href="{% url 'administration:payment_instructions' %}">{% endif %}{% translate "Payment methods" %}</a></li>{% endif %}
       </ul>{% endif %}
       {% if can.support %}<p class="app-nav__group" id="console-support">{% translate "Customer support" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-support">

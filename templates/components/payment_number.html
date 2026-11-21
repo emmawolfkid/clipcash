@@ -1,0 +1,9 @@
+{% load i18n %}{# UI-10: a receiving number members type into their phone. Context: number, label, uid. The copy button is shown by shared-ui.js only where the clipboard works. #}
+<div class="payment-number">
+  <span class="payment-number__label">{{ label }}</span>
+  <span class="payment-number__value">{{ number }}</span>
+  <span class="payment-number__copy">
+    <button type="button" class="button button--secondary button--compact" data-copy-value="{{ number }}" data-copied="{% translate 'Number copied.' %}" aria-describedby="pn-status-{{ uid }}" hidden>{% translate "Copy number" %}</button>
+    <span class="payment-number__status" id="pn-status-{{ uid }}" role="status"></span>
+  </span>
+</div>

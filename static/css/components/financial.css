@@ -43,3 +43,67 @@
   justify-self: start;
   margin-top: var(--space-3);
 }
+
+/* UI-10: a receiving number members type into their phone: large, grouped-digit friendly, copyable. */
+.payment-number {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "label label" "value copy";
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-soft);
+  border-left: 4px solid var(--brand-yellow);
+  border-radius: var(--radius-sm);
+}
+
+.payment-number__label {
+  grid-area: label;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.payment-number__value {
+  grid-area: value;
+  min-width: 0;
+  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.payment-number__copy {
+  grid-area: copy;
+  display: grid;
+  justify-items: end;
+}
+
+.payment-number__status {
+  color: var(--success);
+  font-size: 0.8125rem;
+}
+
+.payment-number__status:empty {
+  display: none;
+}
+
+@media (max-width: 24rem) {
+  .payment-number {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "label" "value" "copy";
+  }
+
+  .payment-number__copy {
+    justify-items: start;
+  }
+}
+
+@media (max-width: 40rem) {
+  .button--compact {
+    min-height: var(--touch-target);
+  }
+}

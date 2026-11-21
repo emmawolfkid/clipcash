@@ -53,6 +53,25 @@
   border-color: var(--danger);
 }
 
+/* UI-10: a destructive action that is not the page's main action (retire, remove). */
+.button--quiet-danger {
+  color: var(--danger);
+  background: var(--surface);
+  border-color: var(--danger);
+}
+
+.button--quiet-danger:hover {
+  color: var(--surface);
+  background: var(--danger);
+}
+
+/* UI-10: secondary actions inside table rows and cards. Keeps the touch target on phones. */
+.button--compact {
+  min-height: 2.25rem;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+}
+
 .button--link {
   padding: 0;
   border: 0;

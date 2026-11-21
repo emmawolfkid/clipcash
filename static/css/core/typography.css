@@ -27,3 +27,30 @@ a {
   letter-spacing: -0.025em;
 }
 
+
+/* UI-10: staff-entered text rendered by a safe formatting filter (paragraphs, lists, bold). */
+.formatted-text > :first-child {
+  margin-top: 0;
+}
+
+.formatted-text > :last-child {
+  margin-bottom: 0;
+}
+
+.formatted-text p {
+  margin: 0 0 var(--space-3);
+  max-width: 44rem;
+}
+
+.formatted-text ol,
+.formatted-text ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-3);
+  max-width: 44rem;
+  padding-left: var(--space-5);
+}
+
+.formatted-text li::marker {
+  font-weight: 650;
+}

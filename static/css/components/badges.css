@@ -19,7 +19,6 @@
 .badge--pending_verification,
 .badge--demo_requested,
 .badge--demo_under_review,
-.badge--demo_approved,
 .badge--demo_payout_pending {
   border-color: var(--muted);
   color: var(--muted);
@@ -63,7 +62,8 @@
 .badge--restricted,
 .badge--disputed,
 .badge--refunded,
-.badge--demo_failed {
+.badge--demo_failed,
+.badge--demo_rejected {
   color: var(--danger);
   border-color: var(--danger);
   background: var(--danger-bg);
@@ -90,8 +90,6 @@
 .badge--archived,
 .badge--retired,
 .badge--demo_reversed,
-.badge--demo_rejected,
-.badge--demo_paid,
 .badge--demo_returned,
 .badge--demo_cancelled,
 .badge--demo_expired {
@@ -100,6 +98,20 @@
   background: var(--surface);
 }
 
+
+/* UI-10: demo withdrawal outcomes read apart at a glance; every label still names its state.
+   A simulated payout is never styled exactly like a real settlement: its border is dashed. */
+.badge--demo_approved {
+  color: var(--brand-navy);
+  border-color: var(--brand-navy);
+  background: var(--info-bg);
+}
+
+.badge--demo_paid {
+  color: var(--success);
+  border: 1px dashed var(--success);
+  background: var(--success-bg);
+}
 
 @media (forced-colors: active) {
   .badge {

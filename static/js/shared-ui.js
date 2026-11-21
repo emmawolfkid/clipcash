@@ -44,4 +44,21 @@
   });
   var summary = document.querySelector(".error-summary");
   if (summary) { summary.focus(); }
+
+  // UI-10: copy buttons stay hidden without a usable clipboard; the value is always visible as text.
+  if (navigator.clipboard && window.isSecureContext) {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-copy-value]"), function (button) {
+      var status = document.getElementById(button.getAttribute("aria-describedby") || "");
+      var timer = null;
+      button.hidden = false;
+      button.addEventListener("click", function () {
+        navigator.clipboard.writeText(button.getAttribute("data-copy-value")).then(function () {
+          if (!status) { return; }
+          status.textContent = button.getAttribute("data-copied") || "";
+          window.clearTimeout(timer);
+          timer = window.setTimeout(function () { status.textContent = ""; }, 4000);
+        });
+      });
+    });
+  }
 }());

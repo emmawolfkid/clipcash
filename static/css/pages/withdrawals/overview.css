@@ -13,7 +13,7 @@
 }
 
 .checklist__item--no::before {
-  content: "\2715";
+  content: "\2715" / "";
   position: absolute;
   left: 0;
   color: var(--danger);
@@ -21,6 +21,11 @@
 
 .withdrawal-demo-table td:nth-child(2) {
   white-space: nowrap;
+}
+
+/* UI-10: an amount needs a short field, not the whole panel width. */
+.panel .toolbar input[type="number"] {
+  flex: 0 1 14rem;
 }
 
 @media (max-width: 30rem) {

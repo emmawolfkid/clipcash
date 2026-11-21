@@ -1,23 +1,78 @@
-{% extends "administration/layout.html" %}{% load i18n %}
+{% extends "administration/layout.html" %}{% load i18n static payment_format %}
 {% block title %}{% translate "Manual payment methods" %}{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/administration/payment-methods.css' %}">{% endblock %}
 {% block console_content %}
-<div class="page-heading"><h1 class="page-title">{% translate "Manual payment methods" %}</h1><a href="{% url 'administration:membership_payments' %}">{% translate "Verification queue" %}</a></div>
-<p class="notice">{% translate "Check every receiving number and registered recipient before publishing. Changes affect new instructions. Issued instructions and pending claims keep their original details." %}</p>
-{% if not enabled %}<p class="notice">{% translate "Manual membership payments are switched off in this deployment." %}</p>{% endif %}
-<section class="workspace-section"><h2>{% translate "Active methods" %}</h2>
-{% for item in methods %}
-<article class="workspace-section"><h3>{{ item.provider_label }}</h3>
-<p><strong>{{ item.business_number }}</strong> &middot; {{ item.recipient_name }}</p>
-<p>{{ item.instructions|linebreaksbr }}</p>
-<a href="?edit={{ item.pk }}">{% translate "Edit method" %}</a>
-<form method="post">{% csrf_token %}<input type="hidden" name="action" value="retire"><input type="hidden" name="instruction_id" value="{{ item.pk }}"><button class="button button--secondary">{% translate "Retire method" %}</button></form>
-</article>{% empty %}<p>{% translate "No active payment methods." %}</p>{% endfor %}
+<div class="page-heading">
+  <div class="page-heading__text">
+    <h1 class="page-title">{% translate "Manual payment methods" %}</h1>
+    <p class="page-intro">{% translate "The receiving numbers and registered names members pay to for their membership." %}</p>
+  </div>
+  <a class="button button--secondary" href="{% url 'administration:membership_payments' %}">{% translate "Verification queue" %}</a>
+</div>
+
+<div class="payment-methods__notices">
+  {% if not enabled %}<p class="notice notice--warning" role="status"><strong>{% translate "Payments switched off." %}</strong> {% translate "Manual membership payments are switched off in this deployment." %}</p>{% endif %}
+  <p class="notice" role="note">{% translate "Check every receiving number and registered recipient before publishing. Changes affect new instructions. Issued instructions and pending claims keep their original details." %}</p>
+</div>
+
+<section class="workspace-section" aria-labelledby="methods-active">
+  <h2 class="workspace-section__title" id="methods-active">{% translate "Active methods" %}</h2>
+  {% if methods %}
+  <div class="payment-methods">
+    {% for item in methods %}
+    <article class="payment-method" aria-labelledby="method-{{ item.pk }}">
+      <header class="payment-method__header">
+        <div>
+          <h3 class="payment-method__name" id="method-{{ item.pk }}">{{ item.provider_label }}</h3>
+          <p class="payment-method__channel">{% if item.is_bank %}{% translate "Bank transfer" %}{% else %}{% translate "Mobile money" %}{% endif %} · <code>{{ item.method }}</code></p>
+        </div>
+        <span class="badge badge--published">{% translate "Published" %}</span>
+      </header>
+      {% if item.is_bank %}{% translate "Account number" as number_label %}{% else %}{% translate "Lipa receiving number" as number_label %}{% endif %}
+      {% include "components/payment_number.html" with number=item.business_number label=number_label uid=item.pk %}
+      <dl class="payment-method__details">
+        <dt>{% translate "Registered recipient" %}</dt><dd>{{ item.recipient_name }}</dd>
+        <dt>{% translate "Published" %}</dt><dd>{{ item.created_at|date:"SHORT_DATETIME_FORMAT" }}</dd>
+      </dl>
+      {% if item.instructions %}
+      <div class="payment-method__steps">
+        <h4 class="payment-method__subtitle">{% translate "Payment steps shown to members" %}</h4>
+        <div class="formatted-text">{{ item.instructions|payment_steps }}</div>
+      </div>
+      {% endif %}
+      <p class="payment-method__verify" role="note">{% translate "Members' payments are never approved automatically: staff confirm each one in the official provider records before a membership starts." %}</p>
+      <footer class="payment-method__actions">
+        <a class="button button--secondary" href="?edit={{ item.pk }}#method-form">{% translate "Edit method" %}</a>
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="retire"><input type="hidden" name="instruction_id" value="{{ item.pk }}"><button class="button button--quiet-danger">{% translate "Retire method" %}</button></form>
+      </footer>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty-state">{% translate "No active payment methods." %} {% translate "Members cannot pay for a membership until you publish one below." %}</p>
+  {% endif %}
 </section>
-<section class="workspace-section"><h2>{% if form.initial.instruction_id %}{% translate "Edit payment method" %}{% else %}{% translate "Add payment method" %}{% endif %}</h2>
-{% include "components/form.html" with form=form button=_("Publish payment details") %}
+
+<section class="workspace-section panel payment-method-form" id="method-form" aria-labelledby="method-form-title">
+  <div class="section__header">
+    <h2 class="workspace-section__title" id="method-form-title">{% if form.initial.instruction_id %}{% translate "Edit payment method" %}{% else %}{% translate "Add payment method" %}{% endif %}</h2>
+    {% if form.initial.instruction_id %}<a href="{% url 'administration:payment_instructions' %}">{% translate "Cancel editing" %}</a>{% endif %}
+  </div>
+  <p class="workspace-note">{% translate "Payment steps may use **bold** text, numbered lines (1.) and bullet lines (-). Everything else is shown exactly as typed." %}</p>
+  {% include "components/form.html" with form=form button=_("Publish payment details") %}
 </section>
-<section class="workspace-section"><h2>{% translate "History" %}</h2>
-<table class="table workspace-table"><caption class="visually-hidden">{% translate "Payment method version history" %}</caption><thead><tr><th scope="col">{% translate "Provider" %}</th><th scope="col">{% translate "Receiving number" %}</th><th scope="col">{% translate "Recipient" %}</th><th scope="col">{% translate "State" %}</th></tr></thead>
-<tbody>{% for item in history %}<tr><td>{{ item.provider_label }}</td><td>{{ item.business_number }}</td><td>{{ item.recipient_name }}</td><td>{% if item.is_active %}{% translate "Active" %}{% else %}{% translate "Retired" %} &middot; {{ item.retired_at|date:"SHORT_DATETIME_FORMAT" }}
-<form method="post">{% csrf_token %}<input type="hidden" name="action" value="enable"><input type="hidden" name="instruction_id" value="{{ item.pk }}"><button class="button button--secondary">{% translate "Enable method" %}</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></section>
+
+<section class="workspace-section" aria-labelledby="methods-history">
+  <h2 class="workspace-section__title" id="methods-history">{% translate "History" %}</h2>
+  <table class="table workspace-table hide-narrow-3"><caption class="visually-hidden">{% translate "Payment method version history" %}</caption>
+    <thead><tr><th scope="col">{% translate "Provider" %}</th><th scope="col">{% translate "Receiving number" %}</th><th scope="col">{% translate "Recipient" %}</th><th scope="col">{% translate "State" %}</th><th scope="col"><span class="visually-hidden">{% translate "Actions" %}</span></th></tr></thead>
+    <tbody>{% for item in history %}<tr>
+      <td>{{ item.provider_label }}<span class="cell-meta">{{ item.created_at|date:"SHORT_DATETIME_FORMAT" }}</span></td>
+      <td class="payment-history__number">{{ item.business_number }}</td>
+      <td>{{ item.recipient_name }}</td>
+      <td>{% if item.is_active %}<span class="badge badge--active">{% translate "Active" %}</span>{% else %}<span class="badge badge--retired">{% translate "Retired" %}</span><span class="cell-meta">{{ item.retired_at|date:"SHORT_DATETIME_FORMAT" }}</span>{% endif %}</td>
+      <td>{% if not item.is_active %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="enable"><input type="hidden" name="instruction_id" value="{{ item.pk }}"><button class="button button--secondary button--compact">{% translate "Enable method" %}</button></form>{% endif %}</td>
+    </tr>{% empty %}<tr><td colspan="5" class="not-applicable">{% translate "No payment methods have been published yet." %}</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
 {% endblock %}

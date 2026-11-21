@@ -5154,3 +5154,11 @@ msgstr "haijathibitishwa (uthibitisho wa SMS haupatikani)"
 #: templates/payments/manual_pay.html
 msgid "with your provider transaction reference so our team can check it and arrange any refund."
 msgstr "ukiwa na kumbukumbu ya muamala wako kutoka kwa mtoa huduma ili timu yetu iikague na ipange kurejesha malipo inapohitajika."
+
+#: templates/components/payment_number.html
+msgid "Copy number"
+msgstr "Nakili namba"
+
+#: templates/components/payment_number.html
+msgid "Number copied."
+msgstr "Namba imenakiliwa."

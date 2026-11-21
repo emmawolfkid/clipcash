@@ -1,4 +1,4 @@
-{% extends "members/layout.html" %}{% load static i18n money purchase_state %}
+{% extends "members/layout.html" %}{% load static i18n money purchase_state payment_format %}
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/payments/manual.css' %}">{% endblock %}
 {% block title %}{% translate "Pay for your membership" %}{% endblock %}
 {% block crumb %}{% translate "Pay" %}{% endblock %}
@@ -17,8 +17,8 @@
 </section>
 
 {% if payments_enabled and methods %}
-<section class="panel"><h2>{% translate "Choose a payment method" %}</h2>
-<form method="post">{% csrf_token %}<input type="hidden" name="action" value="choose_method">
+<section class="panel manual-payment__choose" aria-labelledby="pay-choose"><h2 class="panel__title" id="pay-choose">{% translate "Choose a payment method" %}</h2>
+<form method="post" class="toolbar">{% csrf_token %}<input type="hidden" name="action" value="choose_method">
 <label for="payment-method">{% translate "Payment provider" %}</label>
 <select id="payment-method" name="instruction">{% for item in methods %}<option value="{{ item.pk }}">{{ item.provider_label }}</option>{% endfor %}</select>
 <button class="button">{% translate "Get payment instructions" %}</button></form></section>
@@ -28,12 +28,13 @@
   <h2 class="panel__title" id="pay-how">{{ instruction.provider_label }}</h2>
   <p>{% translate "Use the issued receiving number and registered name below. These details stay with your submission even if the method changes." %}</p>
   <p>{% translate "Instructions issued" %}: {{ quote.created_at|date:"DATETIME_FORMAT" }}</p>
-  <dl class="details">
-    <dt>{% if instruction.is_bank %}{% translate "Account number" %}{% else %}{% translate "Receiving number" %}{% endif %}</dt><dd><strong class="manual-payment__number">{{ instruction.business_number }}</strong></dd>
-    <dt>{% translate "Recipient name" %}</dt><dd>{{ instruction.recipient_name }}</dd>
+  {% if instruction.is_bank %}{% translate "Account number" as number_label %}{% else %}{% translate "Receiving number" as number_label %}{% endif %}
+  {% include "components/payment_number.html" with number=instruction.business_number label=number_label uid=instruction.pk %}
+  <dl class="details manual-payment__details">
+    <dt>{% translate "Recipient name" %}</dt><dd><strong>{{ instruction.recipient_name }}</strong></dd>
     <dt>{% translate "Exact amount" %}</dt><dd><strong class="financial-amount">{{ quote.amount|default:subscription.price_amount|tzs }}</strong></dd>
   </dl>
-  {% if instruction.instructions %}<p class="manual-payment__steps">{{ instruction.instructions|linebreaksbr }}</p>{% endif %}
+  {% if instruction.instructions %}<div class="formatted-text manual-payment__steps">{{ instruction.instructions|payment_steps }}</div>{% endif %}
   <p class="notice" role="note">{% translate "Check that the provider shows the recipient name above before you confirm. Pay the exact amount in one payment: partial or extra amounts cannot be matched automatically. Never share your payment PIN with anyone, including ClipCash staff." %}</p>
   <p>{% translate "Paid a different amount, paid twice, or paid to the wrong number? Do not submit it here." %} <a href="{% url 'support:tickets' %}">{% translate "Contact support" %}</a> {% translate "with your provider transaction reference so our team can check it and arrange any refund." %}</p>
 </section>

@@ -62,9 +62,11 @@
 
 .toolbar__check {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 0.35rem;
   font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 input {
@@ -79,10 +81,13 @@ input[type="datetime-local"]:focus-within {
   outline-offset: 3px;
 }
 
+/* UI-10: a locked value must not look editable. */
 input:disabled,
 select:disabled,
 textarea:disabled {
   cursor: not-allowed;
+  background: var(--surface-soft);
+  border-style: dashed;
 }
 
 input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]) {
@@ -185,6 +190,7 @@ textarea::placeholder {
 .toolbar {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   margin: 0 0 1rem;
   gap: var(--space-3);
 }
@@ -199,6 +205,12 @@ textarea::placeholder {
 .toolbar input {
   flex: 1 1 12rem;
   border-color: var(--control-border);
+}
+
+/* UI-10: a filter checkbox keeps its own size; only text inputs share the row's free space. */
+.toolbar input[type="checkbox"],
+.toolbar input[type="radio"] {
+  flex: none;
 }
 
 .toolbar select {
@@ -232,3 +244,11 @@ textarea::placeholder {
   align-content: center;
 }
 
+
+/* UI-10: the field rules above outrank input:disabled (up to 0,5,1); this selector matches them and comes later. */
+.form input:disabled:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+.form select:disabled,
+.form textarea:disabled {
+  background: var(--surface-soft);
+  border-style: dashed;
+}
