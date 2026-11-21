@@ -45,3 +45,54 @@
   border-left-color: var(--warning);
 }
 
+
+/* Compact top-right cards reserve their space so controls remain reachable. */
+.feedback {
+  width: min(100%, 24rem);
+  margin-inline-start: auto;
+  margin-block-end: var(--space-4);
+}
+.feedback .messages {
+  margin: 0;
+}
+.feedback .messages__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-inline-start: 4px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  font-size: var(--text-sm);
+}
+.messages__text {
+  flex: 1;
+  min-width: 0;
+  align-self: center;
+  overflow-wrap: anywhere;
+}
+.messages__close {
+  flex: 0 0 var(--touch-target);
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: var(--text-lg);
+}
+.messages__close:hover {
+  background: var(--surface);
+}
+.feedback .messages__item--success { border-inline-start-color: var(--success); }
+.feedback .messages__item--error { border-inline-start-color: var(--danger); }
+.feedback .messages__item--warning { border-inline-start-color: var(--warning); }
+/* No entrance/exit motion, including when reduced motion is requested. */
+
+.messages__close[hidden] { display: none; }
+.messages__close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }

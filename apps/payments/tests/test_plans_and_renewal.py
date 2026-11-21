@@ -115,7 +115,7 @@ class PlanConsoleTests(ManualPaymentTestCase):
         stale = form_data(self.plan, price_amount="6000", name="Monthly", duration_days="30")
         memberships.update_plan(self.root, self.plan, {"price_amount": 7_000})  # Someone else saves first.
         response = self.client.post(plan_url(self.plan), stale, follow=True)
-        self.assertContains(response, "Another administrator changed")
+        self.assertContains(response, "Another administrator changed", status_code=400)
         self.plan.refresh_from_db()
         self.assertEqual(self.plan.price_amount, 7_000)
 

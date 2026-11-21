@@ -973,7 +973,8 @@ def _plan_queryset():
 
 
 PLAN_ERRORS = {"stale_edit": _("Another administrator changed this plan's price or duration while you were "
-                               "editing. The form now shows the current terms; check them and save again.")}
+                               "editing. Your changes were not saved. The current terms are shown above the "
+                               "form; check them and save again.")}
 
 
 @console
@@ -1014,7 +1015,7 @@ class PlanCreateView(View):
         except ValidationError as error:
             _form_errors(form, error)
             return self._render(request, form, status=400)
-        messages.success(request, _("Plan created. It is active and can be bought now if it is listed."))
+        messages.success(request, _("%(plan)s plan created") % {"plan": plan.name}, extra_tags="feedback-auto")
         return redirect("administration:plan", pk=plan.pk)
 
 
@@ -1064,8 +1065,8 @@ class PlanEditView(View):
                 return self._render(request, original, form, status=400)
             values = form.plan_values()
             changes = {name: value for name, value in values.items() if getattr(original, name) != value}
-            memberships.update_plan(request.user, original, changes,
-                                    expected_version=form.cleaned_data["expected_version"])
+            saved_plan = memberships.update_plan(request.user, original, changes,
+                                                 expected_version=form.cleaned_data["expected_version"])
         except memberships.NotAuthorized:
             raise PermissionDenied from None
         except ValidationError as error:
@@ -1076,11 +1077,17 @@ class PlanEditView(View):
             return self._render(request, MembershipPlan.objects.get(pk=pk), form, status=400)
         except memberships.MembershipError as error:
             messages.error(request, PLAN_ERRORS.get(error.code, str(error)))
-            if error.code == "stale_edit" or action == "status":
+            if action == "status":
                 return redirect("administration:plan", pk=pk)
-            return self._render(request, MembershipPlan.objects.get(pk=pk), form, status=400)
-        messages.success(request, _("Plan saved. New choices use these terms; existing choices, payments and "
-                                    "memberships keep the price and duration they were quoted."))
+            current = MembershipPlan.objects.get(pk=pk)
+            if error.code == "stale_edit":
+                # Keep the administrator's input, but acknowledge the current version so a deliberate
+                # second save (after checking the current terms shown above the form) can succeed.
+                data = request.POST.copy()
+                data["expected_version"] = current.version
+                form = self._form(current, data)
+            return self._render(request, current, form, status=400)
+        messages.success(request, _("%(plan)s plan saved.") % {"plan": saved_plan.name})
         return redirect("administration:plan", pk=pk)
 
 
