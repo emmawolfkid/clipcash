@@ -10,7 +10,7 @@
 .messages li,
 .notice {
   background: var(--info-bg);
-  border-left: 4px solid var(--accent);
+  border-inline-start: 4px solid var(--info);
   padding: var(--space-4);
   border-radius: var(--radius-sm);
 }
@@ -21,7 +21,7 @@
 }
 
 .notice--sandbox {
-  border-left-color: var(--warning);
+  border-inline-start-color: var(--warning);
   background: var(--warning-bg);
 }
 
@@ -29,18 +29,22 @@
 .notice--success {
   color: var(--success);
   background: var(--success-bg);
-  border-left-color: var(--success);
+  border-inline-start-color: var(--success);
 }
 
 .messages .messages__item--error {
   color: var(--danger);
   background: var(--danger-bg);
-  border-left-color: var(--danger);
+  border-inline-start-color: var(--danger);
 }
 
 .messages .messages__item--warning,
 .notice--warning {
   color: var(--warning);
   background: var(--warning-bg);
-  border-left-color: var(--warning);
+  border-inline-start-color: var(--warning);
 }
+
+
+.notice--error { color: var(--error); background: var(--error-bg); border-inline-start-color: var(--error); }
+.notice--info, .messages .messages__item--info { color: var(--info); }

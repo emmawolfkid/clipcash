@@ -2,8 +2,8 @@
 .badge {
   display: inline-block;
   padding: 0.1rem 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 650;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   background: var(--surface-soft);

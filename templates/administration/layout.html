@@ -5,7 +5,8 @@
 {% endblock %}
 {% block main %}
 <div class="app-shell app-shell--console">
-  <aside class="app-sidebar">
+  <aside class="app-sidebar" tabindex="-1">
+    <button type="button" class="drawer-close" data-nav-close hidden>{% translate "Close navigation" %} <span aria-hidden="true">×</span></button>
     <p class="app-sidebar__title">{% translate "Administration" %}</p>
     <button type="button" class="app-nav__toggle" aria-expanded="true" aria-controls="console-menu" hidden>{% translate "Menu" %}</button>
     {# ADMIN-01: both membership payment pages pass nav="membership_payments"; the URL name tells them apart. #}

@@ -107,3 +107,7 @@
     min-height: var(--touch-target);
   }
 }
+
+/* Shared summary figures wrap on phones; transaction table values remain intact. */
+.summary-card__value .financial-amount,
+.stat__value .financial-amount { white-space: normal; }

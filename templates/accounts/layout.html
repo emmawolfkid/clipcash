@@ -4,11 +4,16 @@
 {% block main %}
 <main id="content" class="auth-shell" tabindex="-1">
   <aside class="auth-introduction" aria-labelledby="auth-intro-title">
-    <p class="auth-eyebrow">{% include "components/wordmark.html" %}</p>
-    <p class="auth-introduction__title" id="auth-intro-title">{% translate "A clear path to your next clip." %}</p>
-    <p>{% translate "Your account brings video discovery, membership access and viewing records together." %}</p>
-    {% if restricted_demo %}<ol><li>{% translate "Confirm your email address." %}</li><li>{% translate "Check your membership eligibility." %}</li><li>{% translate "Explore videos and understand what counts." %}</li></ol>
-    {% else %}<ol><li>{% translate "Create your account with a username, a password and an email address or mobile number." %}</li><li>{% translate "Choose a membership plan. It stays pending until your payment is verified." %}</li><li>{% translate "Explore videos and understand what counts." %}</li></ol>{% endif %}
+    <a class="auth-brand" href="{% url 'home' %}" aria-label="{% translate 'ClipCash home' %}">{% include "components/wordmark.html" %}</a>
+    <p class="auth-tagline" lang="sw">Tazama Video · Kusanya Zawadi</p>
+    {% include "components/clip_illustration.html" %}
+    <p class="auth-introduction__title" id="auth-intro-title">{% translate "Your next clip starts here." %}</p>
+    <p>{% translate "One account for video discovery, membership access and your viewing records." %}</p>
+    <ul class="auth-benefits">
+      <li>{% include "components/nav_icon.html" with icon="videos" %}<span>{% translate "Discover available videos" %}</span></li>
+      <li>{% include "components/nav_icon.html" with icon="membership" %}<span>{% translate "Manage your membership" %}</span></li>
+      <li>{% include "components/nav_icon.html" with icon="activity" %}<span>{% translate "Follow your viewing history" %}</span></li>
+    </ul>
     <p class="auth-introduction__note">{% translate "Keep your password private. ClipCash staff will never ask for your mobile-money PIN or one-time codes." %}</p>
   </aside>
   <div class="auth-content">

@@ -128,3 +128,17 @@
   overflow-y: auto;
 }
 
+
+/* Decorative clip artwork shared by the landing and authentication shells. */
+.clip-illustration { position: relative; isolation: isolate; display: grid; place-items: center; width: min(100%, 20rem); min-height: 16rem; margin: var(--space-3) auto var(--space-5); }
+.clip-illustration__phone { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); width: 9rem; height: 14rem; border: 3px solid var(--nav-muted); border-radius: 1.75rem; background: linear-gradient(155deg, var(--nav-hover), var(--nav-bg)); box-shadow: var(--shadow-card); transform: rotate(12deg); }
+.clip-illustration__speaker { position: absolute; top: var(--space-2); width: 3rem; height: var(--space-1); background: var(--nav-muted); border-radius: var(--radius-pill); }
+.clip-illustration__play { display: grid; place-items: center; width: 4.5rem; height: 4.5rem; border-radius: 50%; color: var(--primary-text); background: var(--primary-bg); box-shadow: var(--shadow-control); }
+.clip-illustration__play svg { width: 3rem; height: 3rem; }
+.clip-illustration__brand { color: var(--nav-text); font-weight: 750; }
+.clip-illustration__brand > span { color: var(--brand-yellow); }
+.clip-illustration__line { width: 5rem; height: var(--space-1); background: var(--nav-muted); border-radius: var(--radius-pill); }
+.clip-illustration__line--short { width: 3rem; }
+.clip-illustration__orbit { position: absolute; z-index: -1; width: min(13rem, 85%); aspect-ratio: 1; border: 1px solid var(--nav-muted); border-radius: 50%; }
+.clip-illustration__orbit--two { width: min(16rem, 100%); border-style: dashed; }
+.clip-illustration__spark { position: absolute; inset-block-start: var(--space-5); inset-inline-end: var(--space-3); font-size: 2rem; color: var(--brand-yellow); }

@@ -86,7 +86,9 @@ input:disabled,
 select:disabled,
 textarea:disabled {
   cursor: not-allowed;
-  background: var(--surface-soft);
+  background: var(--disabled-bg);
+  color: var(--disabled-text);
+  opacity: 1;
   border-style: dashed;
 }
 
@@ -138,7 +140,7 @@ textarea {
 
 input[type="checkbox"],
 input[type="radio"] {
-  accent-color: var(--brand-navy);
+  accent-color: var(--primary-bg);
   inline-size: 1.15rem;
   block-size: 1.15rem;
   flex-shrink: 0;
@@ -249,6 +251,8 @@ textarea::placeholder {
 .form input:disabled:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
 .form select:disabled,
 .form textarea:disabled {
-  background: var(--surface-soft);
+  background: var(--disabled-bg);
+  color: var(--disabled-text);
+  opacity: 1;
   border-style: dashed;
 }

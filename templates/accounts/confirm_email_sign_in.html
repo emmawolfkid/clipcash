@@ -1,6 +1,7 @@
 {% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Sign in to confirm your email" %}{% endblock %}
 {% block auth_content %}
+{% include "components/auth_state.html" with kind="info" %}
 <h1>{% translate "Sign in to confirm your email" %}</h1>
 <p>{% translate "For your security, an email address added to an existing account is confirmed only by the account owner. Sign in with your mobile number (or your username, if you have one), then open this link again or use the button below." %}</p>
 <p><a class="button" href="{% url 'accounts:login' %}?next={{ next|urlencode }}">{% translate "Sign in and confirm" %}</a></p>

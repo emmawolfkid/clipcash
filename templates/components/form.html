@@ -20,5 +20,5 @@
   {% endfor %}
   {% for field in form.hidden_fields %}{{ field }}{% endfor %}
   {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-  <button type="submit" class="button button--block">{{ button }}</button>
+  <button type="submit" class="button button--block{% if button_class %} {{ button_class }}{% endif %}">{{ button }}</button>
 </form>

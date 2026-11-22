@@ -1,6 +1,7 @@
 {% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Registration closed" %}{% endblock %}
 {% block auth_content %}
+{% include "components/auth_state.html" with kind="warning" %}
 <h1>{% translate "Registration closed" %}</h1>
 <p>{% translate "New accounts cannot be created at the moment. Please try again later." %}</p>
 {% if restricted_demo %}<p>{% translate "This is a restricted demonstration: only accounts provided by the ClipCash team can sign in." %}</p>{% endif %}

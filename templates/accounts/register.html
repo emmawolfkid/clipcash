@@ -1,10 +1,11 @@
 {% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Create an account" %}{% endblock %}
 {% block auth_content %}
+<p class="auth-kicker">{% translate "Join ClipCash" %}</p>
 <h1>{% translate "Create an account" %}</h1>
-<p class="lead">{% translate "Tell us your name, choose a password, and sign up with your email address, your mobile number or a username. Your account is ready at once. Creating an account is free." %}</p>
+<p class="lead">{% translate "Tell us your name and choose how to sign in: a mobile number, email address or username. Choose a password. Your account is ready at once. Creating an account is free." %}</p>
 <p class="auth-recovery-note">{% translate "Forgotten passwords are reset by email. If you sign up with a mobile number or a username, add an email address in My account so you can recover your account. Buying a membership needs a confirmed email address." %}</p>
-{% include "components/form.html" with button=_("Create account") %}
+{% include "components/form.html" with button=_("Create account") button_class="button--action" %}
 <ul class="links">
   <li><a href="{% url 'accounts:login' %}">{% translate "Already registered? Sign in" %}</a></li>
 </ul>

@@ -11,16 +11,17 @@
     <p class="hero__lead">{% if site_config.platform_description %}{{ site_config.platform_description }}{% else %}{% translate "Discover reviewed video campaigns, explore eligible content and follow your viewing journey with clarity." %}{% endif %}</p>
     <p class="hero__tagline" lang="sw">Tazama Video · Kusanya Zawadi</p>
     <div class="actions">
-      {% if user.is_authenticated %}<a class="button" href="{% url 'dashboard' %}">{% translate "Go to your dashboard" %}</a>{% elif features.registration %}<a class="button" href="{% url 'accounts:register' %}">{% translate "Create account" %}</a>{% else %}<a class="button" href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a>{% endif %}
+      {% if user.is_authenticated %}<a class="button button--action" href="{% url 'dashboard' %}">{% translate "Go to your dashboard" %}</a>{% elif features.registration %}<a class="button button--action" href="{% url 'accounts:register' %}">{% translate "Create account" %}</a>{% else %}<a class="button button--action" href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a>{% endif %}
       <a class="button button--secondary" href="#how-it-works">{% translate "How it works" %} <span aria-hidden="true">↗</span></a>
     </div>
-    {% if not user.is_authenticated %}{% if features.registration %}<p class="hero__note">{% translate "Creating an account is free. You only need your mobile number." %} <a href="{% url 'accounts:login' %}">{% translate "Already registered? Sign in" %}</a></p>{% else %}<p class="hero__note">{% translate "New accounts are not open to the public at the moment. If the ClipCash team has given you access, sign in with your account." %}</p>{% endif %}{% endif %}
+    {% if not user.is_authenticated %}{% if features.registration %}<p class="hero__note">{% translate "Creating an account is free. Choose a mobile number, email address or username and a password." %} <a href="{% url 'accounts:login' %}">{% translate "Already registered? Sign in" %}</a></p>{% else %}<p class="hero__note">{% translate "New accounts are not open to the public at the moment. If the ClipCash team has given you access, sign in with your account." %}</p>{% endif %}{% endif %}
   </div>
   <aside class="hero-story" aria-labelledby="story-title">
-    <p class="hero-story__label">{% translate "A more transparent viewing journey" %}</p>
-    <div class="hero-story__screen" aria-hidden="true"><svg viewBox="0 0 120 120" width="120" height="120" focusable="false"><circle cx="60" cy="60" r="43" fill="none" stroke="currentColor" stroke-width="2"/><path d="M50 39 80 60 50 81Z" fill="currentColor"/></svg></div>
-    <h2 id="story-title">{% translate "Discover. Watch. Understand." %}</h2><p>{% translate "Reviewed campaigns. Server-checked viewing. Records you can follow." %}</p>
-    <p class="hero-story__caption">{% translate "An introduction to the experience, not a playable video." %}</p>
+    <p class="hero-story__label">{% translate "Your ClipCash, together" %}</p>
+    {% include "components/clip_illustration.html" %}
+    <h2 id="story-title">{% translate "Discover. Watch. Keep track." %}</h2>
+    <p>{% translate "A clear view of your membership, eligible videos and viewing history." %}</p>
+    <p class="hero-story__caption">{% translate "Illustration only. Cash rewards and withdrawals are not available." %}</p>
   </aside>
 </section>
 {% if financial_locked %}{% if restricted_demo %}<aside class="notice notice--warning home-notice" role="note"><strong>{% translate "No money is paid out on this site." %}</strong>
@@ -33,7 +34,7 @@
   <ol class="journey-grid">
     {% if restricted_demo %}
     <li><h3>{% translate "Your account" %}</h3><p>{% translate "Create an account when registration is available, or sign in with access provided by the ClipCash team." %}</p></li>
-    <li><h3>{% translate "Email verification" %}</h3><p>{% translate "Follow your verification link and complete the account steps. Restricted demo access may have specific exceptions." %}</p></li>
+    <li><h3>{% translate "Your sign-in details" %}</h3><p>{% translate "Use the identifier you registered with. Ordinary member registration does not require an email confirmation or an SMS code." %}</p></li>
     <li><h3>{% translate "Eligible membership" %}</h3><p>{% translate "Review membership requirements. Selecting a plan saves a pending choice; sandbox payments do not activate access." %}</p></li>
     {% else %}
     <li><h3>{% translate "Your account" %}</h3><p>{% if features.registration %}{% translate "Create an account with your email address, your mobile number or a username, and a password. It is free, and you can use it straight away." %}{% else %}{% translate "Registration is not open yet. If the ClipCash team has given you access, sign in with your account." %}{% endif %}</p></li>

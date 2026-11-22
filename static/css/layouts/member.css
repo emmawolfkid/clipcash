@@ -48,7 +48,7 @@
 }
 
 .app-sidebar :focus-visible {
-  outline-color: var(--brand-yellow);
+  outline-color: var(--focus-on-navy);
   box-shadow: 0 0 0 2px var(--brand-navy);
 }
 
@@ -75,7 +75,7 @@
   position: sticky;
   top: 1rem;
   color: var(--nav-text);
-  background: var(--brand-navy);
+  background: var(--nav-bg);
   border-color: var(--brand-navy);
   padding: var(--space-3);
 }
@@ -121,9 +121,9 @@ a.app-nav__link:hover,
 
 .app-nav__link.is-current {
   font-weight: 600;
-  color: var(--brand-navy);
-  background: var(--brand-yellow);
-  box-shadow: none;
+  color: var(--nav-active-text);
+  background: var(--nav-active-bg);
+  box-shadow: var(--shadow-control);
 }
 
 .app-nav__link.is-disabled {
@@ -180,6 +180,18 @@ a.app-nav__link:hover,
     border: 1px solid ButtonText;
   }
 
+}
+
+/* The same bounded sidebar serves member, advertiser and staff shells. */
+.nav-icon { flex: 0 0 1.25rem; }
+.app-nav__link { font-size: var(--text-sm); }
+.app-nav__link .badge { margin-inline-start: auto; }
+.app-nav__link.is-current:hover { background: var(--primary-hover); color: var(--nav-active-text); }
+@media (min-width: 52.01rem) {
+  .app-sidebar { max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem); overflow-y: auto; overscroll-behavior: contain; }
+}
+@media (max-width: 52rem) {
+  .nav-enhanced .app-nav__list { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* UI-10: with a mouse on wide screens, denser menu rows keep the whole console menu in view.

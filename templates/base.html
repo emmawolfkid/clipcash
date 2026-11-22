@@ -33,33 +33,27 @@
         <p class="brand-tagline" lang="sw">Tazama Video · Kusanya Zawadi</p>
       </div>
       {% if request %}{# Error pages rendered without a request get no forms. #}
-      <button class="site-menu-toggle" type="button" aria-expanded="true" aria-controls="site-menu" hidden>{% translate "Menu" %}</button>
+      <button class="site-menu-toggle" aria-label="{% translate 'Open navigation' %}" type="button" aria-expanded="true" aria-controls="site-menu" hidden>{% translate "Menu" %}</button>
       <nav id="site-menu" class="site-nav" aria-label="{% block navigation_label %}{% translate 'Account' %}{% endblock %}">
+        <button type="button" class="drawer-close" data-nav-close hidden>{% translate "Close navigation" %} <span aria-hidden="true">×</span></button>
+        <button type="button" class="drawer-close" data-nav-close hidden>{% translate "Close navigation" %} <span aria-hidden="true">×</span></button>
         {% block site_navigation %}
         {% if user.is_authenticated %}
           <a href="{% url 'dashboard' %}">{% translate "Dashboard" %}</a>
-          {% with count=unread_notifications %}<a class="notification-bell" href="{% url 'notifications:inbox' %}"{% if count %} aria-label="{% blocktranslate count n=count %}Notifications, {{ n }} unread{% plural %}Notifications, {{ n }} unread{% endblocktranslate %}"{% endif %}>
-            <svg class="notification-bell__icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1Z"/></svg>
-            <span{% if count %} aria-hidden="true"{% endif %}>{% translate "Notifications" %}</span>{% if count %}<span class="notification-bell__badge" aria-hidden="true">{% if count > 99 %}99+{% else %}{{ count }}{% endif %}</span>{% endif %}
-          </a>{% endwith %}
           {% if user.is_staff %}<a href="{% url 'administration:overview' %}">{% translate "Console" %}</a>{% endif %}
-          <a href="{% url 'accounts:profile' %}">{% translate "My account" %}</a>
-          {% if features.memberships %}<a href="{% url 'memberships:mine' %}">{% translate "Membership" %}</a>{% endif %}
-          <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
-            <button type="submit" class="button--link">{% translate "Sign out" %}</button>
-          </form>
         {% else %}
           {% if features.videos %}<a href="{% url 'videos:library' %}">{% translate "Videos" %}</a>{% endif %}
           {% if features.memberships %}<a href="{% url 'memberships:plans' %}">{% translate "Plans" %}</a>{% endif %}
           <a href="{% url 'accounts:login' %}">{% translate "Sign in" %}</a>
           {% if features.registration %}<a href="{% url 'accounts:register' %}">{% translate "Create account" %}</a>{% endif %}
         {% endif %}
-        {% include "components/language_form.html" %}
         {% endblock %}
       </nav>
+      {% include "components/header_account.html" %}
       {% endif %}
     </div>
   </header>
+  <div class="nav-overlay" data-nav-overlay hidden aria-hidden="true"></div>
   {% if demo_verification_optional %}
   <p class="demo-banner" role="note"><strong>{% translate "Restricted demonstration" %}</strong> — {% translate "Email verification is optional for authorized demo accounts. Real payments and payouts are disabled." %}</p>
   {% endif %}

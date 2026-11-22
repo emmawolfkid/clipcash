@@ -6,7 +6,7 @@
 .status-panel {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1rem;
+  padding: var(--space-4);
   margin-bottom: 1rem;
 }
 
@@ -61,7 +61,7 @@
 
 .summary-card__title {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--text-sm);
   color: var(--muted);
   display: flex;
   gap: 0.4rem;
@@ -74,6 +74,7 @@
   font-size: 1.35rem;
   font-weight: 700;
   overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
 }
 
 .summary-card__unit {
@@ -117,7 +118,7 @@
 
 .card-grid {
   display: grid;
-  gap: 1rem;
+  gap: var(--space-4);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
 }
 
@@ -177,3 +178,5 @@
   }
 
 }
+
+.summary-card__value, .stat__value { overflow-wrap: anywhere; }

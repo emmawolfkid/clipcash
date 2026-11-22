@@ -113,3 +113,14 @@
   }
 
 }
+
+/* Conversation metadata is shared by customer and staff support, independently of inbox CSS. */
+.conversation-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
