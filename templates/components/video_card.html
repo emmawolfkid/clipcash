@@ -3,11 +3,13 @@
   <a class="video-card__link" href="{% url 'videos:detail' video.slug %}">
     <div class="video-card__thumb">
       {% if video.thumbnail %}<img src="{{ video.thumbnail }}" alt="" loading="lazy" width="320" height="180">{% else %}<span class="video-card__placeholder" aria-hidden="true">{{ video.title|slice:":1" }}</span>{% endif %}
+      {% if show_watch_action %}<span class="video-card__play" aria-hidden="true">&#9654;</span>{% endif %}
       {% if video.duration_display %}<span class="video-card__duration">{{ video.duration_display }}</span>{% endif %}
     </div>
     <div class="video-card__body">
       <h3 class="video-card__title">{{ video.title }}</h3>
       <p class="video-card__meta">{% if video.category %}{{ video.category.name }}{% endif %}{% if video.is_demo %} <span class="badge badge--pending">{% translate "Demo sample" %}</span>{% endif %}</p>
+      {% if show_watch_action %}<span class="video-card__action">{% translate "Watch video" %} <span aria-hidden="true">&#8594;</span></span>{% endif %}
     </div>
   </a>
 </li>

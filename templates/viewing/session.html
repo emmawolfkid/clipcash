@@ -1,13 +1,14 @@
 {% extends "members/layout.html" %}{% load i18n static money %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/viewing/session.css' %}">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/video-experience.css' %}"><link rel="stylesheet" href="{% static 'css/pages/viewing/session.css' %}">{% endblock %}
 {% block title %}{{ session.campaign.name }}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{{ session.campaign.name }}</h1>
+<div class="video-experience">
+<header class="video-heading"><span class="video-heading__icon" aria-hidden="true">&#9654;</span><h1 class="page-title">{{ session.campaign.name }}</h1></header>
 <p><a href="{% url 'viewing:history' %}">{% translate "Viewing history" %}</a> · <a href="{% url 'viewing:list' %}">{% translate "Sponsored videos" %}</a></p>
 {% if session.quoted_credits %}<p class="notice credit-quote" role="note">{% blocktranslate with credits=session.quoted_credits|credits %}This session earns {{ credits }} if ClipCash verifies the view. The amount is fixed for this session.{% endblocktranslate %}</p>
 {% elif session.quoted_credits == 0 %}<p class="notice credit-quote" role="note">{% translate "This session earns no credits." %}</p>{% endif %}
 {% if session.is_open and playback %}
-  <div class="player" data-playback-error="{% translate 'Playback is unavailable. Use the player controls to retry, or reload this session to check its current status. Unconfirmed time may not count.' %}">
+  <div class="player" data-playback-loading="{% translate 'Loading video. If playback does not resume, use the player controls or reload this page.' %}" data-playback-error="{% translate 'Playback is unavailable. Use the player controls to retry, or reload this session to check its current status. Unconfirmed time may not count.' %}">
     {% if playback.kind == "iframe" %}
       <iframe id="watch-frame" class="player__frame" src="{{ playback.url }}" title="{{ session.video.title }}"
               allow="accelerometer; gyroscope; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
@@ -49,4 +50,5 @@
   </section>
 {% endif %}
 {% include "components/not_a_reward_notice.html" %}
+</div>
 {% endblock %}

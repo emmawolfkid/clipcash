@@ -1,8 +1,9 @@
 {% extends "members/layout.html" %}{% load i18n static %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/videos/library.css' %}">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/video-experience.css' %}"><link rel="stylesheet" href="{% static 'css/pages/videos/library.css' %}">{% endblock %}
 {% block title %}{% if category %}{{ category.name }}{% else %}{% translate "Videos" %}{% endif %}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{% if category %}{{ category.name }}{% else %}{% translate "Video library" %}{% endif %}</h1>
+<div class="video-experience">
+<header class="video-heading"><span class="video-heading__icon" aria-hidden="true">&#9654;</span><div><h1 class="page-title">{% if category %}{{ category.name }}{% else %}{% translate "Video library" %}{% endif %}</h1><p>{% translate "Find your next video. Watch at your own pace." %}</p></div></header>
 {% if category.description %}<p class="lead">{{ category.description }}</p>{% endif %}
 <p class="lead">{% translate "Explore published videos. Playback access depends on your membership; library playback is separate from sponsored viewing verification." %}</p>
 <form class="toolbar library-search" method="get" role="search">
@@ -18,7 +19,7 @@
 {% endif %}
 {% if videos %}
   <h2 class="visually-hidden">{% translate "Videos" %}</h2>
-  <ul class="video-grid">{% for video in videos %}{% include "components/video_card.html" %}{% endfor %}</ul>
+  <ul class="video-grid">{% for video in videos %}{% include "components/video_card.html" with show_watch_action=True %}{% endfor %}</ul>
   {% if page.has_other_pages %}
   <nav class="pagination" aria-label="{% translate 'Pages' %}">
     {% if page.has_previous %}<a href="?{% if query %}q={{ query|urlencode }}&amp;{% endif %}page={{ page.previous_page_number }}">{% translate "Previous" %}</a>{% endif %}
@@ -27,7 +28,8 @@
   </nav>
   {% endif %}
 {% else %}
-  <p class="empty-state">{% if query %}{% translate "No videos match your search." %}{% else %}{% translate "No videos are available here yet." %}{% endif %}</p>
-  {% if query %}<a href="{{ request.path }}">{% translate "Clear search" %}</a>{% endif %}
+  <div class="video-empty"><span class="video-empty__icon" aria-hidden="true">&#9654;</span><p class="empty-state">{% if query %}{% translate "No videos match your search." %}{% else %}{% translate "No videos are available here yet." %}{% endif %}</p>
+  {% if query %}<a href="{{ request.path }}">{% translate "Clear search" %}</a>{% endif %}</div>
 {% endif %}
+</div>
 {% endblock %}

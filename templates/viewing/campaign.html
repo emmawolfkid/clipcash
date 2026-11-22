@@ -1,8 +1,9 @@
 {% extends "members/layout.html" %}{% load i18n static money %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/viewing/list.css' %}">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/video-experience.css' %}"><link rel="stylesheet" href="{% static 'css/pages/viewing/list.css' %}">{% endblock %}
 {% block title %}{{ campaign.name }}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{{ campaign.name }}</h1>
+<div class="video-experience">
+<header class="video-heading"><span class="video-heading__icon" aria-hidden="true">&#9654;</span><h1 class="page-title">{{ campaign.name }}</h1></header>
 <p><a href="{% url 'viewing:list' %}">{% translate "Back to sponsored videos" %}</a></p>
 <p class="lead">{% blocktranslate with name=campaign.organization.display_name %}Sponsored by {{ name }}{% endblocktranslate %}{% if campaign.video.duration_display %} · {{ campaign.video.duration_display }}{% endif %}</p>
 {% if campaign.description %}<p>{{ campaign.description|linebreaksbr }}</p>{% endif %}
@@ -19,11 +20,12 @@
   </ul>
   {% if budget_short %}<p class="notice notice--warning" role="status">{% translate "This campaign's credit budget is used up. You can still watch, but a view will not earn credits." %}</p>{% endif %}
   {% if today_done %}<p class="notice" role="status">{% translate "You already have a verified view of this campaign today. Come back tomorrow." %}</p>
-  {% elif views_left %}<form method="post">{% csrf_token %}<button class="button" type="submit">{% translate "Start watching" %}</button></form>{% endif %}
+  {% elif views_left %}<form method="post">{% csrf_token %}<button class="button button--action" type="submit">{% translate "Start watching" %}</button></form>{% endif %}
   {% elif reason == "plan_not_targeted" or reason == "no_membership" or reason == "entitlement_missing" %}
   <p class="notice" role="status"><strong>{% translate "Locked." %}</strong> {% if plans %}{% blocktranslate with plans=plans|join:", " %}This campaign is for members on: {{ plans }}.{% endblocktranslate %}{% else %}{% translate "An active membership that includes this video is needed." %}{% endif %}</p>
   <p><a class="button button--secondary" href="{% url 'memberships:plans' %}">{% translate "See membership plans" %}</a></p>
   {% else %}<p class="notice" role="status">{{ reason_message }}</p>{% endif %}
 </section>
 <p class="lead">{% translate "Credits are non-cash: they are not money, are kept separate from your wallet and cannot be withdrawn." %}</p>
+</div>
 {% endblock %}

@@ -11,6 +11,9 @@
   margin: var(--space-1) 0;
   font-weight: 700;
 }
+.video-experience .credit-offer { color: var(--success); font-size: var(--text-lg); }
+.video-experience .sponsored-label { display: inline-block; color: var(--warning); background: var(--warning-bg); border-radius: var(--radius-pill); padding: var(--space-1) var(--space-2); font-size: var(--text-sm); }
+.video-experience .credit-panel { max-width: 52rem; border-block-start: 3px solid var(--brand-yellow); }
 
 .video-card--locked .video-card__thumb {
   opacity: 0.6;

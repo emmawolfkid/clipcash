@@ -14,3 +14,7 @@
 .credit-quote {
   margin-bottom: var(--space-4);
 }
+.video-experience #watch-panel { margin-block: var(--space-5); border-block-start: 3px solid var(--brand-blue); }
+.video-experience #watch-panel progress { accent-color: var(--brand-blue); }
+.video-experience #watch-panel form { margin-top: var(--space-4); }
+.video-experience .credit-quote { background: var(--warning-bg); color: var(--warning); border-inline-start: 3px solid var(--brand-yellow); }
