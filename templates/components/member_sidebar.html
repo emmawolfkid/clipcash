@@ -2,6 +2,7 @@
   <aside class="app-sidebar" tabindex="-1">
     <button type="button" class="drawer-close" data-nav-close hidden>{% translate "Close navigation" %} <span aria-hidden="true">×</span></button>
     <button type="button" class="app-nav__toggle" aria-expanded="true" aria-controls="member-menu" hidden>{% translate "Menu" %}</button>
+    <a class="app-sidebar__brand" href="{% url 'dashboard' %}">{% include "components/wordmark.html" %}</a>
     <nav id="member-menu" class="app-nav" aria-label="{% translate 'Member menu' %}">
       <p class="app-nav__group" id="nav-home">{% translate "Home" %}</p>
       <ul class="app-nav__list" aria-labelledby="nav-home">

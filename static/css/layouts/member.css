@@ -206,3 +206,11 @@ a.app-nav__link:hover,
     margin-top: var(--space-4);
   }
 }
+
+/* UI-04: compact overview shell; member workflows retain their existing navigation. */
+.app-sidebar__brand { display: block; margin: var(--space-3) var(--space-2) var(--space-4); text-decoration: none; }
+.profile-menu__account-id { display: block; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; font-size: 0.6875rem; font-weight: 400; color: var(--nav-muted); }
+.app-shell--overview { gap: var(--space-4); margin-block: var(--space-4); }
+.app-shell--overview .app-main { min-width: 0; }
+@media (min-width: 64rem) { .app-shell--overview { grid-template-columns: 13rem minmax(0, 1fr); } }
+@media (max-width: 52rem) { .profile-menu__account-id { display: none; } }

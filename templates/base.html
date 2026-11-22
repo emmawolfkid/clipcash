@@ -36,7 +36,6 @@
       <button class="site-menu-toggle" aria-label="{% translate 'Open navigation' %}" type="button" aria-expanded="true" aria-controls="site-menu" hidden>{% translate "Menu" %}</button>
       <nav id="site-menu" class="site-nav" aria-label="{% block navigation_label %}{% translate 'Account' %}{% endblock %}">
         <button type="button" class="drawer-close" data-nav-close hidden>{% translate "Close navigation" %} <span aria-hidden="true">×</span></button>
-        <button type="button" class="drawer-close" data-nav-close hidden>{% translate "Close navigation" %} <span aria-hidden="true">×</span></button>
         {% block site_navigation %}
         {% if user.is_authenticated %}
           <a href="{% url 'dashboard' %}">{% translate "Dashboard" %}</a>

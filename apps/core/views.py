@@ -49,10 +49,19 @@ class MemberDashboardView(VerifiedAccountRequiredMixin, TemplateView):
                 recent_videos = list(member_catalogue(access.subscription).order_by("-published_at")[:4])
                 for video in recent_videos:
                     video.thumbnail = thumbnail_url(video)
+        # UI-04 presentation only: public plan catalogue and supported destination labels.
+        # Bounded, read-only; plan details retain all purchase/eligibility decisions.
+        from apps.memberships.models import MembershipPlan
+        from apps.withdrawals.models import PayoutBeneficiary
+        dashboard_plans = (list(MembershipPlan.objects.filter(
+            status=MembershipPlan.Status.ACTIVE, is_public=True)[:4])
+            if features.is_enabled("memberships") else [])
         from apps.accounts.services import email_change_available
 
         context.update({"nav": "dashboard", "summary": summary, "recent_videos": recent_videos,
-                        "videos_locked": videos_locked,
+                        "videos_locked": videos_locked, "dashboard_plans": dashboard_plans,
+                        "dashboard_networks": [*PayoutBeneficiary.Network.choices,
+                                               (PayoutBeneficiary.Kind.BANK, PayoutBeneficiary.Kind.BANK.label)],
                         # REG-04: the unconfirmed-email reminder offers a way to correct the address.
                         "email_change_available": email_change_available(self.request.user),
                         # Kept for templates and tests that read them directly.

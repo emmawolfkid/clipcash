@@ -5206,3 +5206,89 @@ msgstr "Usalama na ukaguzi"
 #: templates/administration/_sidebar.html templates/administration/overview.html
 msgid "Wallets (real ledger)"
 msgstr "Pochi (leja halisi)"
+
+# UI-04 member dashboard and profile
+msgid "Account ID"
+msgstr "Kitambulisho cha akaunti"
+
+# UI-04 member dashboard and profile
+msgid "Account settings"
+msgstr "Mipangilio ya akaunti"
+
+# UI-04 member dashboard and profile
+msgid "Account options"
+msgstr "Chaguo za akaunti"
+
+# UI-04 member dashboard and profile
+msgid "Withdrawal information"
+msgstr "Maelezo ya kutoa pesa"
+
+# UI-04 member dashboard and profile
+msgid "Sponsored videos are not available at the moment."
+msgstr "Video za matangazo hazipatikani kwa sasa."
+
+# UI-04 member dashboard and profile
+msgid "Quick actions"
+msgstr "Vitendo vya haraka"
+
+# UI-04 member dashboard and profile
+msgid "Watch videos"
+msgstr "Tazama video"
+
+# UI-04 member dashboard and profile
+msgid "Referral"
+msgstr "Mialiko"
+
+# UI-04 member dashboard and profile
+msgid "Check availability"
+msgstr "Angalia upatikanaji"
+
+# UI-04 member dashboard and profile
+msgid "Watch Video Now"
+msgstr "Tazama Video Sasa"
+
+# UI-04 member dashboard and profile
+msgid "Membership does not promise earnings or create wallet money."
+msgstr "Uanachama hauahidi mapato wala kuweka pesa kwenye pochi."
+
+# UI-04 member dashboard and profile
+msgid "Referral sharing is not available yet."
+msgstr "Kushiriki mialiko bado hakupatikani."
+
+# UI-04 member dashboard and profile
+msgid "No referral link or referral rewards are available on your account."
+msgstr "Hakuna kiungo cha mwaliko wala zawadi za mialiko zinazopatikana kwenye akaunti yako."
+
+# UI-04 member dashboard and profile
+msgid "Supported destination types"
+msgstr "Aina za maeneo ya kupokea pesa zinazokubaliwa"
+
+# UI-04 member dashboard and profile
+msgid "Destination support does not mean live payouts are enabled."
+msgstr "Kukubaliwa kwa eneo la kupokea pesa hakumaanishi malipo halisi yamewezeshwa."
+
+# UI-04 member dashboard and profile
+msgid "How ClipCash works"
+msgstr "Jinsi ClipCash inavyofanya kazi"
+
+# UI-04 member dashboard and profile
+msgid "Create your account"
+msgstr "Fungua akaunti yako"
+
+# UI-04 member dashboard and profile
+msgid "Choose eligible content"
+msgstr "Chagua maudhui yanayoruhusiwa"
+
+# UI-04 member dashboard and profile
+msgid "Review verified activity"
+msgstr "Angalia shughuli zilizothibitishwa"
+
+# UI-04 member dashboard and profile
+msgid "Check wallet and withdrawal availability"
+msgstr "Angalia pochi na upatikanaji wa kutoa pesa"
+
+# UI-04 member dashboard
+msgid "%(n)s demo withdrawal"
+msgid_plural "%(n)s demo withdrawals"
+msgstr[0] "utoaji pesa wa majaribio %(n)s"
+msgstr[1] "utoaji pesa wa majaribio %(n)s"

@@ -3,7 +3,14 @@
 {% block title %}{% translate "My account" %}{% endblock %}
 {% block crumb %}{% translate "Profile and security" %}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{% translate "My account" %}</h1>
+<div class="account-overview">
+<header class="account-heading"><span class="account-avatar" aria-hidden="true">{% include "components/nav_icon.html" with icon="profile" %}</span><div><h1 class="page-title">{% translate "My account" %}</h1><p>{% firstof user.get_full_name user.sign_in_identifier %}</p>{% if user.pk %}<p class="account-note">{% translate "Account ID" %}: {{ user.pk }}</p>{% endif %}</div></header>
+<nav class="account-settings-menu" aria-label="{% translate 'Account settings' %}">
+<a href="{% url 'accounts:profile_edit' %}">{% include "components/nav_icon.html" with icon="profile" %}<span>{% translate "Edit name and phone number" %}</span><span aria-hidden="true">›</span></a>
+<a href="{% url 'accounts:password_change' %}">{% include "components/nav_icon.html" with icon="settings" %}<span>{% translate "Change password" %}</span><span aria-hidden="true">›</span></a>
+{% if email_change_available %}<a href="{% url 'accounts:email_change' %}">{% include "components/nav_icon.html" with icon="profile" %}<span>{% if user.email %}{% translate "Change email address" %}{% else %}{% translate "Add a recovery email address" %}{% endif %}</span><span aria-hidden="true">›</span></a>{% endif %}
+<a href="{% url 'notifications:inbox' %}">{% include "components/nav_icon.html" with icon="notifications" %}<span>{% translate "Notifications" %}</span><span aria-hidden="true">›</span></a>
+</nav>
 {% if pending_email_change %}
 <div class="notice notice--warning account-pending" role="status">
   {% blocktranslate with email=pending_email_change.new_email %}A change to <strong>{{ email }}</strong> is waiting for confirmation. Your email address stays the same until the link sent there is used.{% endblocktranslate %}
@@ -55,4 +62,5 @@
   {% include "members/_activity_list.html" %}
   <p class="account-note">{% translate "If you do not recognise something here, change your password and contact support." %}</p>
 </section>
+</div>
 {% endblock %}

@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% load i18n static %}
 {% block layout_styles %}<link rel="stylesheet" href="{% static 'css/layouts/member.css' %}">{% endblock %}
 {% block main %}
-<div class="app-shell{% if not user.is_authenticated %} app-shell--plain{% endif %}">
+<div class="app-shell{% if nav == 'dashboard' or nav == 'profile' %} app-shell--overview{% endif %}{% if not user.is_authenticated %} app-shell--plain{% endif %}">
   {% if user.is_authenticated %}
   {% include "components/member_sidebar.html" %}
   {% endif %}

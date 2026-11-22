@@ -1,0 +1,6 @@
+{% load i18n %}{% if activity %}
+<ol class="activity">{% for item in activity %}<li class="activity__item">
+<span class="activity__kind" aria-hidden="true">{% if item.kind == 'viewing' %}{% include "components/nav_icon.html" with icon="videos" %}{% elif item.kind == 'reward' %}{% include "components/nav_icon.html" with icon="rewards" %}{% elif item.kind == 'membership' %}{% include "components/nav_icon.html" with icon="membership" %}{% else %}{% include "components/nav_icon.html" with icon="activity" %}{% endif %}</span>
+<span class="activity__text"><span class="visually-hidden">{{ item.kind|capfirst }}: </span>{% if item.url %}<a href="{{ item.url }}">{{ item.text }}</a>{% else %}{{ item.text }}{% endif %}{% if item.simulated %} <span class="badge badge--sandbox">{% translate "Simulated" %}</span>{% endif %}</span>
+<time class="activity__time" datetime="{{ item.when|date:'c' }}">{{ item.when|date:"SHORT_DATETIME_FORMAT" }}</time>
+</li>{% endfor %}</ol>{% else %}<p class="empty-state">{% translate "No activity yet." %}</p>{% endif %}
