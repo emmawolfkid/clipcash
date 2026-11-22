@@ -5292,3 +5292,65 @@ msgid "%(n)s demo withdrawal"
 msgid_plural "%(n)s demo withdrawals"
 msgstr[0] "utoaji pesa wa majaribio %(n)s"
 msgstr[1] "utoaji pesa wa majaribio %(n)s"
+
+# UI-05 video library and player
+msgid "Watch video"
+msgstr "Tazama video"
+
+msgid "Member video library"
+msgstr "Maktaba ya video ya wanachama"
+
+msgid "Find your next video. Watch at your own pace."
+msgstr "Pata video yako inayofuata. Tazama kwa kasi yako mwenyewe."
+
+msgid "About this video"
+msgstr "Kuhusu video hii"
+
+msgid "Playback is available for your current membership."
+msgstr "Video hii inaweza kuchezwa kwa uanachama wako wa sasa."
+
+msgid "Loading video. If playback does not resume, use the player controls or reload this page."
+msgstr "Video inapakiwa. Ikiwa haitaendelea kucheza, tumia vidhibiti vya kicheza video au pakia upya ukurasa huu."
+
+msgid "Continue watching"
+msgstr "Endelea kutazama"
+
+msgid "View campaign"
+msgstr "Angalia kampeni"
+
+# UI-05 playback and catalogue access messages shown on the video pages
+msgid "Sign in to watch this video."
+msgstr "Ingia ili kutazama video hii."
+
+msgid "Your account cannot play videos at the moment."
+msgstr "Akaunti yako haiwezi kucheza video kwa sasa."
+
+msgid "Confirm your email address to watch videos."
+msgstr "Thibitisha barua pepe yako ili kutazama video."
+
+msgid "An active membership is needed to watch this video."
+msgstr "Uanachama unaotumika unahitajika ili kutazama video hii."
+
+msgid "Your membership plan does not include this video."
+msgstr "Mpango wako wa uanachama haujumuishi video hii."
+
+msgid "This video is not available right now."
+msgstr "Video hii haipatikani kwa sasa."
+
+msgid "Sign in to browse videos. Videos are available to members with an active membership."
+msgstr "Ingia ili kuvinjari video. Video zinapatikana kwa wanachama wenye uanachama unaotumika."
+
+msgid "Your account cannot use videos at the moment. Please contact support."
+msgstr "Akaunti yako haiwezi kutumia video kwa sasa. Wasiliana na usaidizi."
+
+msgid "Confirm your email address and choose a membership to browse videos."
+msgstr "Thibitisha barua pepe yako na uchague uanachama ili kuvinjari video."
+
+msgid "Videos are available to members with an active membership. Choose a plan to get started."
+msgstr "Video zinapatikana kwa wanachama wenye uanachama unaotumika. Chagua mpango ili kuanza."
+
+msgid "Your membership is suspended, so videos are unavailable. Please contact support."
+msgstr "Uanachama wako umesimamishwa, kwa hiyo video hazipatikani. Wasiliana na usaidizi."
+
+msgid "Your membership plan does not include this video. Compare plans to find one that does."
+msgstr "Mpango wako wa uanachama haujumuishi video hii. Linganisha mipango ili kupata unaoijumuisha."
