@@ -5415,3 +5415,7 @@ msgstr "Klipu yako inayofuata inaanzia hapa."
 
 msgid "Your sign-in details"
 msgstr "Taarifa zako za kuingia"
+
+# UI-07 wallet
+msgid "Check your real wallet balances and ledger transaction history."
+msgstr "Angalia salio halisi la pochi yako na historia ya miamala ya leja."
