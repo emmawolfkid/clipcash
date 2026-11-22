@@ -1,0 +1,4 @@
+{% load i18n %}{# UI-06A: POST, CSRF-protected sign-out inside the collapsible #site-menu (mobile). Wider screens hide it and use the profile menu's identical form. #}
+<form method="post" action="{% url 'accounts:logout' %}" class="site-nav__sign-out">{% csrf_token %}
+  <button type="submit" class="button--link">{% translate "Sign out" %}</button>
+</form>

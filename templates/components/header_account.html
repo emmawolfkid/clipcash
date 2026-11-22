@@ -9,7 +9,7 @@
     {% if count %}<span class="notification-bell__badge" aria-hidden="true">{% if count > 99 %}99+{% else %}{{ count }}{% endif %}</span>{% endif %}
   </a>{% endwith %}
   <details class="profile-menu">
-    <summary class="profile-menu__trigger"><span class="profile-menu__avatar">{% include "components/nav_icon.html" with icon="profile" %}</span><span class="profile-menu__identity">{% firstof user.first_name user.sign_in_identifier _("My account") %}{% if user.pk %}<small class="profile-menu__account-id">{% translate "Account ID" %}: {{ user.pk }}</small>{% endif %}</span><span class="profile-menu__chevron" aria-hidden="true">⌄</span><span class="visually-hidden">{% translate "Account options" %}</span></summary>
+    <summary class="profile-menu__trigger"><span class="profile-menu__avatar">{% include "components/nav_icon.html" with icon="profile" %}</span><span class="profile-menu__identity">{# UI-06A: never the sign-in email, phone or username, which would show on every page. #}{% firstof user.first_name _("My account") %}{% if user.pk %}<small class="profile-menu__account-id">{% translate "Account ID" %}: {{ user.pk }}</small>{% endif %}</span><span class="profile-menu__chevron" aria-hidden="true">⌄</span><span class="visually-hidden">{% translate "Account options" %}</span></summary>
     <div class="profile-menu__panel">
       <a href="{% url 'accounts:profile' %}">{% translate "Profile and security" %}</a>
       <a href="{% url 'accounts:profile_edit' %}">{% translate "Edit profile" %}</a>

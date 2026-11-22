@@ -5354,3 +5354,64 @@ msgstr "Uanachama wako umesimamishwa, kwa hiyo video hazipatikani. Wasiliana na 
 
 msgid "Your membership plan does not include this video. Compare plans to find one that does."
 msgstr "Mpango wako wa uanachama haujumuishi video hii. Linganisha mipango ili kupata unaoijumuisha."
+
+# UI-06A account, home and navigation strings
+msgid "A clear view of your membership, eligible videos and viewing history."
+msgstr "Mwonekano wazi wa uanachama wako, video unazostahili na historia ya utazamaji."
+
+msgid "Call ClipCash support"
+msgstr "Piga simu kwa usaidizi wa ClipCash"
+
+msgid "ClipCash home"
+msgstr "Ukurasa wa mwanzo wa ClipCash"
+
+msgid "Close navigation"
+msgstr "Funga menyu"
+
+msgid "Creating an account is free. Choose a mobile number, email address or username and a password."
+msgstr "Kufungua akaunti ni bure. Chagua namba ya simu, anwani ya barua pepe au jina la mtumiaji, pamoja na nenosiri."
+
+msgid "Discover available videos"
+msgstr "Gundua video zinazopatikana"
+
+msgid "Discover. Watch. Keep track."
+msgstr "Gundua. Tazama. Fuatilia."
+
+msgid "Email ClipCash support"
+msgstr "Tuma barua pepe kwa usaidizi wa ClipCash"
+
+msgid "Email activation"
+msgstr "Uwezeshaji kwa barua pepe"
+
+msgid "Illustration only. Cash rewards and withdrawals are not available."
+msgstr "Mchoro wa mfano tu. Zawadi za pesa taslimu na utoaji pesa hazipatikani."
+
+msgid "Join ClipCash"
+msgstr "Jiunge na ClipCash"
+
+msgid "Manage your membership"
+msgstr "Simamia uanachama wako"
+
+msgid "One account for video discovery, membership access and your viewing records."
+msgstr "Akaunti moja kwa kugundua video, kufikia uanachama na kumbukumbu zako za utazamaji."
+
+msgid "Sign in with your mobile number (for example 0712 345 678), email address or username, and your password."
+msgstr "Ingia kwa namba yako ya simu (kwa mfano 0712 345 678), anwani ya barua pepe au jina la mtumiaji, pamoja na nenosiri lako."
+
+msgid "Tell us your name and choose how to sign in: a mobile number, email address or username. Choose a password. Your account is ready at once. Creating an account is free."
+msgstr "Tuambie jina lako na uchague jinsi ya kuingia: namba ya simu, anwani ya barua pepe au jina la mtumiaji. Chagua nenosiri. Akaunti yako iko tayari mara moja. Kufungua akaunti ni bure."
+
+msgid "Use the identifier you registered with. Ordinary member registration does not require an email confirmation or an SMS code."
+msgstr "Tumia kitambulisho ulichojisajili nacho. Usajili wa kawaida wa mwanachama hauhitaji uthibitisho wa barua pepe wala msimbo wa SMS."
+
+msgid "Welcome back"
+msgstr "Karibu tena"
+
+msgid "Your ClipCash, together"
+msgstr "ClipCash yako, mahali pamoja"
+
+msgid "Your next clip starts here."
+msgstr "Klipu yako inayofuata inaanzia hapa."
+
+msgid "Your sign-in details"
+msgstr "Taarifa zako za kuingia"

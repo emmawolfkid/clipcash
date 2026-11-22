@@ -234,3 +234,8 @@
   .header-tools .language-form select { max-width: 7rem; }
   .profile-menu__identity { max-width: 6rem; }
 }
+
+/* UI-06A: the mobile menu keeps its own sign-out form; wider screens use the profile menu. */
+@media (min-width: 52.01rem) {
+  .site-nav .site-nav__sign-out { display: none; }
+}
