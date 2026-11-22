@@ -35,7 +35,35 @@
   document.documentElement.classList.add("nav-enhanced");
   if (sidebar) { document.documentElement.classList.add("has-sidebar"); }
   if (sidebarToggle && siteToggle) { sidebarToggle.hidden = true; }
-  toggle.setAttribute("aria-controls", sidebarMenu ? sidebarMenu.id : panel.id);
+
+  // UI-06B: with a sidebar, the one Menu button controls both menus. Header-menu links and
+  // forms the sidebar already offers are marked so each destination appears once; the rest
+  // (e.g. the member dashboard and sign-out on console pages) join the sidebar drawer on
+  // narrow screens and return to the header on wide ones.
+  var shared = siteMenu && sidebarMenu;
+  var siteHome = siteMenu && { parent: siteMenu.parentNode, next: siteMenu.nextSibling };
+  function markDuplicates() {
+    Array.prototype.forEach.call(siteMenu.querySelectorAll("a[href]"), function (link) {
+      if (sidebar.querySelector('a[href="' + link.getAttribute("href") + '"]')) { link.classList.add("site-nav__duplicate"); }
+    });
+    Array.prototype.forEach.call(siteMenu.querySelectorAll("form[action]"), function (form) {
+      if (sidebar.querySelector('form[action="' + form.getAttribute("action") + '"]')) { form.classList.add("site-nav__duplicate"); }
+    });
+  }
+  function placeSiteMenu() {
+    if (!shared) { return; }
+    if (narrow.matches) {
+      if (siteMenu.parentNode !== sidebar) { sidebar.appendChild(siteMenu); }
+    } else if (siteMenu.parentNode !== siteHome.parent) {
+      siteHome.parent.insertBefore(siteMenu, siteHome.next);
+    }
+  }
+  if (shared) {
+    markDuplicates();
+    toggle.setAttribute("aria-controls", siteMenu.id + " " + sidebarMenu.id);
+  } else {
+    toggle.setAttribute("aria-controls", sidebarMenu ? sidebarMenu.id : panel.id);
+  }
 
   function focusable() {
     return Array.prototype.slice.call(panel.querySelectorAll('a[href], button:not([disabled]), select:not([disabled]), input:not([disabled]):not([type="hidden"]), summary, [tabindex="0"]'))
@@ -82,6 +110,7 @@
     var hadFocus = panel.contains(document.activeElement);
     // Release the old modal before changing breakpoint; never leave the document inert.
     closeDrawer(false);
+    placeSiteMenu();
     toggle.hidden = !narrow.matches;
     if (closeButton) { closeButton.hidden = !narrow.matches; }
     if (narrow.matches && hadFocus) { toggle.focus(); }
