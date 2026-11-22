@@ -1,7 +1,15 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load static i18n %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/support/support.css' %}">{% endblock %}
 {% block title %}{% translate "Ask for help" %}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{% translate "Ask for help" %}</h1>
-<p><a href="{% url 'support:tickets' %}">{% translate "Back to my tickets" %}</a></p>
-{% translate "Send request" as button %}{% include "components/form.html" with form=form button=button %}
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="support" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{% translate "Ask for help" %}</h1>
+    <p class="page-banner__subtitle"><a href="{% url 'support:tickets' %}">{% translate "Back to my tickets" %}</a></p></div>
+</header>
+<div class="support-page">
+<section class="support-card support-card--reply">
+{% translate "Send request" as button %}{% include "components/form.html" with form=form button=button button_class="button--action" %}
+</section>
+</div>
 {% endblock %}

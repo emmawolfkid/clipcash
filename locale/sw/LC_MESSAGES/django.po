@@ -5423,3 +5423,7 @@ msgstr "Angalia salio halisi la pochi yako na historia ya miamala ya leja."
 # UI-08 withdrawals
 msgid "See what a withdrawal needs, manage payout destinations and review demo scenarios."
 msgstr "Angalia mahitaji ya kutoa pesa, simamia njia za kupokea malipo na kagua mifano ya majaribio."
+
+# UI-10 support
+msgid "Ask ClipCash support for help and follow every reply here."
+msgstr "Omba msaada kutoka kwa usaidizi wa ClipCash na ufuatilie kila jibu hapa."

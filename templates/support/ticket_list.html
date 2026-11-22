@@ -1,8 +1,15 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load static i18n %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/support/support.css' %}">{% endblock %}
 {% block title %}{% translate "Support" %}{% endblock %}
 {% block member_content %}
-<div class="section__header"><h1 class="page-title">{% translate "Support tickets" %}</h1><a class="button" href="{% url 'support:create' %}">{% translate "Ask for help" %}</a></div>
-<form class="toolbar" method="get" role="search">
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="support" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{% translate "Support tickets" %}</h1>
+    <p class="page-banner__subtitle">{% translate "Ask ClipCash support for help and follow every reply here." %}</p></div>
+  <a class="page-banner__aside button" href="{% url 'support:create' %}">{% translate "Ask for help" %}</a>
+</header>
+<div class="support-page">
+<form class="toolbar support-filters" method="get" role="search">
   <label class="visually-hidden" for="q">{% translate "Search by reference or subject" %}</label>
   <input id="q" type="search" name="q" value="{{ query }}" maxlength="100" placeholder="{% translate 'Search by reference or subject' %}">
   <label class="visually-hidden" for="f-status">{% translate "Status" %}</label>
@@ -10,17 +17,22 @@
   <button type="submit" class="button button--secondary">{% translate "Filter" %}</button>
 </form>
 {% if page.object_list %}
-<table class="table"><caption class="visually-hidden">{% translate "Your support tickets" %}</caption>
-  <thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Subject" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Last update" %}</th></tr></thead>
-  <tbody>{% for ticket in page.object_list %}<tr>
-    <td><a href="{% url 'support:ticket' ticket.reference %}">{{ ticket.reference }}</a></td>
-    <td>{{ ticket.subject }}{% if ticket.organization %}<br><small>{{ ticket.organization.display_name }}</small>{% endif %}</td>
-    <td>{% include "support/_status_badge.html" %}</td>
-    <td><time datetime="{{ ticket.last_activity_at|date:'c' }}">{{ ticket.last_activity_at|date:"SHORT_DATETIME_FORMAT" }}</time></td>
-  </tr>{% endfor %}</tbody>
-</table>
+<section aria-labelledby="ticket-list-title">
+<h2 class="visually-hidden" id="ticket-list-title">{% translate "Your support tickets" %}</h2>
+<ul class="ticket-list">{% for ticket in page.object_list %}
+  <li class="ticket-row">
+    <span class="ticket-row__avatar">{% include "components/nav_icon.html" with icon="support" %}</span>
+    <div class="ticket-row__main">
+      <h3 class="ticket-row__subject"><a href="{% url 'support:ticket' ticket.reference %}">{{ ticket.subject }}</a></h3>
+      <p class="ticket-row__meta">{{ ticket.reference }}{% if ticket.organization %} · {{ ticket.organization.display_name }}{% endif %}</p>
+    </div>
+    <div class="ticket-row__status">{% include "support/_status_badge.html" %}<span><span class="visually-hidden">{% translate "Last update" %}: </span><time datetime="{{ ticket.last_activity_at|date:'c' }}">{{ ticket.last_activity_at|date:"SHORT_DATETIME_FORMAT" }}</time></span></div>
+  </li>{% endfor %}
+</ul>
+</section>
 {% include "components/pagination.html" %}
 {% else %}
-<p class="empty-state">{% if query or status %}{% translate "No tickets match these filters." %}{% else %}{% translate "You have not asked for help yet. Open a ticket and ClipCash support will reply here." %}{% endif %}</p>
+<p class="empty-state support-card">{% if query or status %}{% translate "No tickets match these filters." %}{% else %}{% translate "You have not asked for help yet. Open a ticket and ClipCash support will reply here." %}{% endif %}</p>
 {% endif %}
+</div>
 {% endblock %}

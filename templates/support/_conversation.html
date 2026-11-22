@@ -2,7 +2,7 @@
 <ol class="list support-thread" aria-label="{% translate 'Conversation and history' %}">
 {% for moment, kind, item in items %}
   {% if kind == "message" %}
-  <li class="list__item{% if staff %}{% if item.internal %} support-note--internal{% endif %}{% else %} panel{% endif %}">
+  <li class="list__item support-message{% if item.from_staff %} support-message--staff{% endif %}{% if staff %}{% if item.internal %} support-note--internal{% endif %}{% else %} panel{% endif %}">
     <div>
       <p class="conversation-meta">
         <strong>{% if item.from_staff %}{% if staff %}{{ item.author.sign_in_identifier }}{% else %}{% translate "ClipCash support" %}{% endif %}{% elif staff %}{{ item.author.sign_in_identifier }} ({% translate "customer" %}){% else %}{% if item.author_id == user.pk %}{% translate "You" %}{% else %}{{ item.author.sign_in_identifier }}{% endif %}{% endif %}</strong>
@@ -13,7 +13,7 @@
     </div>
   </li>
   {% else %}
-  <li class="list__item">
+  <li class="list__item support-event">
     <p class="conversation-meta"><time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:"SHORT_DATETIME_FORMAT" }}</time>
       {% if item.action == "CREATED" %}{% translate "Ticket opened" %}
       {% elif item.action == "REOPENED" %}{% translate "Ticket reopened" %}

@@ -1,25 +1,32 @@
-{% extends "members/layout.html" %}{% load i18n %}
+{% extends "members/layout.html" %}{% load static i18n %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/support/support.css' %}">{% endblock %}
 {% block title %}{{ ticket.reference }}{% endblock %}
 {% block member_content %}
-<p><a href="{% url 'support:tickets' %}">{% translate "Back to my tickets" %}</a></p>
-<div class="section__header"><h1 class="page-title">{{ ticket.subject }}</h1>{% include "support/_status_badge.html" %}</div>
-<dl class="details">
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="support" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{{ ticket.subject }}</h1>
+    <p class="page-banner__subtitle"><a href="{% url 'support:tickets' %}">{% translate "Back to my tickets" %}</a></p></div>
+  <span class="page-banner__aside">{% include "support/_status_badge.html" %}</span>
+</header>
+<div class="support-page">
+<section class="support-card"><dl class="details support-facts">
   <dt>{% translate "Reference" %}</dt><dd>{{ ticket.reference }}</dd>
   <dt>{% translate "Category" %}</dt><dd>{{ ticket.get_category_display }}</dd>
   {% if ticket.organization %}<dt>{% translate "Advertiser account" %}</dt><dd>{{ ticket.organization.display_name }}</dd>{% endif %}
   <dt>{% translate "Opened" %}</dt><dd>{{ ticket.created_at|date:"DATETIME_FORMAT" }}</dd>
-</dl>
-<section class="section">
+</dl></section>
+<section class="support-card">
   <h2>{% translate "Conversation" %}</h2>
   {% include "support/_conversation.html" with items=items staff=False %}
 </section>
-<section class="section">
+<section class="support-card{% if can_reply %} support-card--reply{% endif %}">
   {% if can_reply %}
   <h2>{% translate "Reply" %}</h2>
   {% if ticket.status == "RESOLVED" %}<p class="lead">{% translate "This ticket is resolved. Replying will reopen it." %}</p>{% endif %}
-  {% translate "Send reply" as button %}{% include "components/form.html" with form=form button=button %}
+  {% translate "Send reply" as button %}{% include "components/form.html" with form=form button=button button_class="button--action" %}
   {% else %}
   <p class="empty-state">{% translate "This ticket is closed." %} <a href="{% url 'support:create' %}">{% translate "Open a new ticket" %}</a></p>
   {% endif %}
 </section>
+</div>
 {% endblock %}

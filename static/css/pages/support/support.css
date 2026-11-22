@@ -1,0 +1,59 @@
+/* UI-10: pages / support (member tickets; design plan section 9). Staff console pages do not load this. */
+.support-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); min-width: 0; }
+.support-page > * { margin: 0; }
+.support-card {
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+.support-card > h2 { margin: 0 0 var(--space-4); font-size: var(--text-lg); }
+.support-card > .form { margin: 0; }
+.support-card--reply { border-top: 4px solid var(--brand-yellow); }
+
+/* Filters: a white toolbar card. */
+.support-filters { margin: 0; padding: var(--space-3) var(--space-4); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+.support-filters input[type="search"] { flex: 1 1 14rem; min-width: 0; }
+.support-filters select { flex: 0 1 14rem; min-width: 0; }
+
+/* Ticket rows: avatar, subject and reference, then status and last update. */
+.ticket-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.ticket-row {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.ticket-row__avatar { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; color: var(--primary-text); background: var(--primary-bg); }
+.ticket-row__main { min-width: 0; }
+.ticket-row__subject { margin: 0; font-size: var(--text-base); font-weight: 750; overflow-wrap: anywhere; }
+.ticket-row__meta { margin: var(--space-1) 0 0; color: var(--muted); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.ticket-row__status { display: grid; justify-items: end; gap: var(--space-1); color: var(--muted); font-size: var(--text-sm); white-space: nowrap; }
+
+/* Ticket facts. */
+.support-facts { margin: 0; }
+
+/* Conversation: messages as bubbles, history events as quiet lines. */
+.support-page .support-thread { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.support-page .support-thread > .list__item { display: block; padding: 0; border: 0; }
+.support-page .support-thread > .support-message { max-width: min(42rem, 92%); padding: var(--space-3) var(--space-4); background: var(--info-bg); border: 1px solid var(--border); border-radius: var(--radius-lg); border-end-start-radius: var(--radius-sm); box-shadow: none; }
+.support-page .support-thread > .support-message--staff { justify-self: start; background: var(--surface-soft); }
+.support-page .support-thread > .support-message:not(.support-message--staff) { justify-self: end; border-end-start-radius: var(--radius-lg); border-end-end-radius: var(--radius-sm); }
+.support-page .support-thread > .support-message p { margin: 0; overflow-wrap: anywhere; }
+.support-page .support-thread > .support-message .conversation-meta { margin-bottom: var(--space-1); }
+.support-page .support-thread > .support-event .conversation-meta { justify-content: center; margin: 0; text-align: center; font-size: 0.8125rem; }
+
+@media (max-width: 36rem) {
+  .support-card { padding: var(--space-4); }
+  .ticket-row { grid-template-columns: 2.5rem minmax(0, 1fr); }
+  .ticket-row__avatar { width: 2.5rem; height: 2.5rem; }
+  .ticket-row__status { grid-column: 2; justify-items: start; grid-auto-flow: column; justify-content: start; align-items: center; gap: var(--space-2); }
+  .support-page .support-thread > .support-message { max-width: 100%; }
+}
