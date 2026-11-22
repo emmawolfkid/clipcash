@@ -65,7 +65,7 @@ class MemberJourneyTests(ManualPaymentTestCase):
         claim = ManualMembershipPayment.objects.get()
         self.assertRedirects(response, claim_url(claim))
         status = self.client.get(claim_url(claim))
-        self.assertContains(status, "Awaiting payment verification")  # PAY-03 member wording.
+        self.assertContains(status, "Verification requested")  # PAY-UX-01 member wording.
         self.assertContains(status, "MP241110.0930.B77")
         # The pay page now forwards to the open submission; no second form.
         self.assertRedirects(self.client.get(pay_url(pending)), claim_url(claim))
@@ -85,17 +85,21 @@ class MemberJourneyTests(ManualPaymentTestCase):
         self.assertContains(response, "Please correct the errors below.", status_code=400)
         self.assertContains(response, "valid phone number", status_code=400)
         self.assertFalse(ManualMembershipPayment.objects.exists())
+        # PAY-UX-01: the member no longer types the amount; a forged one is ignored and the claim
+        # always records the issued plan price (the service still refuses a different amount).
         response = self.client.post(pay_url(pending), {"amount": "4000", "payer_phone": "0781234567",
                                                        "transaction_reference": "MP12345678"})
-        self.assertContains(response, "The amount must be exactly TZS 5,000", status_code=400)
+        claim = ManualMembershipPayment.objects.get()
+        self.assertRedirects(response, claim_url(claim))
+        self.assertEqual(claim.amount, 5_000)
 
     def test_rejected_member_can_resubmit(self):
         claim = self.submit()
         manual.reject(self.verifier, claim, reason="REFERENCE_MISMATCH")
         page = self.client.get(claim_url(claim))
         self.assertContains(page, "The transaction reference does not match")
-        self.assertContains(page, "Submit corrected details")
-        self.assertContains(self.client.get(reverse("dashboard")), "Payment not confirmed")
+        self.assertContains(page, "Request verification again")
+        self.assertContains(self.client.get(reverse("dashboard")), "Verification unsuccessful")
         self.assertEqual(self.client.get(pay_url(claim.subscription)).status_code, 200)
 
     def test_approved_member_sees_active_membership(self):

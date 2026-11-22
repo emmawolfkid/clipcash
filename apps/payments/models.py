@@ -550,10 +550,13 @@ class ManualMembershipPayment(BaseModel):
     plan_name = models.CharField(_("plan"), max_length=100)
     amount = AmountField(_("amount (TZS)"), non_negative=True)
     currency = models.CharField(_("currency"), max_length=3, default=DEFAULT_CURRENCY)
-    payer_phone = models.CharField(_("paying phone number"), max_length=16)
-    transaction_reference = models.CharField(_("transaction reference"), max_length=40)
-    # Canonical form (upper case, letters and digits only): the single-use key.
-    reference_key = models.CharField(_("reference key"), max_length=40, editable=False)
+    # PAY-UX-01: the paying phone and the reference are optional for the member ("" = not given).
+    payer_phone = models.CharField(_("paying phone number"), max_length=16, blank=True)
+    transaction_reference = models.CharField(_("transaction reference"), max_length=40, blank=True)
+    # Canonical form (upper case, letters and digits only): the single-use key. Empty while the
+    # member gave none; approval then records the reference the reviewer found in the provider
+    # records (the only change ever allowed to it, enforced by the database).
+    reference_key = models.CharField(_("reference key"), max_length=40, editable=False, blank=True)
     paid_on = models.DateField(_("payment date (stated by member)"), null=True, blank=True)
 
     status = models.CharField(_("status"), max_length=20, choices=Status.choices,
@@ -587,15 +590,23 @@ class ManualMembershipPayment(BaseModel):
             models.CheckConstraint(condition=Q(amount__gt=0), name="manual_payment_amount_positive"),
             models.CheckConstraint(condition=Q(currency="TZS"), name="manual_payment_currency"),
             models.CheckConstraint(condition=Q(method__regex=r"^[A-Z][A-Z0-9_]{1,19}$"), name="manual_payment_method"),
-            models.CheckConstraint(condition=Q(reference_key__regex=r"^[A-Z0-9]{6,40}$"),
+            # PAY-UX-01: a reference may be absent ("") until approval; an approved claim always has one.
+            models.CheckConstraint(condition=Q(reference_key__regex=r"^[A-Z0-9]{6,40}$")
+                                   | (Q(reference_key="") & ~Q(status="APPROVED")),
                                    name="manual_payment_reference_key_format"),
-            models.CheckConstraint(condition=Q(payer_phone__regex=r"^\+[1-9][0-9]{7,14}$"),
+            # The displayed reference and its key are given (or absent) together.
+            models.CheckConstraint(condition=Q(reference_key="", transaction_reference="")
+                                   | (~Q(reference_key="") & ~Q(transaction_reference="")),
+                                   name="manual_payment_reference_pair"),
+            models.CheckConstraint(condition=Q(payer_phone__regex=r"^\+[1-9][0-9]{7,14}$") | Q(payer_phone=""),
                                    name="manual_payment_phone_e164"),
             models.CheckConstraint(
                 condition=Q(status__in=["PENDING_VERIFICATION", "APPROVED", "REJECTED", "CANCELLED"]),
                 name="manual_payment_status_valid"),
-            # One transaction reference backs at most one open or approved claim, ever.
-            models.UniqueConstraint(fields=["method", "reference_key"], condition=Q(status__in=MANUAL_OPEN_OR_FINAL),
+            # One transaction reference backs at most one open or approved claim, ever. Claims
+            # without a reference yet are not keyed; they get one only when approved.
+            models.UniqueConstraint(fields=["method", "reference_key"],
+                                    condition=Q(status__in=MANUAL_OPEN_OR_FINAL) & ~Q(reference_key=""),
                                     name="manual_payment_reference_single_use"),
             # One open claim, and at most one approved claim, per membership choice.
             models.UniqueConstraint(fields=["subscription"], condition=Q(status="PENDING_VERIFICATION"),

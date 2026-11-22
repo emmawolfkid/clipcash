@@ -106,6 +106,16 @@ def activation_reference(method, reference_key):
     return "MANUAL:" + receipt_key(method, reference_key)
 
 
+def reference_used(method, reference_key, exclude=None):
+    """True when this provider transaction already backs an open or approved claim, or an
+    activated membership (the single-use rule; the database enforces it as well)."""
+    claims = Claim.objects.filter(method=method, reference_key=reference_key, status__in=MANUAL_OPEN_OR_FINAL)
+    if exclude is not None:
+        claims = claims.exclude(pk=exclude.pk)
+    return (claims.exists()
+            or Subscription.objects.filter(payment_reference=activation_reference(method, reference_key)).exists())
+
+
 def issue_instructions(member, subscription, instruction):
     if not manual_payments_enabled():
         raise Unavailable("Manual membership payments are not available.")
@@ -211,13 +221,27 @@ def normalize_amount(raw, field="amount"):
 
 
 def _normalize_phone(raw):
+    """PAY-UX-01: optional. "" when not given; any valid number, not necessarily the member's own."""
+    if not str(raw or "").strip():
+        return ""
     try:
-        phone = normalize_phone_number(raw)
+        return normalize_phone_number(raw) or ""
     except ValidationError as error:
         raise ValidationError({"payer_phone": error.messages}) from None
-    if not phone:
-        raise ValidationError({"payer_phone": _("Enter the phone number you paid from.")})
-    return phone
+
+
+def _optional_reference(raw):
+    """PAY-UX-01: ("", "") when the member gave no reference; otherwise normalize_reference."""
+    if not str(raw or "").strip():
+        return "", ""
+    return normalize_reference(raw)
+
+
+def _reference_text(claim):
+    """The reference for member messages, or a neutral phrase when none was given yet."""
+    if claim.transaction_reference:
+        return _("reference %(ref)s") % {"ref": claim.transaction_reference}
+    return _("no transaction reference given")
 
 
 def _check_paid_on(paid_on, subscription):
@@ -250,9 +274,14 @@ def open_claim(subscription):
     return subscription.manual_payments.filter(status=C.PENDING_VERIFICATION).first()
 
 
-def submit_claim(member, subscription, *, amount, payer_phone, transaction_reference, paid_on=None, quote=None,
-                 evidence=None):
-    """Record the member's statement that they paid. Returns (claim, created).
+def submit_claim(member, subscription, *, amount=None, payer_phone="", transaction_reference="", paid_on=None,
+                 quote=None, evidence=None):
+    """Record the member's request to verify their payment. Returns (claim, created).
+
+    PAY-UX-01: every detail is optional. ``amount`` defaults to the issued quote (the plan price;
+    a different amount is still refused), ``payer_phone`` may be any number or none, and without
+    a ``transaction_reference`` the reviewer records the one found in the provider records when
+    approving. The claim is a request, never proof: nothing is activated here.
 
     PRD-04: ``evidence`` is an optional uploaded receipt (JPEG, PNG or PDF, checked by content and
     size by apps.payments.evidence). It is stored privately and attached to the NEW claim only;
@@ -271,9 +300,9 @@ def submit_claim(member, subscription, *, amount, payer_phone, transaction_refer
             raise NotAuthorized("Your account cannot make payments yet.", code=reason)
         if ratelimit.hit(_rate_key(member), CLAIM_WINDOW_SECONDS) > settings.MANUAL_PAYMENTS_CLAIMS_PER_HOUR:
             raise RateLimited("Too many payment submissions. Please wait an hour and try again.")
-        amount = normalize_amount(amount)
+        amount = None if amount is None or not str(amount).strip() else normalize_amount(amount)
         payer_phone = _normalize_phone(payer_phone)
-        reference_text, reference_key = normalize_reference(transaction_reference)
+        reference_text, reference_key = _optional_reference(transaction_reference)
         evidence_info = payment_evidence.inspect(evidence) if evidence else None  # Before any lock is taken.
         now = timezone.now()
         with transaction.atomic():
@@ -287,7 +316,7 @@ def submit_claim(member, subscription, *, amount, payer_phone, transaction_refer
                     raise ValidationError({"quote": _("Choose payment instructions for this membership.")}) from None
             existing = open_claim(subscription)
             if existing is not None:
-                if (existing.reference_key == reference_key and existing.amount == amount
+                if (existing.reference_key == reference_key and amount in (None, existing.amount)
                         and (quote is None or existing.instruction_id == quote.instruction_id)):
                     return existing, False
                 raise InvalidState("A payment for this membership is already waiting for verification.",
@@ -306,13 +335,13 @@ def submit_claim(member, subscription, *, amount, payer_phone, transaction_refer
                 raise Unavailable("Payment details are not published.", code="no_instructions")
             if quote is None:
                 quote = issue_instructions(member, subscription, instruction)
+            if amount is None:
+                amount = quote.amount  # The issued price; the member does not retype it.
             if amount != quote.amount:
                 raise ValidationError({"amount": _("The amount must be exactly %(price)s, the price of your "
                                                    "plan.") % {"price": format_tzs(subscription.price_amount)}})
             _check_paid_on(paid_on, subscription)
-            if (Claim.objects.filter(method=instruction.method, reference_key=reference_key, status__in=MANUAL_OPEN_OR_FINAL).exists()
-                    or Subscription.objects.filter(
-                        payment_reference=activation_reference(instruction.method, reference_key)).exists()):
+            if reference_key and reference_used(instruction.method, reference_key):
                 raise ValidationError({"transaction_reference": ValidationError(_(
                     "This transaction reference has already been submitted. Each provider payment can be used "
                     "for one membership only. Contact support if you think this is a mistake."),
@@ -331,11 +360,14 @@ def submit_claim(member, subscription, *, amount, payer_phone, transaction_refer
                     "This transaction reference has already been submitted."), code="duplicate_reference")}) from None
             record_business_event("membership.manual_payment.submitted", actor=member, target=claim,
                                   metadata={"reference": claim.reference, "amount": amount,
-                                            "plan_code": subscription.plan.code, "resubmission": resubmission})
-            _notify(claim, "submitted", _("Payment submitted for verification"),
-                    _("We received your payment details for %(plan)s (%(amount)s, reference %(ref)s). Your "
+                                            "plan_code": subscription.plan.code, "resubmission": resubmission,
+                                            "details": sorted(name for name, given in (
+                                                ("payer_phone", payer_phone), ("transaction_reference", reference_key),
+                                                ("paid_on", paid_on), ("evidence", evidence_info)) if given)})
+            _notify(claim, "submitted", _("Payment verification requested"),
+                    _("We received your request to verify your payment for %(plan)s (%(amount)s, %(ref)s). Your "
                       "membership starts after our team confirms the payment in the provider business records.")
-                    % {"plan": claim.plan_name, "amount": format_tzs(amount), "ref": claim.transaction_reference},
+                    % {"plan": claim.plan_name, "amount": format_tzs(amount), "ref": _reference_text(claim)},
                     email=True)
             if evidence_info is not None:
                 _attach_evidence(claim, member, evidence, *evidence_info)
@@ -436,7 +468,7 @@ def approve(actor, claim, *, verified_amount, verified_reference, receipt_confir
         if errors:
             raise ValidationError(errors)
         verified_amount = normalize_amount(verified_amount, field="verified_amount")
-        _text, verified_key = normalize_reference(verified_reference, field="verified_reference")
+        verified_text, verified_key = normalize_reference(verified_reference, field="verified_reference")
         note = " ".join(str(note or "").split())[:300]
         now = timezone.now()
         with transaction.atomic():
@@ -462,10 +494,20 @@ def approve(actor, claim, *, verified_amount, verified_reference, receipt_confir
                 raise ValidationError({"verified_amount": _(
                     "The verified amount differs from the plan price (%(price)s). Reject the payment with "
                     "the reason “amount does not match” instead.") % {"price": format_tzs(claim.amount)}})
-            if verified_key != claim.reference_key:
+            reference_source = "member" if claim.reference_key else "reviewer"
+            if claim.reference_key and verified_key != claim.reference_key:
                 raise ValidationError({"verified_reference": _(
                     "The reference you found differs from the one the member submitted. Check it again, or "
                     "reject the payment.")})
+            if not claim.reference_key:
+                # PAY-UX-01: the member gave no reference. The one found in the provider records
+                # becomes this claim's single-use reference, if no other payment has used it.
+                if reference_used(claim.method, verified_key, exclude=claim):
+                    raise ValidationError({"verified_reference": ValidationError(_(
+                        "This transaction reference is already used by another membership payment. Do not "
+                        "approve: check which member really paid, and reject with “already used” if needed."),
+                        code="duplicate_reference")})
+                claim.transaction_reference, claim.reference_key = verified_text, verified_key
             subscription = (Subscription.objects.select_for_update().select_related("plan", "member")
                             .get(pk=claim.subscription_id))
             entry = ledger.post_entry(
@@ -478,23 +520,26 @@ def approve(actor, claim, *, verified_amount, verified_reference, receipt_confir
                 description=f"Membership fee {claim.reference}, verified by staff ({claim.plan_name})",
                 actor=None,  # Posted by this verification process; the reviewer is recorded on the claim.
             )
+            # The claim is approved first (same transaction), so the activation guard finds its
+            # final reference: PAY-UX-01 claims receive theirs only in this update.
+            claim.status, claim.reviewed_by, claim.reviewed_at = C.APPROVED, actor, now
+            claim.verified_amount, claim.verified_reference_key = verified_amount, verified_key
+            claim.receipt_confirmed, claim.review_note, claim.ledger_entry_id = True, note, entry.pk
+            claim.save(update_fields=["status", "reviewed_by", "reviewed_at", "verified_amount",
+                                      "verified_reference_key", "receipt_confirmed", "review_note",
+                                      "ledger_entry_id", "transaction_reference", "reference_key", "updated_at"])
             # The shared activation rule (apps.memberships.services._activate), as a future
             # verified provider payment would use it: the exact plan chosen, once.
             memberships.activate_with_manual_payment(subscription, reference_key=claim.reference_key,
                                                      amount=claim.amount, actor=actor,
                                                      submitted_at=claim.created_at, now=now, method=claim.method)
             subscription.refresh_from_db()
-            claim.status, claim.reviewed_by, claim.reviewed_at = C.APPROVED, actor, now
-            claim.verified_amount, claim.verified_reference_key = verified_amount, verified_key
-            claim.receipt_confirmed, claim.review_note, claim.ledger_entry_id = True, note, entry.pk
-            claim.save(update_fields=["status", "reviewed_by", "reviewed_at", "verified_amount",
-                                      "verified_reference_key", "receipt_confirmed", "review_note",
-                                      "ledger_entry_id", "updated_at"])
             record_business_event("membership.manual_payment.approved", actor=actor, target=claim,
                                   metadata={"reference": claim.reference, "amount": claim.amount,
                                             "plan_code": subscription.plan.code, "ledger_entry": str(entry.pk),
                                             "subscription": str(subscription.pk),
                                             "transaction_reference_key": claim.reference_key,
+                                            "reference_source": reference_source,
                                             "recipient": claim.instruction.business_number,
                                             "expires_at": subscription.expires_at.isoformat()})
             _notify(claim, "approved", _("Payment confirmed: membership active"),
@@ -504,6 +549,10 @@ def approve(actor, claim, *, verified_amount, verified_reference, receipt_confir
                        "plan": claim.plan_name,
                        "expires": timezone.localtime(subscription.expires_at).strftime("%d %b %Y")}, email=True)
             return claim, True
+    except ValidationError as error:
+        if "duplicate_reference" in {e.code for errors in getattr(error, "error_dict", {}).values() for e in errors}:
+            _refuse("approve", actor, ManualPaymentError("", code="duplicate_reference"), claim)
+        raise
     except IntegrityError as error:
         conflict = InvalidState("The approval conflicted with another record. Nothing was changed.",
                                 code="conflict")
@@ -549,8 +598,8 @@ def reject(actor, claim, *, reason, note=""):
                                       "updated_at"])
             record_business_event("membership.manual_payment.rejected", actor=actor, target=claim,
                                   metadata={"reference": claim.reference, "reason": reason})
-            message = _("We could not confirm your payment for %(plan)s (reference %(ref)s): %(reason)s.") % {
-                "plan": claim.plan_name, "ref": claim.transaction_reference,
+            message = _("We could not confirm your payment for %(plan)s (%(ref)s): %(reason)s.") % {
+                "plan": claim.plan_name, "ref": _reference_text(claim),
                 "reason": str(claim.get_rejection_reason_display()).lower()}
             if note:
                 message = f"{message} {note}"

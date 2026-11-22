@@ -100,7 +100,8 @@ class SubmissionTests(ManualPaymentTestCase):
         self.assertFalse(JournalEntry.objects.exists())
         event = AuditEvent.objects.get(action="membership.manual_payment.submitted")
         self.assertEqual(event.metadata, {"reference": claim.reference, "amount": 5_000, "plan_code": "monthly",
-                                          "resubmission": False})
+                                          "resubmission": False,
+                                          "details": ["payer_phone", "transaction_reference"]})
         self.assertNotIn("781234567", str(AuditEvent.objects.values_list("metadata", flat=True)))
         notice = Notification.objects.get(recipient=self.member, kind="membership.payment_submitted")
         self.assertIn("confirms the payment", notice.message)
@@ -125,7 +126,8 @@ class SubmissionTests(ManualPaymentTestCase):
     @override_settings(MANUAL_PAYMENTS_CLAIMS_PER_HOUR=100)
     def test_malformed_references_are_refused(self):
         pending = self.choose()
-        for reference in (" ", "ABC12", "A" * 41, "AAAAAAAA", "000000", "MP<script>", "MP 12'34;--", "-MP12345"):
+        # PAY-UX-01: a blank reference means "not given" (tests/test_pay_ux01.py); a typed one must be valid.
+        for reference in ("ABC12", "A" * 41, "AAAAAAAA", "000000", "MP<script>", "MP 12'34;--", "-MP12345"):
             with self.subTest(reference=reference), self.assertRaises(ValidationError) as caught:
                 self.submit(pending, reference=reference)
             self.assertIn("transaction_reference", caught.exception.message_dict)

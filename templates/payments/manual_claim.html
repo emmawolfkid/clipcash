@@ -1,4 +1,4 @@
-{% extends "members/layout.html" %}{% load static i18n money %}
+{% extends "members/layout.html" %}{% load static i18n money payment_status %}
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/payments/manual.css' %}">{% endblock %}
 {% block title %}{% translate "Membership payment" %} {{ claim.reference }}{% endblock %}
 {% block crumb %}{{ claim.reference }}{% endblock %}
@@ -6,16 +6,16 @@
 <header class="page-banner">
   <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="wallet" %}</span>
   <div class="page-banner__text"><h1 class="page-title">{% translate "Membership payment" %}</h1><p class="page-banner__subtitle">{{ claim.reference }}</p></div>
-  <span class="page-banner__aside badge badge--{{ claim.status|lower }}">{% if claim.status == "PENDING_VERIFICATION" %}{% translate "Awaiting payment verification" %}{% else %}{{ claim.get_status_display }}{% endif %}</span>
+  <span class="page-banner__aside badge badge--{{ claim.status|lower }}">{{ claim|claim_status }}</span>
 </header>
 <div class="manual-payment">
 
 {% if claim.status == "PENDING_VERIFICATION" %}
 <section class="notice manual-payment__next" role="status" aria-labelledby="claim-next">
-  <h2 id="claim-next">{% translate "Awaiting payment verification" %}</h2>
-  <p>{% translate "Your membership is not active yet. Submitting a reference does not activate it by itself." %}</p>
+  <h2 id="claim-next">{% translate "Verification requested" %}</h2>
+  <p>{% translate "Your membership is not active yet. Requesting verification does not activate it by itself." %}</p>
   <ol>
-    <li>{% translate "Our team finds your payment in ClipCash's provider business records and checks the reference, the exact amount and that it reached our receiving account. This usually takes up to one working day." %}</li>
+    <li>{% translate "Our team finds your payment in ClipCash's provider business records and checks the exact amount and that it reached our receiving account. This usually takes up to one working day." %}</li>
     <li>{% translate "You get a notification and an email when the payment is confirmed or if it cannot be matched." %}</li>
     <li>{% blocktranslate with plan=claim.plan_name %}Once confirmed, your {{ plan }} membership starts immediately and its end date appears on your membership page.{% endblocktranslate %}</li>
   </ol>
@@ -30,22 +30,22 @@
 </section>
 {% elif claim.status == "REJECTED" %}
 <div class="notice notice--warning" role="status">
-  <p>{% translate "We could not confirm this payment." %} <strong>{{ claim.get_rejection_reason_display }}.</strong>{% if claim.review_note %} {{ claim.review_note }}{% endif %}</p>
-  {% if can_resubmit %}<p><a class="button button--action" href="{% url 'payments:manual_pay' subscription.pk %}">{% translate "Submit corrected details" %}</a></p>
+  <p><strong>{% translate "Verification unsuccessful." %}</strong> {% translate "We could not confirm this payment." %} <strong>{{ claim.get_rejection_reason_display }}.</strong>{% if claim.review_note %} {{ claim.review_note }}{% endif %}</p>
+  {% if can_resubmit %}<p><a class="button button--action" href="{% url 'payments:manual_pay' subscription.pk %}">{% translate "Request verification again" %}</a></p>
   {% else %}<p>{% translate "If you paid and believe this is a mistake, contact support with the claim reference below." %}</p>{% endif %}
 </div>
 {% elif claim.status == "CANCELLED" %}
-<p class="notice" role="status">{% translate "You withdrew these payment details." %}{% if can_resubmit %} <a href="{% url 'payments:manual_pay' subscription.pk %}">{% translate "Submit payment details again" %}</a>{% endif %}</p>
+<p class="notice" role="status">{% translate "You withdrew this verification request." %}{% if can_resubmit %} <a href="{% url 'payments:manual_pay' subscription.pk %}">{% translate "Request verification again" %}</a>{% endif %}</p>
 {% endif %}
 
-<section class="panel" aria-labelledby="claim-details"><h2 class="panel__title" id="claim-details">{% translate "What you submitted" %}</h2>
+<section class="panel" aria-labelledby="claim-details"><h2 class="panel__title" id="claim-details">{% translate "Your request" %}</h2>
 <dl class="details">
   <dt>{% translate "Claim reference" %}</dt><dd>{{ claim.reference }}</dd>
   <dt>{% translate "Plan" %}</dt><dd>{{ claim.plan_name }}</dd>
   <dt>{% translate "Amount" %}</dt><dd class="financial-amount">{{ claim.amount|tzs }}</dd>
   <dt>{% translate "Paid to" %}</dt><dd>{{ claim.instruction.provider_label }} {{ claim.instruction.business_number }} ({{ claim.instruction.recipient_name }})</dd>
-  <dt>{% if claim.instruction.is_bank %}{% translate "Contact phone" %}{% else %}{% translate "Paid from" %}{% endif %}</dt><dd>{{ claim.payer_phone }}</dd>
-  <dt>{% translate "Transaction reference" %}</dt><dd>{{ claim.transaction_reference }}</dd>
+  <dt>{% if claim.instruction.is_bank %}{% translate "Contact phone" %}{% else %}{% translate "Paid from" %}{% endif %}</dt><dd>{{ claim.payer_phone|default:_("Not given") }}</dd>
+  <dt>{% translate "Transaction reference" %}</dt><dd>{{ claim.transaction_reference|default:_("Not given") }}</dd>
   <dt>{% translate "Payment date" %}</dt><dd>{{ claim.paid_on|date:"DATE_FORMAT"|default:"—" }}</dd>
   <dt>{% translate "Receipt" %}</dt><dd>{% if claim.evidence %}<a href="{% url 'payments:manual_evidence' claim.pk %}">{% translate "Download the receipt you attached" %}</a>{% else %}{% translate "None attached" %}{% endif %}</dd>
   <dt>{% translate "Submitted" %}</dt><dd>{{ claim.created_at|date:"DATETIME_FORMAT" }}</dd>
@@ -54,8 +54,8 @@
 
 {% if claim.status == "PENDING_VERIFICATION" %}
 <form method="post" class="manual-payment__withdraw">{% csrf_token %}<input type="hidden" name="action" value="cancel">
-  <button type="submit" class="button button--secondary">{% translate "Withdraw these details" %}</button>
-  <p class="form-help">{% translate "Only if you entered something wrong or did not pay. Withdrawing does not refund a payment." %}</p>
+  <button type="submit" class="button button--secondary">{% translate "Withdraw this request" %}</button>
+  <p class="form-help">{% translate "Only if you have not paid, or want to send different details. Withdrawing does not refund a payment." %}</p>
 </form>
 {% endif %}
 <p><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></p>

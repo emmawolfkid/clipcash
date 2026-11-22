@@ -42,3 +42,43 @@
   .manual-payment .panel { padding: var(--space-4); }
   .manual-payment .button:not(.button--compact) { width: 100%; text-align: center; }
 }
+
+/* PAY-UX-01 (integrated with UI-06): "I've paid — request verification" with optional details. */
+.manual-payment__meta {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.manual-payment__optional {
+  margin: var(--space-3) 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  min-width: 0;
+}
+
+.manual-payment__optional legend {
+  padding: 0 var(--space-2);
+  font-weight: 600;
+}
+
+.manual-payment__optional > .form-help {
+  margin: 0 0 var(--space-3);
+  color: var(--muted);
+}
+
+.manual-payment__submit {
+  min-height: var(--touch-target);
+}
+
+.manual-payment__request > form > .form-help {
+  margin-top: var(--space-2);
+  color: var(--muted);
+}
+
+@media (max-width: 480px) {
+  .manual-payment__optional {
+    padding: var(--space-3);
+  }
+}

@@ -160,12 +160,13 @@ EVENT_TYPES = {
         _event("membership.action.denied", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
         _event("membership.activation.rejected", Category.MEMBERSHIP, SECURITY, ["reason", "subscription"]),
         # PAY-01: manual (Airtel Lipa) membership payments. Phone numbers are never recorded.
+        # PAY-UX-01: "details" names which optional details were given (never their values).
         _event("membership.manual_payment.submitted", Category.MEMBERSHIP, BUSINESS,
-               ["reference", "amount", "plan_code", "resubmission"]),
+               ["reference", "amount", "plan_code", "resubmission", "details"]),
         _event("membership.manual_payment.cancelled", Category.MEMBERSHIP, BUSINESS, ["reference"]),
         _event("membership.manual_payment.approved", Category.MEMBERSHIP, BUSINESS,
                ["reference", "amount", "plan_code", "ledger_entry", "subscription", "transaction_reference_key",
-                "recipient", "expires_at"]),
+                "reference_source", "recipient", "expires_at"]),
         _event("membership.manual_payment.rejected", Category.MEMBERSHIP, BUSINESS, ["reference", "reason"]),
         _event("membership.manual_payment.refused", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
         # PRD-04: a staff member opened a member's receipt evidence (personal and financial data).

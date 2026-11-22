@@ -102,12 +102,13 @@ class EndToEndAcceptanceTests(ManualPaymentTestCase):
         page = self.client.get(pay_url)
         self.assertContains(page, FICTIONAL_NUMBER)
         self.assertContains(page, FICTIONAL_RECIPIENT)
-        wrong = self.client.post(pay_url, {"amount": "20000", "payer_phone": "0781234567",
-                                           "transaction_reference": FICTIONAL_REFERENCE})
-        self.assertContains(wrong, "The amount must be exactly TZS 25,000", status_code=400)
-        self.client.post(pay_url, {"amount": "25000", "payer_phone": "0781234567",
-                                   "transaction_reference": FICTIONAL_REFERENCE})
+        # PAY-UX-01: the amount is not asked for; a forged one is ignored (the plan price is recorded),
+        # and pressing the button again returns the same request instead of creating a second one.
+        forged = self.client.post(pay_url, {"amount": "20000", "payer_phone": "0781234567",
+                                            "transaction_reference": FICTIONAL_REFERENCE})
+        self.client.post(pay_url, {"payer_phone": "0781234567", "transaction_reference": FICTIONAL_REFERENCE})
         first = ManualMembershipPayment.objects.get(member=member)
+        self.assertRedirects(forged, reverse("payments:manual_claim", args=[first.pk]))
         self.assertEqual((first.status, first.amount), ("PENDING_VERIFICATION", 25_000))
 
         # Nothing is activated by a claim.

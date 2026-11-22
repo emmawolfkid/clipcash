@@ -1,4 +1,4 @@
-{% extends "members/layout.html" %}{% load static i18n money purchase_state payment_format %}
+{% extends "members/layout.html" %}{% load static i18n money purchase_state payment_format payment_status %}
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/payments/manual.css' %}">{% endblock %}
 {% block title %}{% translate "Pay for your membership" %}{% endblock %}
 {% block crumb %}{% translate "Pay" %}{% endblock %}
@@ -6,7 +6,7 @@
 <header class="page-banner">
   <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="wallet" %}</span>
   <div class="page-banner__text"><h1 class="page-title">{% translate "Pay for your membership" %}</h1>
-    <p class="page-banner__subtitle">{% translate "Pay with your selected payment provider, then tell us the transaction details. Your membership starts after our team confirms the payment in the provider records, usually within one working day." %}</p></div>
+    <p class="page-banner__subtitle">{% translate "Pay with the details below from any phone, then tap “I've Paid — Request Verification”. Your membership starts after our team confirms the payment in the provider records, usually within one working day." %}</p></div>
 </header>
 <div class="manual-payment">
 <section class="panel manual-payment__summary" aria-labelledby="pay-plan">
@@ -16,6 +16,7 @@
     <div><dt>{% translate "Length" %}</dt><dd>{% blocktranslate count days=subscription.duration_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</dd></div>
     <div><dt>{% translate "Amount to pay" %}</dt><dd><strong class="manual-payment__amount financial-amount">{{ quote.amount|default:subscription.price_amount|tzs }}</strong></dd></div>
     <div><dt>{% translate "Price held until" %}</dt><dd>{{ subscription.pending_until|date:"DATETIME_FORMAT" }}</dd></div>
+    <div><dt>{% translate "Status" %}</dt><dd><span class="badge badge--pending">{% awaiting_payment_label %}</span></dd></div>
   </dl>
 </section>
 
@@ -23,14 +24,12 @@
 <section class="panel manual-payment__step manual-payment__choose" aria-labelledby="pay-choose"><h2 class="panel__title" id="pay-choose">{% translate "Choose a payment method" %}</h2>
 <form method="post" class="toolbar manual-payment__method">{% csrf_token %}<input type="hidden" name="action" value="choose_method">
 <label for="payment-method">{% translate "Payment provider" %}</label>
-<select id="payment-method" name="instruction">{% for item in methods %}<option value="{{ item.pk }}">{{ item.provider_label }}</option>{% endfor %}</select>
-<button class="button">{% translate "Get payment instructions" %}</button></form></section>
+<select id="payment-method" name="instruction">{% for item in methods %}<option value="{{ item.pk }}"{% if methods|length > 1 and instruction and item.pk == instruction.pk %} selected{% endif %}>{{ item.provider_label }}</option>{% endfor %}</select>
+<button class="button button--secondary">{% translate "Get payment instructions" %}</button></form></section>
 {% endif %}
 {% if instruction %}
 <section class="panel manual-payment__step manual-payment__instructions" aria-labelledby="pay-how">
   <h2 class="panel__title" id="pay-how">{{ instruction.provider_label }}</h2>
-  <p>{% translate "Use the issued receiving number and registered name below. These details stay with your submission even if the method changes." %}</p>
-  <p>{% translate "Instructions issued" %}: {{ quote.created_at|date:"DATETIME_FORMAT" }}</p>
   {% if instruction.is_bank %}{% translate "Account number" as number_label %}{% else %}{% translate "Receiving number" as number_label %}{% endif %}
   {% include "components/payment_number.html" with number=instruction.business_number label=number_label uid=instruction.pk %}
   <dl class="details manual-payment__details">
@@ -38,22 +37,42 @@
     <dt>{% translate "Exact amount" %}</dt><dd><strong class="financial-amount">{{ quote.amount|default:subscription.price_amount|tzs }}</strong></dd>
   </dl>
   {% if instruction.instructions %}<div class="formatted-text manual-payment__steps">{{ instruction.instructions|payment_steps }}</div>{% endif %}
-  <p class="notice" role="note">{% translate "Check that the provider shows the recipient name above before you confirm. Pay the exact amount in one payment: partial or extra amounts cannot be matched automatically. Never share your payment PIN with anyone, including ClipCash staff." %}</p>
-  <p>{% translate "Paid a different amount, paid twice, or paid to the wrong number? Do not submit it here." %} <a href="{% url 'support:tickets' %}">{% translate "Contact support" %}</a> {% translate "with your provider transaction reference so our team can check it and arrange any refund." %}</p>
+  <p class="notice" role="note">{% translate "Check that the provider shows the recipient name above before you confirm. Pay the exact amount in one payment. You can pay from your own phone or someone else's. Never share your payment PIN with anyone, including ClipCash staff." %}</p>
+  <p class="manual-payment__meta">{% translate "Instructions issued" %}: {{ quote.created_at|date:"DATETIME_FORMAT" }} · {% translate "These details stay with your request even if the method changes later." %}</p>
+  <p>{% translate "Paid a different amount, paid twice, or paid to the wrong number? Do not request verification here." %} <a href="{% url 'support:tickets' %}">{% translate "Contact support" %}</a> {% translate "so our team can check it and arrange any refund." %}</p>
 </section>
 
-<section class="panel manual-payment__step" aria-labelledby="pay-tell">
-  <h2 class="panel__title" id="pay-tell">{% translate "2. Tell us about your payment" %}</h2>
+<section class="panel manual-payment__step manual-payment__request" aria-labelledby="pay-tell">
+  <h2 class="panel__title" id="pay-tell">{% translate "2. Request verification" %}</h2>
   <p>{% translate "Submitting these details does not activate your membership by itself. We check every payment against the official provider records first." %}</p>
-  {% include "components/form.html" with form=form button=_("Submit payment details") button_class="button--action" %}
+  <form class="form" method="post" novalidate enctype="multipart/form-data">{% csrf_token %}
+    {% if form.errors %}
+    <div class="error-summary" tabindex="-1" role="alert" aria-labelledby="form-errors-title">
+      <h2 id="form-errors-title">{% translate "Please correct the errors below." %}</h2>
+      <ul>
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        {% for field in form.visible_fields %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}
+        {% for field in form.hidden_fields %}{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    <fieldset class="manual-payment__optional">
+      <legend>{% translate "Payment details (optional)" %}</legend>
+      <p class="form-help">{% translate "None of these is required. Adding them helps our team find your payment faster." %}</p>
+      {% for field in form.visible_fields %}<div class="form-field">{{ field.as_field_group }}</div>{% endfor %}
+    </fieldset>
+    {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+    <button type="submit" class="button button--action button--block manual-payment__submit">{% translate "I've Paid — Request Verification" %}</button>
+    <p class="form-help">{% translate "Tapping this does not activate your membership by itself, and tapping it again does not create a second request." %}</p>
+  </form>
 </section>
 {% elif not payments_enabled or not methods %}{# PAY-LIVE-01C: one explanation whether payments are off or no method is published. #}
 <p class="notice notice--warning" role="status">{% purchase_closed_message %} {% translate "Your plan choice is kept until the date above." %}</p>
 {% endif %}
 
 {% if previous %}
-<section class="section" aria-labelledby="pay-previous"><h2 id="pay-previous">{% translate "Earlier submissions for this plan" %}</h2>
-<ul class="list">{% for item in previous %}<li class="list__item"><span><a href="{% url 'payments:manual_claim' item.pk %}">{{ item.transaction_reference }}</a> · {{ item.created_at|date:"SHORT_DATETIME_FORMAT" }}</span><span class="badge badge--{{ item.status|lower }}">{{ item.get_status_display }}</span></li>{% endfor %}</ul>
+<section class="section" aria-labelledby="pay-previous"><h2 id="pay-previous">{% translate "Earlier requests for this plan" %}</h2>
+<ul class="list">{% for item in previous %}<li class="list__item"><span><a href="{% url 'payments:manual_claim' item.pk %}">{{ item.transaction_reference|default:item.reference }}</a> · {{ item.created_at|date:"SHORT_DATETIME_FORMAT" }}</span><span class="badge badge--{{ item.status|lower }}">{{ item|claim_status }}</span></li>{% endfor %}</ul>
 </section>
 {% endif %}
 <p><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></p>

@@ -161,21 +161,63 @@ def probe_temporary_tables(connection, roles):
 PROBE_TABLE = "clipcash_privilege_probe_never_created"
 _ACCESS_DENIED = {1044, 1142, 1227}  # Database, table and command level "access denied".
 
+HELD, ABSENT, UNVERIFIED = "held", "absent", "unverified"
+# One row per trigger in this database that the login can see, and whether its body or definer is
+# shown (1) or hidden (0).
+_VISIBLE_TRIGGERS = ("SELECT TRIGGER_NAME, (ACTION_STATEMENT IS NOT NULL OR DEFINER IS NOT NULL)"
+                     " FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE()")
+
+
+def probe_trigger_right(cursor):
+    """Whether the login holds TRIGGER on any table of this database: HELD, ABSENT or UNVERIFIED.
+
+    Which rows information_schema.TRIGGERS shows depends on the server version:
+
+    * before MariaDB 10.11.16 (and 11.4.10, 11.8.6, 12.2.2) a row is listed only when the login
+      holds TRIGGER on its table, with its body and definer;
+    * from those versions on (MDEV-37474), a row is also listed when the login holds only INSERT,
+      UPDATE or DELETE on its table, but ACTION_STATEMENT and DEFINER are then NULL. Only TRIGGER
+      reveals them.
+
+    So a row whose body or definer is shown proves TRIGGER on that table, and merely seeing a row
+    proves nothing. When rows are listed with the body hidden, SHOW CREATE TRIGGER (which needs
+    TRIGGER and changes nothing) confirms by behaviour. Every unexpected outcome is UNVERIFIED,
+    which callers must treat as unsafe."""
+    try:
+        cursor.execute(_VISIBLE_TRIGGERS)
+        rows = cursor.fetchall()
+    except DatabaseError:
+        return UNVERIFIED
+    if not rows:
+        return ABSENT
+    if any(revealed for _name, revealed in rows):
+        return HELD
+    try:
+        cursor.execute(f"SHOW CREATE TRIGGER `{rows[0][0].replace('`', '``')}`")
+        cursor.fetchall()
+    except DatabaseError as error:
+        code = error.args[0] if error.args else None
+        return ABSENT if code in _ACCESS_DENIED else UNVERIFIED
+    return HELD  # The body was hidden from information_schema yet readable: TRIGGER after all.
+
 
 def probe_schema_rights(connection, *, ddl=True):
     """Rights that grants can hide (e.g. an anonymous ''@'%' row on `test\\_%` databases, which
     neither SHOW GRANTS nor information_schema.SCHEMA_PRIVILEGES shows), found by behaviour and
-    without changing anything: TRIGGER (information_schema.TRIGGERS lists only triggers on
-    tables the login may change triggers on), DROP (DROP TABLE IF EXISTS on a table that never
-    exists) and ALTER (denied vs "no such table" on that same name)."""
-    held = []
+    without changing anything: TRIGGER (see probe_trigger_right), DROP (DROP TABLE IF EXISTS on
+    a table that never exists) and ALTER (denied vs "no such table" on that same name).
+
+    Returns (held, unverified): rights the login holds, and rights that could not be verified."""
+    held, unverified = [], []
     table = connection.ops.quote_name(PROBE_TABLE)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT COUNT(*) FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE()")
-        if cursor.fetchone()[0]:
+        trigger = probe_trigger_right(cursor)
+        if trigger == HELD:
             held.append("TRIGGER")
+        elif trigger != ABSENT:
+            unverified.append("TRIGGER")
         if not ddl:
-            return held
+            return held, unverified
         for right, statement in (("DROP", f"DROP TABLE IF EXISTS {table}"),
                                  ("ALTER", f"ALTER TABLE {table} ADD COLUMN probe INT")):
             try:
@@ -186,7 +228,7 @@ def probe_schema_rights(connection, *, ddl=True):
                     held.append(right)  # Allowed to try: it only failed because the table is absent.
                 continue
             held.append(right)
-    return held
+    return held, unverified
 
 
 def runtime_login_findings(connection, *, ddl_probes=True):
@@ -210,8 +252,11 @@ def runtime_login_findings(connection, *, ddl_probes=True):
             findings.append(f"{source} grants {', '.join(extra)} on this database")
     for context in probe_temporary_tables(connection, roles):
         findings.append(f"it can CREATE TEMPORARY TABLE ({context}): guard triggers can be shadowed")
-    for right in probe_schema_rights(connection, ddl=ddl_probes):
+    held, unverified = probe_schema_rights(connection, ddl=ddl_probes)
+    for right in held:
         findings.append(f"it holds {right} on this database (found by probing; may come from a hidden grant)")
+    for right in unverified:
+        findings.append(f"whether it holds {right} on this database could not be verified: treat as unsafe")
     return findings
 
 

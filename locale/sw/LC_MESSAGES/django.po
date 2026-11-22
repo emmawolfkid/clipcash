@@ -5427,3 +5427,139 @@ msgstr "Angalia mahitaji ya kutoa pesa, simamia njia za kupokea malipo na kagua 
 # UI-10 support
 msgid "Ask ClipCash support for help and follow every reply here."
 msgstr "Omba msaada kutoka kwa usaidizi wa ClipCash na ufuatilie kila jibu hapa."
+
+# Integration of 8c49a8d (PAY-UX-01) with UI-06: member-facing payment verification wording
+msgid "Phone number you paid from (optional)"
+msgstr "Namba ya simu uliyolipia (si lazima)"
+
+msgid "For example 0781234567. It can be someone else's phone; it does not have to be the number on your account."
+msgstr "Kwa mfano 0781234567. Inaweza kuwa simu ya mtu mwingine; si lazima iwe namba iliyo kwenye akaunti yako."
+
+msgid "Transaction reference (optional)"
+msgstr "Kumbukumbu ya muamala (si lazima)"
+
+msgid "From the provider confirmation message, for example the code after “TID” or “Ref”."
+msgstr "Kutoka kwenye ujumbe wa uthibitisho wa mtoa huduma, kwa mfano msimbo baada ya “TID” au “Ref”."
+
+msgid "no transaction reference given"
+msgstr "hakuna kumbukumbu ya muamala iliyotolewa"
+
+msgid "reference %(ref)s"
+msgstr "kumbukumbu %(ref)s"
+
+msgid "Payment verification requested"
+msgstr "Uhakiki wa malipo umeombwa"
+
+msgid "We received your request to verify your payment for %(plan)s (%(amount)s, %(ref)s). Your membership starts after our team confirms the payment in the provider business records."
+msgstr "Tumepokea ombi lako la kuhakiki malipo yako ya %(plan)s (%(amount)s, %(ref)s). Uanachama wako unaanza baada ya timu yetu kuthibitisha malipo katika rekodi za biashara za mtoa huduma."
+
+msgid "We could not confirm your payment for %(plan)s (%(ref)s): %(reason)s."
+msgstr "Hatukuweza kuthibitisha malipo yako ya %(plan)s (%(ref)s): %(reason)s."
+
+msgid "Awaiting payment"
+msgstr "Inasubiri malipo"
+
+msgid "Verification requested"
+msgstr "Unasubiri uhakiki wa malipo"
+
+msgid "Membership active"
+msgstr "Uanachama unatumika"
+
+msgid "Verification unsuccessful"
+msgstr "Uhakiki haukufanikiwa"
+
+msgid "Withdrawn"
+msgstr "Limeondolewa"
+
+msgid "Verification is already requested for this membership. We are checking your payment."
+msgstr "Uhakiki tayari umeombwa kwa uanachama huu. Tunakagua malipo yako."
+
+msgid "Your phone number (optional)"
+msgstr "Namba yako ya simu (si lazima)"
+
+msgid "Thank you. Verification requested: your membership starts once our team confirms your payment."
+msgstr "Asante. Uhakiki umeombwa: uanachama wako unaanza mara timu yetu itakapothibitisha malipo yako."
+
+msgid "Your verification request was withdrawn."
+msgstr "Ombi lako la uhakiki limeondolewa."
+
+msgid "This verification request can no longer be withdrawn."
+msgstr "Ombi hili la uhakiki haliwezi kuondolewa tena."
+
+msgid "We received your request to verify your payment (%(amount)s, reference %(ref)s) and are checking it against the provider records. Your membership starts once the payment is confirmed."
+msgstr "Tumepokea ombi lako la kuhakiki malipo yako (%(amount)s, kumbukumbu %(ref)s) na tunalikagua dhidi ya rekodi za mtoa huduma. Uanachama wako unaanza mara malipo yatakapothibitishwa."
+
+msgid "We received your request to verify your payment (%(amount)s) and are checking it against the provider records. Your membership starts once the payment is confirmed."
+msgstr "Tumepokea ombi lako la kuhakiki malipo yako (%(amount)s) na tunalikagua dhidi ya rekodi za mtoa huduma. Uanachama wako unaanza mara malipo yatakapothibitishwa."
+
+msgid "View request"
+msgstr "Angalia ombi"
+
+msgid "Request verification again"
+msgstr "Omba uhakiki tena"
+
+msgid "You withdrew your last verification request."
+msgstr "Uliondoa ombi lako la mwisho la uhakiki."
+
+msgid "Pay and request verification"
+msgstr "Lipa na uombe uhakiki"
+
+msgid "Check the details and request verification again."
+msgstr "Angalia taarifa na uombe uhakiki tena."
+
+msgid "We could not confirm your payment on %(date)s:"
+msgstr "Hatukuweza kuthibitisha malipo yako tarehe %(date)s:"
+
+msgid "Your membership is not active yet. Requesting verification does not activate it by itself."
+msgstr "Uanachama wako bado haujawezeshwa. Kuomba uhakiki pekee hakuuwezeshi."
+
+msgid "Our team finds your payment in ClipCash's provider business records and checks the exact amount and that it reached our receiving account. This usually takes up to one working day."
+msgstr "Timu yetu hutafuta malipo yako kwenye rekodi za biashara za ClipCash kwa mtoa huduma na kuhakiki kiasi kamili na kama yamefika kwenye akaunti yetu ya kupokea malipo. Kwa kawaida hili huchukua hadi siku moja ya kazi."
+
+msgid "Verification unsuccessful."
+msgstr "Uhakiki haukufanikiwa."
+
+msgid "You withdrew this verification request."
+msgstr "Uliondoa ombi hili la uhakiki."
+
+msgid "Your request"
+msgstr "Ombi lako"
+
+msgid "Withdraw this request"
+msgstr "Ondoa ombi hili"
+
+msgid "Only if you have not paid, or want to send different details. Withdrawing does not refund a payment."
+msgstr "Fanya hivyo tu ikiwa hujalipa, au unataka kutuma taarifa tofauti. Kuondoa ombi hakurejeshi malipo."
+
+msgid "Pay with the details below from any phone, then tap “I've Paid — Request Verification”. Your membership starts after our team confirms the payment in the provider records, usually within one working day."
+msgstr "Lipa kwa taarifa zilizo hapa chini kutoka simu yoyote, kisha bonyeza “Nimelipa — Omba Uhakiki”. Uanachama wako unaanza baada ya timu yetu kuthibitisha malipo katika rekodi za mtoa huduma, kwa kawaida ndani ya siku moja ya kazi."
+
+msgid "Check that the provider shows the recipient name above before you confirm. Pay the exact amount in one payment. You can pay from your own phone or someone else's. Never share your payment PIN with anyone, including ClipCash staff."
+msgstr "Hakikisha mtoa huduma anaonyesha jina la mpokeaji lililo hapo juu kabla ya kuthibitisha. Lipa kiasi kamili kwa muamala mmoja. Unaweza kulipa kutoka simu yako au ya mtu mwingine. Usimpe mtu yeyote PIN yako ya malipo, hata wafanyakazi wa ClipCash."
+
+msgid "These details stay with your request even if the method changes later."
+msgstr "Taarifa hizi zinabaki na ombi lako hata kama njia ya malipo itabadilika baadaye."
+
+msgid "Paid a different amount, paid twice, or paid to the wrong number? Do not request verification here."
+msgstr "Umelipa kiasi tofauti, umelipa mara mbili, au umelipa namba isiyo sahihi? Usiombe uhakiki hapa."
+
+msgid "so our team can check it and arrange any refund."
+msgstr "ili timu yetu iikague na ipange kurejesha malipo inapohitajika."
+
+msgid "2. Request verification"
+msgstr "2. Omba uhakiki"
+
+msgid "Payment details (optional)"
+msgstr "Taarifa za malipo (si lazima)"
+
+msgid "None of these is required. Adding them helps our team find your payment faster."
+msgstr "Hakuna kati ya hizi kinachohitajika. Kuziongeza husaidia timu yetu kupata malipo yako haraka."
+
+msgid "I've Paid — Request Verification"
+msgstr "Nimelipa — Omba Uhakiki"
+
+msgid "Tapping this does not activate your membership by itself, and tapping it again does not create a second request."
+msgstr "Kubonyeza hapa pekee hakuwezeshi uanachama wako, na kubonyeza tena hakuundi ombi la pili."
+
+msgid "Earlier requests for this plan"
+msgstr "Maombi ya awali kwa mpango huu"

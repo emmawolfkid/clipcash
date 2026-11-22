@@ -1,4 +1,4 @@
-{% extends "members/layout.html" %}{% load i18n static money purchase_state %}
+{% extends "members/layout.html" %}{% load i18n static money purchase_state payment_status %}
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/members/dashboard.css' %}">{% endblock %}
 {% block title %}{% translate "Dashboard" %}{% endblock %}
 {% block member_content %}
@@ -56,11 +56,11 @@
     {% elif m.pending %}
       <p class="summary-card__value">{{ m.pending.plan_name }}</p>
       {% if m.pending_payment.status == "PENDING_VERIFICATION" %}
-      <p class="summary-card__status"><span class="badge badge--pending_verification">{% translate "Awaiting payment verification" %}</span> {% translate "Your payment is being verified." %}</p>
+      <p class="summary-card__status"><span class="badge badge--pending_verification">{{ m.pending_payment|claim_status }}</span> {% translate "Your payment is being verified." %}</p>
       {% elif m.pending_payment.status == "REJECTED" %}
-      <p class="summary-card__status"><span class="badge badge--rejected">{% translate "Payment not confirmed" %}</span> {% translate "Check the details and submit them again." %}</p>
+      <p class="summary-card__status"><span class="badge badge--rejected">{{ m.pending_payment|claim_status }}</span> {% translate "Check the details and request verification again." %}</p>
       {% elif m.manual_payments_ready %}
-      <p class="summary-card__status"><span class="badge badge--pending">{{ m.pending.get_status_display }}</span> {% translate "Pay with an available payment method to start this membership." %}</p>
+      <p class="summary-card__status"><span class="badge badge--pending">{% awaiting_payment_label %}</span> {% translate "Pay with an available payment method to start this membership." %}</p>
       {% elif m.purchase_state == "sandbox" %}
       <p class="summary-card__status"><span class="badge badge--pending">{{ m.pending.get_status_display }}</span> {% translate "Waiting for payment. Online payment is not available yet." %}</p>
       {% else %}
@@ -82,7 +82,7 @@
   {% if d.status == "APPROVED" %}<h2 id="payment-update-title">{% translate "Payment update: confirmed" %}</h2>
   <p>{% blocktranslate with plan=d.plan_name amount=d.amount|tzs ref=d.transaction_reference date=d.reviewed_at|date:"DATE_FORMAT" end=d.subscription.expires_at|date:"DATE_FORMAT" %}Your payment of {{ amount }} (reference {{ ref }}) was confirmed on {{ date }}. {{ plan }} is active until {{ end }}.{% endblocktranslate %}</p>
   {% else %}<h2 id="payment-update-title">{% translate "Payment update: not confirmed" %}</h2>
-  <p>{% blocktranslate with ref=d.transaction_reference date=d.reviewed_at|date:"DATE_FORMAT" %}We could not confirm your payment (reference {{ ref }}) on {{ date }}:{% endblocktranslate %} {{ d.get_rejection_reason_display }}.{% if d.review_note %} {{ d.review_note }}{% endif %}</p>
+  <p>{% if d.transaction_reference %}{% blocktranslate with ref=d.transaction_reference date=d.reviewed_at|date:"DATE_FORMAT" %}We could not confirm your payment (reference {{ ref }}) on {{ date }}:{% endblocktranslate %}{% else %}{% blocktranslate with date=d.reviewed_at|date:"DATE_FORMAT" %}We could not confirm your payment on {{ date }}:{% endblocktranslate %}{% endif %} {{ d.get_rejection_reason_display }}.{% if d.review_note %} {{ d.review_note }}{% endif %}</p>
   {% endif %}
   <a href="{% url 'payments:manual_claim' d.pk %}">{% translate "View payment" %}</a>
 </section>
