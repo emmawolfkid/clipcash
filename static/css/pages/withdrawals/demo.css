@@ -1,3 +1,8 @@
+/* UI-08: pages / withdrawals / demo withdrawal detail (simulated only). */
+.demo-withdrawal { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); min-width: 0; }
+.demo-withdrawal > * { margin: 0; }
+.demo-withdrawal .panel { border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+
 .demo-decision-list .list__item {
   padding-block: var(--space-4);
 }

@@ -1,3 +1,17 @@
+/* UI-08: pages / withdrawals / payout destinations. Masked destinations only. */
+.destination-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); min-width: 0; }
+.destination-page > *,
+.destination-page .card-grid { margin: 0; }
+.destination-card {
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+.destination-card > .empty-state { margin: 0; }
+
 .destination-table td:first-child {
   min-width: 11rem;
 }
@@ -5,6 +19,8 @@
 .destination-table td:last-child {
   min-width: 8rem;
 }
+
+.destination-form { border-radius: var(--radius-lg); box-shadow: var(--shadow-card); border-top: 4px solid var(--primary-bg); }
 
 .destination-form .form {
   margin-bottom: 0;
@@ -14,4 +30,8 @@
 .destination-form select {
   min-width: 0;
   width: 100%;
+}
+
+@media (max-width: 36rem) {
+  .destination-card { padding: var(--space-4); }
 }

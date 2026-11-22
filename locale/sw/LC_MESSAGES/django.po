@@ -5419,3 +5419,7 @@ msgstr "Taarifa zako za kuingia"
 # UI-07 wallet
 msgid "Check your real wallet balances and ledger transaction history."
 msgstr "Angalia salio halisi la pochi yako na historia ya miamala ya leja."
+
+# UI-08 withdrawals
+msgid "See what a withdrawal needs, manage payout destinations and review demo scenarios."
+msgstr "Angalia mahitaji ya kutoa pesa, simamia njia za kupokea malipo na kagua mifano ya majaribio."

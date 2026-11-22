@@ -1,4 +1,36 @@
-/* UI-02: pages / withdrawals / overview. */
+/* UI-02/UI-08: pages / withdrawals / overview (design plan section 7). Withdrawals stay unavailable. */
+.withdrawal-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); min-width: 0; }
+.withdrawal-page > * { margin: 0; }
+.withdrawal-page .panel { border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+.withdrawal-page .card-grid { margin: 0; }
+
+/* Status: the dashboard's blue balance-card treatment, stating the real (unavailable) state. */
+.withdrawal-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  color: var(--nav-text);
+  background: linear-gradient(120deg, var(--nav-bg), var(--primary-bg));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+.withdrawal-hero__status { flex: 1 1 20rem; min-width: 0; margin: 0; }
+.withdrawal-hero__status strong { display: block; margin-bottom: var(--space-1); font-size: var(--text-lg); color: var(--brand-yellow); }
+.withdrawal-hero__balance { display: grid; gap: var(--space-1); margin: 0; padding: var(--space-3) var(--space-4); background: rgb(255 255 255 / 10%); border-radius: var(--radius); }
+.withdrawal-hero__balance span { color: var(--nav-muted); font-size: var(--text-sm); font-weight: 600; }
+.withdrawal-hero__balance strong { font-size: clamp(1.5rem, 3vw, 2rem); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.withdrawal-destinations { display: grid; align-content: start; gap: var(--space-3); }
+.withdrawal-destinations .list-plain,
+.withdrawal-destinations .lead { margin: 0; }
+.withdrawal-destinations .button { justify-self: start; }
+.withdrawal-safety { border-top: 4px solid var(--brand-yellow); }
+.withdrawal-safety ul { margin: 0; padding-inline-start: var(--space-5); display: grid; gap: var(--space-2); }
+
 .checklist {
   list-style: none;
   margin: 0 0 0.75rem;
@@ -28,9 +60,14 @@
   flex: 0 1 14rem;
 }
 
+@media (max-width: 36rem) {
+  .withdrawal-hero { padding: var(--space-4); }
+  .withdrawal-hero__balance { flex-basis: 100%; }
+  .withdrawal-destinations .button { justify-self: stretch; text-align: center; }
+}
+
 @media (max-width: 30rem) {
   .panel .toolbar .button {
     width: 100%;
   }
 }
-

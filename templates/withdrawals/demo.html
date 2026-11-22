@@ -1,9 +1,14 @@
 {% extends "members/layout.html" %}{% load static i18n money %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/withdrawals/demo.css' %}">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/withdrawals/demo.css' %}">{% endblock %}
 {% block title %}{{ demo.reference }}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{{ demo.reference }} <span class="badge badge--sandbox">{% translate "Demo" %}</span></h1>
-<p><a href="{% url 'withdrawals:overview' %}">{% translate "Back to withdrawals" %}</a></p>
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="withdrawals" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{{ demo.reference }}</h1>
+    <p class="page-banner__subtitle"><a href="{% url 'withdrawals:overview' %}">{% translate "Back to withdrawals" %}</a></p></div>
+  <span class="page-banner__aside badge badge--sandbox">{% translate "Demo" %}</span>
+</header>
+<div class="demo-withdrawal">
 {% include "components/demo_withdrawal_notice.html" %}
 <section class="panel"><dl class="details">
   <dt>{% translate "Simulated amount" %}</dt><dd><span class="financial-amount financial-amount--large">{{ demo.simulated_amount|tzs }}</span></dd>
@@ -11,5 +16,6 @@
   <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ demo.status|lower }}">{{ demo.get_status_display }}</span></dd>
   <dt>{% translate "Created" %}</dt><dd>{{ demo.created_at|date:"DATETIME_FORMAT" }}</dd>
 </dl></section>
-<section class="section"><h2>{% translate "History" %}</h2>{% if decisions %}<ol class="list demo-decision-list">{% for d in decisions %}<li class="list__item"><span>{{ d.created_at|date:"SHORT_DATETIME_FORMAT" }}</span><span class="badge badge--{{ d.to_status|lower }}">{{ d.status_label }}</span></li>{% endfor %}</ol>{% else %}<p class="empty-state">{% translate "No demo decisions have been recorded." %}</p>{% endif %}</section>
+<section class="panel"><h2 class="panel__title">{% translate "History" %}</h2>{% if decisions %}<ol class="list demo-decision-list">{% for d in decisions %}<li class="list__item"><span>{{ d.created_at|date:"SHORT_DATETIME_FORMAT" }}</span><span class="badge badge--{{ d.to_status|lower }}">{{ d.status_label }}</span></li>{% endfor %}</ol>{% else %}<p class="empty-state">{% translate "No demo decisions have been recorded." %}</p>{% endif %}</section>
+</div>
 {% endblock %}
