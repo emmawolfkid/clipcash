@@ -1,9 +1,9 @@
 /* Opt-in video surfaces; dashboard cards and application chrome stay unchanged. */
 .video-experience { min-width: 0; overflow-wrap: anywhere; }
-.video-heading { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); }
+.video-heading { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); margin-bottom: var(--space-5); padding: var(--space-4) var(--space-5); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
 .video-heading .page-title { margin: 0; }
 .video-heading p { margin: var(--space-1) 0 0; color: var(--muted); }
-.video-heading__icon { display: grid; place-items: center; flex: 0 0 2.75rem; width: 2.75rem; height: 2.75rem; border-radius: var(--radius); color: var(--primary-text); background: var(--primary-bg); box-shadow: var(--shadow-control); }
+.video-heading__icon { display: grid; place-items: center; flex: 0 0 3rem; width: 3rem; height: 3rem; border-radius: var(--radius); color: var(--primary-text); background: var(--primary-bg); box-shadow: var(--shadow-control); }
 .video-experience .video-grid { gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); }
 .video-experience .video-card { min-width: 0; border-radius: var(--radius-lg); }
 .video-experience .video-card__link { display: flex; flex-direction: column; }
@@ -25,6 +25,6 @@
 @media (max-width: 36rem) {
   .video-experience .video-grid { grid-template-columns: minmax(0, 1fr); }
   .video-experience .panel { padding: var(--space-4); }
-  .video-heading { align-items: flex-start; }
+  .video-heading { align-items: flex-start; padding: var(--space-4); }
   .video-heading > div { flex: 1; min-width: 0; }
 }

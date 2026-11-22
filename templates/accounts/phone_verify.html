@@ -1,9 +1,13 @@
 {% extends "members/layout.html" %}{% load i18n static %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/accounts/settings.css' %}">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/accounts/settings.css' %}">{% endblock %}
 {% block title %}{% translate "Verify your mobile number" %}{% endblock %}
 {% block crumb %}{% translate "Verify your mobile number" %}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{% translate "Verify your mobile number" %}</h1>
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="profile" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{% translate "Verify your mobile number" %}</h1>
+    <p class="page-banner__subtitle"><a href="{% url 'accounts:profile' %}">{% translate "Back to my account" %}</a></p></div>
+</header>
 <section class="panel account-form">
 {% if not user.phone_number %}
   <p>{% translate "Your account has no mobile number yet." %}</p>
@@ -20,12 +24,12 @@
   <form class="form" method="post" novalidate>{% csrf_token %}
     <input type="hidden" name="action" value="confirm">
     {{ form.code.as_field_group }}
-    <button type="submit" class="button">{% translate "Verify number" %}</button>
+    <button type="submit" class="button button--action">{% translate "Verify number" %}</button>
   </form>
   {% endif %}
   <form method="post" class="section">{% csrf_token %}
     <input type="hidden" name="action" value="send">
-    <button type="submit" class="button{% if challenge %} button--secondary{% endif %}">{% if challenge %}{% translate "Send a new code" %}{% else %}{% translate "Send code" %}{% endif %}</button>
+    <button type="submit" class="button{% if challenge %} button--secondary{% else %} button--action{% endif %}">{% if challenge %}{% translate "Send a new code" %}{% else %}{% translate "Send code" %}{% endif %}</button>
   </form>
   <p class="helptext">{% translate "ClipCash staff will never ask for this code. Never share it with anyone." %}</p>
   <ul class="links"><li><a href="{% url 'accounts:profile_edit' %}">{% translate "Wrong number? Change it first" %}</a></li><li><a href="{% url 'accounts:profile' %}">{% translate "Back to my account" %}</a></li></ul>

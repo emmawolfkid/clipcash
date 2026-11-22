@@ -5,7 +5,7 @@
 <div class="member-dashboard">
 <header class="dashboard-welcome">
 <div class="dashboard-welcome__copy"><p class="dashboard-welcome__eyebrow">{% translate "Your ClipCash" %}</p>
-<h1 class="page-title">{% blocktranslate with name=user.first_name|default:user.sign_in_identifier %}Welcome, {{ name }}{% endblocktranslate %} <span aria-hidden="true">👋</span></h1>
+<h1 class="page-title">{% if user.first_name %}{% blocktranslate with name=user.first_name %}Welcome, {{ name }}{% endblocktranslate %}{% else %}{% translate "Welcome back" %}{% endif %} <span aria-hidden="true">👋</span></h1>
 <p>{% translate "Discover something new. Keep track of what ClipCash has verified." %}</p>
 <nav class="dashboard-welcome__links" aria-label="{% translate 'Dashboard shortcuts' %}">{% if features.videos %}<a href="{% url 'videos:library' %}">{% translate "Explore videos" %}</a>{% endif %}<a href="{% url 'notifications:inbox' %}">{% translate "Notifications" %}{% if unread_notifications %} ({{ unread_notifications }}){% endif %}</a></nav></div>
 <div class="dashboard-welcome__art">{% include "components/clip_illustration.html" %}</div>

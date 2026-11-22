@@ -1,11 +1,15 @@
 {% extends "members/layout.html" %}{% load i18n static %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/accounts/settings.css' %}">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/accounts/settings.css' %}">{% endblock %}
 {% block title %}{% translate "Edit profile" %}{% endblock %}
 {% block crumb %}{% translate "Edit profile" %}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{% translate "Edit profile" %}</h1>
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="profile" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{% translate "Edit profile" %}</h1>
+    <p class="page-banner__subtitle"><a href="{% url 'accounts:profile' %}">{% translate "Back to my account" %}</a></p></div>
+</header>
 <section class="panel account-form">
-  {% include "components/form.html" with button=_("Save changes") %}
+  {% include "components/form.html" with button=_("Save changes") button_class="button--action" %}
   <ul class="links"><li><a href="{% url 'accounts:profile' %}">{% translate "Cancel" %}</a></li></ul>
 </section>
 {% endblock %}
