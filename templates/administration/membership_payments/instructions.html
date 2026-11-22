@@ -7,7 +7,7 @@
     <h1 class="page-title">{% translate "Manual payment methods" %}</h1>
     <p class="page-intro">{% translate "The receiving numbers and registered names members pay to for their membership." %}</p>
   </div>
-  <a class="button button--secondary" href="{% url 'administration:membership_payments' %}">{% translate "Verification queue" %}</a>
+  {% if can.membership_payments %}<a class="button button--secondary" href="{% url 'administration:membership_payments' %}">{% translate "Verification queue" %}</a>{% endif %}{# ADMIN-01: the queue refuses access while manual payments are off. #}
 </div>
 
 <div class="payment-methods__notices">

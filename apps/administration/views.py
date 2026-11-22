@@ -91,8 +91,10 @@ def console_links(user):
         "payments": payments.can_view_payments(user) and payments_sandbox_active(),
         # PAY-01: real membership payments (Airtel Lipa), verified by staff.
         "membership_payments": manual_payments.manual_payments_enabled() and manual_payments.can_view(user),
-        "payment_instructions": (manual_payments.manual_payments_enabled()
-                                 and manual_payments.can_manage_instructions(user)),
+        # ADMIN-01: the methods page opens for Super Administrators whether or not manual payments are
+        # switched on (it says when they are off), so its link follows the page's own check. The
+        # verification queue above refuses access while switched off, so its link stays hidden then.
+        "payment_instructions": manual_payments.can_manage_instructions(user),
         "wallets": wallet_services.can_view_wallets(user),
         "withdrawals": withdrawals.can_view(user),
         "support": support.can_view_queue(user),

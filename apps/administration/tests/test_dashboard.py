@@ -69,7 +69,7 @@ class AccessTests(DashboardTestCase):
         self.assertEqual(set(page.context["sections"]),
                          {"members", "advertising", "videos", "viewing", "rewards", "payments", "wallets",
                           "withdrawals", "jobs"})
-        for group in ("Overview", "Members", "Advertising", "Videos and viewing", "Financial simulation",
+        for group in ("Overview", "Members and memberships", "Advertising", "Videos and viewing", "Financial simulation",
                       "Operations", "Security and audit"):
             self.assertContains(page, f">{group}</p>")
         self.assertContains(page, 'aria-current="page" href="' + OVERVIEW + '"')

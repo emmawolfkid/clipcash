@@ -1,0 +1,60 @@
+{% load i18n %}{# ADMIN-01: the console menu. Context: can (console_links), console_active (the current entry's key). Each group appears only when it holds at least one entry this staff member may open; every target still enforces its own permission. #}
+    <nav id="console-menu" class="app-nav" aria-label="{% translate 'Administration menu' %}">
+      <p class="app-nav__group" id="console-overview">{% translate "Overview" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-overview">
+        {% include "administration/_nav_link.html" with target="administration:overview" key="overview" label=_("Overview") %}
+        {% include "administration/_nav_link.html" with target="administration:health" key="health" label=_("Operational health") %}
+      </ul>
+      {% if can.members or can.plans %}<p class="app-nav__group" id="console-members">{% translate "Members and memberships" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-members">
+        {% if can.members %}{% include "administration/_nav_link.html" with target="administration:members" key="members" label=_("Member directory") %}{% endif %}
+        {% if can.plans %}{% include "administration/_nav_link.html" with target="administration:plans" key="plans" label=_("Membership plans") %}{% endif %}
+        {% if can.members %}{% include "administration/_nav_link.html" with target="admin:accounts_user_changelist" nav_external=True label=_("User accounts (admin)") %}{% endif %}
+      </ul>{% endif %}
+      {% if can.membership_payments or can.payment_instructions %}<p class="app-nav__group" id="console-membership-payments">{% translate "Membership payments" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-membership-payments">
+        {% if can.payment_instructions %}{% include "administration/_nav_link.html" with target="administration:payment_instructions" key="payment_instructions" label=_("Payment methods") %}{% endif %}
+        {% if can.membership_payments %}{% include "administration/_nav_link.html" with target="administration:membership_payments" key="membership_payments" label=_("Verification queue") %}{% endif %}
+      </ul>{% endif %}
+      {% if can.videos or can.categories or can.viewing %}<p class="app-nav__group" id="console-content">{% translate "Videos and viewing" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-content">
+        {% if can.videos %}{% include "administration/_nav_link.html" with target="administration:videos" key="videos" label=_("Video management") %}{% endif %}
+        {% if can.categories %}{% include "administration/_nav_link.html" with target="administration:categories" key="categories" label=_("Categories") %}{% endif %}
+        {% if can.viewing %}{% include "administration/_nav_link.html" with target="administration:viewing" key="viewing" label=_("Viewing review") %}{% endif %}
+      </ul>{% endif %}
+      {% if can.advertisers or can.campaigns %}<p class="app-nav__group" id="console-advertising">{% translate "Advertising" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-advertising">
+        {% if can.advertisers %}{% include "administration/_nav_link.html" with target="administration:advertisers" key="advertisers" label=_("Advertisers") %}{% endif %}
+        {% if can.campaigns %}{% include "administration/_nav_link.html" with target="administration:campaigns" key="campaigns" label=_("Campaigns") %}{% endif %}
+      </ul>{% endif %}
+      {% if can.rewards or can.payments or can.wallets or can.withdrawals %}<p class="app-nav__group" id="console-finance">{% translate "Financial simulation" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-finance">
+        {% if can.rewards %}{% include "administration/_nav_link.html" with target="administration:demo_rewards" key="rewards" label=_("Demo rewards") %}{% endif %}
+        {% if can.payments %}{% include "administration/_nav_link.html" with target="administration:payments" key="payments" label=_("Payments (sandbox)") %}{% endif %}
+        {% if can.wallets %}{% include "administration/_nav_link.html" with target="administration:wallets" key="wallets" label=_("Wallets (real ledger)") %}{% endif %}
+        {% if can.withdrawals %}{% include "administration/_nav_link.html" with target="administration:withdrawals" key="withdrawals" label=_("Withdrawals (demo)") %}{% endif %}
+      </ul>{% endif %}
+      {% if can.support %}<p class="app-nav__group" id="console-support">{% translate "Customer support" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-support">
+        {% include "administration/_nav_link.html" with target="administration:support" key="support" label=_("Support queue") %}
+      </ul>{% endif %}
+      {% if can.analytics or can.reports %}<p class="app-nav__group" id="console-reports">{% translate "Reports" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-reports">
+        {% if can.analytics %}{% include "administration/_nav_link.html" with target="administration:analytics" key="analytics" label=_("Analytics") %}{% endif %}
+        {% if can.reports %}{% include "administration/_nav_link.html" with target="administration:reports" key="reports" label=_("Reports") %}{% endif %}
+      </ul>{% endif %}
+      {% if can.settings %}<p class="app-nav__group" id="console-operations">{% translate "Operations" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-operations">
+        {% include "administration/_nav_link.html" with target="admin:core_siteconfiguration_changelist" nav_external=True label=_("System settings") %}
+      </ul>{% endif %}
+      {% if can.audit %}<p class="app-nav__group" id="console-security">{% translate "Security and audit" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-security">
+        {% include "administration/_nav_link.html" with target="administration:security" key="security" label=_("Security summary") %}
+        {% include "administration/_nav_link.html" with target="admin:audit_auditevent_changelist" nav_external=True label=_("Audit logs") %}
+      </ul>{% endif %}
+      <p class="app-nav__group" id="console-account">{% translate "Your account" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-account">
+        {% include "administration/_nav_link.html" with target="notifications:inbox" nav_external=True label=_("My notifications") nav_badge=unread_notifications %}
+        {% include "administration/_nav_link.html" with target="accounts:profile" nav_external=True label=_("My account") %}
+      </ul>
+    </nav>

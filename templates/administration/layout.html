@@ -8,66 +8,8 @@
   <aside class="app-sidebar">
     <p class="app-sidebar__title">{% translate "Administration" %}</p>
     <button type="button" class="app-nav__toggle" aria-expanded="true" aria-controls="console-menu" hidden>{% translate "Menu" %}</button>
-    <nav id="console-menu" class="app-nav" aria-label="{% translate 'Administration menu' %}">
-      <p class="app-nav__group" id="console-overview">{% translate "Overview" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-overview">
-        <li><a class="app-nav__link{% if nav == 'overview' %} is-current{% endif %}"{% if nav == 'overview' %} aria-current="page"{% endif %} href="{% url 'administration:overview' %}">{% translate "Overview" %}</a></li>
-        <li><a class="app-nav__link{% if nav == 'health' %} is-current{% endif %}"{% if nav == 'health' %} aria-current="page"{% endif %} href="{% url 'administration:health' %}">{% translate "Operational health" %}</a></li>
-      </ul>
-      {% if can.members or can.plans %}<p class="app-nav__group" id="console-members">{% translate "Members" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-members">
-        {% if can.members %}<li><a class="app-nav__link{% if nav == 'members' %} is-current{% endif %}"{% if nav == 'members' %} aria-current="page"{% endif %} href="{% url 'administration:members' %}">{% translate "Member directory" %}</a></li>{% endif %}
-        {% if can.members %}<li><a class="app-nav__link" href="{% url 'admin:accounts_user_changelist' %}">{% translate "User accounts (admin)" %}</a></li>{% endif %}
-        {% if can.plans %}<li><a class="app-nav__link{% if nav == 'plans' %} is-current{% endif %}"{% if nav == 'plans' %} aria-current="page"{% endif %} href="{% url 'administration:plans' %}">{% translate "Membership plans" %}</a></li>{% endif %}
-      </ul>{% endif %}
-      {% if can.membership_payments or can.payment_instructions %}<p class="app-nav__group" id="console-membership-payments">{% translate "Membership payments" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-membership-payments">
-        {# UI-10: both pages pass nav="membership_payments"; the URL name tells them apart. #}
-        {% if can.membership_payments %}{% if nav == 'membership_payments' and request.resolver_match.url_name != 'payment_instructions' %}<li><a class="app-nav__link is-current" aria-current="page" href="{% url 'administration:membership_payments' %}">{% else %}<li><a class="app-nav__link" href="{% url 'administration:membership_payments' %}">{% endif %}{% translate "Verification queue" %}</a></li>{% endif %}
-        {% if can.payment_instructions %}{% if request.resolver_match.url_name == 'payment_instructions' %}<li><a class="app-nav__link is-current" aria-current="page" href="{% url 'administration:payment_instructions' %}">{% else %}<li><a class="app-nav__link" href="{% url 'administration:payment_instructions' %}">{% endif %}{% translate "Payment methods" %}</a></li>{% endif %}
-      </ul>{% endif %}
-      {% if can.support %}<p class="app-nav__group" id="console-support">{% translate "Customer support" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-support">
-        <li><a class="app-nav__link{% if nav == 'support' %} is-current{% endif %}"{% if nav == 'support' %} aria-current="page"{% endif %} href="{% url 'administration:support' %}">{% translate "Support queue" %}</a></li>
-      </ul>{% endif %}
-      {% if can.advertisers or can.campaigns %}<p class="app-nav__group" id="console-advertising">{% translate "Advertising" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-advertising">
-        {% if can.advertisers %}<li><a class="app-nav__link{% if nav == 'advertisers' %} is-current{% endif %}"{% if nav == 'advertisers' %} aria-current="page"{% endif %} href="{% url 'administration:advertisers' %}">{% translate "Advertisers" %}</a></li>{% endif %}
-        {% if can.campaigns %}<li><a class="app-nav__link{% if nav == 'campaigns' %} is-current{% endif %}"{% if nav == 'campaigns' %} aria-current="page"{% endif %} href="{% url 'administration:campaigns' %}">{% translate "Campaigns" %}</a></li>{% endif %}
-      </ul>{% endif %}
-      {% if can.videos or can.categories or can.viewing %}<p class="app-nav__group" id="console-content">{% translate "Videos and viewing" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-content">
-        {% if can.videos %}<li><a class="app-nav__link{% if nav == 'videos' %} is-current{% endif %}"{% if nav == 'videos' %} aria-current="page"{% endif %} href="{% url 'administration:videos' %}">{% translate "Video management" %}</a></li>{% endif %}
-        {% if can.categories %}<li><a class="app-nav__link{% if nav == 'categories' %} is-current{% endif %}"{% if nav == 'categories' %} aria-current="page"{% endif %} href="{% url 'administration:categories' %}">{% translate "Categories" %}</a></li>{% endif %}
-        {% if can.viewing %}<li><a class="app-nav__link{% if nav == 'viewing' %} is-current{% endif %}"{% if nav == 'viewing' %} aria-current="page"{% endif %} href="{% url 'administration:viewing' %}">{% translate "Viewing review" %}</a></li>{% endif %}
-      </ul>{% endif %}
-      {% if can.rewards or can.payments or can.wallets or can.withdrawals %}<p class="app-nav__group" id="console-finance">{% translate "Financial simulation" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-finance">
-        {% if can.rewards %}<li><a class="app-nav__link{% if nav == 'rewards' %} is-current{% endif %}"{% if nav == 'rewards' %} aria-current="page"{% endif %} href="{% url 'administration:demo_rewards' %}">{% translate "Demo rewards" %}</a></li>{% endif %}
-        {% if can.payments %}<li><a class="app-nav__link{% if nav == 'payments' %} is-current{% endif %}"{% if nav == 'payments' %} aria-current="page"{% endif %} href="{% url 'administration:payments' %}">{% translate "Payments (sandbox)" %}</a></li>{% endif %}
-        {% if can.wallets %}<li><a class="app-nav__link{% if nav == 'wallets' %} is-current{% endif %}"{% if nav == 'wallets' %} aria-current="page"{% endif %} href="{% url 'administration:wallets' %}">{% translate "Wallets" %}</a></li>{% endif %}
-        {% if can.withdrawals %}<li><a class="app-nav__link{% if nav == 'withdrawals' %} is-current{% endif %}"{% if nav == 'withdrawals' %} aria-current="page"{% endif %} href="{% url 'administration:withdrawals' %}">{% translate "Withdrawals (demo)" %}</a></li>{% endif %}
-      </ul>{% endif %}
-      {% if can.reports %}<p class="app-nav__group" id="console-reports">{% translate "Reports" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-reports">
-        {% if can.analytics %}<li><a class="app-nav__link{% if nav == 'analytics' %} is-current{% endif %}"{% if nav == 'analytics' %} aria-current="page"{% endif %} href="{% url 'administration:analytics' %}">{% translate "Analytics" %}</a></li>{% endif %}
-        <li><a class="app-nav__link{% if nav == 'reports' %} is-current{% endif %}"{% if nav == 'reports' %} aria-current="page"{% endif %} href="{% url 'administration:reports' %}">{% translate "Reports" %}</a></li>
-      </ul>{% endif %}
-      {% if can.settings %}<p class="app-nav__group" id="console-operations">{% translate "Operations" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-operations">
-        {% if can.settings %}<li><a class="app-nav__link" href="{% url 'admin:core_siteconfiguration_changelist' %}">{% translate "System settings" %}</a></li>{% endif %}
-      </ul>{% endif %}
-      {% if can.audit %}<p class="app-nav__group" id="console-security">{% translate "Security and audit" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-security">
-        {% if can.audit %}<li><a class="app-nav__link{% if nav == 'security' %} is-current{% endif %}"{% if nav == 'security' %} aria-current="page"{% endif %} href="{% url 'administration:security' %}">{% translate "Security summary" %}</a></li>{% endif %}
-        {% if can.audit %}<li><a class="app-nav__link" href="{% url 'admin:audit_auditevent_changelist' %}">{% translate "Audit logs" %}</a></li>{% endif %}
-      </ul>{% endif %}
-      <p class="app-nav__group" id="console-account">{% translate "Your account" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-account">
-        <li><a class="app-nav__link" href="{% url 'notifications:inbox' %}">{% translate "My notifications" %}{% if unread_notifications %} <span class="badge badge--pending">{{ unread_notifications }}</span>{% endif %}</a></li>
-        <li><a class="app-nav__link" href="{% url 'accounts:profile' %}">{% translate "My account" %}</a></li>
-      </ul>
-    </nav>
+    {# ADMIN-01: both membership payment pages pass nav="membership_payments"; the URL name tells them apart. #}
+    {% if request.resolver_match.url_name == 'payment_instructions' %}{% include "administration/_sidebar.html" with console_active="payment_instructions" %}{% else %}{% include "administration/_sidebar.html" with console_active=nav %}{% endif %}
   </aside>
   <main id="content" class="app-main" tabindex="-1">
     {% if breadcrumbs %}<nav class="breadcrumbs" aria-label="{% translate 'Breadcrumb' %}"><ol>{% for label, url_name in breadcrumbs %}<li><a href="{% url url_name %}">{% translate label %}</a></li>{% endfor %}<li aria-current="page">{% block crumb %}{% endblock %}</li></ol></nav>{% endif %}

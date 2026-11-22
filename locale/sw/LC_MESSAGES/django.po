@@ -5162,3 +5162,47 @@ msgstr "Nakili namba"
 #: templates/components/payment_number.html
 msgid "Number copied."
 msgstr "Namba imenakiliwa."
+
+#: templates/administration/layout.html
+msgid "Administration"
+msgstr "Usimamizi"
+
+#: templates/administration/_sidebar.html
+msgid "Administration menu"
+msgstr "Menyu ya usimamizi"
+
+#: templates/administration/_sidebar.html
+msgid "Members and memberships"
+msgstr "Wanachama na uanachama"
+
+#: templates/administration/_sidebar.html
+msgid "Membership payments"
+msgstr "Malipo ya uanachama"
+
+#: templates/administration/_sidebar.html
+msgid "Videos and viewing"
+msgstr "Video na utazamaji"
+
+#: templates/administration/_sidebar.html
+msgid "Advertising"
+msgstr "Matangazo"
+
+#: templates/administration/_sidebar.html
+msgid "Financial simulation"
+msgstr "Fedha za kuigiza"
+
+#: templates/administration/_sidebar.html
+msgid "Customer support"
+msgstr "Usaidizi kwa wateja"
+
+#: templates/administration/_sidebar.html
+msgid "Operations"
+msgstr "Uendeshaji"
+
+#: templates/administration/_sidebar.html
+msgid "Security and audit"
+msgstr "Usalama na ukaguzi"
+
+#: templates/administration/_sidebar.html templates/administration/overview.html
+msgid "Wallets (real ledger)"
+msgstr "Pochi (leja halisi)"
