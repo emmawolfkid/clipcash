@@ -1,6 +1,7 @@
 {% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Confirm your new email address" %}{% endblock %}
 {% block auth_content %}
+{% include "components/auth_state.html" with kind="warning" %}
 <h1>{% translate "Confirm your new email address" %}</h1>
 <p>{% blocktranslate with email=user.sign_in_identifier %}You are signed in as <strong>{{ email }}</strong>.{% endblocktranslate %}
    {% blocktranslate %}Use <strong>{{ new_email }}</strong> to sign in to your ClipCash account from now on?{% endblocktranslate %}</p>

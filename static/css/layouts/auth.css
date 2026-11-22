@@ -21,7 +21,6 @@
   .auth-shell { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: var(--space-7); margin-block: var(--space-7); }
 }
 @media (max-width: 52rem) {
-  .auth-content { order: -1; }
   .auth-introduction__title { font-size: 1.5rem; }
   .auth-introduction ol { margin-block: var(--space-4); }
 }
@@ -36,3 +35,48 @@
 /* PRD-03B: a POST action (e.g. Sign out) listed among the card links, with the same touch target. */
 .auth-card .links form { display: inline; }
 .auth-card .links .button--link { min-height: var(--touch-target); }
+
+/* UI-03: one branded shell for entry, recovery and account states. */
+.auth-shell { max-width: 66rem; margin-block: clamp(1rem, 4vw, 3rem); padding: var(--space-2); gap: var(--space-2); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); align-items: stretch; width: calc(100% - var(--gutter) * 2); }
+.auth-introduction { display: flex; flex-direction: column; background: linear-gradient(155deg, var(--nav-hover), var(--nav-bg) 65%); padding: clamp(1.25rem, 3vw, 2.5rem); min-width: 0; }
+.auth-brand { align-self: flex-start; text-decoration: none; }
+.auth-brand:focus-visible { outline-color: var(--focus-on-navy); }
+.auth-tagline { margin: var(--space-2) 0 var(--space-4); font-size: var(--text-sm); }
+.auth-introduction__title { font-size: clamp(1.5rem, 2.6vw, 2.1rem); margin-bottom: var(--space-3); }
+.auth-introduction__note { margin-top: auto; padding-top: var(--space-4); }
+.auth-benefits { display: grid; gap: var(--space-3); list-style: none; padding: 0; margin: var(--space-4) 0 var(--space-6); }
+.auth-benefits li { display: flex; gap: var(--space-3); align-items: center; font-size: var(--text-sm); }
+.auth-benefits .nav-icon { flex: 0 0 1.25rem; color: var(--brand-yellow); }
+.auth-content { display: flex; flex-direction: column; order: 0; }
+.auth-card { border: 0; box-shadow: none; padding: clamp(1rem, 3vw, 2.5rem); flex: 1; }
+.auth-card h1 { font-size: clamp(1.6rem, 2.8vw, 2.1rem); margin-bottom: var(--space-3); }
+.auth-card > .lead { margin-top: 0; font-size: var(--text-sm); }
+.auth-kicker { margin: 0 0 var(--space-2); font-size: var(--text-sm); font-weight: 700; color: var(--primary-bg); }
+.auth-card .form { margin-top: var(--space-5); }
+.auth-card .form-field { margin-bottom: var(--space-4); }
+.auth-card .helptext { line-height: 1.5; }
+.auth-card fieldset > div[id] { grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); }
+.auth-card fieldset > div[id] label { margin: 0; padding: var(--space-3); height: 100%; }
+.auth-card fieldset > div[id] label:has(input:checked) { border-color: var(--primary-bg); background: var(--info-bg); box-shadow: inset 0 0 0 1px var(--primary-bg); }
+.auth-password-toggle { display: inline-flex; align-items: center; font-size: var(--text-sm); }
+.auth-alternative { background: var(--surface-soft); border: 0; }
+.auth-footnote { padding: 0 var(--space-4) var(--space-3); margin-top: var(--space-3); }
+.auth-state { display: grid; place-items: center; width: 3rem; height: 3rem; margin-bottom: var(--space-4); border-radius: var(--radius); color: var(--info); background: var(--info-bg); }
+.auth-state--success { color: var(--success); background: var(--success-bg); }
+.auth-state--warning { color: var(--warning); background: var(--warning-bg); }
+.auth-state--error { color: var(--error); background: var(--error-bg); }
+.auth-content > .feedback { margin: var(--space-3); width: auto; }
+.auth-recovery-note { font-size: var(--text-sm); line-height: 1.6; }
+@media (min-width: 52.01rem) { .auth-shell { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); } }
+@media (max-width: 52rem) {
+  .auth-shell { grid-template-columns: minmax(0, 1fr); }
+  .auth-introduction { padding: var(--space-4); }
+  .auth-introduction .clip-illustration { display: none; }
+  .auth-introduction__title { margin-top: var(--space-2); }
+  .auth-benefits { grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); margin-block: var(--space-3); }
+  .auth-introduction__note { margin-bottom: 0; }
+}
+@media (max-width: 30rem) {
+  .auth-alternative { align-items: stretch; flex-direction: column; }
+  .auth-alternative .button { width: 100%; }
+}

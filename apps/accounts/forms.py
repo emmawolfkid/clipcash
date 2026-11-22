@@ -219,9 +219,9 @@ class LoginForm(ThrottledLoginMixin, AuthenticationForm):
     message, so it does not say which identifiers exist."""
 
     username = forms.CharField(
-        label=_("Email, mobile number or username"), max_length=254,
+        label=_("Mobile number, email or username"), max_length=254,
         widget=forms.TextInput(attrs={"autocomplete": "username", "autofocus": True, "autocapitalize": "none",
-                                      "spellcheck": "false"}),
+                                      "spellcheck": "false", "placeholder": _("0712 345 678, email or username")}),
     )
     error_messages = {
         **AuthenticationForm.error_messages,

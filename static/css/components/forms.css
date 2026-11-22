@@ -133,7 +133,7 @@ textarea {
 
 input[type="checkbox"],
 input[type="radio"] {
-  accent-color: var(--brand-navy);
+  accent-color: var(--primary-bg);
   inline-size: 1.15rem;
   block-size: 1.15rem;
   flex-shrink: 0;
@@ -232,3 +232,12 @@ textarea::placeholder {
   align-content: center;
 }
 
+
+/* Disabled controls stay legible; invalid borders retain their error semantics. */
+input:disabled, select:disabled, textarea:disabled {
+  color: var(--disabled-text);
+  background: var(--disabled-bg);
+  opacity: 1;
+}
+.form input:disabled:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+.form select:disabled, .form textarea:disabled { background: var(--disabled-bg); color: var(--disabled-text); }

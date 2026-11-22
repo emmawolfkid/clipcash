@@ -1,7 +1,13 @@
 {% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Account unavailable" %}{% endblock %}
 {% block auth_content %}
+{% include "components/auth_state.html" with kind="warning" %}
 <h1>{% translate "Account unavailable" %}</h1>
 <p>{% translate "You have been signed out because this account is no longer active." %}</p>
 <p class="lead">{% translate "If you think this is a mistake, contact ClipCash support." %}</p>
+<ul class="links">
+  {% if site_config.support_email %}<li><a href="mailto:{{ site_config.support_email }}">{% translate "Email ClipCash support" %}</a></li>{% endif %}
+  {% if site_config.support_phone %}<li><a href="tel:{{ site_config.support_phone }}">{% translate "Call ClipCash support" %}</a></li>{% endif %}
+  <li><a href="{% url 'home' %}">{% translate "Back to ClipCash" %}</a></li>
+</ul>
 {% endblock %}

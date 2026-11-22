@@ -53,3 +53,24 @@
 @media (max-width: 30rem) {
   .hero .actions .button { width: 100%; }
 }
+
+/* UI-03: reference-aligned public presentation; availability copy remains explicit. */
+.hero { background: linear-gradient(135deg, var(--nav-hover), var(--nav-bg) 70%); gap: var(--space-5); align-items: center; }
+.hero__title { font-size: clamp(2.25rem, 5vw, 4.25rem); }
+.hero__lead { font-size: clamp(1rem, 1.5vw, 1.125rem); line-height: 1.65; }
+.hero__note a { color: var(--nav-text); text-underline-offset: 0.2em; }
+.hero-story { background: var(--nav-bg); border-color: var(--nav-hover); text-align: center; }
+.hero-story h2 { color: var(--nav-text); }
+.hero-story .clip-illustration { margin-block: var(--space-3); }
+.journey-grid { gap: var(--space-4); }
+.journey-grid li { padding: var(--space-5); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-card); min-width: 0; }
+.journey-grid li::before { display: inline-grid; place-items: center; min-width: 2rem; min-height: 2rem; border-radius: var(--radius-sm); background: var(--info-bg); color: var(--primary-bg); font-weight: 700; }
+.benefit-list > div { padding: var(--space-4); border-inline-start: 3px solid var(--primary-bg); background: var(--surface); border-radius: var(--radius-sm); }
+.faq details { background: var(--surface); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: var(--space-3); }
+.faq details[open] { border-color: var(--primary-bg); }
+.faq summary:focus-visible { border-radius: var(--radius-sm); }
+@media (max-width: 40rem) {
+  .hero { padding: var(--space-5); }
+  .hero-story { padding: var(--space-4); }
+  .landing-section { padding-block: var(--space-7); }
+}

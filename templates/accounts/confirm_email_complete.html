@@ -1,6 +1,7 @@
 {% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% if activated %}{% translate "Account activated" %}{% else %}{% translate "Email confirmed" %}{% endif %}{% endblock %}
 {% block auth_content %}
+{% include "components/auth_state.html" with kind="success" %}
 {% if activated %}
 <h1>{% translate "Account activated" %}</h1>
 <p>{% translate "Your email address is confirmed and your account is active. Sign in with that address and the password you chose." %}</p>

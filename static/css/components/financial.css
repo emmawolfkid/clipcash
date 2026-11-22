@@ -43,3 +43,7 @@
   justify-self: start;
   margin-top: var(--space-3);
 }
+
+/* Shared summary figures wrap on phones; transaction table values remain intact. */
+.summary-card__value .financial-amount,
+.stat__value .financial-amount { white-space: normal; }

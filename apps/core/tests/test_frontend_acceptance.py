@@ -67,7 +67,10 @@ class SharedFrontendTests(SimpleTestCase):
     def test_escape_moves_focus_out_of_the_menu_before_closing_it(self):
         script = (STATIC / "js/member-nav.js").read_text(encoding="utf-8")
         handler = script.split('event.key === "Escape"', 1)[1]
-        self.assertLess(handler.index("toggle.focus()"), handler.index('toggle.setAttribute("aria-expanded", "false")'))
+        self.assertIn("closeDrawer(true)", handler)
+        close = script.split("function closeDrawer(restore)", 1)[1].split("function openDrawer", 1)[0]
+        self.assertLess(close.index("release()"), close.index("toggle.focus()"))
+        self.assertLess(close.index("toggle.focus()"), close.index('toggle.setAttribute("aria-expanded", "false")'))
 
     def test_invalid_text_inputs_outrank_the_general_input_border(self):
         forms = (STATIC / "css/components/forms.css").read_text(encoding="utf-8")

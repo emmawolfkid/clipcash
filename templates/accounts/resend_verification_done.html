@@ -1,6 +1,7 @@
 {% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Check your email" %}{% endblock %}
 {% block auth_content %}
+{% include "components/auth_state.html" with kind="info" %}
 <h1>{% translate "Check your email" %}</h1>
 <p>{% translate "If that address belongs to an account that still needs verification, we have sent it a new link." %}</p>
 <ul class="links">

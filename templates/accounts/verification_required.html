@@ -1,6 +1,7 @@
 {% extends "accounts/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Confirm your email" %}{% endblock %}
 {% block auth_content %}
+{% include "components/auth_state.html" with kind="info" %}
 {% comment %}PRD-03B: only staff accounts without a confirmed address (or a mobile number) are held here;
 members are sent on to their account page by the view. Always offers a way out.{% endcomment %}
 <h1>{% translate "Confirm your email" %}</h1>
