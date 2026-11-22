@@ -5,11 +5,12 @@
 <div class="console-split">
 <section><h2 class="workspace-section__title">{% translate "Member's claim (unverified)" %}</h2><dl class="details">
   <dt>{% translate "Member" %}</dt><dd>{{ member.sign_in_identifier }}{% if member.get_full_name %} · {{ member.get_full_name }}{% endif %}{% if can.members %} · <a href="{% url 'administration:member' member.pk %}">{% translate "Profile" %}</a>{% endif %}</dd>
+  <dt>{% translate "Registered phone" %}</dt><dd>{{ member.phone_number|default:_("None on the account") }}</dd>
   <dt>{% translate "Account" %}</dt><dd>{{ member.get_status_display }} · {% if member.email_verified %}{% translate "email confirmed" %}{% else %}{% translate "email not confirmed" %}{% endif %}</dd>
   <dt>{% translate "Plan" %}</dt><dd>{{ claim.plan_name }} ({{ subscription.get_status_display }})</dd>
   <dt>{% translate "Amount due" %}</dt><dd><strong class="financial-amount">{{ claim.amount|tzs }}</strong></dd>
-  <dt>{% translate "Transaction reference" %}</dt><dd><code>{{ claim.transaction_reference }}</code></dd>
-  <dt>{% if claim.instruction.is_bank %}{% translate "Contact phone" %}{% else %}{% translate "Paid from" %}{% endif %}</dt><dd>{{ claim.payer_phone }}</dd>
+  <dt>{% translate "Transaction reference" %}</dt><dd>{% if claim.transaction_reference %}<code>{{ claim.transaction_reference }}</code>{% else %}{% translate "Not given by the member" %}{% endif %}</dd>
+  <dt>{% if claim.instruction.is_bank %}{% translate "Contact phone" %}{% else %}{% translate "Paid from (stated)" %}{% endif %}</dt><dd>{% if claim.payer_phone %}{{ claim.payer_phone }}{% if member.phone_number and claim.payer_phone != member.phone_number %} · {% translate "not the registered number (allowed)" %}{% endif %}{% else %}{% translate "Not given" %}{% endif %}</dd>
   <dt>{% translate "Payment date (stated)" %}</dt><dd>{{ claim.paid_on|date:"DATE_FORMAT"|default:"—" }}</dd>
   <dt>{% translate "Paid to (shown to member)" %}</dt><dd>{{ claim.instruction.provider_label }} {{ claim.instruction.business_number }} · {{ claim.instruction.recipient_name }}</dd>
   <dt>{% translate "Receipt (member's evidence, not proof)" %}</dt><dd>{% if evidence %}<a href="{% url 'payments:manual_evidence' claim.pk %}">{% translate "Download" %}</a> · {{ evidence.get_content_type_display }} · {{ evidence.size|filesizeformat }} · <code class="audit-code">{{ evidence.sha256|truncatechars:13 }}</code>{% else %}{% translate "None attached" %}{% endif %}</dd>
@@ -21,7 +22,9 @@
   {% if subscription.activated_at %}<dt>{% translate "Membership period" %}</dt><dd>{{ subscription.starts_at|date:"SHORT_DATETIME_FORMAT" }} – {{ subscription.expires_at|date:"SHORT_DATETIME_FORMAT" }}</dd>{% endif %}
 </dl></section>
 <section><h2 class="workspace-section__title">{% translate "Checks" %}</h2>
-  {% if same_reference %}<p class="notice notice--warning" role="status">{% translate "The same transaction reference appears in other submissions:" %}</p>
+  {% if claim.status == "PENDING_VERIFICATION" and not claim.transaction_reference %}<p class="notice" role="note">{% translate "The member gave no transaction reference. Search the provider records by amount, time and paying number. When you approve, you type the reference you found; it is checked against every other payment and can back only this membership." %}</p>
+  {% elif not claim.transaction_reference %}<p>{% translate "No transaction reference was given." %}</p>
+  {% elif same_reference %}<p class="notice notice--warning" role="status">{% translate "The same transaction reference appears in other submissions:" %}</p>
   <ul class="list">{% for other in same_reference %}<li class="list__item"><span><a href="{% url 'administration:membership_payment' other.pk %}">{{ other.reference }}</a> · {{ other.member.sign_in_identifier }}</span><span class="badge badge--{{ other.status|lower }}">{{ other.get_status_display }}</span></li>{% endfor %}</ul>
   {% else %}<p>{% translate "No other submission uses this transaction reference." %}</p>{% endif %}
   {% if evidence_duplicates %}<p class="notice notice--warning" role="status">{% translate "The same receipt file was attached to other submissions. A reused screenshot is a warning sign: check the provider records carefully." %}</p>

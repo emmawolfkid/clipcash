@@ -154,7 +154,7 @@ class ManualPaymentsRequiredMixin:
 
 
 MANUAL_STATE_MESSAGES = {
-    "already_submitted": _("A payment for this membership is already waiting for verification."),
+    "already_submitted": _("Verification is already requested for this membership. We are checking your payment."),
     "not_pending": _("This membership is not waiting for payment."),
     "choice_expired": _("This membership choice has expired. Choose the plan again to pay."),
     "plan_unavailable": _("This plan is no longer available. Choose another plan."),
@@ -206,7 +206,7 @@ class ManualPayView(VerifiedAccountRequiredMixin, View):
         if quote is not None and not form.is_bound:
             form.initial["quote"] = quote.pk
         if quote is not None and quote.instruction.is_bank:  # PRD-04: a bank transfer has no paying phone.
-            form.fields["payer_phone"].label = _("Your phone number")
+            form.fields["payer_phone"].label = _("Your phone number (optional)")
             form.fields["payer_phone"].help_text = _("So our team can contact you about this bank transfer. The "
                                                      "transfer itself is checked in the bank's records.")
         if not form.is_bound and request.user.phone_number:
@@ -277,7 +277,7 @@ class ManualPayView(VerifiedAccountRequiredMixin, View):
             if error.code in ("no_instructions", "rate_limited"):
                 return self._render(request, subscription, form, status=429 if error.code == "rate_limited" else 503)
             return redirect("memberships:mine")
-        messages.success(request, _("Thank you. Your payment details were submitted. Awaiting payment verification."))
+        messages.success(request, _("Thank you. Verification requested: your membership starts once our team confirms your payment."))
         return redirect("payments:manual_claim", pk=claim.pk)
 
 
@@ -308,11 +308,11 @@ class ManualClaimView(VerifiedAccountRequiredMixin, ManualPaymentsRequiredMixin,
             raise Http404
         try:
             manual.cancel_claim(request.user, claim)
-            messages.success(request, _("Your payment details were withdrawn."))
+            messages.success(request, _("Your verification request was withdrawn."))
         except manual.NotAuthorized:
             raise PermissionDenied from None
         except manual.ManualPaymentError:
-            messages.error(request, _("These payment details can no longer be withdrawn."))
+            messages.error(request, _("This verification request can no longer be withdrawn."))
         return redirect("payments:manual_claim", pk=claim.pk)
 
 

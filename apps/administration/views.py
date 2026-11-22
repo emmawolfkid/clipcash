@@ -1135,14 +1135,17 @@ class MembershipPaymentDetailView(View):
         from apps.payments.forms import ApproveManualPaymentForm, RejectManualPaymentForm
         from apps.wallets.models import JournalEntry
 
+        # PAY-UX-01: claims without a reference share no transaction; only real references are compared.
         same_reference = (ManualMembershipPayment.objects.filter(method=claim.method, reference_key=claim.reference_key)
-                          .exclude(pk=claim.pk).select_related("member").order_by("-created_at")[:10])
+                          .exclude(pk=claim.pk).select_related("member").order_by("-created_at")[:10]
+                          if claim.reference_key else [])
         evidence = getattr(claim, "evidence", None)  # PRD-04: optional receipt; never proof.
         return render(request, self.template_name, {
             "claim": claim, "subscription": claim.subscription, "member": claim.member,
             "evidence": evidence,
             "evidence_duplicates": list(manual_payments.evidence_duplicates(evidence)[:10]) if evidence else [],
-            "approve_form": approve_form or ApproveManualPaymentForm(instruction=claim.instruction),
+            "approve_form": approve_form or ApproveManualPaymentForm(instruction=claim.instruction,
+                                                                     reference_given=bool(claim.reference_key)),
             "reject_form": reject_form or RejectManualPaymentForm(),
             "can_verify": manual_payments.can_verify(request.user) and claim.member_id != request.user.pk,
             "same_reference": same_reference,
@@ -1170,7 +1173,8 @@ class MembershipPaymentDetailView(View):
         claim = self._claim(pk)
         action = request.POST.get("action", "")
         if action == "approve":
-            form = ApproveManualPaymentForm(request.POST, instruction=claim.instruction)
+            form = ApproveManualPaymentForm(request.POST, instruction=claim.instruction,
+                                            reference_given=bool(claim.reference_key))
             if not form.is_valid():
                 return self._render(request, claim, approve_form=form, status=400)
             try:

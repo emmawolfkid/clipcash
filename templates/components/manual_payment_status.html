@@ -1,12 +1,12 @@
-{% load i18n money %}{# PAY-01: status of the latest manual payment for a pending choice. Context: claim, pending, manual_payments_ready. #}
+{% load i18n money payment_status %}{# PAY-01: status of the latest manual payment for a pending choice. Context: claim, pending, manual_payments_ready. PAY-UX-01: member-facing state labels. #}
 {% if claim.status == "PENDING_VERIFICATION" %}
-<p class="notice" role="status"><span class="badge badge--pending_verification">{% translate "Awaiting payment verification" %}</span>
-  {% blocktranslate with amount=claim.amount|tzs ref=claim.transaction_reference %}We received your payment details ({{ amount }}, reference {{ ref }}) and are checking them against the provider records. Your membership starts once the payment is confirmed.{% endblocktranslate %}
-  <a href="{% url 'payments:manual_claim' claim.pk %}">{% translate "View submission" %}</a></p>
+<p class="notice" role="status"><span class="badge badge--pending_verification">{{ claim|claim_status }}</span>
+  {% if claim.transaction_reference %}{% blocktranslate with amount=claim.amount|tzs ref=claim.transaction_reference %}We received your request to verify your payment ({{ amount }}, reference {{ ref }}) and are checking it against the provider records. Your membership starts once the payment is confirmed.{% endblocktranslate %}{% else %}{% blocktranslate with amount=claim.amount|tzs %}We received your request to verify your payment ({{ amount }}) and are checking it against the provider records. Your membership starts once the payment is confirmed.{% endblocktranslate %}{% endif %}
+  <a href="{% url 'payments:manual_claim' claim.pk %}">{% translate "View request" %}</a></p>
 {% elif claim.status == "REJECTED" %}
-<p class="notice notice--warning" role="status"><span class="badge badge--rejected">{{ claim.get_status_display }}</span>
+<p class="notice notice--warning" role="status"><span class="badge badge--rejected">{{ claim|claim_status }}</span>
   {% translate "We could not confirm your last payment:" %} {{ claim.get_rejection_reason_display }}.
-  <a href="{% url 'payments:manual_claim' claim.pk %}">{% translate "Details" %}</a>{% if manual_payments_ready %} · <a href="{% url 'payments:manual_pay' pending.pk %}">{% translate "Submit corrected details" %}</a>{% endif %}</p>
+  <a href="{% url 'payments:manual_claim' claim.pk %}">{% translate "Details" %}</a>{% if manual_payments_ready %} · <a href="{% url 'payments:manual_pay' pending.pk %}">{% translate "Request verification again" %}</a>{% endif %}</p>
 {% elif claim.status == "CANCELLED" %}
-<p class="notice" role="status">{% translate "You withdrew your last payment details." %}{% if manual_payments_ready %} <a href="{% url 'payments:manual_pay' pending.pk %}">{% translate "Pay and submit details" %}</a>{% endif %}</p>
+<p class="notice" role="status">{% translate "You withdrew your last verification request." %}{% if manual_payments_ready %} <a href="{% url 'payments:manual_pay' pending.pk %}">{% translate "Pay and request verification" %}</a>{% endif %}</p>
 {% endif %}

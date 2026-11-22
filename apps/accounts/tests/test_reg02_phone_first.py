@@ -103,7 +103,7 @@ class PhoneFirstJourneyTests(ManualPaymentTestCase):
 
         claim = self.pay()
         self.assertContains(self.client.get(reverse("payments:manual_claim", args=[claim.pk])),
-                            "Awaiting payment verification")
+                            "Verification requested")
         self.assertEqual(videos.authorize_playback(member, self.video)[0], "no_membership")
 
         # Staff find the phone-only member by number, in any format, and see it in the queue.

@@ -8,20 +8,18 @@ from .models import ManualMembershipPayment
 
 
 class ManualPaymentForm(forms.Form):
+    """PAY-UX-01: "I've paid — request verification". Every detail is optional; the amount is always
+    the issued plan price, so it is not asked for."""
+
     quote = forms.UUIDField(required=False, widget=forms.HiddenInput)
-    amount = forms.CharField(
-        label=_("Amount paid (TZS)"), max_length=20,
-        help_text=_("Exactly the plan price shown above, in whole shillings."),
-        widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}))
     payer_phone = forms.CharField(
-        label=_("Phone number you paid from"), max_length=24,
-        help_text=_("The mobile-money number the payment came from, for example 0781234567 or +255781234567. "
-                    "It does not have to be the number on your account."),
+        label=_("Phone number you paid from (optional)"), max_length=24, required=False,
+        help_text=_("For example 0781234567. It can be someone else's phone; it does not have to be the number "
+                    "on your account."),
         widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel", "inputmode": "tel"}))
     transaction_reference = forms.CharField(
-        label=_("Provider transaction reference"), max_length=60,
-        help_text=_("Copy it from the provider confirmation message, for example the code after “TID” or "
-                    "“Ref”."),
+        label=_("Transaction reference (optional)"), max_length=60, required=False,
+        help_text=_("From the provider confirmation message, for example the code after “TID” or “Ref”."),
         widget=forms.TextInput(attrs={"autocomplete": "off", "autocapitalize": "characters", "spellcheck": "false"}))
     paid_on = forms.DateField(
         label=_("Payment date (optional)"), required=False,
@@ -50,8 +48,13 @@ class ApproveManualPaymentForm(forms.Form):
     verified_receiving_number = forms.CharField(label=_("Receiving number in the provider records"), max_length=15)
     verified_recipient_name = forms.CharField(label=_("Registered recipient in the provider records"), max_length=100)
 
-    def __init__(self, *args, instruction=None, **kwargs):
+    def __init__(self, *args, instruction=None, reference_given=True, **kwargs):
         super().__init__(*args, **kwargs)
+        if not reference_given:  # PAY-UX-01: the member gave none; the reviewer's becomes single-use.
+            self.fields["verified_reference"].help_text = _(
+                "The member did not give a reference. Find the payment in the provider records (amount, time, "
+                "paying number) and type its reference: it is recorded on this payment and can never be used "
+                "for another membership.")
         if instruction is not None:  # Name the exact account the member was shown.
             self.fields["recipient_confirmed"].label = _(
                 "It was received into %(provider)s %(number)s (%(name)s), the account shown to the member.") % {
