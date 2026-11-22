@@ -1,79 +1,60 @@
-/* UI-02: pages / notifications / inbox. */
-.notification-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.75rem;
-}
+/* UI-02/UI-09: pages / notifications / inbox (design plan section 8).
+   The inbox template is protected (docs/architecture/frontend.md): this module styles its
+   existing markup only and is loaded by base.html on notifications:inbox alone. */
 
-.notification {
+/* The base layout wraps the inbox in one card; the inbox's own cards replace it. */
+.app-main > .card { padding: 0; background: none; border: 0; box-shadow: none; }
+
+/* Page banner: the inbox's own heading row, shown like the shared page banner. */
+.app-main > .card > .section__header {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 1rem;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 1rem;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) var(--space-5);
   background: var(--surface);
   border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+.app-main > .card > .section__header::before {
+  content: "";
+  flex: 0 0 3rem;
+  width: 3rem;
+  height: 3rem;
   border-radius: var(--radius);
+  background: var(--primary-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0v6l-2 3h16l-2-3V8m-8 12h4'/%3E%3C/svg%3E") center / 1.6rem no-repeat;
+  box-shadow: var(--shadow-control);
 }
+.app-main > .card > .section__header h1 { flex: 1 1 10rem; min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.app-main > .card > .section__header form { margin: 0; }
 
-.notification--unread {
-  border-left: 4px solid var(--accent);
-}
-
-.notification__body {
-  flex: 1 1 18rem;
-  min-width: 0;
-}
-
-.notification__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-  margin: 0 0 0.25rem;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.notification__state {
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.notification__title {
-  font-size: 1.05rem;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.notification__message {
-  margin: 0.25rem 0 0;
-  overflow-wrap: anywhere;
-}
-
-.notification__actions form {
-  margin: 0;
-}
-
+/* Filters: a white toolbar card. */
 .notification-filters {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  margin: 1rem 0;
+  margin: 0 0 var(--space-4);
   gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
+.notification-filters label[for="id_category"] { font-weight: 600; }
+
 .notification-filters select {
+  min-height: var(--touch-target);
   padding: 0.4rem 0.6rem;
   font: inherit;
   color: var(--text);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) / 2);
-  border-color: var(--control-border);
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  min-width: 0;
 }
 
 .notification-filters__check {
@@ -84,16 +65,132 @@
   align-content: center;
 }
 
-.notification__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+/* Notification rows: icon, content, actions. Unread rows carry a blue edge, tint and icon. */
+.notification-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.notification {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+  gap: var(--space-3) var(--space-4);
+  align-items: start;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.notification::before {
+  content: "";
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--control-border) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0v6l-2 3h16l-2-3V8m-8 12h4'/%3E%3C/svg%3E") center / 1.3rem no-repeat;
+}
+
+.notification--unread {
+  border-inline-start: 4px solid var(--primary-bg);
+  background: linear-gradient(90deg, var(--info-bg), var(--surface) 45%);
+}
+
+.notification--unread::before { background-color: var(--primary-bg); }
+
+.notification__body {
   min-width: 0;
 }
 
+.notification__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin: 0 0 var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.notification__state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.1rem var(--space-2);
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  color: var(--primary-bg);
+  background: var(--info-bg);
+}
+
+.notification__state::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--primary-bg);
+}
+
+.notification__title {
+  font-size: var(--text-base);
+  font-weight: 750;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.notification__message {
+  margin: var(--space-1) 0 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.notification__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.notification__actions form {
+  margin: 0;
+}
+
+/* Empty inbox: a white card with the bell, like the design plan's empty states. */
+.app-main > .card > .empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-7) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  font-weight: 600;
+}
+
+.app-main > .card > .empty-state::before {
+  content: "";
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: var(--control-border) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0v6l-2 3h16l-2-3V8m-8 12h4'/%3E%3C/svg%3E") center / 1.6rem no-repeat;
+}
 
 @media (max-width: 40rem) {
+  .notification {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+  }
+
+  .notification::before {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
   .notification__actions {
+    grid-column: 1 / -1;
     width: 100%;
   }
 
@@ -104,5 +201,10 @@
   .notification__actions .button {
     width: 100%;
   }
+}
 
+@media (max-width: 36rem) {
+  .app-main > .card > .section__header,
+  .notification-filters { padding: var(--space-4); }
+  .notification-filters select { flex: 1 1 12rem; }
 }
