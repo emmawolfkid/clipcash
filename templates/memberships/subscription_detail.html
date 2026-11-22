@@ -1,15 +1,19 @@
 {% extends "members/layout.html" %}{% load static i18n money %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/memberships/overview.css' %}">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/memberships/overview.css' %}">{% endblock %}
 {% block title %}{{ subscription.plan_name }}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{{ subscription.plan_name }}</h1>
-<p><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></p>
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="membership" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{{ subscription.plan_name }}</h1>
+    <p class="page-banner__subtitle"><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></p></div>
+</header>
+<div class="membership-overview membership-record">
 {% if subscription.activation_source == "COMPLIMENTARY" %}<p class="notice">{% if restricted_demo %}{% translate "Complimentary demonstration access: no payment was made, and access ends on the date below." %}{% else %}{% translate "Complimentary access: no payment was made, and access ends on the date below. Nothing renews automatically." %}{% endif %}</p>
 {% elif subscription.status == "EXPIRED" %}<p class="notice" role="status">{% translate "This membership has ended, so it no longer gives access to included content." %}</p>
 {% elif subscription.status == "CANCELLED" %}<p class="notice" role="status">{% translate "This membership choice was cancelled. It does not give access to included content." %}</p>
 {% elif subscription.status == "SUSPENDED" %}<p class="notice notice--warning" role="status">{% translate "Your membership is suspended. Please contact support." %}</p>
 {% elif subscription.status == "PENDING" and pending_payment %}{% include "components/manual_payment_status.html" with claim=pending_payment pending=subscription %}
-{% elif subscription.status == "PENDING" %}{% include "components/membership_payment_notice.html" %}{% if manual_payments_ready %}<p><a class="button" href="{% url 'payments:manual_pay' subscription.pk %}">{% translate "Pay now" %}</a></p>{% endif %}
+{% elif subscription.status == "PENDING" %}{% include "components/membership_payment_notice.html" %}{% if manual_payments_ready %}<p><a class="button button--action" href="{% url 'payments:manual_pay' subscription.pk %}">{% translate "Pay now" %}</a></p>{% endif %}
 {% endif %}
 <section class="panel">
 <div class="membership-status"><span class="membership-status__label">{% translate "Status" %}</span><span class="badge badge--{{ subscription.status|lower }}">{{ subscription.get_status_display }}</span></div>
@@ -26,7 +30,10 @@
   {% if subscription.cancelled_at %}<dt>{% translate "Cancelled" %}</dt><dd>{{ subscription.cancelled_at|date:"DATETIME_FORMAT" }} ({{ subscription.get_cancellation_reason_display }})</dd>{% endif %}
 </dl>
 </section>
-{% if subscription.benefits %}<section class="section"><h2>{% translate "Benefits" %}</h2><ul>{% for benefit in subscription.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul></section>{% endif %}
-{% if entitlement_labels %}<section class="section"><h2>{% translate "Includes" %}</h2><ul>{% for item in entitlement_labels %}<li>{{ item }}</li>{% endfor %}</ul>
-{% if subscription.status == "ACTIVE" and features.videos %}<p><a class="button" href="{% url 'videos:library' %}">{% translate "Open included videos" %}</a></p>{% endif %}</section>{% endif %}
+{% if subscription.benefits or entitlement_labels %}<div class="membership-record__lists">
+{% if subscription.benefits %}<section class="panel"><h2>{% translate "Benefits" %}</h2><ul class="check-list">{% for benefit in subscription.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul></section>{% endif %}
+{% if entitlement_labels %}<section class="panel"><h2>{% translate "Includes" %}</h2><ul class="check-list">{% for item in entitlement_labels %}<li>{{ item }}</li>{% endfor %}</ul>
+{% if subscription.status == "ACTIVE" and features.videos %}<p><a class="button button--action" href="{% url 'videos:library' %}">{% translate "Open included videos" %}</a></p>{% endif %}</section>{% endif %}
+</div>{% endif %}
+</div>
 {% endblock %}

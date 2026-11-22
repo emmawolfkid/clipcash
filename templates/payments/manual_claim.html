@@ -1,9 +1,14 @@
 {% extends "members/layout.html" %}{% load static i18n money %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/payments/manual.css' %}">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/payments/manual.css' %}">{% endblock %}
 {% block title %}{% translate "Membership payment" %} {{ claim.reference }}{% endblock %}
 {% block crumb %}{{ claim.reference }}{% endblock %}
 {% block member_content %}
-<div class="page-heading"><h1 class="page-title">{% translate "Membership payment" %}</h1><span class="badge badge--{{ claim.status|lower }}">{% if claim.status == "PENDING_VERIFICATION" %}{% translate "Awaiting payment verification" %}{% else %}{{ claim.get_status_display }}{% endif %}</span></div>
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="wallet" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{% translate "Membership payment" %}</h1><p class="page-banner__subtitle">{{ claim.reference }}</p></div>
+  <span class="page-banner__aside badge badge--{{ claim.status|lower }}">{% if claim.status == "PENDING_VERIFICATION" %}{% translate "Awaiting payment verification" %}{% else %}{{ claim.get_status_display }}{% endif %}</span>
+</header>
+<div class="manual-payment">
 
 {% if claim.status == "PENDING_VERIFICATION" %}
 <section class="notice manual-payment__next" role="status" aria-labelledby="claim-next">
@@ -26,7 +31,7 @@
 {% elif claim.status == "REJECTED" %}
 <div class="notice notice--warning" role="status">
   <p>{% translate "We could not confirm this payment." %} <strong>{{ claim.get_rejection_reason_display }}.</strong>{% if claim.review_note %} {{ claim.review_note }}{% endif %}</p>
-  {% if can_resubmit %}<p><a class="button" href="{% url 'payments:manual_pay' subscription.pk %}">{% translate "Submit corrected details" %}</a></p>
+  {% if can_resubmit %}<p><a class="button button--action" href="{% url 'payments:manual_pay' subscription.pk %}">{% translate "Submit corrected details" %}</a></p>
   {% else %}<p>{% translate "If you paid and believe this is a mistake, contact support with the claim reference below." %}</p>{% endif %}
 </div>
 {% elif claim.status == "CANCELLED" %}
@@ -54,4 +59,5 @@
 </form>
 {% endif %}
 <p><a href="{% url 'memberships:mine' %}">{% translate "Back to my membership" %}</a></p>
+</div>
 {% endblock %}

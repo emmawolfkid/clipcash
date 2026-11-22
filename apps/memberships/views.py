@@ -81,7 +81,11 @@ class PlanListView(ListView):
         return MembershipPlan.objects.filter(status=MembershipPlan.Status.ACTIVE, is_public=True)
 
     def get_context_data(self, **kwargs):
-        return {**super().get_context_data(**kwargs), **payment_context()}
+        # UI-06: read-only marker for the member's current plan card; no eligibility rule changes.
+        user = self.request.user
+        current = current_subscription(user) if user.is_authenticated else None
+        return {**super().get_context_data(**kwargs), **payment_context(),
+                "current_plan_id": current.plan_id if current else None}
 
 
 @method_decorator(feature_required("memberships"), name="dispatch")

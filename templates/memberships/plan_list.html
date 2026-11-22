@@ -1,25 +1,32 @@
 {% extends "members/layout.html" %}{% load static i18n money %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/memberships/plans.css' %}">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/memberships/plans.css' %}">{% endblock %}
 {% block title %}{% translate "Membership plans" %}{% endblock %}
 
 {% block member_content %}
-<h1 class="page-title">{% translate "Membership plans" %}</h1>
-<p class="lead">{% translate "Choose access based on the published price, duration and included content. Membership does not promise earnings or create wallet money." %}</p>
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="membership" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{% translate "Membership plans" %}</h1>
+    <p class="page-banner__subtitle">{% translate "Choose access based on the published price, duration and included content. Membership does not promise earnings or create wallet money." %}</p></div>
+  {% if user.is_authenticated %}<a class="page-banner__aside" href="{% url 'memberships:mine' %}">{% translate "My membership" %}</a>{% endif %}
+</header>
 {% include "components/membership_payment_notice.html" %}
 {% if plans %}
 <ul class="plan-grid">
   {% for plan in plans %}
-  <li class="plan-card">
-    <h2 class="plan-card__name">{{ plan.name }}</h2>
-    <p class="plan-card__price">{{ plan.price_amount|tzs }}</p>
-    <p class="plan-card__duration">{% blocktranslate count days=plan.duration_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</p>
-    {% if plan.benefits %}<ul class="plan-card__benefits">{% for benefit in plan.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
-    <a class="button button--secondary" href="{% url 'memberships:plan_detail' plan.code %}">{% translate "View details" %}</a>
+  <li class="plan-card plan-card--tone-{% cycle '1' '2' '3' '4' %}{% if plan.pk == current_plan_id %} plan-card--current{% endif %}">
+    <div class="plan-card__head">
+      <span class="plan-card__icon">{% include "components/nav_icon.html" with icon="membership" %}</span>
+      <h2 class="plan-card__name">{{ plan.name }}</h2>
+      {% if plan.pk == current_plan_id %}<span class="plan-card__current">{% translate "Current plan" %}</span>{% endif %}
+    </div>
+    <p class="plan-card__price"><span class="plan-card__amount">{{ plan.price_amount|tzs }}</span>
+      <span class="plan-card__duration">/ {% blocktranslate count days=plan.duration_days %}{{ days }} day{% plural %}{{ days }} days{% endblocktranslate %}</span></p>
+    {% if plan.benefits %}<ul class="check-list plan-card__benefits">{% for benefit in plan.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
+    <a class="button {% if plan.pk == current_plan_id %}button--secondary{% else %}button--action{% endif %}" href="{% url 'memberships:plan_detail' plan.code %}">{% translate "View details" %}</a>
   </li>
   {% endfor %}
 </ul>
 {% else %}
 <p class="empty-state">{% translate "No membership plans are available at the moment." %}</p>
 {% endif %}
-{% if user.is_authenticated %}<ul class="links"><li><a href="{% url 'memberships:mine' %}">{% translate "My membership" %}</a></li></ul>{% endif %}
 {% endblock %}

@@ -124,3 +124,8 @@
   color: var(--muted);
   font-size: var(--text-sm);
 }
+
+/* UI-06: benefit lists with check marks (membership plans and records). */
+.check-list { list-style: none; margin: 0; padding: 0; display: grid; align-content: start; gap: var(--space-2); }
+.check-list > li { position: relative; padding-inline-start: 1.6rem; overflow-wrap: anywhere; }
+.check-list > li::before { content: "\2713"; position: absolute; inset-inline-start: 0; top: 0.05em; display: grid; place-items: center; width: 1.15rem; height: 1.15rem; border-radius: 50%; font-size: 0.7rem; font-weight: 800; color: var(--primary-text); background: var(--success); }

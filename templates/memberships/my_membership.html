@@ -1,26 +1,31 @@
 {% extends "members/layout.html" %}{% load static i18n money %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/memberships/overview.css' %}">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/memberships/overview.css' %}">{% endblock %}
 {% block title %}{% translate "My membership" %}{% endblock %}
 
 {% block member_content %}
-<h1 class="page-title">{% translate "My membership" %}</h1>
-<p class="lead">{% translate "Your membership controls access to included content. Dates and status below come from your current subscription records." %}</p>
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="membership" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{% translate "My membership" %}</h1>
+    <p class="page-banner__subtitle">{% translate "Your membership controls access to included content. Dates and status below come from your current subscription records." %}</p></div>
+  <a class="page-banner__aside" href="{% url 'memberships:plans' %}">{% translate "Membership plans" %}</a>
+</header>
+<div class="membership-overview">
 {% if current %}
-  <div class="status-panel">
+  <section class="membership-hero" aria-label="{% translate 'Current plan' %}">
     <div class="membership-status"><div><span class="membership-status__label">{% translate "Current plan" %}</span><strong>{{ current.plan_name }}</strong></div><span class="badge badge--{{ current.status|lower }}">{{ current.get_status_display }}</span></div>
     {% if current.activation_source == "COMPLIMENTARY" %}<p class="notice">{% if restricted_demo %}{% translate "Complimentary demonstration access: no payment was made, and access ends on the date below." %}{% else %}{% translate "Complimentary access: no payment was made, and access ends on the date below. Nothing renews automatically." %}{% endif %}</p>{% endif %}
-    <dl class="details">
-      <dt>{% translate "Started" %}</dt><dd>{{ current.starts_at|date:"DATETIME_FORMAT" }}</dd>
-      <dt>{% translate "Ends" %}</dt><dd>{{ current.expires_at|date:"DATETIME_FORMAT" }}</dd>
+    <dl class="membership-hero__dates">
+      <div><dt>{% translate "Started" %}</dt><dd>{{ current.starts_at|date:"DATETIME_FORMAT" }}</dd></div>
+      <div><dt>{% translate "Ends" %}</dt><dd>{{ current.expires_at|date:"DATETIME_FORMAT" }}</dd></div>
     </dl>
-    {% if current.benefits %}<ul>{% for benefit in current.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
+    {% if current.benefits %}<ul class="check-list">{% for benefit in current.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
     {% if current.status == "SUSPENDED" %}<p class="notice notice--warning" role="status">{% translate "Your membership is suspended. Please contact support." %}</p>
-    {% elif features.videos %}<p><a class="button" href="{% url 'videos:library' %}">{% translate "Open included videos" %}</a> <a href="{% url 'memberships:subscription_detail' current.pk %}">{% translate "What this plan includes" %}</a></p>{% endif %}
-  </div>
+    {% elif features.videos %}<p class="membership-hero__actions"><a class="button button--action" href="{% url 'videos:library' %}">{% translate "Open included videos" %}</a> <a href="{% url 'memberships:subscription_detail' current.pk %}">{% translate "What this plan includes" %}</a></p>{% endif %}
+  </section>
 {% elif pending %}
-  <p class="status-panel">{% translate "You do not have an active membership." %} {% if pending_payment.status == "PENDING_VERIFICATION" %}{% translate "Your payment below is being verified." %}{% else %}{% translate "Your choice below is waiting for payment." %}{% endif %}</p>
+  <p class="membership-state membership-state--pending">{% translate "You do not have an active membership." %} {% if pending_payment.status == "PENDING_VERIFICATION" %}{% translate "Your payment below is being verified." %}{% else %}{% translate "Your choice below is waiting for payment." %}{% endif %}</p>
 {% else %}
-  <div class="empty-state"><p>{% translate "You do not have an active membership." %}{% if history %} {% translate "Your earlier records are listed below." %}{% endif %}</p><a class="button" href="{% url 'memberships:plans' %}">{% translate "See plans" %}</a></div>
+  <div class="membership-state"><p>{% translate "You do not have an active membership." %}{% if history %} {% translate "Your earlier records are listed below." %}{% endif %}</p><a class="button button--action" href="{% url 'memberships:plans' %}">{% translate "See plans" %}</a></div>
 {% endif %}
 
 {% if queued %}
@@ -38,11 +43,11 @@
 {% endif %}
 
 {% if pending %}
-<section class="panel section"><h2 class="panel__title">{% translate "Waiting for payment" %}</h2>
+<section class="panel section membership-state--pending"><h2 class="panel__title">{% translate "Waiting for payment" %}</h2>
   <p>{% blocktranslate with plan=pending.plan_name price=pending.price_amount|tzs until=pending.pending_until|date:"DATE_FORMAT" %}{{ plan }} for {{ price }}. This choice is kept until {{ until }}.{% endblocktranslate %}</p>
   {% if pending_payment %}{% include "components/manual_payment_status.html" with claim=pending_payment %}
   {% else %}{% include "components/membership_payment_notice.html" %}
-  {% if manual_payments_ready %}<p><a class="button" href="{% url 'payments:manual_pay' pending.pk %}">{% translate "Pay now" %}</a></p>{% endif %}
+  {% if manual_payments_ready %}<p><a class="button button--action" href="{% url 'payments:manual_pay' pending.pk %}">{% translate "Pay now" %}</a></p>{% endif %}
   {% endif %}
   {% if sandbox_payments %}<p class="notice notice--sandbox">{% translate "Sandbox: you can try a simulated payment for this choice. It shows what would happen and never activates your membership." %} <a href="{% url 'payments:history' %}">{% translate "Sandbox payments" %}</a></p>{% endif %}
   {% if pending_payment.status != "PENDING_VERIFICATION" %}
@@ -72,4 +77,5 @@
 <p class="empty-state">{% translate "No memberships yet." %}</p>
 {% endif %}
 </section>
+</div>
 {% endblock %}

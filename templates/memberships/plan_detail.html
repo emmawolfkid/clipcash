@@ -1,25 +1,34 @@
 {% extends "members/layout.html" %}{% load static i18n money %}
-{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/memberships/plans.css' %}">{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/memberships/plans.css' %}">{% endblock %}
 {% block title %}{{ plan.name }}{% endblock %}
 {% block member_content %}
-<h1 class="page-title">{{ plan.name }}</h1>
-<p><a href="{% url 'memberships:plans' %}">{% translate "Back to all plans" %}</a></p>
-<div class="membership-price"><span class="membership-price__amount">{{ plan.price_amount|tzs }}</span><span class="membership-price__term">{% blocktranslate count days=plan.duration_days %}for {{ days }} day{% plural %}for {{ days }} days{% endblocktranslate %}</span></div>
-{% if plan.description %}<p>{{ plan.description|linebreaksbr }}</p>{% endif %}
-{% if plan.benefits %}<h2>{% translate "Benefits" %}</h2><ul>{% for benefit in plan.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
-{% if entitlement_labels %}<h2>{% translate "Includes" %}</h2><ul>{% for item in entitlement_labels %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-<p class="lead">{% translate "A membership gives access to content. It is not an investment and does not promise any earnings." %}</p>
-{% include "components/membership_payment_notice.html" %}
-{% if demo_unconfirmed_account %}
-{% include "components/demo_unconfirmed_notice.html" %}
-{% elif not purchase_open %}{# Closed: the notice above already explains it once; no way to choose is offered. #}
-{% elif user.is_authenticated and not user.has_verified_contact and user.role == "MEMBER" %}
-{% include "components/contact_verification_notice.html" %}
-{% elif user.is_authenticated %}
-<form method="post" action="{% url 'memberships:choose' plan.code %}">{% csrf_token %}
-  <button type="submit" class="button">{% translate "Choose this plan" %}</button>
-</form>
-{% else %}
-<p><a class="button" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">{% translate "Sign in to choose this plan" %}</a></p>
-{% endif %}
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="membership" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{{ plan.name }}</h1>
+    <p class="page-banner__subtitle"><a href="{% url 'memberships:plans' %}">{% translate "Back to all plans" %}</a></p></div>
+</header>
+<div class="plan-detail">
+  <section class="plan-detail__offer" aria-labelledby="plan-price">
+    <div class="membership-price" id="plan-price"><span class="membership-price__amount">{{ plan.price_amount|tzs }}</span><span class="membership-price__term">{% blocktranslate count days=plan.duration_days %}for {{ days }} day{% plural %}for {{ days }} days{% endblocktranslate %}</span></div>
+    {% if plan.description %}<p>{{ plan.description|linebreaksbr }}</p>{% endif %}
+    {% if plan.benefits %}<h2>{% translate "Benefits" %}</h2><ul class="check-list">{% for benefit in plan.benefits %}<li>{{ benefit }}</li>{% endfor %}</ul>{% endif %}
+    {% if entitlement_labels %}<h2>{% translate "Includes" %}</h2><ul class="check-list">{% for item in entitlement_labels %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+  </section>
+  <section class="plan-detail__choose">
+    <p class="lead">{% translate "A membership gives access to content. It is not an investment and does not promise any earnings." %}</p>
+    {% include "components/membership_payment_notice.html" %}
+    {% if demo_unconfirmed_account %}
+    {% include "components/demo_unconfirmed_notice.html" %}
+    {% elif not purchase_open %}{# Closed: the notice above already explains it once; no way to choose is offered. #}
+    {% elif user.is_authenticated and not user.has_verified_contact and user.role == "MEMBER" %}
+    {% include "components/contact_verification_notice.html" %}
+    {% elif user.is_authenticated %}
+    <form method="post" action="{% url 'memberships:choose' plan.code %}">{% csrf_token %}
+      <button type="submit" class="button button--action">{% translate "Choose this plan" %}</button>
+    </form>
+    {% else %}
+    <p><a class="button" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">{% translate "Sign in to choose this plan" %}</a></p>
+    {% endif %}
+  </section>
+</div>
 {% endblock %}

@@ -1,23 +1,65 @@
+/* UI-06: pages / memberships / my membership and membership record. */
+.membership-overview { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); min-width: 0; }
+.membership-overview > .section,
+.membership-overview > .panel { margin: 0; }
+
+/* Current plan: the dashboard's blue balance-card treatment. */
+.membership-hero {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  color: var(--nav-text);
+  background: linear-gradient(120deg, var(--nav-bg), var(--primary-bg));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+.membership-hero a { color: var(--nav-text); }
+.membership-hero a:focus-visible { outline-color: var(--focus-on-navy); }
+.membership-hero .membership-status strong { display: block; font-size: clamp(1.5rem, 3vw, 2rem); color: var(--brand-yellow); overflow-wrap: anywhere; }
+.membership-hero .membership-status__label { color: var(--nav-muted); }
+.membership-hero__dates { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--space-3); }
+.membership-hero__dates > div { padding: var(--space-3); background: rgb(255 255 255 / 10%); border-radius: var(--radius); }
+.membership-hero__dates dt { color: var(--nav-muted); font-size: var(--text-sm); }
+.membership-hero__dates dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.membership-hero .notice { color: var(--text); margin: 0; }
+.membership-hero .check-list { font-size: var(--text-sm); }
+.membership-hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin: 0; }
+
 .membership-status {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
 }
+.membership-status__label { display: block; color: var(--muted); font-size: var(--text-sm); }
 
-.membership-status__label {
-  display: block;
-  color: var(--muted);
-  font-size: var(--text-sm);
+.membership-state {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
+.membership-state p { margin: 0; }
+.membership-state--pending { border-inline-start: 4px solid var(--brand-yellow); }
 
-.membership-history caption {
-  color: var(--text);
-}
+.membership-overview .panel { border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+.membership-overview .panel form { margin: 0; }
 
-.membership-history td:nth-child(3) {
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+.membership-history caption { color: var(--text); }
+.membership-history td:nth-child(3) { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Membership record (subscription detail). */
+.membership-record .panel .membership-status { margin-bottom: var(--space-4); }
+.membership-record__lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: var(--space-4); }
+.membership-record__lists h2 { margin-top: 0; font-size: var(--text-lg); }
+
+@media (max-width: 36rem) {
+  .membership-hero,
+  .membership-state { padding: var(--space-4); }
 }

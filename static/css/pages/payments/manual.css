@@ -1,52 +1,44 @@
-/* PAY-01: pages / payments / manual membership payment (Airtel Lipa). */
-.manual-payment__summary,
-.manual-payment__choose,
-.manual-payment__instructions {
-  margin-bottom: var(--space-4);
-}
+/* PAY-01/UI-06: pages / payments / manual membership payment. */
+.manual-payment { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); min-width: 0; }
+.manual-payment > * { margin: 0; }
+.manual-payment .panel { border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
 
-.manual-payment__amount {
-  font-size: 1.35rem;
+/* Amount summary: the dashboard's blue balance-card treatment. */
+.manual-payment__summary {
+  color: var(--nav-text);
+  background: linear-gradient(120deg, var(--nav-bg), var(--primary-bg));
+  border: 0;
 }
+.manual-payment__summary .panel__title { color: var(--nav-muted); font-size: var(--text-sm); }
+.manual-payment__summary .details { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: var(--space-3); }
+.manual-payment__summary .details > div { padding: var(--space-3); background: rgb(255 255 255 / 10%); border-radius: var(--radius); min-width: 0; }
+.manual-payment__summary dt { color: var(--nav-muted); font-size: var(--text-sm); font-weight: 600; }
+.manual-payment__summary dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.manual-payment__amount { font-size: 1.5rem; color: var(--brand-yellow); }
+
+/* Numbered steps: choose a method, follow the instructions, submit the details. */
+.manual-payment__step { border-top: 4px solid var(--primary-bg); }
+.manual-payment__instructions { border-top-color: var(--brand-yellow); }
+
+/* Configured payment methods: the existing select, laid out for touch. */
+.manual-payment__method { align-items: center; }
+.manual-payment__method label { font-weight: 600; }
+.manual-payment__method select { flex: 1 1 12rem; min-width: 0; min-height: var(--touch-target); }
 
 /* UI-10: the receiving number leads; the recipient and amount follow it. */
-.manual-payment__instructions .payment-number {
-  margin: var(--space-4) 0;
-}
+.manual-payment__instructions .payment-number { margin: var(--space-4) 0; }
+.manual-payment__details { margin-bottom: var(--space-4); }
+.manual-payment__steps { margin: var(--space-4) 0; padding-top: var(--space-4); border-top: 1px solid var(--border); }
 
-.manual-payment__details {
-  margin-bottom: var(--space-4);
-}
-
-.manual-payment__steps {
-  margin: var(--space-4) 0;
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--border);
-}
-
-.manual-payment__withdraw {
-  margin: var(--space-4) 0;
-}
-
-.manual-payment__withdraw .form-help {
-  margin-top: var(--space-2);
-  color: var(--muted);
-}
+.manual-payment__withdraw .form-help { margin-top: var(--space-2); color: var(--muted); }
 
 /* PAY-03: what happens next (pending) and the activated plan (approved). */
-.manual-payment__next {
-  margin-bottom: var(--space-4);
-}
-
-.manual-payment__next h2 {
-  margin: 0 0 var(--space-2);
-  font-size: 1.15rem;
-}
-
+.manual-payment__next { border-radius: var(--radius-lg); }
+.manual-payment__next h2 { margin: 0 0 var(--space-2); font-size: 1.15rem; }
 .manual-payment__next ol,
-.manual-payment__next ul {
-  margin: var(--space-2) 0;
-  padding-left: var(--space-5);
-  display: grid;
-  gap: var(--space-2);
+.manual-payment__next ul { margin: var(--space-2) 0; padding-left: var(--space-5); display: grid; gap: var(--space-2); }
+
+@media (max-width: 36rem) {
+  .manual-payment .panel { padding: var(--space-4); }
+  .manual-payment .button:not(.button--compact) { width: 100%; text-align: center; }
 }

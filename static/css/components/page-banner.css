@@ -1,0 +1,35 @@
+/* UI-06: member page banner (icon, title, subtitle) from the design plan's page headers. */
+.page-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+.page-banner__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 3rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius);
+  color: var(--primary-text);
+  background: var(--primary-bg);
+  box-shadow: var(--shadow-control);
+}
+.page-banner__icon .nav-icon { width: 1.6rem; height: 1.6rem; }
+.page-banner__text { flex: 1 1 16rem; min-width: 0; }
+.page-banner .page-title { margin: 0; overflow-wrap: anywhere; }
+.page-banner__subtitle { margin: var(--space-1) 0 0; color: var(--muted); font-size: var(--text-sm); max-width: 48rem; }
+.page-banner__aside { flex: 0 0 auto; }
+@media (max-width: 36rem) {
+  .page-banner { padding: var(--space-4); align-items: flex-start; }
+  .page-banner__icon { flex-basis: 2.5rem; width: 2.5rem; height: 2.5rem; }
+  .page-banner__aside { flex-basis: 100%; }
+}
