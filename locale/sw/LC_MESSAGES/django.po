@@ -2538,6 +2538,27 @@ msgid "Payment confirmed: your membership is active"
 msgstr "Malipo yamethibitishwa: uanachama wako unatumika"
 
 #: templates/payments/manual_claim.html
+msgid "Payment confirmed: your new membership is booked"
+msgstr "Malipo yamethibitishwa: uanachama wako mpya umehifadhiwa"
+
+#: templates/payments/manual_claim.html
+msgid ""
+"%(plan)s starts on %(start)s, when your current membership ends, and runs "
+"until %(end)s. You keep your current access until then."
+msgstr ""
+"%(plan)s utaanza %(start)s, uanachama wako wa sasa utakapoisha, na "
+"utaendelea hadi %(end)s. Utaendelea kutumia huduma zako za sasa hadi wakati "
+"huo."
+
+#: templates/payments/manual_claim.html
+msgid ""
+"Your %(plan)s membership is active now, until %(end)s. You can start "
+"watching straight away."
+msgstr ""
+"Uanachama wako wa %(plan)s unatumika sasa, hadi %(end)s. Unaweza kuanza "
+"kutazama video mara moja."
+
+#: templates/payments/manual_claim.html
 msgid "Payment date"
 msgstr "Tarehe ya malipo"
 

@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -297,8 +298,12 @@ class ManualClaimView(VerifiedAccountRequiredMixin, ManualPaymentsRequiredMixin,
                         and manual.open_claim(subscription) is None)
         from apps.memberships.entitlements import label
 
+        # UX-01: an approved membership bought while another is current starts when that one ends.
+        starts_later = bool(claim.status == ManualMembershipPayment.Status.APPROVED and subscription.starts_at
+                            and subscription.starts_at > timezone.now())
         return render(request, "payments/manual_claim.html", {
             "nav": "membership", "claim": claim, "subscription": subscription, "can_resubmit": can_resubmit,
+            "starts_later": starts_later,
             "entitlement_labels": [label(code) for code in subscription.entitlements],
             "breadcrumbs": [("My membership", "memberships:mine")]})
 

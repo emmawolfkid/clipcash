@@ -4,6 +4,8 @@ apps.payments.manual, which is the single authority."""
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.money import format_amount
+
 from .models import ManualMembershipPayment
 
 
@@ -33,32 +35,43 @@ class ManualPaymentForm(forms.Form):
 
 
 class ApproveManualPaymentForm(forms.Form):
-    verified_amount = forms.CharField(
-        label=_("Amount you found in the provider business records (TZS)"), max_length=20,
-        widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}))
+    """UX-01: one typed value (the provider's transaction reference, the trusted evidence that is
+    checked for reuse) and three confirmations naming the exact records the reviewer checked.
+    Nothing ClipCash already knows (amount due, receiving account) is retyped."""
+
     verified_reference = forms.CharField(
-        label=_("Transaction reference you found in the provider business records"), max_length=60,
-        widget=forms.TextInput(attrs={"autocomplete": "off", "spellcheck": "false"}))
+        label=_("Provider transaction ID"), max_length=60,
+        help_text=_("Type it from the provider statement or business portal, not from this page."),
+        error_messages={"required": _("Type the transaction ID shown in the provider records.")},
+        widget=forms.TextInput(attrs={"autocomplete": "off", "spellcheck": "false", "autocapitalize": "characters"}))
     receipt_confirmed = forms.BooleanField(
-        label=_("I found this payment in the official provider business records, and it has not been used for "
-                "another membership."))
-    recipient_confirmed = forms.BooleanField(label=_("It was received into the account shown to the member."))
-    note = forms.CharField(label=_("Note (optional)"), max_length=300, required=False)
+        label=_("I found this payment in the official provider business records."),
+        error_messages={"required": _("Confirm that you found this payment in the provider records.")})
+    amount_confirmed = forms.BooleanField(
+        label=_("The amount received is exactly the amount due."),
+        error_messages={"required": _("Confirm that exactly the amount due was received.")})
+    recipient_confirmed = forms.BooleanField(
+        label=_("It was received into the account shown to the member."),
+        error_messages={"required": _("Confirm that it reached the receiving account shown to the member.")})
+    note = forms.CharField(label=_("Internal note (optional)"), max_length=300, required=False)
 
-    verified_receiving_number = forms.CharField(label=_("Receiving number in the provider records"), max_length=15)
-    verified_recipient_name = forms.CharField(label=_("Registered recipient in the provider records"), max_length=100)
-
-    def __init__(self, *args, instruction=None, reference_given=True, **kwargs):
+    def __init__(self, *args, instruction=None, reference_given=True, amount=None, **kwargs):
         super().__init__(*args, **kwargs)
         if not reference_given:  # PAY-UX-01: the member gave none; the reviewer's becomes single-use.
             self.fields["verified_reference"].help_text = _(
-                "The member did not give a reference. Find the payment in the provider records (amount, time, "
-                "paying number) and type its reference: it is recorded on this payment and can never be used "
-                "for another membership.")
+                "The member did not give one. Find the payment by amount, time and paying number, then type its "
+                "transaction ID. It is recorded on this payment and can never back another membership.")
+        if amount is not None:
+            self.fields["amount_confirmed"].label = _("The amount received is exactly %(amount)s.") % {
+                "amount": format_amount(amount)}
         if instruction is not None:  # Name the exact account the member was shown.
             self.fields["recipient_confirmed"].label = _(
-                "It was received into %(provider)s %(number)s (%(name)s), the account shown to the member.") % {
-                "provider": instruction.provider_label, "number": instruction.business_number, "name": instruction.recipient_name}
+                "It was received into %(provider)s %(number)s (%(name)s).") % {
+                "provider": instruction.provider_label, "number": instruction.business_number,
+                "name": instruction.recipient_name}
+            self.fields["receipt_confirmed"].label = _(
+                "I found this payment in the official %(provider)s business records.") % {
+                "provider": instruction.provider_label}
 
 
 class RejectManualPaymentForm(forms.Form):

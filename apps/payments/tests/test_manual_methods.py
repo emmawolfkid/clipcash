@@ -166,10 +166,9 @@ class ConfigurableMethodTests(ManualPaymentTestCase):
         review = reverse("administration:membership_payment", args=[claim.pk])
         page = self.client.get(review)
         self.assertContains(page, "654321")
-        response = self.client.post(review, {"action": "approve", "verified_amount": "5000",
+        response = self.client.post(review, {"action": "approve", "amount_confirmed": "on",
                                             "verified_reference": "WEB1234567", "receipt_confirmed": "on",
-                                            "recipient_confirmed": "on", "verified_receiving_number": "654321",
-                                            "verified_recipient_name": "TEST TIGO RECIPIENT"})
+                                            "recipient_confirmed": "on"})
         self.assertEqual(response.status_code, 302)
         claim.refresh_from_db()
         self.assertEqual(claim.status, "APPROVED")

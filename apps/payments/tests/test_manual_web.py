@@ -129,9 +129,9 @@ class MemberJourneyTests(ManualPaymentTestCase):
         claim = self.submit()
         for url in (reverse("administration:membership_payments"), review_url(claim),
                     reverse("administration:payment_instructions")):
-            response = self.client.post(url, {"action": "approve", "verified_amount": "5000",
+            response = self.client.post(url, {"action": "approve",
                                               "verified_reference": claim.transaction_reference,
-                                              "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
+                                              "receipt_confirmed": "on", "recipient_confirmed": "on", "amount_confirmed": "on"})
             self.assertEqual(response.status_code, 302)
             self.assertIn(reverse("admin:login"), response["Location"])
         claim.refresh_from_db()
@@ -205,39 +205,42 @@ class ConsoleTests(ManualPaymentTestCase):
         self.assertContains(queue, "member@example.com")
         self.assertContains(queue, "MP31313131")
         self.assertContains(queue, "TZS 5,000")
-        self.assertContains(queue, "Pending verification")
+        self.assertContains(queue, 'aria-current="page">Pending <span class="payment-queue__count">1</span>')
         self.assertContains(queue, "official provider business records")
         self.assertContains(self.client.get(reverse("administration:overview")),
                             "Membership payments awaiting verification")
         detail = self.client.get(review_url(claim))
-        self.assertContains(detail, "Approve payment and activate membership")
+        self.assertContains(detail, "Confirm Payment &amp; Activate Membership")
         self.assertContains(detail, 'name="receipt_confirmed"')
         self.assertContains(detail, "+255781234567")
 
     def test_approve_through_the_console(self):
         claim = self.submit(reference="MP31313131")
         self.client.force_login(self.verifier)
-        response = self.client.post(review_url(claim), {"action": "approve", "verified_amount": "5000",
+        response = self.client.post(review_url(claim), {"action": "approve",
                                                         "verified_reference": "mp31313131"})
         self.assertEqual(response.status_code, 400)  # Receipt not confirmed.
-        response = self.client.post(review_url(claim), {"action": "approve", "verified_amount": "4000",
+        # UX-01: the exact amount must be confirmed; an unticked confirmation approves nothing.
+        response = self.client.post(review_url(claim), {"action": "approve", "verified_reference": "MP31313131",
+                                                        "receipt_confirmed": "on", "recipient_confirmed": "on"})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("amount_confirmed", response.context["approve_form"].errors)
+        self.assertFalse(JournalEntry.objects.exists())
+        response = self.client.post(review_url(claim), {"action": "approve",
                                                         "verified_reference": "MP31313131",
-                                                        "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
-        self.assertContains(response, "differs from the plan price", status_code=400)
-        response = self.client.post(review_url(claim), {"action": "approve", "verified_amount": "5000",
-                                                        "verified_reference": "MP31313131",
-                                                        "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
+                                                        "receipt_confirmed": "on", "recipient_confirmed": "on", "amount_confirmed": "on"})
         self.assertRedirects(response, review_url(claim))
         claim.refresh_from_db()
         self.assertEqual(claim.status, C.APPROVED)
         self.assertEqual(Subscription.objects.get(pk=claim.subscription_id).status, "ACTIVE")
         # A second click changes nothing.
-        self.client.post(review_url(claim), {"action": "approve", "verified_amount": "5000",
-                                             "verified_reference": "MP31313131", "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
+        self.client.post(review_url(claim), {"action": "approve",
+                                             "verified_reference": "MP31313131", "receipt_confirmed": "on", "recipient_confirmed": "on", "amount_confirmed": "on"})
         self.assertEqual(JournalEntry.objects.count(), 1)
         page = self.client.get(review_url(claim))
         self.assertContains(page, "Ledger entry")
-        self.assertNotContains(page, "Approve payment and activate membership")
+        self.assertContains(page, "Payment confirmed: membership active")
+        self.assertNotContains(page, "Confirm Payment &amp; Activate Membership")
 
     def test_reject_through_the_console(self):
         claim = self.submit()
@@ -256,9 +259,9 @@ class ConsoleTests(ManualPaymentTestCase):
         self.assertEqual(self.client.get(reverse("administration:membership_payments")).status_code, 200)
         detail = self.client.get(review_url(claim))
         self.assertContains(detail, "You can view this payment but not approve or reject it.")
-        response = self.client.post(review_url(claim), {"action": "approve", "verified_amount": "5000",
+        response = self.client.post(review_url(claim), {"action": "approve",
                                                         "verified_reference": claim.transaction_reference,
-                                                        "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
+                                                        "receipt_confirmed": "on", "recipient_confirmed": "on", "amount_confirmed": "on"})
         self.assertEqual(response.status_code, 403)
         self.assertEqual(self.client.get(reverse("administration:payment_instructions")).status_code, 403)
         plain = staff_with("plain@example.com")
@@ -272,9 +275,9 @@ class ConsoleTests(ManualPaymentTestCase):
         claim = self.submit()
         client = Client(enforce_csrf_checks=True)
         client.force_login(self.verifier)
-        response = client.post(review_url(claim), {"action": "approve", "verified_amount": "5000",
+        response = client.post(review_url(claim), {"action": "approve",
                                                    "verified_reference": claim.transaction_reference,
-                                                   "receipt_confirmed": "on", "recipient_confirmed": "on", "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
+                                                   "receipt_confirmed": "on", "recipient_confirmed": "on", "amount_confirmed": "on"})
         self.assertEqual(response.status_code, 403)
         claim.refresh_from_db()
         self.assertEqual(claim.status, C.PENDING_VERIFICATION)

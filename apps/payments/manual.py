@@ -186,6 +186,12 @@ def can_manage_instructions(user):
     return memberships.is_super_admin(user)
 
 
+def refuse_unauthorized(action, actor, target=None):
+    """UX-01: record a refused review attempt by someone who may not verify payments, before any
+    submitted values are looked at (the view refuses it with 403 straight after)."""
+    _refuse(action, actor, NotAuthorized("You are not allowed to verify membership payments."), target)
+
+
 def _refuse(action, actor, error, target=None):
     record_security_event(
         "membership.manual_payment.refused", outcome=DENIED if isinstance(error, NotAuthorized) else FAILURE,
@@ -445,14 +451,21 @@ def _lock_claim(claim_id):
     return Claim.objects.select_for_update().get(pk=claim_id)
 
 
-def approve(actor, claim, *, verified_amount, verified_reference, receipt_confirmed, recipient_confirmed=None,
-            note="", verified_receiving_number=None, verified_recipient_name=None):
+def approve(actor, claim, *, verified_reference, receipt_confirmed, recipient_confirmed=None,
+            amount_confirmed=None, verified_amount=None, note="", verified_receiving_number=None,
+            verified_recipient_name=None):
     """Approve after independently confirming the payment in the official provider business
-    records: the reviewer re-enters the amount and reference the provider shows, confirms the
-    transaction is in those records (receipt_confirmed) and that it was received into the
-    receiving account the member was shown (recipient_confirmed). The member's own statement
-    is never enough. Atomic and idempotent: approving an approved claim again changes
-    nothing and returns (claim, False). Returns (claim, True) when this call approved it."""
+    records. The reviewer always types the provider's transaction reference (the trusted
+    evidence: it must match the member's, if given, and can back one membership only) and
+    confirms that the transaction is in those records (receipt_confirmed) and that it was
+    received into the receiving account the member was shown (recipient_confirmed).
+
+    UX-01: the exact amount is either confirmed (``amount_confirmed=True``: the reviewer saw
+    exactly the claim amount) or typed (``verified_amount``, checked against the claim). The
+    receiving number and recipient name are confirmed by ``recipient_confirmed``; when typed
+    values are also given they are still checked against the issued instructions. The member's
+    own statement is never enough. Atomic and idempotent: approving an approved claim again
+    changes nothing and returns (claim, False). Returns (claim, True) when this call approved it."""
     try:
         if not manual_payments_enabled():
             raise Unavailable("Manual membership payments are not enabled.")
@@ -465,9 +478,12 @@ def approve(actor, claim, *, verified_amount, verified_reference, receipt_confir
         if recipient_confirmed is not True:
             errors["recipient_confirmed"] = _("Confirm that the payment was received into the receiving account "
                                               "shown to the member.")
+        amount_typed = verified_amount is not None and str(verified_amount).strip() != ""
+        if not amount_typed and amount_confirmed is not True:
+            errors["amount_confirmed"] = _("Confirm that the provider records show exactly the amount due.")
         if errors:
             raise ValidationError(errors)
-        verified_amount = normalize_amount(verified_amount, field="verified_amount")
+        verified_amount = normalize_amount(verified_amount, field="verified_amount") if amount_typed else None
         verified_text, verified_key = normalize_reference(verified_reference, field="verified_reference")
         note = " ".join(str(note or "").split())[:300]
         now = timezone.now()
@@ -481,15 +497,20 @@ def approve(actor, claim, *, verified_amount, verified_reference, receipt_confir
             if claim.member_id == actor.pk:
                 raise NotAuthorized("You cannot verify your own payment.", code="own_payment")
             instruction = claim.instruction
-            if verified_receiving_number is not None or claim.method != MANUAL_METHOD_AIRTEL_LIPA:
+            # UX-01: recipient_confirmed (required above) names the exact issued account. Typed
+            # values are optional, and still refused when they differ from the issued details.
+            if verified_receiving_number is not None:
                 number = re.sub(r"\s", "", str(verified_receiving_number or ""))
                 if number != instruction.business_number:
                     raise ValidationError({"verified_receiving_number": _("The receiving number does not match the issued instructions.")})
-            if verified_recipient_name is not None or claim.method != MANUAL_METHOD_AIRTEL_LIPA:
+            if verified_recipient_name is not None:
                 name = " ".join(str(verified_recipient_name or "").split()).casefold()
                 if name != " ".join(instruction.recipient_name.split()).casefold():
                     raise ValidationError({"verified_recipient_name": _("The registered recipient does not match the issued instructions.")})
 
+            amount_source = "entered" if verified_amount is not None else "confirmed"
+            if verified_amount is None:
+                verified_amount = claim.amount  # The reviewer confirmed exactly this amount.
             if verified_amount != claim.amount:
                 raise ValidationError({"verified_amount": _(
                     "The verified amount differs from the plan price (%(price)s). Reject the payment with "
@@ -540,6 +561,7 @@ def approve(actor, claim, *, verified_amount, verified_reference, receipt_confir
                                             "subscription": str(subscription.pk),
                                             "transaction_reference_key": claim.reference_key,
                                             "reference_source": reference_source,
+                                            "amount_source": amount_source,
                                             "recipient": claim.instruction.business_number,
                                             "expires_at": subscription.expires_at.isoformat()})
             _notify(claim, "approved", _("Payment confirmed: membership active"),

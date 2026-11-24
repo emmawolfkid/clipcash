@@ -70,10 +70,9 @@ class Pay03AcceptanceTests(ManualPaymentTestCase):
 
     def staff_approve(self, claim, client=None, **overrides):
         client = client or self.client
-        data = {"action": "approve", "verified_amount": str(claim.amount),
+        data = {"action": "approve", "amount_confirmed": "on",
                 "verified_reference": claim.transaction_reference, "receipt_confirmed": "on",
-                "recipient_confirmed": "on", "verified_receiving_number": claim.instruction.business_number,
-                "verified_recipient_name": claim.instruction.recipient_name, **overrides}
+                "recipient_confirmed": "on", **overrides}
         return client.post(review_url(claim), {k: v for k, v in data.items() if v is not None})
 
     # 1. Member payment ------------------------------------------------------------------
@@ -142,7 +141,7 @@ class Pay03AcceptanceTests(ManualPaymentTestCase):
         cases = {
             "recipient not confirmed": {"recipient_confirmed": None},
             "receipt not confirmed": {"receipt_confirmed": None},
-            "amount mismatch": {"verified_amount": "4000"},
+            "amount not confirmed": {"amount_confirmed": None},
             "reference mismatch": {"verified_reference": "MP00000001"},
         }
         for name, overrides in cases.items():

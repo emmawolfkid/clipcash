@@ -166,7 +166,7 @@ EVENT_TYPES = {
         _event("membership.manual_payment.cancelled", Category.MEMBERSHIP, BUSINESS, ["reference"]),
         _event("membership.manual_payment.approved", Category.MEMBERSHIP, BUSINESS,
                ["reference", "amount", "plan_code", "ledger_entry", "subscription", "transaction_reference_key",
-                "reference_source", "recipient", "expires_at"]),
+                "reference_source", "amount_source", "recipient", "expires_at"]),
         _event("membership.manual_payment.rejected", Category.MEMBERSHIP, BUSINESS, ["reference", "reason"]),
         _event("membership.manual_payment.refused", Category.MEMBERSHIP, SECURITY, ["action", "reason"]),
         # PRD-04: a staff member opened a member's receipt evidence (personal and financial data).

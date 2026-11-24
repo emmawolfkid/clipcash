@@ -145,9 +145,9 @@ class ReviewTests(Pay01UxTestCase):
         for user, status in ((plain, 403), (self.member, 302)):
             self.client.force_login(user)
             response = self.client.post(reverse("administration:membership_payment", args=[claim.pk]), {
-                "action": "approve", "verified_amount": "5000", "verified_reference": "MP55555555",
+                "action": "approve", "verified_reference": "MP55555555",
                 "receipt_confirmed": "on", "recipient_confirmed": "on",
-                "verified_receiving_number": BUSINESS_NUMBER, "verified_recipient_name": RECIPIENT})
+                "amount_confirmed": "on"})
             self.assertEqual(response.status_code, status)
         self.assertEqual(ManualMembershipPayment.objects.get(pk=claim.pk).status, C.PENDING_VERIFICATION)
 
@@ -161,14 +161,13 @@ class ReviewTests(Pay01UxTestCase):
         queue = self.client.get(reverse("administration:membership_payments"))
         for claim in (bare, detailed):
             self.assertContains(queue, reverse("administration:membership_payment", args=[claim.pk]))
-        self.assertContains(queue, "Not given")
         self.assertContains(queue, "MP77007700")
         page = self.client.get(reverse("administration:membership_payment", args=[bare.pk]))
         for text in ("Registered phone", "+255712345678", "Monthly", "TZS 5,000", "Not given by the member",
-                     "The member gave no transaction reference", "Approve payment and activate membership",
+                     "The member gave no transaction ID", "Confirm Payment &amp; Activate Membership",
                      "Reject payment", "None attached"):
             self.assertContains(page, text)
-        self.assertNotContains(page, "The same transaction reference appears in other submissions")
+        self.assertNotContains(page, "This transaction ID is also on other submissions")
         detail = self.client.get(reverse("administration:membership_payment", args=[detailed.pk]))
         self.assertContains(detail, "+255781234567")
 

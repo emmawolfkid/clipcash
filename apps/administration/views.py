@@ -17,6 +17,7 @@ from django.db.models import Count, Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -1178,11 +1179,17 @@ class MembershipPaymentQueueView(View):
         page = Paginator(qs, 25).get_page(request.GET.get("page"))
         params = request.GET.copy()
         params.pop("page", None)
+        # UX-01: the queue's three filters, each with its count (one grouped query).
+        S = ManualMembershipPayment.Status
+        counts = {row["status"]: row["n"] for row in ManualMembershipPayment.objects
+                  .filter(status__in=[S.PENDING_VERIFICATION, S.APPROVED, S.REJECTED])
+                  .values("status").annotate(n=Count("pk")).order_by()}
+        tabs = [(value, label, counts.get(value, 0)) for value, label in (
+            (S.PENDING_VERIFICATION, _("Pending")), (S.APPROVED, _("Approved")), (S.REJECTED, _("Rejected")))]
         return render(request, "administration/membership_payments/list.html", {
-            "page": page, "status": status, "q": query, "statuses": ManualMembershipPayment.Status.choices,
+            "page": page, "status": status, "q": query, "tabs": tabs,
             "page_query": params.urlencode(), "instruction": manual_payments.active_instruction(),
-            "pending_count": ManualMembershipPayment.objects.filter(
-                status=ManualMembershipPayment.Status.PENDING_VERIFICATION).count(),
+            "pending_count": counts.get(S.PENDING_VERIFICATION, 0),
             "can": console_links(request.user), "nav": "membership_payments"})
 
 
@@ -1198,13 +1205,20 @@ class MembershipPaymentDetailView(View):
         same_reference = (ManualMembershipPayment.objects.filter(method=claim.method, reference_key=claim.reference_key)
                           .exclude(pk=claim.pk).select_related("member").order_by("-created_at")[:10]
                           if claim.reference_key else [])
+        from apps.memberships.entitlements import label as entitlement_label
+
         evidence = getattr(claim, "evidence", None)  # PRD-04: optional receipt; never proof.
+        entitlements = list(claim.subscription.entitlements or [])
         return render(request, self.template_name, {
             "claim": claim, "subscription": claim.subscription, "member": claim.member,
             "evidence": evidence,
             "evidence_duplicates": list(manual_payments.evidence_duplicates(evidence)[:10]) if evidence else [],
+            # UX-01: what activation unlocks, and a warning when the plan unlocks no videos at all.
+            "entitlement_labels": [entitlement_label(code) for code in entitlements],
+            "unlocks_videos": any(code.startswith("videos.") for code in entitlements),
             "approve_form": approve_form or ApproveManualPaymentForm(instruction=claim.instruction,
-                                                                     reference_given=bool(claim.reference_key)),
+                                                                     reference_given=bool(claim.reference_key),
+                                                                     amount=claim.amount),
             "reject_form": reject_form or RejectManualPaymentForm(),
             "can_verify": manual_payments.can_verify(request.user) and claim.member_id != request.user.pk,
             "same_reference": same_reference,
@@ -1231,13 +1245,20 @@ class MembershipPaymentDetailView(View):
         _require_manual_payments(request.user)
         claim = self._claim(pk)
         action = request.POST.get("action", "")
+        if action not in ("approve", "reject"):
+            raise PermissionDenied
+        # UX-01: authorization comes before form validation, so a viewer is always refused (403),
+        # whatever they submitted. The service checks it again inside its transaction.
+        if not manual_payments.can_verify(request.user):
+            manual_payments.refuse_unauthorized(action, request.user, claim)
+            raise PermissionDenied
         if action == "approve":
             form = ApproveManualPaymentForm(request.POST, instruction=claim.instruction,
-                                            reference_given=bool(claim.reference_key))
+                                            reference_given=bool(claim.reference_key), amount=claim.amount)
             if not form.is_valid():
                 return self._render(request, claim, approve_form=form, status=400)
             try:
-                _claim, changed = manual_payments.approve(request.user, claim, **form.cleaned_data)
+                approved, changed = manual_payments.approve(request.user, claim, **form.cleaned_data)
             except manual_payments.NotAuthorized:
                 raise PermissionDenied from None
             except ValidationError as error:
@@ -1246,9 +1267,22 @@ class MembershipPaymentDetailView(View):
             except manual_payments.ManualPaymentError as error:
                 messages.error(request, str(error))
                 return redirect("administration:membership_payment", pk=pk)
-            messages.success(request, _("Payment approved and membership activated.") if changed
-                             else _("This payment was already approved. Nothing changed."))
-        elif action == "reject":
+            if changed:
+                subscription = approved.subscription
+                subscription.refresh_from_db()
+                dates = {"plan": approved.plan_name,
+                         "start": date_format(timezone.localtime(subscription.starts_at), "DATE_FORMAT"),
+                         "end": date_format(timezone.localtime(subscription.expires_at), "DATE_FORMAT")}
+                if subscription.starts_at > timezone.now():  # Queued after the member's current membership.
+                    text = _("Payment confirmed. %(plan)s starts on %(start)s, when the current membership ends, "
+                             "and runs until %(end)s. The member has been notified.") % dates
+                else:
+                    text = _("Payment confirmed. %(plan)s membership is active now, until %(end)s. The member has "
+                             "been notified.") % dates
+                messages.success(request, text)
+            else:
+                messages.success(request, _("This payment was already confirmed. Nothing changed."))
+        else:
             form = RejectManualPaymentForm(request.POST)
             if not form.is_valid():
                 return self._render(request, claim, reject_form=form, status=400)
@@ -1262,10 +1296,8 @@ class MembershipPaymentDetailView(View):
             except manual_payments.ManualPaymentError as error:
                 messages.error(request, str(error))
                 return redirect("administration:membership_payment", pk=pk)
-            messages.success(request, _("Payment rejected. The member was notified.") if changed
+            messages.success(request, _("Payment rejected. The member was notified and can send corrected details.") if changed
                              else _("This payment was already rejected. Nothing changed."))
-        else:
-            raise PermissionDenied
         return redirect("administration:membership_payment", pk=pk)
 
 

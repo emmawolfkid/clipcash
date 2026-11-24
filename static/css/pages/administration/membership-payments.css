@@ -1,0 +1,422 @@
+/* UX-01: pages / administration / membership payment queue and review
+   (/manage/membership-payments/ and /manage/membership-payments/<id>/). */
+
+/* --- Queue ------------------------------------------------------------------------------ */
+.payment-queue__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.payment-queue__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  background: var(--surface-soft);
+  border-radius: var(--radius-pill);
+}
+
+.payment-queue__tab {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-4);
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--radius-pill);
+}
+
+.payment-queue__tab:hover {
+  background: var(--surface);
+}
+
+.payment-queue__tab[aria-current="page"] {
+  color: var(--primary-text);
+  background: var(--primary-bg);
+}
+
+.payment-queue__count {
+  min-width: 1.5rem;
+  padding: 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-pill);
+}
+
+.payment-queue__search {
+  display: flex;
+  flex: 1 1 18rem;
+  gap: var(--space-2);
+  max-width: 28rem;
+}
+
+.payment-queue__search input[type="search"] {
+  flex: 1 1 auto;
+}
+
+.payment-queue__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.payment-queue .payment-queue__action {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* --- Review: summary ------------------------------------------------------------------------ */
+.payment-review__back {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.payment-review__summary {
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+/* Fact tiles: every value gets a readable width instead of a squeezed second column. */
+.payment-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+  gap: var(--space-4) var(--space-5);
+  margin: 0;
+}
+
+.payment-facts__item {
+  min-width: 0;
+}
+
+.payment-facts dt {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.payment-facts dd {
+  margin: var(--space-1) 0 0;
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+.payment-facts__item--amount dd {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.payment-facts__number {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.payment-facts__meta {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 400;
+}
+
+.payment-review__unlocks {
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  border-top: 1px solid var(--border);
+}
+
+.payment-review__alerts {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.payment-review__alerts .notice {
+  margin: 0;
+}
+
+.payment-review__alerts p {
+  margin: 0;
+}
+
+.payment-review__links {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* --- Review: verify, reject and outcome -------------------------------------------------- */
+.payment-review__verify,
+.payment-review__outcome {
+  margin-top: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--primary-bg);
+  border-radius: var(--radius);
+}
+
+.payment-review__outcome--approved {
+  background: var(--success-bg);
+  border-top-color: var(--success);
+}
+
+.payment-review__outcome--rejected {
+  background: var(--danger-bg);
+  border-top-color: var(--danger);
+}
+
+.payment-review__outcome p {
+  margin: var(--space-2) 0 0;
+}
+
+.payment-review__title {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.payment-review__lead {
+  max-width: 44rem;
+  margin: var(--space-2) 0 var(--space-4);
+  color: var(--muted);
+}
+
+.payment-review__meta {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.app-shell--console .payment-review__form {
+  gap: var(--space-4);
+  max-width: 40rem;
+}
+
+.payment-review__form > div,
+.payment-review__form .form-field {
+  margin: 0;
+}
+
+.payment-review__form .form-help {
+  margin: 0 0 var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.payment-review__reference input {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.payment-review__checks {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-soft);
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+.payment-review__checks legend {
+  float: left;
+  width: 100%;
+  margin-bottom: var(--space-1);
+  font-weight: 600;
+}
+
+.app-shell--console .payment-review__check {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 var(--space-3);
+  align-items: start;
+}
+
+.app-shell--console .payment-review__check input {
+  margin-top: 0.2rem;
+}
+
+.app-shell--console .payment-review__check label {
+  margin: 0;
+  font-weight: 400;
+}
+
+.payment-review__check .field-error {
+  grid-column: 2;
+}
+
+.payment-review__form .field-error {
+  margin: var(--space-1) 0 0;
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+.payment-review__note input {
+  max-width: 28rem;
+}
+
+.payment-review__submit {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.payment-review__submit .form-help {
+  margin: 0;
+}
+
+.payment-review__reject,
+.payment-review__section {
+  margin-top: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.payment-review__reject > summary,
+.payment-review__section > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.payment-review__reject > :not(summary),
+.payment-review__section > :not(summary) {
+  margin-inline: var(--space-4);
+}
+
+.payment-review__reject[open],
+.payment-review__section[open] {
+  padding-bottom: var(--space-4);
+}
+
+.payment-review__more {
+  margin-top: var(--space-5);
+}
+
+.payment-review__more .payment-review__section + .payment-review__section {
+  margin-top: var(--space-2);
+}
+
+/* Secondary details: label and value side by side where there is room. */
+.payment-review__pairs {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin-block: 0;
+}
+
+.payment-review__pairs dt {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.payment-review__pairs dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.payment-review__history {
+  display: grid;
+  gap: var(--space-2);
+  margin-block: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.payment-review__history li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  justify-content: space-between;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.payment-review__actor {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 40rem) {
+  /* Three short filters stay on one line; they scroll rather than wrap if a translation is long. */
+  .payment-queue__tabs {
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .payment-queue__tab {
+    padding: 0 var(--space-3);
+    white-space: nowrap;
+  }
+
+  /* Phones: member, amount and the Review button always fit without sideways scrolling. */
+  .app-shell--console .table-scroll .workspace-table.payment-queue td,
+  .table-scroll .payment-queue th:first-child,
+  .table-scroll .payment-queue td:first-child {
+    min-width: 0;
+  }
+
+  .payment-queue .payment-queue__ref {
+    display: none;
+  }
+
+  .payment-queue .payment-queue__action .button {
+    padding-inline: var(--space-3);
+  }
+
+  .payment-queue__search {
+    max-width: none;
+  }
+
+  .payment-review__summary,
+  .payment-review__verify,
+  .payment-review__outcome {
+    padding: var(--space-4);
+  }
+
+  .payment-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .payment-facts__item--amount {
+    grid-column: 1 / -1;
+  }
+
+  .payment-review__submit .button {
+    width: 100%;
+  }
+
+  .payment-review__pairs {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .payment-review__pairs dd + dt {
+    margin-top: var(--space-3);
+  }
+}
