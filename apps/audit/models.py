@@ -114,4 +114,4 @@ class AuditEvent(UUIDModel):
     def clean(self):
         super().clean()
         if not isinstance(self.metadata, dict):
-            raise ValidationError({"metadata": "Metadata must be an object."})
+            raise ValidationError({"metadata": _("Metadata must be an object.")})

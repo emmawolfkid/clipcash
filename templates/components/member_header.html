@@ -1,0 +1,14 @@
+{% load i18n %}{# UI-DASH-01: member portal top bar. One menu button: drawer on narrow screens, collapse/expand on wide ones (member-nav.js). #}
+<header class="site-header portal-header">
+  <div class="portal-header__inner">
+    {% if request %}
+    <button class="site-menu-toggle portal-header__toggle" type="button" aria-expanded="true" aria-controls="member-menu"
+            aria-label="{% translate 'Toggle navigation' %}" data-label-open="{% translate 'Open navigation' %}"
+            data-label-collapse="{% translate 'Collapse sidebar' %}" data-label-expand="{% translate 'Expand sidebar' %}">
+      <svg class="portal-header__burger" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    {% endif %}
+    <a class="portal-header__brand" href="{% url 'dashboard' %}">{% include "components/wordmark.html" %}</a>
+    {% if request %}{% include "components/header_account.html" %}{% endif %}
+  </div>
+</header>

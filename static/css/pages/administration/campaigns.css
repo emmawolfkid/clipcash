@@ -1,0 +1,5 @@
+/* UI-DASH-03: console campaign queue - one-click lists by status. */
+.campaign-tabs { display: flex; gap: var(--space-1); margin: 0 0 var(--space-4); overflow-x: auto; border-bottom: 1px solid var(--border); }
+.campaign-tabs__tab { flex: none; display: inline-flex; align-items: center; min-height: var(--touch-target); padding: 0 var(--space-3); color: var(--text); font-weight: 600; text-decoration: none; border-bottom: 3px solid transparent; }
+.campaign-tabs__tab:hover { color: var(--primary-bg); }
+.campaign-tabs__tab[aria-current="page"] { color: var(--primary-bg); border-bottom-color: var(--primary-bg); }

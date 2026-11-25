@@ -27,6 +27,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop as N_
 
 from apps.audit.services import (
     DENIED,
@@ -246,8 +247,8 @@ def confirm_email(user_pk, token):
         else:
             user.save(update_fields=["email_verified", "updated_at"])
         record_business_event("account.email_confirmed", actor=user, target=user)
-        notify_account(user, "email_confirmed", "Your email address is confirmed",
-                       "You can now use every member feature that needs a confirmed address.",
+        notify_account(user, "email_confirmed", N_("Your email address is confirmed"),
+                       N_("You can now use every member feature that needs a confirmed address."),
                        key=f"email_confirmed:{user.pk}:{user.email}")
     return user
 
@@ -270,8 +271,8 @@ def update_profile(user, **values):
         record_business_event("account.profile_updated", actor=account, target=account,
                               metadata={"changed_fields": changed})
         if "phone_number" in changed:
-            notify_account(account, "phone_changed", "Your phone number was changed",
-                           "If this was not you, change your password now and contact ClipCash.",
+            notify_account(account, "phone_changed", N_("Your phone number was changed"),
+                           N_("If this was not you, change your password now and contact ClipCash."),
                            key=f"phone_changed:{account.pk}:{timezone.now().isoformat()}")
     return changed
 
@@ -316,9 +317,9 @@ def request_email_change(user, new_email, request):
         if account.email:  # REG-02: a phone-only member adding a first address has no old one to warn.
             enqueue_email(emails.EMAIL_CHANGE_REQUESTED, recipient=account.email, user=account,
                           context={"base_url": site})
-        notify_account(account, "email_change_requested", "An email address change was requested",
-                       "Nothing changes until the new address is confirmed. If this was not you, "
-                       "cancel it from your account and change your password.",
+        notify_account(account, "email_change_requested", N_("An email address change was requested"),
+                       N_("Nothing changes until the new address is confirmed. If this was not you, "
+                       "cancel it from your account and change your password."),
                        key=f"email_change_requested:{change.pk}")
     return change
 
@@ -377,8 +378,8 @@ def confirm_email_change(change_pk, token, user):
                                             "new_address_hash": hash_identifier(new_email)})
             if old_email:
                 enqueue_email(emails.EMAIL_CHANGED, recipient=old_email, user=account, context={})
-            notify_account(account, "email_changed", "Your email address was changed",
-                           "Use the new address to sign in. If this was not you, contact ClipCash now.",
+            notify_account(account, "email_changed", N_("Your email address was changed"),
+                           N_("Use the new address to sign in. If this was not you, contact ClipCash now."),
                            key=f"email_changed:{change_pk}")
     except IntegrityError:  # A concurrent registration took the address first.
         return None
@@ -391,6 +392,7 @@ def notify_account(user, event, title, message, *, key):
     from apps.notifications import inbox
 
     inbox.notify(user, f"account.{event}", category=inbox.Category.ACCOUNT, title=title, message=message,
+                 params={},
                  link=inbox.link_to("accounts:profile"), dedupe_key=f"account.{key}")
 
 
@@ -487,8 +489,8 @@ def log_access_change(actor, user, *, old_role, old_status):
         )
         if user.status == Status.ACTIVE and old_status in (Status.SUSPENDED, Status.DISABLED):
             # Suspended or disabled accounts cannot sign in to read a notice; reactivation is shown.
-            notify_account(user, "reactivated", "Your account is active again",
-                           "You can sign in and use ClipCash as before.",
+            notify_account(user, "reactivated", N_("Your account is active again"),
+                           N_("You can sign in and use ClipCash as before."),
                            key=f"reactivated:{user.pk}:{timezone.now().isoformat()}")
 
 

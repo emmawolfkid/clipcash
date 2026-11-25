@@ -1,7 +1,11 @@
-{% extends "administration/layout.html" %}{% load i18n %}
+{% extends "administration/layout.html" %}{% load i18n static %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/administration/campaigns.css' %}">{% endblock %}
 {% block title %}{% translate "Campaigns" %}{% endblock %}
 {% block console_content %}
-<h1 class="page-title">{% translate "Campaign review" %}</h1>
+<div class="page-heading"><h1 class="page-title">{% translate "Campaigns" %}</h1>
+<div class="actions">{% if can_report %}<a class="button button--secondary" href="{% url 'administration:report' 'advertising' %}">{% translate "Performance and CSV export" %}</a>{% endif %}
+{% if can.campaign_manage %}<a class="button" href="{% url 'administration:campaign_create' %}">{% translate "New campaign" %}</a>{% endif %}</div></div>
+<nav class="campaign-tabs" aria-label="{% translate 'Campaign lists' %}">{% for value, label in tabs %}<a class="campaign-tabs__tab"{% if status == value %} aria-current="page"{% endif %} href="?status={{ value }}">{{ label }}</a>{% endfor %}</nav>
 <form class="toolbar" method="get">
   <label class="visually-hidden" for="q">{% translate "Search" %}</label>
   <input id="q" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Campaign or advertiser' %}">

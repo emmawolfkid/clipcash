@@ -24,6 +24,9 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_noop as N_
 
 from apps.audit.services import DENIED, record_business_event, record_security_event
 from apps.core import features
@@ -102,8 +105,15 @@ def can_manage_advertiser_videos(user):
     return _staff_with(user, "advertising.manage_advertiser_videos")
 
 
+def can_manage_campaigns(user):
+    """UI-DASH-03: staff may create and manage campaigns (and client organizations) on behalf of
+    advertisers. A separate permission from reviewing: creating never implies approving."""
+    return _staff_with(user, "advertising.manage_campaigns")
+
+
 def can_use_advertising_console(user):
-    return can_review_advertisers(user) or can_review_campaigns(user) or can_manage_advertiser_videos(user)
+    return (can_review_advertisers(user) or can_review_campaigns(user) or can_manage_advertiser_videos(user)
+            or can_manage_campaigns(user))
 
 
 def advertiser_account_reason(user):
@@ -117,7 +127,7 @@ def advertiser_account_reason(user):
 
 
 def _deny(action, actor, target, reason):
-    error = NotAuthorized("You are not allowed to do this.", code=reason)
+    error = NotAuthorized(_("You are not allowed to do this."), code=reason)
     record_security_event("advertiser.action.denied", outcome=DENIED,
                           actor=actor if getattr(actor, "is_authenticated", False) else None,
                           target=target, metadata={"action": action, "reason": reason})
@@ -146,7 +156,7 @@ def organization_for(user, organization_id):
     """The organization if ``user`` belongs to it; NotFound otherwise (no existence oracle)."""
     organization = organizations_for(user).filter(pk=organization_id).first()
     if organization is None:
-        raise NotFound("Advertiser not found.")
+        raise NotFound(_("Advertiser not found."))
     return organization
 
 
@@ -154,7 +164,7 @@ def campaign_for(user, organization, campaign_id):
     campaign = (Campaign.objects.select_related("organization", "video", "video__category")
                 .filter(pk=campaign_id, organization=organization).first())
     if campaign is None:
-        raise NotFound("Campaign not found.")
+        raise NotFound(_("Campaign not found."))
     return campaign
 
 
@@ -170,10 +180,21 @@ def _require_member(user, organization, action, *, owner=False):
     return membership
 
 
+def _require_editor(user, organization, action):
+    """UI-DASH-03: "advertiser" for an active team member, "staff" for a staff member with
+    advertising.manage_campaigns acting for the organization. Staff act as themselves (the audit
+    actor is the staff member); they never become a team member or use an advertiser's account."""
+    if getattr(user, "is_staff", False):
+        _require_staff(can_manage_campaigns, user, action, organization)
+        return "staff"
+    _require_member(user, organization, action)
+    return "advertiser"
+
+
 def _reason(text, *, required):
     text = (text or "").strip()
     if required and len(text) < MIN_REASON_LENGTH:
-        raise ValidationError({"reason": "Please give a reason (at least 5 characters)."})
+        raise ValidationError({"reason": _("Please give a reason (at least 5 characters).")})
     return text[:300]
 
 
@@ -192,7 +213,7 @@ def _clean_org_values(values):
 def create_organization(user, **values):
     """Advertiser onboarding: creates a PENDING organization with ``user`` as OWNER."""
     if not features.is_enabled("advertisers"):
-        raise InvalidState("Advertiser accounts are not available at the moment.", code="feature_disabled")
+        raise InvalidState(_("Advertiser accounts are not available at the moment."), code="feature_disabled")
     reason = advertiser_account_reason(user)
     if reason != "ok":
         _deny("organization.create", user, None, reason)
@@ -201,7 +222,7 @@ def create_organization(user, **values):
         get_user_model().objects.select_for_update().get(pk=user.pk)  # Serialize per user.
         if Organization.objects.filter(memberships__user=user, memberships__is_active=True,
                                        verification_status=V.PENDING).exists():
-            raise InvalidState("You already have an advertiser application awaiting review.", code="pending_exists")
+            raise InvalidState(_("You already have an advertiser application awaiting review."), code="pending_exists")
         organization = Organization(created_by=user, submitted_at=timezone.now(), **values)
         organization.full_clean()
         organization.save()
@@ -212,18 +233,36 @@ def create_organization(user, **values):
     return organization
 
 
+def create_client_organization(actor, **values):
+    """UI-DASH-03: staff with advertising.manage_campaigns register a client organization that has
+    no ClipCash account yet. It starts PENDING (verified by another reviewer) with no team; the
+    client's owner can be invited later (invite_member). The staff member is the recorded actor."""
+    _require_staff(can_manage_campaigns, actor, "organization.create_for_client")
+    if not features.is_enabled("advertisers"):
+        raise InvalidState(_("Advertiser accounts are not available at the moment."), code="feature_disabled")
+    values = _clean_org_values(values)
+    with transaction.atomic():
+        organization = Organization(created_by=actor, submitted_at=timezone.now(), **values)
+        organization.full_clean()
+        organization.save()
+        record_business_event("advertiser.created", actor=actor, target=organization,
+                              metadata={"country": organization.country, "on_behalf": True})
+        _notify_application(organization)
+    return organization
+
+
 def update_organization(user, organization, changes):
     _require_member(user, organization, "organization.update", owner=True)
     changes = _clean_org_values(changes)
     with transaction.atomic():
         organization = Organization.objects.select_for_update().get(pk=organization.pk)
         if organization.verification_status == V.SUSPENDED:
-            raise InvalidState("A suspended advertiser cannot be changed. Please contact support.")
+            raise InvalidState(_("A suspended advertiser cannot be changed. Please contact support."))
         if organization.is_approved:
             for field in ORG_IDENTITY_FIELDS:
                 if field in changes and changes[field] != getattr(organization, field):
-                    raise ValidationError({field: "Verified identity details cannot be changed here. "
-                                                  "Please contact support."})
+                    raise ValidationError({field: _("Verified identity details cannot be changed here. "
+                                                  "Please contact support.")})
         before = {k: getattr(organization, k) for k in changes}
         for key, value in changes.items():
             setattr(organization, key, value)
@@ -240,7 +279,7 @@ def resubmit_organization(user, organization):
     with transaction.atomic():
         organization = Organization.objects.select_for_update().get(pk=organization.pk)
         if organization.verification_status != V.REJECTED:
-            raise InvalidState("Only rejected applications can be resubmitted.")
+            raise InvalidState(_("Only rejected applications can be resubmitted."))
         organization.verification_status = V.PENDING
         organization.submitted_at = timezone.now()
         organization.reviewed_at = None
@@ -263,22 +302,25 @@ ORG_DECISIONS = {
 def review_organization(actor, organization, decision, *, expected_status, reason=""):
     """Staff verification decision. ``expected_status`` is what the reviewer saw."""
     if decision not in ORG_DECISIONS:
-        raise InvalidState("Unknown decision.")
+        raise InvalidState(_("Unknown decision."))
     _require_staff(can_review_advertisers, actor, f"organization.{decision}", organization)
     allowed_from, target, reason_required, name = ORG_DECISIONS[decision]
     reason = _reason(reason, required=reason_required)
     if organization.memberships.filter(user=actor, is_active=True).exists():
         _deny(f"organization.{decision}", actor, organization, "self_review")
+    # UI-DASH-03: a client organization a staff member created is verified by a different reviewer.
+    if decision == "approve" and organization.created_by_id == actor.pk and actor.is_staff:
+        _deny(f"organization.{decision}", actor, organization, "self_approval")
     with transaction.atomic():
         organization = Organization.objects.select_for_update().get(pk=organization.pk)
         current = organization.verification_status
         if current == target and expected_status == current:
             return organization  # Repeated submit of the same decision: no-op.
         if current != expected_status:
-            raise StaleDecision("This advertiser changed since you opened it. Review it again.")
+            raise StaleDecision(_("This advertiser changed since you opened it. Review it again."))
         if current not in allowed_from:
-            raise InvalidState(f"An advertiser that is {organization.get_verification_status_display().lower()} "
-                               f"cannot be {name}.")
+            raise InvalidState(_("An advertiser that is %(status)s cannot be %(decision)s.")
+                               % {"status": organization.get_verification_status_display().lower(), "decision": name})
         organization.verification_status = target
         organization.reviewed_at = timezone.now()
         organization.reviewed_by = actor
@@ -294,9 +336,14 @@ def review_organization(actor, organization, decision, *, expected_status, reaso
 
 
 def invite_member(user, organization, email, role=ROLE.MANAGER):
-    _require_member(user, organization, "member.invite", owner=True)
+    # UI-DASH-03: staff managing campaigns may invite a client's people (e.g. the first owner of a
+    # client organization they registered); otherwise only the organization's owners invite.
+    if getattr(user, "is_staff", False):
+        _require_staff(can_manage_campaigns, user, "member.invite", organization)
+    else:
+        _require_member(user, organization, "member.invite", owner=True)
     if role not in ROLE.values:
-        raise ValidationError({"role": "Choose a valid role."})
+        raise ValidationError({"role": _("Choose a valid role.")})
     email = (email or "").strip().lower()
     invitation = AdvertiserInvitation(organization=organization, email=email, role=role, invited_by=user,
                                       expires_at=timezone.now() + timedelta(days=INVITATION_DAYS))
@@ -304,14 +351,14 @@ def invite_member(user, organization, email, role=ROLE.MANAGER):
     with transaction.atomic():
         organization = Organization.objects.select_for_update().get(pk=organization.pk)
         if organization.verification_status in (V.SUSPENDED, V.REJECTED):
-            raise InvalidState("Invitations are not possible while the advertiser is not in good standing.")
+            raise InvalidState(_("Invitations are not possible while the advertiser is not in good standing."))
         if organization.memberships.filter(is_active=True, user__email__iexact=email).exists():
-            raise ValidationError({"email": "This person is already on the team."})
+            raise ValidationError({"email": _("This person is already on the team.")})
         organization.invitations.filter(status=AdvertiserInvitation.Status.PENDING, email__iexact=email,
                                         expires_at__lte=timezone.now()).update(
             status=AdvertiserInvitation.Status.REVOKED, responded_at=timezone.now())
         if organization.invitations.filter(status=AdvertiserInvitation.Status.PENDING, email__iexact=email).exists():
-            raise ValidationError({"email": "An invitation is already waiting for this address."})
+            raise ValidationError({"email": _("An invitation is already waiting for this address.")})
         invitation.save()
         # The invitee's address is not written to the audit trail.
         record_business_event("advertiser.member.invited", actor=user, target=organization, metadata={"role": role})
@@ -335,9 +382,9 @@ def _locked_invitation_for(user, invitation_id):
         invitation = (AdvertiserInvitation.objects.select_for_update()
                       .filter(pk=invitation_id, email__iexact=user.email).first())
     if invitation is None:
-        raise NotFound("Invitation not found.")
+        raise NotFound(_("Invitation not found."))
     if invitation.status != AdvertiserInvitation.Status.PENDING or invitation.expires_at <= timezone.now():
-        raise InvalidState("This invitation is no longer valid.")
+        raise InvalidState(_("This invitation is no longer valid."))
     return invitation
 
 
@@ -349,7 +396,7 @@ def accept_invitation(user, invitation_id):
         invitation = _locked_invitation_for(user, invitation_id)
         organization = Organization.objects.select_for_update().get(pk=invitation.organization_id)
         if organization.verification_status in (V.SUSPENDED, V.REJECTED):
-            raise InvalidState("This advertiser cannot accept new team members at the moment.")
+            raise InvalidState(_("This advertiser cannot accept new team members at the moment."))
         if not organization.memberships.filter(user=user, is_active=True).exists():
             AdvertiserMembership.objects.create(organization=organization, user=user, role=invitation.role)
         invitation.status = AdvertiserInvitation.Status.ACCEPTED
@@ -375,7 +422,7 @@ def revoke_invitation(user, organization, invitation_id):
         invitation = (AdvertiserInvitation.objects.select_for_update()
                       .filter(pk=invitation_id, organization=organization).first())
         if invitation is None:
-            raise NotFound("Invitation not found.")
+            raise NotFound(_("Invitation not found."))
         if invitation.status == AdvertiserInvitation.Status.PENDING:
             invitation.status = AdvertiserInvitation.Status.REVOKED
             invitation.responded_at = timezone.now()
@@ -390,12 +437,12 @@ def remove_member(user, organization, membership_id):
         Organization.objects.select_for_update().get(pk=organization.pk)  # Serialize team changes.
         membership = organization.memberships.select_for_update().filter(pk=membership_id, is_active=True).first()
         if membership is None:
-            raise NotFound("Team member not found.")
+            raise NotFound(_("Team member not found."))
         if acting.role != ROLE.OWNER and membership.user_id != user.pk:
             _deny("member.remove", user, organization, "owner_required")
         if membership.role == ROLE.OWNER and not organization.memberships.filter(
                 is_active=True, role=ROLE.OWNER).exclude(pk=membership.pk).exists():
-            raise InvalidState("An advertiser must keep at least one owner.", code="last_owner")
+            raise InvalidState(_("An advertiser must keep at least one owner."), code="last_owner")
         membership.is_active = False
         membership.removed_at = timezone.now()
         membership.save(update_fields=["is_active", "removed_at", "updated_at"])
@@ -412,9 +459,9 @@ def grant_video(actor, organization, video):
         organization = Organization.objects.select_for_update().get(pk=organization.pk)
         video = Video.objects.get(pk=video.pk)
         if video.publication_status == Video.Publication.ARCHIVED:
-            raise InvalidState("Archived videos cannot be used in campaigns.")
+            raise InvalidState(_("Archived videos cannot be used in campaigns."))
         if organization.verification_status == V.REJECTED:
-            raise InvalidState("Rejected advertisers cannot receive videos.")
+            raise InvalidState(_("Rejected advertisers cannot receive videos."))
         grant = organization.video_grants.filter(video=video, revoked_at__isnull=True).first()
         if grant is None:
             grant = AdvertiserVideo.objects.create(organization=organization, video=video, granted_by=actor)
@@ -429,7 +476,7 @@ def revoke_video_grant(actor, organization, grant_id):
         grant = (AdvertiserVideo.objects.select_for_update()
                  .filter(pk=grant_id, organization=organization, revoked_at__isnull=True).first())
         if grant is None:
-            raise NotFound("Video authorization not found.")
+            raise NotFound(_("Video authorization not found."))
         grant.revoked_at = timezone.now()
         grant.revoked_by = actor
         grant.save(update_fields=["revoked_at", "revoked_by", "updated_at"])
@@ -462,46 +509,46 @@ def _clean_campaign(organization, values, plans):
     errors = {}
     video = values.get("video")
     if video is None or not video_authorized(organization, video):
-        errors["video"] = "Choose a video your advertiser account is authorized to use."
+        errors["video"] = _("Choose a video your advertiser account is authorized to use.")
     elif video.publication_status == Video.Publication.ARCHIVED:
-        errors["video"] = "This video is archived."
+        errors["video"] = _("This video is archived.")
     starts, ends = values.get("starts_at"), values.get("ends_at")
     for name in ("starts_at", "ends_at"):
         value = values.get(name)
         if value is not None and timezone.is_naive(value):
-            errors[name] = "Enter a date and time with a timezone."
+            errors[name] = _("Enter a date and time with a timezone.")
     if starts and ends and not ({"starts_at", "ends_at"} & errors.keys()):
         if ends <= starts:
-            errors["ends_at"] = "The end must be after the start."
+            errors["ends_at"] = _("The end must be after the start.")
         elif ends - starts > timedelta(days=MAX_CAMPAIGN_DAYS):
-            errors["ends_at"] = f"Campaigns can run for at most {MAX_CAMPAIGN_DAYS} days."
+            errors["ends_at"] = _("Campaigns can run for at most %(days)s days.") % {"days": MAX_CAMPAIGN_DAYS}
         elif ends <= now:
-            errors["ends_at"] = "The end must be in the future."
+            errors["ends_at"] = _("The end must be in the future.")
     for name in ("demo_budget_amount", "demo_reward_per_view"):
         if name in values:
             try:
                 values[name] = to_amount(values[name])
             except (ValueError, TypeError):
-                errors[name] = "Enter a whole number of shillings."
+                errors[name] = _("Enter a whole number of shillings.")
                 continue
             if values[name] <= 0:
-                errors[name] = "Enter an amount greater than zero."
+                errors[name] = _("Enter an amount greater than zero.")
     budget, rate = values.get("demo_budget_amount"), values.get("demo_reward_per_view")
     if isinstance(budget, int) and isinstance(rate, int) and rate > budget and "demo_reward_per_view" not in errors:
-        errors["demo_reward_per_view"] = "The reward per view cannot exceed the budget."
+        errors["demo_reward_per_view"] = _("The reward per view cannot exceed the budget.")
     if plans is not None:
         plans = list(plans)
         if any(plan.status != MembershipPlan.Status.ACTIVE for plan in plans):
-            errors["target_plans"] = "Only active membership plans can be targeted."
+            errors["target_plans"] = _("Only active membership plans can be targeted.")
     if errors:
         raise ValidationError(errors)
     return values, plans
 
 
 def create_campaign(user, organization, *, target_plans=(), **values):
-    _require_member(user, organization, "campaign.create")
+    side = _require_editor(user, organization, "campaign.create")
     if organization.verification_status in (V.SUSPENDED, V.REJECTED):
-        raise InvalidState("Campaigns cannot be created while the advertiser is not in good standing.")
+        raise InvalidState(_("Campaigns cannot be created while the advertiser is not in good standing."))
     values = {k: v for k, v in values.items() if k in CAMPAIGN_FIELDS}
     values, plans = _clean_campaign(organization, values, target_plans)
     with transaction.atomic():
@@ -509,7 +556,8 @@ def create_campaign(user, organization, *, target_plans=(), **values):
         campaign.full_clean(exclude=["organization", "created_by"])
         campaign.save()
         campaign.target_plans.set(plans)
-        record_business_event("campaign.created", actor=user, target=campaign, metadata={"revision": 1})
+        record_business_event("campaign.created", actor=user, target=campaign,
+                              metadata={"revision": 1, "on_behalf": side == "staff"})
     return campaign
 
 
@@ -519,8 +567,8 @@ def _check_budget_covers_awards(campaign, budget):
 
     awarded = awarded_credits(campaign.pk)
     if isinstance(budget, int) and budget < awarded:
-        raise ValidationError({"demo_budget_amount": f"The budget cannot be lower than the {awarded} credits "
-                                                     "already awarded for this campaign."})
+        raise ValidationError({"demo_budget_amount": _("The budget cannot be lower than the %(n)s credits already "
+                                                       "awarded for this campaign.") % {"n": awarded}})
 
 
 def _lock_campaign(campaign):
@@ -530,14 +578,15 @@ def _lock_campaign(campaign):
 
 def update_campaign(user, campaign, changes, *, expected_revision, target_plans=None):
     """Edit a DRAFT or REJECTED campaign. A rejected campaign returns to DRAFT."""
-    _require_member(user, campaign.organization, "campaign.update")
+    _require_editor(user, campaign.organization, "campaign.update")
     changes = {k: v for k, v in changes.items() if k in CAMPAIGN_FIELDS}
     with transaction.atomic():
         campaign = _lock_campaign(campaign)
         if campaign.revision != expected_revision:
-            raise StaleDecision("This campaign changed since you opened it. Reload and try again.")
+            raise StaleDecision(_("This campaign changed since you opened it. Reload and try again."))
         if not campaign.is_editable:
-            raise InvalidState("Only draft campaigns can be edited. Reopen it as a draft first.", code="not_editable")
+            raise InvalidState(_("Only draft campaigns can be edited. Reopen it as a draft first."),
+                               code="not_editable")
         merged = {k: getattr(campaign, k) for k in CAMPAIGN_FIELDS}
         merged.update(changes)
         merged, plans = _clean_campaign(campaign.organization, merged, target_plans)
@@ -581,24 +630,24 @@ def _event(name, actor, campaign, from_status, reason=""):
 
 CAMPAIGN_NOTICES = {
     # event: (title, message, email to the team)
-    "submitted": ("Campaign submitted for review", "ClipCash staff will review “{name}”.", False),
-    "approved": ("Campaign approved", "“{name}” was approved and will run on its scheduled dates.", True),
-    "rejected": ("Changes requested for a campaign", "“{name}” needs changes before it can run. "
-                 "Open it to see the reviewer's note.", True),
-    "activated": ("Campaign is now running", "“{name}” started and is shown to eligible members.", False),
-    "completed": ("Campaign finished", "“{name}” reached its end date.", False),
-    "paused": ("Campaign paused by ClipCash", "“{name}” is paused. Open it for details.", True),
-    "resumed": ("Campaign resumed", "“{name}” is running again.", False),
-    "cancelled": ("Campaign cancelled by ClipCash", "“{name}” was cancelled. Open it for details.", True),
+    "submitted": (N_("Campaign submitted for review"), N_("ClipCash staff will review “{name}”."), False),
+    "approved": (N_("Campaign approved"), N_("“{name}” was approved and will run on its scheduled dates."), True),
+    "rejected": (N_("Changes requested for a campaign"), N_("“{name}” needs changes before it can run. "
+                 "Open it to see the reviewer's note."), True),
+    "activated": (N_("Campaign is now running"), N_("“{name}” started and is shown to eligible members."), False),
+    "completed": (N_("Campaign finished"), N_("“{name}” reached its end date."), False),
+    "paused": (N_("Campaign paused by ClipCash"), N_("“{name}” is paused. Open it for details."), True),
+    "resumed": (N_("Campaign resumed"), N_("“{name}” is running again."), False),
+    "cancelled": (N_("Campaign cancelled by ClipCash"), N_("“{name}” was cancelled. Open it for details."), True),
 }
 STAFF_ONLY_EVENTS = ("paused", "resumed", "cancelled")  # The team's own actions are not notified.
 ORGANIZATION_NOTICES = {
-    "approved": ("Your advertiser account is approved", "You can now submit campaigns for review.", True),
-    "rejected": ("Your advertiser application was not approved", "Open your advertiser page for the reason "
-                 "and to apply again.", True),
-    "suspended": ("Your advertiser account is suspended", "Campaigns are paused. Open your advertiser page "
-                  "for details.", True),
-    "reinstated": ("Your advertiser account is active again", "You can manage and submit campaigns again.", False),
+    "approved": (N_("Your advertiser account is approved"), N_("You can now submit campaigns for review."), True),
+    "rejected": (N_("Your advertiser application was not approved"), N_("Open your advertiser page for the reason "
+                 "and to apply again."), True),
+    "suspended": (N_("Your advertiser account is suspended"), N_("Campaigns are paused. Open your advertiser page "
+                  "for details."), True),
+    "reinstated": (N_("Your advertiser account is active again"), N_("You can manage and submit campaigns again."), False),
 }
 
 
@@ -615,13 +664,14 @@ def _notify_campaign(name, actor, campaign, from_status):
     title, message, email = CAMPAIGN_NOTICES[name]
     stamp = campaign.updated_at.isoformat() if name in ("paused", "resumed") else ""
     inbox.notify(_team(campaign.organization), f"campaign.{name}", category=inbox.Category.ADVERTISING,
-                 title=title, message=message.format(name=campaign.name),
+                 title=title, message=message, params={"name": campaign.name},
                  link=inbox.link_to("advertising:campaign", campaign.organization_id, campaign.pk),
                  dedupe_key=f"campaign.{name}:{campaign.pk}:{campaign.revision}:{from_status}:{stamp}", email=email)
     if name == "submitted":
         inbox.notify(inbox.staff_with_permission("advertising.review_campaigns"), "campaign.review_needed",
-                     category=inbox.Category.ADVERTISING, title="Campaign awaiting review",
-                     message=f"“{campaign.name}” from {campaign.organization.display_name} was submitted.",
+                     category=inbox.Category.ADVERTISING, title=N_("Campaign awaiting review"),
+                     message=N_("“{name}” from {organization} was submitted."),
+                     params={"name": campaign.name, "organization": campaign.organization.display_name},
                      link=inbox.link_to("administration:campaign_review", campaign.pk),
                      dedupe_key=f"campaign.review_needed:{campaign.pk}:{campaign.revision}")
 
@@ -631,7 +681,7 @@ def _notify_organization_decision(name, organization):
 
     title, message, email = ORGANIZATION_NOTICES[name]
     inbox.notify(_team(organization), f"advertiser.{name}", category=inbox.Category.ADVERTISING, title=title,
-                 message=message, link=inbox.link_to("advertising:organization", organization.pk),
+                 message=message, params={}, link=inbox.link_to("advertising:organization", organization.pk),
                  dedupe_key=f"advertiser.{name}:{organization.pk}:{organization.reviewed_at.isoformat()}",
                  email=email)
 
@@ -645,9 +695,12 @@ def _notify_invitee(invitation):
     invitee = get_user_model().objects.filter(email__iexact=invitation.email, email_verified=True,
                                               is_active=True).first()
     inbox.notify(invitee, "advertiser.invitation", category=inbox.Category.ADVERTISING,
-                 title="You were invited to an advertiser team",
-                 message=f"{invitation.organization.display_name} invited you as "
-                         f"{invitation.get_role_display().lower()}. Accept or decline on your advertiser page.",
+                 title=N_("You were invited to an advertiser team"),
+                 message=(N_("{organization} invited you as owner. Accept or decline on your advertiser page.")
+                          if invitation.role == ROLE.OWNER else
+                          N_("{organization} invited you as campaign manager. Accept or decline on your advertiser "
+                             "page.")),
+                 params={"organization": invitation.organization.display_name},
                  link=inbox.link_to("advertising:home"), dedupe_key=f"advertiser.invitation:{invitation.pk}")
 
 
@@ -655,8 +708,8 @@ def _notify_application(organization):
     from apps.notifications import inbox
 
     inbox.notify(inbox.staff_with_permission("advertising.review_advertisers"), "advertiser.review_needed",
-                 category=inbox.Category.ADVERTISING, title="Advertiser application awaiting review",
-                 message=f"{organization.display_name} applied to advertise.",
+                 category=inbox.Category.ADVERTISING, title=N_("Advertiser application awaiting review"),
+                 message=N_("{organization} applied to advertise."), params={"organization": organization.display_name},
                  link=inbox.link_to("administration:advertiser_review", organization.pk),
                  dedupe_key=f"advertiser.review_needed:{organization.pk}:{organization.submitted_at.isoformat()}")
 
@@ -675,17 +728,17 @@ def _activation_blocker(campaign, now):
 
 
 def submit_campaign(user, campaign):
-    _require_member(user, campaign.organization, "campaign.submit")
+    _require_editor(user, campaign.organization, "campaign.submit")
     with transaction.atomic():
         campaign = _lock_campaign(campaign)
         if campaign.status != S.DRAFT:
-            raise InvalidState("Only drafts can be submitted for review.")
+            raise InvalidState(_("Only drafts can be submitted for review."))
         if not campaign.organization.is_approved:
-            raise InvalidState("Your advertiser account must be approved before campaigns can be submitted.",
+            raise InvalidState(_("Your advertiser account must be approved before campaigns can be submitted."),
                                code="organization_not_approved")
         _clean_campaign(campaign.organization, {k: getattr(campaign, k) for k in CAMPAIGN_FIELDS}, None)
         if not video_available(campaign.video):
-            raise InvalidState("The campaign video is not published and ready yet.", code="video_unavailable")
+            raise InvalidState(_("The campaign video is not published and ready yet."), code="video_unavailable")
         campaign.status = S.SUBMITTED
         campaign.submitted_at = timezone.now()
         campaign.save()
@@ -694,11 +747,11 @@ def submit_campaign(user, campaign):
 
 
 def withdraw_campaign(user, campaign):
-    _require_member(user, campaign.organization, "campaign.withdraw")
+    _require_editor(user, campaign.organization, "campaign.withdraw")
     with transaction.atomic():
         campaign = _lock_campaign(campaign)
         if campaign.status != S.SUBMITTED:
-            raise InvalidState("Only campaigns awaiting review can be withdrawn.")
+            raise InvalidState(_("Only campaigns awaiting review can be withdrawn."))
         campaign.status = S.DRAFT
         campaign.save()
         _event("withdrawn", user, campaign, S.SUBMITTED)
@@ -707,11 +760,11 @@ def withdraw_campaign(user, campaign):
 
 def reopen_campaign(user, campaign):
     """Approved (scheduled or paused) campaign back to DRAFT: the approval no longer applies."""
-    _require_member(user, campaign.organization, "campaign.reopen")
+    _require_editor(user, campaign.organization, "campaign.reopen")
     with transaction.atomic():
         campaign = _lock_campaign(campaign)
         if campaign.status not in (S.SCHEDULED, S.PAUSED):
-            raise InvalidState("Only scheduled or paused campaigns can be reopened for changes.")
+            raise InvalidState(_("Only scheduled or paused campaigns can be reopened for changes."))
         old = campaign.status
         campaign.status = S.DRAFT
         campaign.revision += 1
@@ -725,6 +778,10 @@ def _check_reviewer(actor, campaign, action):
     _require_staff(can_review_campaigns, actor, f"campaign.{action}", campaign)
     if campaign.organization.memberships.filter(user=actor, is_active=True).exists():
         _deny(f"campaign.{action}", actor, campaign, "self_review")
+    # UI-DASH-03: a campaign a staff member created on behalf of an advertiser is approved by
+    # a different reviewer (four eyes), like other separated workflows.
+    if action == "approve" and campaign.created_by_id == actor.pk and actor.is_staff:
+        _deny(f"campaign.{action}", actor, campaign, "self_approval")
 
 
 def approve_campaign(actor, campaign, *, expected_revision, notes=""):
@@ -734,9 +791,9 @@ def approve_campaign(actor, campaign, *, expected_revision, notes=""):
         if campaign.status in APPROVED_STATES and campaign.approved_revision == expected_revision:
             return campaign  # Same decision submitted twice.
         if campaign.revision != expected_revision:
-            raise StaleDecision("The advertiser changed this campaign. Review the new version.")
+            raise StaleDecision(_("The advertiser changed this campaign. Review the new version."))
         if campaign.status != S.SUBMITTED:
-            raise InvalidState("Only campaigns awaiting review can be approved.")
+            raise InvalidState(_("Only campaigns awaiting review can be approved."))
         now = timezone.now()
         blocker = _activation_blocker(campaign, now)
         if blocker:
@@ -764,9 +821,9 @@ def reject_campaign(actor, campaign, *, expected_revision, reason):
         if campaign.status == S.REJECTED and campaign.revision == expected_revision:
             return campaign
         if campaign.revision != expected_revision:
-            raise StaleDecision("The advertiser changed this campaign. Review the new version.")
+            raise StaleDecision(_("The advertiser changed this campaign. Review the new version."))
         if campaign.status != S.SUBMITTED:
-            raise InvalidState("Only campaigns awaiting review can be rejected.")
+            raise InvalidState(_("Only campaigns awaiting review can be rejected."))
         campaign.status = S.REJECTED
         campaign.reviewed_at = timezone.now()
         campaign.reviewed_by = actor
@@ -793,7 +850,7 @@ def pause_campaign(actor, campaign, *, reason=""):
         if campaign.status == S.PAUSED:
             return campaign
         if campaign.status not in (S.SCHEDULED, S.ACTIVE):
-            raise InvalidState("Only scheduled or active campaigns can be paused.")
+            raise InvalidState(_("Only scheduled or active campaigns can be paused."))
         old = campaign.status
         campaign.status = S.PAUSED
         campaign.paused_by_staff = side == "staff"
@@ -807,9 +864,9 @@ def resume_campaign(actor, campaign):
     with transaction.atomic():
         campaign = _lock_campaign(campaign)
         if campaign.status != S.PAUSED:
-            raise InvalidState("Only paused campaigns can be resumed.")
+            raise InvalidState(_("Only paused campaigns can be resumed."))
         if campaign.paused_by_staff and side != "staff":
-            raise InvalidState("This campaign was paused by ClipCash staff. Please contact support.",
+            raise InvalidState(_("This campaign was paused by ClipCash staff. Please contact support."),
                                code="paused_by_staff")
         now = timezone.now()
         blocker = _activation_blocker(campaign, now)
@@ -834,7 +891,7 @@ def cancel_campaign(actor, campaign, *, reason=""):
         if campaign.status == S.CANCELLED:
             return campaign
         if campaign.status in (S.COMPLETED, S.ARCHIVED):
-            raise InvalidState("Finished campaigns cannot be cancelled.")
+            raise InvalidState(_("Finished campaigns cannot be cancelled."))
         old = campaign.status
         campaign.status = S.CANCELLED
         campaign.cancelled_at = timezone.now()
@@ -850,7 +907,7 @@ def archive_campaign(actor, campaign):
         if campaign.status == S.ARCHIVED:
             return campaign
         if campaign.status not in (S.COMPLETED, S.CANCELLED, S.REJECTED):
-            raise InvalidState("Only completed, cancelled or rejected campaigns can be archived.")
+            raise InvalidState(_("Only completed, cancelled or rejected campaigns can be archived."))
         old = campaign.status
         campaign.status = S.ARCHIVED
         campaign.archived_at = timezone.now()
@@ -923,21 +980,22 @@ class EligibilityDecision:
 
 
 ELIGIBILITY_MESSAGES = {
-    "ok": "Eligible members can be shown this campaign.",
-    "feature_disabled": "Advertiser features are switched off.",
-    "unsupported_campaign": "This campaign type is not supported.",
-    "campaign_not_active": "The campaign is not active.",
-    "not_started": "The campaign has not started yet.",
-    "ended": "The campaign has ended.",
-    "organization_not_approved": "The advertiser is not approved.",
-    "video_not_authorized": "The video is no longer authorized for this advertiser.",
-    "video_unavailable": "The video is not published and ready.",
-    "plan_not_targeted": "The member's plan is not targeted.",
+    "ok": gettext_lazy("Eligible members can be shown this campaign."),
+    "feature_disabled": gettext_lazy("Advertiser features are switched off."),
+    "unsupported_campaign": gettext_lazy("This campaign type is not supported."),
+    "campaign_not_active": gettext_lazy("The campaign is not active."),
+    "not_started": gettext_lazy("The campaign has not started yet."),
+    "ended": gettext_lazy("The campaign has ended."),
+    "organization_not_approved": gettext_lazy("The advertiser is not approved."),
+    "video_not_authorized": gettext_lazy("The video is no longer authorized for this advertiser."),
+    "video_unavailable": gettext_lazy("The video is not published and ready."),
+    "plan_not_targeted": gettext_lazy("The member's plan is not targeted."),
 }
 
 
 def eligibility_message(reason):
-    return ELIGIBILITY_MESSAGES.get(reason, "The member is not eligible (" + reason.replace("_", " ") + ").")
+    return ELIGIBILITY_MESSAGES.get(reason, _("The member is not eligible (%(reason)s).")
+                                    % {"reason": reason.replace("_", " ")})
 
 
 def campaign_eligibility(campaign, member=None, now=None):
@@ -990,21 +1048,40 @@ def eligible_campaigns(member, now=None):
 # --- Preview -------------------------------------------------------------------------------------
 
 
-def preview_playback(user, campaign):
-    """Short-lived signed preview for the advertiser's own authorized video, or a
-    reviewer. Same provider signing as member playback; no credentials exposed."""
-    if not (can_review_campaigns(user) or membership_for(user, campaign.organization)):
-        raise NotFound("Campaign not found.")
-    video = campaign.video
-    if not video_authorized(campaign.organization, video) and not can_review_campaigns(user):
-        return "video_not_authorized", None
+def preview_unavailable_reason(video):
+    """UI-DASH-03: why a video cannot be previewed, or "" when it can. A Bunny video is embedded
+    only once Bunny has confirmed it (a completed sync); otherwise the player would show the
+    provider's own error page inside the frame."""
+    if video.publication_status == Video.Publication.ARCHIVED:
+        return "video_archived"
+    if video.processing_status == Video.Processing.FAILED:
+        return "video_failed"
+    if video.processing_status != Video.Processing.READY:
+        return "video_processing"
+    if video.provider == Video.Provider.BUNNY and not (video.provider_video_id and video.last_synced_at):
+        return "video_not_confirmed"
     if not video_available(video):
-        return "video_unavailable", None
+        return "video_unavailable"
+    return ""
+
+
+def preview_playback(user, campaign):
+    """Short-lived signed preview for the advertiser's own authorized video, or staff who
+    review or manage campaigns. Same provider signing as member playback; no credentials exposed."""
+    staff = can_review_campaigns(user) or can_manage_campaigns(user)
+    if not (staff or membership_for(user, campaign.organization)):
+        raise NotFound(_("Campaign not found."))
+    video = campaign.video
+    if not video_authorized(campaign.organization, video) and not staff:
+        return "video_not_authorized", None
+    reason = preview_unavailable_reason(video)
+    if reason:
+        return reason, None
     try:
         return "ok", get_provider(video.provider).playback(video.provider_video_id,
                                                            expires_in=settings.VIDEO_PLAYBACK_TOKEN_SECONDS)
     except ProviderError:
-        return "video_unavailable", None
+        return "provider_unavailable", None
 
 
 # --- Reporting ---------------------------------------------------------------------------------
@@ -1044,7 +1121,7 @@ def organization_report(organization, *, for_advertiser=True):
 
     campaigns = Campaign.objects.filter(organization=organization)
     report = campaign_summary(campaigns)
-    totals, _ = campaign_performance(campaigns)
+    totals, _unused = campaign_performance(campaigns)
     report["viewing"] = _viewing_figures(totals, for_advertiser=for_advertiser)
     return report
 
@@ -1055,7 +1132,7 @@ def campaign_report(campaign, *, for_advertiser=True):
     from apps.rewards import services as rewards
     from apps.viewing.services import campaign_performance
 
-    _, by_campaign = campaign_performance(Campaign.objects.filter(pk=campaign.pk))
+    _unused, by_campaign = campaign_performance(Campaign.objects.filter(pk=campaign.pk))
     totals = next(iter(rewards.campaign_totals([campaign])), {})
     qualified = report_figure(totals.get("qualified", 0), for_advertiser=for_advertiser)
     budget = rewards.budget_summary(campaign)

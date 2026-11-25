@@ -30,6 +30,8 @@ NAV_MAP = {
     "viewing": "viewing", "viewing_review": "viewing",
     "advertisers": "advertisers", "advertiser_review": "advertisers",
     "campaigns": "campaigns", "campaign_review": "campaigns", "campaign_credits": "demo_rewards",
+    # UI-DASH-03: staff-managed advertising.
+    "advertiser_create": "advertisers", "campaign_create": "campaign_create", "campaign_edit": "campaigns",
     "demo_rewards": "demo_rewards", "reward_policies": "demo_rewards", "reward_policy": "demo_rewards",
     "payments": "payments", "payment_exceptions": "payments", "payment_funding": "payments", "payment": "payments",
     "wallets": "wallets", "wallet_reconciliation": "wallets", "wallet": "wallets",

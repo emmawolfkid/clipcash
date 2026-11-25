@@ -1,0 +1,34 @@
+{% extends "advertising/layout.html" %}{% load i18n static %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/advertising/creatives.css' %}">{% endblock %}
+{% block title %}{% translate "Video creatives" %}{% endblock %}
+{% block member_content %}
+{% include "advertising/_header.html" %}
+<div class="page-heading"><div class="page-heading__text"><h1 class="page-title">{% translate "Video creatives" %}</h1>
+  <p class="page-intro">{% translate "Videos ClipCash has authorized for your advertiser account. ClipCash uploads and processes each video securely; choose one when you create a campaign." %}</p></div>
+  {% include "advertising/_new_campaign_action.html" %}</div>
+{% if videos %}
+<ul class="creative-grid">{% for video in videos %}
+  <li class="creative-card">
+    <div class="creative-card__thumb">
+      {% if video.thumbnail %}<img src="{{ video.thumbnail }}" alt="" loading="lazy" width="320" height="180">{% else %}<span class="creative-card__placeholder" aria-hidden="true">{% include "components/nav_icon.html" with icon="film" %}</span>{% endif %}
+      {% if video.duration_display %}<span class="creative-card__duration">{{ video.duration_display }}</span>{% endif %}
+    </div>
+    <div class="creative-card__body">
+      <h2 class="creative-card__title">{{ video.title }}</h2>
+      <p class="creative-card__badges">
+        <span class="badge badge--{% if video.processing_status == 'READY' %}active{% elif video.processing_status == 'FAILED' %}rejected{% else %}pending{% endif %}">{{ video.get_processing_status_display }}</span>
+        <span class="badge badge--{% if video.publication_status == 'PUBLISHED' %}active{% else %}draft{% endif %}">{{ video.get_publication_status_display }}</span>
+        {% if video.category %}<span class="creative-card__category">{{ video.category.name }}</span>{% endif %}
+      </p>
+      {% if not video.available %}<p class="creative-card__warning">{% translate "Not playable right now. Campaigns using it are not shown to members until ClipCash fixes this." %}</p>{% endif %}
+      <p class="creative-card__usage">{% blocktranslate count n=video.n_campaigns %}Used in {{ n }} campaign{% plural %}Used in {{ n }} campaigns{% endblocktranslate %}{% if video.n_running %} · {% blocktranslate count n=video.n_running %}{{ n }} running or scheduled{% plural %}{{ n }} running or scheduled{% endblocktranslate %}{% endif %}</p>
+      {% if video.n_campaigns %}<a class="creative-card__link" href="{% url 'advertising:campaigns' organization.pk %}?video={{ video.pk }}">{% translate "View campaigns" %}</a>{% endif %}
+    </div>
+  </li>{% endfor %}
+</ul>
+<p class="workspace-note">{% translate "Preview a creative from any campaign that uses it. To add or replace a video, contact ClipCash support." %}</p>
+{% else %}
+<div class="empty-state"><p>{% translate "No videos are authorized for your account yet. ClipCash adds approved videos after reviewing your advertiser application." %}</p>
+<a href="{% url 'support:tickets' %}">{% translate "Contact support" %}</a></div>
+{% endif %}
+{% endblock %}

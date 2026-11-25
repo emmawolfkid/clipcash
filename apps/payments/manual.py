@@ -21,8 +21,9 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, transaction
-from django.utils import timezone
+from django.utils import timezone, translation
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop as N_
 
 from apps.accounts.phone_numbers import normalize_phone_number
 from apps.audit.services import DENIED, FAILURE, record_business_event, record_security_event
@@ -243,13 +244,6 @@ def _optional_reference(raw):
     return normalize_reference(raw)
 
 
-def _reference_text(claim):
-    """The reference for member messages, or a neutral phrase when none was given yet."""
-    if claim.transaction_reference:
-        return _("reference %(ref)s") % {"ref": claim.transaction_reference}
-    return _("no transaction reference given")
-
-
 def _check_paid_on(paid_on, subscription):
     if paid_on is None:
         return None
@@ -370,10 +364,14 @@ def submit_claim(member, subscription, *, amount=None, payer_phone="", transacti
                                             "details": sorted(name for name, given in (
                                                 ("payer_phone", payer_phone), ("transaction_reference", reference_key),
                                                 ("paid_on", paid_on), ("evidence", evidence_info)) if given)})
-            _notify(claim, "submitted", _("Payment verification requested"),
-                    _("We received your request to verify your payment for %(plan)s (%(amount)s, %(ref)s). Your "
-                      "membership starts after our team confirms the payment in the provider business records.")
-                    % {"plan": claim.plan_name, "amount": format_tzs(amount), "ref": _reference_text(claim)},
+            _notify(claim, "submitted", N_("Payment verification requested"),
+                    N_("We received your request to verify your payment for {plan} ({amount}, reference {ref}). "
+                       "Your membership starts after our team confirms the payment in the provider business "
+                       "records.") if claim.transaction_reference else
+                    N_("We received your request to verify your payment for {plan} ({amount}, no transaction "
+                       "reference given). Your membership starts after our team confirms the payment in the "
+                       "provider business records."),
+                    {"plan": claim.plan_name, "amount": format_tzs(amount), "ref": claim.transaction_reference},
                     email=True)
             if evidence_info is not None:
                 _attach_evidence(claim, member, evidence, *evidence_info)
@@ -564,12 +562,12 @@ def approve(actor, claim, *, verified_reference, receipt_confirmed, recipient_co
                                             "amount_source": amount_source,
                                             "recipient": claim.instruction.business_number,
                                             "expires_at": subscription.expires_at.isoformat()})
-            _notify(claim, "approved", _("Payment confirmed: membership active"),
-                    _("Your payment of %(amount)s (reference %(ref)s) was confirmed. Your %(plan)s membership is "
-                      "active until %(expires)s.")
-                    % {"amount": format_tzs(claim.amount), "ref": claim.transaction_reference,
-                       "plan": claim.plan_name,
-                       "expires": timezone.localtime(subscription.expires_at).strftime("%d %b %Y")}, email=True)
+            _notify(claim, "approved", N_("Payment confirmed: membership active"),
+                    N_("Your payment of {amount} (reference {ref}) was confirmed. Your {plan} membership is "
+                       "active until {expires}."),
+                    {"amount": format_tzs(claim.amount), "ref": claim.transaction_reference,
+                     "plan": claim.plan_name, "expires": timezone.localtime(subscription.expires_at).date()},
+                    email=True)
             return claim, True
     except ValidationError as error:
         if "duplicate_reference" in {e.code for errors in getattr(error, "error_dict", {}).values() for e in errors}:
@@ -620,13 +618,17 @@ def reject(actor, claim, *, reason, note=""):
                                       "updated_at"])
             record_business_event("membership.manual_payment.rejected", actor=actor, target=claim,
                                   metadata={"reference": claim.reference, "reason": reason})
-            message = _("We could not confirm your payment for %(plan)s (%(ref)s): %(reason)s.") % {
-                "plan": claim.plan_name, "ref": _reference_text(claim),
-                "reason": str(claim.get_rejection_reason_display()).lower()}
-            if note:
-                message = f"{message} {note}"
-            _notify(claim, "rejected", _("Payment not confirmed"),
-                    str(message) + " " + str(_("You can submit corrected details or contact support.")),
+            # The staff note is shown as written; the reason label follows the reader's language.
+            with translation.override(None):  # The English source label (its msgid).
+                reason_label = str(claim.get_rejection_reason_display())
+            _notify(claim, "rejected", N_("Payment not confirmed"),
+                    N_("We could not confirm your payment for {plan} (reference {ref}): {reason__tl}. {note}You can "
+                       "submit corrected details or contact support.") if claim.transaction_reference else
+                    N_("We could not confirm your payment for {plan} (no transaction reference given): "
+                       "{reason__tl}. {note}You can submit corrected details or contact support."),
+                    {"plan": claim.plan_name, "ref": claim.transaction_reference,
+                     "reason__tl": reason_label,
+                     "note": f"{note} " if note else ""},
                     email=True)
             return claim, True
     except ManualPaymentError as error:
@@ -634,11 +636,14 @@ def reject(actor, claim, *, reason, note=""):
         raise
 
 
-def _notify(claim, event, title, message, *, email):
+def _notify(claim, event, title, message, params, *, email):
+    """UI-DASH-03: English source templates (gettext_noop) and plain values, so each member reads the
+    notice in their own language whoever triggered it; the stored and emailed text is the English
+    rendering."""
     from apps.notifications import inbox
 
     inbox.notify(claim.member, f"membership.payment_{event}", category=inbox.Category.MEMBERSHIP,
-                 title=str(title), message=str(message)[:inbox.MAX_MESSAGE],
+                 title=title, message=message, params=params,
                  link=inbox.link_to("payments:manual_claim", claim.pk),
                  dedupe_key=f"membership.payment_{event}:{claim.pk}", email=email)
 

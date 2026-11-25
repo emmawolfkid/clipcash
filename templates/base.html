@@ -12,6 +12,7 @@
       {# Protected inbox template inherits this base; leave its source untouched. #}
       {% if user.is_authenticated and request.resolver_match.namespace == 'notifications' %}
       <link rel="stylesheet" href="{% static 'css/layouts/member.css' %}">
+      <link rel="stylesheet" href="{% static 'css/layouts/member-portal.css' %}">
       {% endif %}
     {% endblock %}
     {% block page_styles %}
@@ -20,12 +21,17 @@
       {% endif %}
     {% endblock %}
   {% endblock %}
+  {% block head_scripts %}{% if user.is_authenticated and request.resolver_match.namespace == 'notifications' %}{% include "components/member_portal_head.html" %}{% endif %}{% endblock %}
   <script src="{% static 'js/member-nav.js' %}" defer></script>
   <script src="{% static 'js/shared-ui.js' %}" defer></script>
   <script src="{% static 'js/toasts.js' %}" defer></script>
+  {% block page_scripts %}{% endblock %}
 </head>
-<body data-table-scroll-hint="{% translate 'Scroll sideways to see all columns.' %}">
+<body{% block body_class %}{% if user.is_authenticated and request.resolver_match.namespace == 'notifications' %} class="portal"{% endif %}{% endblock %} data-table-scroll-hint="{% translate 'Scroll sideways to see all columns.' %}">
   <a class="skip-link" href="#content">{% translate "Skip to content" %}</a>
+  {% block site_header %}
+  {# UI-DASH-01: signed-in member pages (and the protected inbox) use the portal top bar. #}
+  {% if user.is_authenticated and request.resolver_match.namespace == 'notifications' %}{% include "components/member_header.html" %}{% else %}
   <header class="site-header">
     <div class="site-header__inner">
       <div class="brand-block">
@@ -53,6 +59,8 @@
       {% endif %}
     </div>
   </header>
+  {% endif %}
+  {% endblock %}
   <div class="nav-overlay" data-nav-overlay hidden aria-hidden="true"></div>
   {% if demo_verification_optional %}
   <p class="demo-banner" role="note"><strong>{% translate "Restricted demonstration" %}</strong> — {% translate "Email verification is optional for authorized demo accounts. Real payments and payouts are disabled." %}</p>
@@ -61,7 +69,7 @@
   {% block main %}
   {# The protected Phase 15-A inbox inherits base.html. Compose its shell here without editing it. #}
   {% if user.is_authenticated and request.resolver_match.namespace == 'notifications' %}
-  <div class="app-shell">
+  <div class="app-shell app-shell--portal">
     {% include "components/member_sidebar.html" with nav="notifications" %}
   {% endif %}
   <main id="content" tabindex="-1" class="{% if user.is_authenticated and request.resolver_match.namespace == 'notifications' %}app-main{% else %}site-main{% block main_class %}{% endblock %}{% endif %}">

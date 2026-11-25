@@ -18,6 +18,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import DENIED, SUCCESS, record_business_event, record_security_event
@@ -77,7 +78,7 @@ def _deny(action, actor, target=None, reason="permission_missing"):
     record_security_event("wallets.access.denied", outcome=DENIED,
                           actor=actor if getattr(actor, "is_authenticated", False) else None,
                           target=target, metadata={"action": action, "reason": reason})
-    raise NotAuthorized("You are not allowed to do this.", code=reason)
+    raise NotAuthorized(_("You are not allowed to do this."), code=reason)
 
 
 def wallet_eligibility(user):
@@ -106,7 +107,7 @@ def ensure_wallet(member):
     Idempotent and safe under concurrent requests."""
     reason = wallet_eligibility(member)
     if reason != "ok":
-        raise NotEligible("This account cannot have a member wallet.", code=reason)
+        raise NotEligible(_("This account cannot have a member wallet."), code=reason)
     existing = Wallet.objects.filter(member=member).first()
     if existing is not None:
         return existing
@@ -133,7 +134,7 @@ def wallet_for_staff(actor, wallet_id, *, view="detail"):
         _deny("wallet.inspect", actor)
     wallet = Wallet.objects.select_related("member").filter(pk=wallet_id).first()
     if wallet is None:
-        raise NotEligible("Wallet not found.", code="not_found")
+        raise NotEligible(_("Wallet not found."), code="not_found")
     record_security_event("wallets.wallet.inspected", outcome=SUCCESS, actor=actor, target=wallet,
                           metadata={"view": view})
     return wallet
@@ -199,7 +200,7 @@ def request_wallet_posting(category, wallet, amount, *, actor=None, idempotency_
 def _reason(text, field="reason"):
     text = (text or "").strip()
     if len(text) < MIN_REASON:
-        raise ValidationError({field: "Please give a reason (at least 5 characters)."})
+        raise ValidationError({field: _("Please give a reason (at least 5 characters).")})
     return text[:300]
 
 
@@ -215,7 +216,7 @@ def place_restriction(actor, wallet, *, kind, reason):
     if not can_manage_restrictions(actor):
         _deny("restriction.place", actor, wallet)
     if kind not in WalletRestriction.Kind.values:
-        raise ValidationError({"kind": "Choose a restriction type."})
+        raise ValidationError({"kind": _("Choose a restriction type.")})
     reason = _reason(reason)
     with transaction.atomic():
         wallet = Wallet.objects.select_for_update().get(pk=wallet.pk)
@@ -233,7 +234,7 @@ def request_lift(actor, restriction, *, reason):
     with transaction.atomic():
         restriction = WalletRestriction.objects.select_for_update().get(pk=restriction.pk)
         if restriction.status != R.ACTIVE:
-            raise InvalidState("Only active restrictions can be lifted.")
+            raise InvalidState(_("Only active restrictions can be lifted."))
         restriction.status = R.LIFT_REQUESTED
         restriction.lift_requested_by = actor
         restriction.lift_reason = reason
@@ -256,7 +257,7 @@ def decide_lift(actor, restriction, *, approve, note=""):
         if restriction.status != R.LIFT_REQUESTED:
             return restriction
         if restriction.lift_requested_by_id == actor.pk:  # Re-checked on the locked row.
-            raise NotAuthorized("The person who requested the lift cannot approve it.", code="four_eyes")
+            raise NotAuthorized(_("The person who requested the lift cannot approve it."), code="four_eyes")
         if approve:
             restriction.status = R.LIFTED
             restriction.lifted_by = actor

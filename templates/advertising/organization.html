@@ -1,39 +1,104 @@
-{% extends "advertising/layout.html" %}{% load i18n money %}
+{% extends "advertising/layout.html" %}{% load i18n static money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/advertising/dashboard.css' %}">{% endblock %}
 {% block title %}{{ organization.display_name }}{% endblock %}
 {% block member_content %}
+{# UI-DASH-02: advertiser dashboard. Figures: services.organization_report (all time) and the masked #}
+{# reports.advertiser_report for the default period. Demo budgets are planning figures, never money. #}
+<div class="advertiser-dashboard">
 {% include "advertising/_header.html" %}
-<div class="page-heading"><h1 class="page-title">{% translate "Overview" %}</h1>{% include "advertising/_new_campaign_action.html" %}</div>
-<dl class="metric-row">
-  <div class="metric"><dt>{% translate "Active campaigns" %}</dt><dd>{{ report.n_active }}</dd></div>
-  <div class="metric"><dt>{% translate "Awaiting review" %}</dt><dd>{{ report.n_submitted }}</dd></div>
-  <div class="metric"><dt>{% translate "Drafts" %}</dt><dd>{{ report.n_draft }}</dd></div>
-  <div class="metric"><dt>{% translate "Verified views" %}</dt><dd>{{ report.viewing.verified.display }}</dd></div>
-  <div class="metric"><dt>{% translate "Unique viewers (verified)" %}</dt><dd>{{ report.viewing.viewers.display }}</dd></div>
-</dl>
-<section class="workspace-section">
-  <h2 class="workspace-section__title">{% translate "Recent campaigns" %}</h2>
-  {% if recent %}{% translate "The five newest campaigns" as recent_caption %}{% include "advertising/_campaign_table.html" with campaigns=recent caption=recent_caption %}
-  <p class="workspace-note"><a href="{% url 'advertising:campaigns' organization.pk %}">{% translate "All campaigns" %}</a> · <a href="{% url 'advertising:reports' organization.pk %}">{% translate "Reports" %}</a></p>
-  {% elif organization.verification_status == "SUSPENDED" or organization.verification_status == "REJECTED" %}<p class="empty-state">{% translate "No campaigns yet." %}</p>
-  {% else %}<p class="empty-state">{% translate "No campaigns yet. Create a draft to get started." %}</p>{% endif %}
-</section>
-{% if report.total %}
-<section class="workspace-section">
-  <h2 class="workspace-section__title">{% translate "Campaigns by status" %}</h2>
-  <ul class="status-links">
-    {% with base=organization.pk %}
-    {% if report.n_draft %}<li><a href="{% url 'advertising:campaigns' base %}?status=DRAFT"><span class="status-links__count">{{ report.n_draft }}</span> {% translate "Draft" %}</a></li>{% endif %}
-    {% if report.n_submitted %}<li><a href="{% url 'advertising:campaigns' base %}?status=SUBMITTED"><span class="status-links__count">{{ report.n_submitted }}</span> {% translate "Awaiting review" %}</a></li>{% endif %}
-    {% if report.n_rejected %}<li><a href="{% url 'advertising:campaigns' base %}?status=REJECTED"><span class="status-links__count">{{ report.n_rejected }}</span> {% translate "Changes requested" %}</a></li>{% endif %}
-    {% if report.n_scheduled %}<li><a href="{% url 'advertising:campaigns' base %}?status=SCHEDULED"><span class="status-links__count">{{ report.n_scheduled }}</span> {% translate "Approved, scheduled" %}</a></li>{% endif %}
-    {% if report.n_active %}<li><a href="{% url 'advertising:campaigns' base %}?status=ACTIVE"><span class="status-links__count">{{ report.n_active }}</span> {% translate "Active" %}</a></li>{% endif %}
-    {% if report.n_paused %}<li><a href="{% url 'advertising:campaigns' base %}?status=PAUSED"><span class="status-links__count">{{ report.n_paused }}</span> {% translate "Paused" %}</a></li>{% endif %}
-    {% if report.n_completed %}<li><a href="{% url 'advertising:campaigns' base %}?status=COMPLETED"><span class="status-links__count">{{ report.n_completed }}</span> {% translate "Completed" %}</a></li>{% endif %}
-    {% if report.n_cancelled %}<li><a href="{% url 'advertising:campaigns' base %}?status=CANCELLED"><span class="status-links__count">{{ report.n_cancelled }}</span> {% translate "Cancelled" %}</a></li>{% endif %}
-    {% if report.n_archived %}<li><a href="{% url 'advertising:campaigns' base %}?status=ARCHIVED"><span class="status-links__count">{{ report.n_archived }}</span> {% translate "Archived" %}</a></li>{% endif %}
-    {% endwith %}
-  </ul>
-</section>
-{% endif %}
-<p class="workspace-note">{% blocktranslate with amount=report.demo_budget_running|tzs %}Demo budget in approved campaigns: {{ amount }} (a planning figure, not money).{% endblocktranslate %} {% translate "Spend: not applicable. No money is charged to advertisers in this demonstration." %}</p>
+<header class="adv-welcome">
+  <div class="adv-welcome__copy">
+    <p class="adv-welcome__eyebrow">{% translate "Advertiser dashboard" %}</p>
+    <h1 class="page-title">{% translate "Overview" %}</h1>
+    <p>{% translate "Plan sponsored video campaigns, follow their review and see verified viewing results." %}</p>
+    <div class="adv-welcome__actions">{% include "advertising/_new_campaign_action.html" %}</div>
+  </div>
+  <img class="adv-welcome__art" src="{% static 'images/dashboard/welcome-phone.svg' %}" alt="" width="300" height="132">
+</header>
+
+<div class="adv-stats">
+  <section class="adv-stat adv-stat--primary" aria-labelledby="adv-total">
+    <span class="adv-stat__icon">{% include "components/nav_icon.html" with icon="advertiser" %}</span>
+    <h2 class="adv-stat__label" id="adv-total">{% translate "Total campaigns" %}</h2>
+    <p class="adv-stat__value">{{ report.total }}</p>
+    <p class="adv-stat__note">{% blocktranslate count n=report.n_draft %}{{ n }} draft{% plural %}{{ n }} drafts{% endblocktranslate %}</p>
+  </section>
+  <section class="adv-stat" aria-labelledby="adv-active">
+    <span class="adv-stat__icon adv-stat__icon--green">{% include "components/nav_icon.html" with icon="play" %}</span>
+    <h2 class="adv-stat__label" id="adv-active">{% translate "Active campaigns" %}</h2>
+    <p class="adv-stat__value">{{ report.n_active }}</p>
+    <p class="adv-stat__note">{% blocktranslate count n=report.n_scheduled %}{{ n }} approved, scheduled{% plural %}{{ n }} approved, scheduled{% endblocktranslate %}{% if report.n_paused %} · {% blocktranslate count n=report.n_paused %}{{ n }} paused{% plural %}{{ n }} paused{% endblocktranslate %}{% endif %}</p>
+  </section>
+  <section class="adv-stat" aria-labelledby="adv-review">
+    <span class="adv-stat__icon adv-stat__icon--amber">{% include "components/nav_icon.html" with icon="clock" %}</span>
+    <h2 class="adv-stat__label" id="adv-review">{% translate "Awaiting review" %}</h2>
+    <p class="adv-stat__value">{{ report.n_submitted }}</p>
+    <p class="adv-stat__note">{% blocktranslate count n=report.n_rejected %}{{ n }} with changes requested{% plural %}{{ n }} with changes requested{% endblocktranslate %}</p>
+  </section>
+  <section class="adv-stat" aria-labelledby="adv-completed">
+    <span class="adv-stat__icon adv-stat__icon--slate">{% include "components/nav_icon.html" with icon="check-circle" %}</span>
+    <h2 class="adv-stat__label" id="adv-completed">{% translate "Completed" %}</h2>
+    <p class="adv-stat__value">{{ report.n_completed }}</p>
+    <p class="adv-stat__note">{% blocktranslate count n=report.n_cancelled %}{{ n }} cancelled{% plural %}{{ n }} cancelled{% endblocktranslate %}</p>
+  </section>
+</div>
+
+<nav class="adv-quick" aria-label="{% translate 'Quick actions' %}">
+  {% if organization.verification_status != "SUSPENDED" and organization.verification_status != "REJECTED" %}<a class="adv-quick__item" href="{% url 'advertising:campaign_create' organization.pk %}"><span class="dashboard-action-icon dashboard-action-icon--orange">{% include "components/nav_icon.html" with icon="plus" %}</span><strong>{% translate "New campaign" %}</strong><span>{% translate "Start as a draft" %}</span></a>{% endif %}
+  <a class="adv-quick__item" href="{% url 'advertising:campaigns' organization.pk %}"><span class="dashboard-action-icon dashboard-action-icon--blue">{% include "components/nav_icon.html" with icon="advertiser" %}</span><strong>{% translate "Campaigns" %}</strong><span>{% translate "Manage and track" %}</span></a>
+  <a class="adv-quick__item" href="{% url 'advertising:creatives' organization.pk %}"><span class="dashboard-action-icon dashboard-action-icon--purple">{% include "components/nav_icon.html" with icon="film" %}</span><strong>{% translate "Video creatives" %}</strong><span>{% blocktranslate count n=n_creatives %}{{ n }} authorized video{% plural %}{{ n }} authorized videos{% endblocktranslate %}</span></a>
+  <a class="adv-quick__item" href="{% url 'advertising:reports' organization.pk %}"><span class="dashboard-action-icon dashboard-action-icon--sky">{% include "components/nav_icon.html" with icon="activity" %}</span><strong>{% translate "Reports" %}</strong><span>{% translate "Verified viewing results" %}</span></a>
+</nav>
+
+<div class="adv-columns">
+  <section class="adv-panel" aria-labelledby="adv-recent-title">
+    <div class="adv-panel__head"><h2 id="adv-recent-title">{% include "components/nav_icon.html" with icon="advertiser" %}{% translate "Recent campaigns" %}</h2>{% if recent %}<a href="{% url 'advertising:campaigns' organization.pk %}">{% translate "All campaigns" %}</a>{% endif %}</div>
+    {% if recent %}
+    <p class="adv-panel__intro">{% blocktranslate with first=period.first|date:"DATE_FORMAT" last=period.last|date:"DATE_FORMAT" %}Verified views from {{ first }} to {{ last }}.{% endblocktranslate %}</p>
+    <ul class="adv-campaigns">{% for row in performance.rows %}{% with campaign=row.campaign %}
+      <li class="adv-campaign">
+        <div class="adv-campaign__main">
+          <a class="adv-campaign__name" href="{% url 'advertising:campaign' organization.pk campaign.pk %}">{{ campaign.name }}</a>
+          <span class="adv-campaign__meta">{{ campaign.video.title }} · {{ campaign.starts_at|date:"SHORT_DATE_FORMAT" }} – {{ campaign.ends_at|date:"SHORT_DATE_FORMAT" }}</span>
+        </div>
+        {% include "advertising/_campaign_status.html" %}
+        <span class="adv-campaign__figure">{% if not campaign.activated_at and row.sessions == "0" %}<span class="adv-campaign__muted">{% translate "Has not run" %}</span>{% else %}<strong>{{ row.verified }}</strong> <span>{% translate "verified" %}</span>{% endif %}</span>
+      </li>{% endwith %}{% endfor %}
+    </ul>
+    {% elif organization.verification_status == "SUSPENDED" or organization.verification_status == "REJECTED" %}<p class="empty-state">{% translate "No campaigns yet." %}</p>
+    {% else %}<p class="empty-state">{% translate "No campaigns yet. Create a draft to get started." %}</p>{% endif %}
+  </section>
+
+  <div class="adv-column">
+    <section class="adv-panel" aria-labelledby="adv-performance-title">
+      <div class="adv-panel__head"><h2 id="adv-performance-title">{% include "components/nav_icon.html" with icon="activity" %}{% translate "Campaign performance" %}</h2><a href="{% url 'advertising:reports' organization.pk %}">{% translate "Reports" %}</a></div>
+      <p class="adv-panel__intro">{% translate "All time, from server-verified viewing. Small counts are shown as a range to protect viewers' privacy." %}</p>
+      <dl class="adv-figures">
+        <div><dt>{% translate "Verified views" %}</dt><dd>{{ report.viewing.verified.display }}</dd></div>
+        <div><dt>{% translate "Unique viewers (verified)" %}</dt><dd>{{ report.viewing.viewers.display }}</dd></div>
+      </dl>
+    </section>
+    {% if report.total %}
+    <section class="adv-panel" aria-labelledby="adv-status-title">
+      <div class="adv-panel__head"><h2 id="adv-status-title">{% include "components/nav_icon.html" with icon="flag" %}{% translate "Campaigns by status" %}</h2></div>
+      <ul class="status-links adv-status-links">
+        {% with base=organization.pk %}
+        {% if report.n_draft %}<li><a href="{% url 'advertising:campaigns' base %}?status=DRAFT"><span class="status-links__count">{{ report.n_draft }}</span> {% translate "Draft" %}</a></li>{% endif %}
+        {% if report.n_submitted %}<li><a href="{% url 'advertising:campaigns' base %}?status=SUBMITTED"><span class="status-links__count">{{ report.n_submitted }}</span> {% translate "Awaiting review" %}</a></li>{% endif %}
+        {% if report.n_rejected %}<li><a href="{% url 'advertising:campaigns' base %}?status=REJECTED"><span class="status-links__count">{{ report.n_rejected }}</span> {% translate "Changes requested" %}</a></li>{% endif %}
+        {% if report.n_scheduled %}<li><a href="{% url 'advertising:campaigns' base %}?status=SCHEDULED"><span class="status-links__count">{{ report.n_scheduled }}</span> {% translate "Approved, scheduled" %}</a></li>{% endif %}
+        {% if report.n_active %}<li><a href="{% url 'advertising:campaigns' base %}?status=ACTIVE"><span class="status-links__count">{{ report.n_active }}</span> {% translate "Active" %}</a></li>{% endif %}
+        {% if report.n_paused %}<li><a href="{% url 'advertising:campaigns' base %}?status=PAUSED"><span class="status-links__count">{{ report.n_paused }}</span> {% translate "Paused" %}</a></li>{% endif %}
+        {% if report.n_completed %}<li><a href="{% url 'advertising:campaigns' base %}?status=COMPLETED"><span class="status-links__count">{{ report.n_completed }}</span> {% translate "Completed" %}</a></li>{% endif %}
+        {% if report.n_cancelled %}<li><a href="{% url 'advertising:campaigns' base %}?status=CANCELLED"><span class="status-links__count">{{ report.n_cancelled }}</span> {% translate "Cancelled" %}</a></li>{% endif %}
+        {% if report.n_archived %}<li><a href="{% url 'advertising:campaigns' base %}?status=ARCHIVED"><span class="status-links__count">{{ report.n_archived }}</span> {% translate "Archived" %}</a></li>{% endif %}
+        {% endwith %}
+      </ul>
+    </section>
+    {% endif %}
+  </div>
+</div>
+
+<p class="adv-budget-note">{% include "components/nav_icon.html" with icon="info" %}<span>{% blocktranslate with amount=report.demo_budget_running|tzs %}Demo budget in approved campaigns: {{ amount }} (a planning figure, not money).{% endblocktranslate %} {% translate "Spend: not applicable. No money is charged to advertisers in this demonstration." %}</span></p>
+</div>
 {% endblock %}

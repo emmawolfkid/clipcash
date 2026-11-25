@@ -138,7 +138,7 @@ class AdvertiserFundingView(VerifiedAccountRequiredMixin, SandboxRequiredMixin, 
 def _whole(raw):
     raw = (raw or "").strip().replace(",", "")
     if not raw.isdigit():
-        raise ValidationError({"amount": "Enter a whole number of shillings."})
+        raise ValidationError({"amount": _("Enter a whole number of shillings.")})
     return int(raw)
 
 

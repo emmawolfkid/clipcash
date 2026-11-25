@@ -16,6 +16,8 @@ urlpatterns = [
          name="team_change"),
     path("<uuid:organization_id>/campaigns/", views.CampaignListView.as_view(), name="campaigns"),
     path("<uuid:organization_id>/reports/", views.ReportsView.as_view(), name="reports"),
+    path("<uuid:organization_id>/reports/export/", views.ReportsExportView.as_view(), name="reports_export"),
+    path("<uuid:organization_id>/creatives/", views.CreativesView.as_view(), name="creatives"),
     path("<uuid:organization_id>/campaigns/new/", views.CampaignCreateView.as_view(), name="campaign_create"),
     path("<uuid:organization_id>/campaigns/<uuid:campaign_id>/", views.CampaignDetailView.as_view(),
          name="campaign"),

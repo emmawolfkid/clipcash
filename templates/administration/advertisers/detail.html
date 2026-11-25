@@ -2,7 +2,8 @@
 {% block title %}{{ organization.display_name }}{% endblock %}
 {% block console_content %}
 <div class="page-heading"><h1 class="page-title">{{ organization.display_name }}</h1>
-<span class="badge badge--{{ organization.verification_status|lower }}">{{ organization.get_verification_status_display }}</span></div>
+<span class="badge badge--{{ organization.verification_status|lower }}">{{ organization.get_verification_status_display }}</span>
+{% if can.campaign_manage and organization.verification_status != "REJECTED" and organization.verification_status != "SUSPENDED" %}<a class="button" href="{% url 'administration:campaign_create' %}?organization={{ organization.pk }}">{% translate "Create campaign for this advertiser" %}</a>{% endif %}</div>
 <div class="console-split">
   <section>
     <h2 class="workspace-section__title">{% translate "Profile" %}</h2>
@@ -49,6 +50,16 @@
     <select id="grant-video" name="video">{% for video in grantable %}<option value="{{ video.pk }}">{{ video.title }} ({{ video.get_publication_status_display }})</option>{% endfor %}</select>
     <button class="button button--secondary" type="submit">{% translate "Authorize video" %}</button></form>{% endif %}
 </section>
+{% if can.campaign_manage and organization.verification_status != "REJECTED" and organization.verification_status != "SUSPENDED" %}
+<section class="workspace-section" aria-labelledby="invite-title">
+  <h2 class="workspace-section__title" id="invite-title">{% translate "Invite the client's people" %}</h2>
+  <p class="lead">{% translate "They see the invitation after signing in with a confirmed address, and then manage campaigns in their own workspace." %}</p>
+  <form method="post" class="toolbar">{% csrf_token %}<input type="hidden" name="action" value="invite">
+    <label for="invite-email">{% translate "Email address" %}</label><input id="invite-email" type="email" name="email" required maxlength="254">
+    <label for="invite-role">{% translate "Role" %}</label><select id="invite-role" name="role"><option value="OWNER">{% translate "Owner" %}</option><option value="MANAGER">{% translate "Campaign manager" %}</option></select>
+    <button class="button button--secondary" type="submit">{% translate "Send invitation" %}</button></form>
+</section>
+{% endif %}
 <section class="workspace-section"><h2 class="workspace-section__title">{% translate "Campaigns" %}</h2>
   {% include "components/campaign_report.html" %}
   {% if campaigns %}<ul class="list">{% for c in campaigns %}<li class="list__item"><a href="{% url 'administration:campaign_review' c.pk %}">{{ c.name }}</a> <span class="badge badge--{{ c.status|lower }}">{{ c.get_status_display }}</span></li>{% endfor %}</ul>{% endif %}

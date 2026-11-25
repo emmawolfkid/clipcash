@@ -9,6 +9,12 @@
   <div class="period-field"><label for="to">{% translate "To" %}</label><input id="to" type="date" name="to" value="{{ period.last|date:'Y-m-d' }}"></div>
   <button type="submit" class="button button--secondary">{% translate "Show" %}</button>
 </form>
+{% if report.rows %}{# UI-DASH-03: the same masked figures as CSV for this period. #}
+<form class="report-export" method="post" action="{% url 'advertising:reports_export' organization.pk %}">{% csrf_token %}
+  <input type="hidden" name="from" value="{{ period.first|date:'Y-m-d' }}"><input type="hidden" name="to" value="{{ period.last|date:'Y-m-d' }}">
+  <button type="submit" class="button button--secondary">{% include "components/nav_icon.html" with icon="download" %}{% translate "Download CSV" %}</button>
+  <span class="workspace-note">{% translate "Same figures as this page, including privacy ranges. No viewer identities." %}</span>
+</form>{% endif %}
 <dl class="metric-row">
   <div class="metric"><dt>{% translate "Verified views" %}</dt><dd>{{ report.totals.verified }}</dd></div>
   <div class="metric"><dt>{% translate "Unique viewers (verified)" %}</dt><dd>{{ report.totals.viewers }}</dd></div>

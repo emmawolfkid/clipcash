@@ -46,7 +46,8 @@ class AccessTests(MemberExperienceTestCase):
         self.client.force_login(self.member)
         page = self.client.get(DASHBOARD)
         self.assertContains(page, 'aria-current="page" href="' + DASHBOARD + '"')
-        for group in ("Home", "Watch", "Money", "Account"):
+        # UI-DASH-01: Main / Membership and finance / Account and support (visually hidden group labels).
+        for group in ("Main", "Membership and finance", "Account and support"):
             self.assertContains(page, f">{group}</p>")
         self.assertContains(page, 'aria-controls="member-menu"')
         self.assertContains(page, "js/member-nav.js")

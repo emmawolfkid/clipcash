@@ -15,6 +15,7 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop as N_
 from django.views import View
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
@@ -418,8 +419,8 @@ class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
             services.confirm_email_by_reset(form.user)
             services.email_password_changed(form.user, self.request)
             record_business_event("auth.password_reset.completed", actor=form.user, target=form.user)
-            services.notify_account(form.user, "password_reset", "Your password was reset",
-                                    "If you did not do this, reset your password again now and contact ClipCash.",
+            services.notify_account(form.user, "password_reset", N_("Your password was reset"),
+                                    N_("If you did not do this, reset your password again now and contact ClipCash."),
                                     key=f"password_reset:{form.user.pk}:{timezone.now().isoformat()}")
         return response
 
@@ -441,8 +442,8 @@ class PasswordChangeView(auth_views.PasswordChangeView):
             services.discard_email_change(self.request.user)
             services.email_password_changed(self.request.user, self.request)
             record_business_event("auth.password.changed", target=self.request.user)
-            services.notify_account(self.request.user, "password_changed", "Your password was changed",
-                                    "Other sessions were signed out. If this was not you, reset your password now.",
+            services.notify_account(self.request.user, "password_changed", N_("Your password was changed"),
+                                    N_("Other sessions were signed out. If this was not you, reset your password now."),
                                     key=f"password_changed:{self.request.user.pk}:{timezone.now().isoformat()}")
         return response
 

@@ -1,0 +1,40 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% if campaign %}{% translate "Edit campaign" %}{% else %}{% translate "New campaign" %}{% endif %}{% endblock %}
+{% block console_content %}
+{# UI-DASH-03: staff create or edit a draft on behalf of an advertiser organization. #}
+<p><a href="{% if campaign %}{% url 'administration:campaign_review' campaign.pk %}{% else %}{% url 'administration:campaigns' %}{% endif %}">{% if campaign %}{% translate "Back to campaign" %}{% else %}{% translate "All campaigns" %}{% endif %}</a></p>
+<div class="page-heading"><div class="page-heading__text"><h1 class="page-title">{% if campaign %}{% translate "Edit campaign" %}{% else %}{% translate "New campaign" %}{% endif %}</h1>
+  <p class="page-intro">{% translate "Steps: save a draft, submit it for review, then another reviewer approves it. Members see the advertisement only after approval, within its schedule." %}</p></div></div>
+<form class="form" method="post" novalidate>{% csrf_token %}
+  {% if campaign %}<input type="hidden" name="revision" value="{{ campaign.revision }}">{% endif %}
+  {% include "advertising/_form_errors.html" %}
+  <section class="settings-group" aria-labelledby="group-client">
+    <div><h2 class="settings-group__title" id="group-client">{% translate "Advertiser" %}</h2>
+      <p class="settings-group__help">{% translate "The campaign belongs to this organization; its team sees it in their workspace." %} {% if can.advertisers %}<a href="{% url 'administration:advertiser_create' %}">{% translate "Register a new client" %}</a>{% endif %}</p></div>
+    <div class="settings-group__fields"><div class="form-field">{{ form.organization.as_field_group }}</div></div>
+  </section>
+  <section class="settings-group" aria-labelledby="group-details">
+    <div><h2 class="settings-group__title" id="group-details">{% translate "Campaign details" %}</h2></div>
+    <div class="settings-group__fields"><div class="form-field">{{ form.name.as_field_group }}</div><div class="form-field">{{ form.description.as_field_group }}</div></div>
+  </section>
+  <section class="settings-group" aria-labelledby="group-video">
+    <div><h2 class="settings-group__title" id="group-video">{% translate "Video" %}</h2>
+      <p class="settings-group__help">{% translate "If the advertiser is not yet authorized to use the chosen video, it is authorized when you save (recorded in the audit trail)." %} {% if can.videos %}<a href="{% url 'administration:videos' %}">{% translate "Video management" %}</a>{% endif %}</p></div>
+    <div class="settings-group__fields"><div class="form-field">{{ form.video.as_field_group }}</div></div>
+  </section>
+  <section class="settings-group" aria-labelledby="group-schedule">
+    <div><h2 class="settings-group__title" id="group-schedule">{% translate "Schedule" %}</h2></div>
+    <div class="settings-group__fields"><div class="form-field">{{ form.starts_at.as_field_group }}</div><div class="form-field">{{ form.ends_at.as_field_group }}</div></div>
+  </section>
+  <section class="settings-group" aria-labelledby="group-audience">
+    <div><h2 class="settings-group__title" id="group-audience">{% translate "Audience" %}</h2></div>
+    <div class="settings-group__fields"><div class="form-field">{{ form.target_plans.as_field_group }}</div><div class="form-field">{{ form.max_views_per_member.as_field_group }}</div></div>
+  </section>
+  <section class="settings-group" aria-labelledby="group-demo">
+    <div><h2 class="settings-group__title" id="group-demo">{% translate "Demo planning figures" %}</h2>
+      <p class="settings-group__help">{% translate "Demonstration budgets only. No money is charged, held or paid out." %}</p></div>
+    <div class="settings-group__fields"><div class="form-field">{{ form.demo_budget_amount.as_field_group }}</div><div class="form-field">{{ form.demo_reward_per_view.as_field_group }}</div></div>
+  </section>
+  <div class="settings-actions"><button type="submit" class="button">{% translate "Save draft" %}</button></div>
+</form>
+{% endblock %}

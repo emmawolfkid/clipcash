@@ -1,0 +1,143 @@
+/* UI-DASH-01: member portal shell — fixed collapsible sidebar, compact top bar, drawer below 64rem.
+   Everything is scoped to body.portal (signed-in member pages), so console and public chrome are unchanged.
+   member-nav.js toggles html.sidebar-collapsed (wide) and .is-collapsed/.nav-open (drawer). */
+
+.portal { background: var(--portal-bg); color: var(--portal-text); }
+
+/* ---- Top bar ------------------------------------------------------------------------------ */
+.portal .portal-header { position: sticky; top: 0; z-index: 40; background: var(--portal-navy); color: var(--nav-text); box-shadow: 0 1px 0 rgb(255 255 255 / 6%); }
+.portal-header__inner { display: flex; align-items: center; gap: var(--space-3); height: var(--portal-header-height); padding-inline: var(--space-5) var(--space-6); }
+.portal-header__toggle { display: inline-grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; color: var(--nav-text); background: transparent; border: 0; border-radius: var(--radius-sm); cursor: pointer; }
+.portal-header__toggle:hover { background: rgb(255 255 255 / 8%); }
+.portal-header__brand { display: none; text-decoration: none; }
+.portal-header__brand .wordmark { font-size: 1.25rem; }
+.portal-header__brand .wordmark__mark { width: 1.75rem; height: 1.75rem; }
+.portal-header .header-tools { gap: var(--space-4); margin-inline-start: auto; flex-wrap: nowrap; }
+.portal-header :focus-visible { outline: 2px solid var(--focus-on-navy); outline-offset: 2px; box-shadow: none; }
+
+/* Language: a white select like the reference; the submit button stays for no-JS use. */
+.portal-header .language-form { flex-wrap: nowrap; gap: var(--space-2); }
+.portal-header .language-form select { min-height: 2.375rem; max-width: 10rem; padding: 0 2rem 0 0.75rem; color: var(--portal-text); background: #fff; border: 1px solid #cfd6e6; border-radius: 0.5rem; font-size: var(--text-sm); font-weight: 600; }
+.portal-header .language-form .button--link { font-size: 0.8125rem; color: var(--nav-muted); }
+.js-language-auto .portal-header .language-form .button--link { display: none; }
+
+/* Bell with a red count, matching the reference. */
+.portal-header .notification-bell { color: var(--nav-text); }
+.portal-header .notification-bell .nav-icon { width: 1.5rem; height: 1.5rem; }
+.portal-header .notification-bell__badge { inset-block-start: 0.2rem; inset-inline-end: 0.1rem; min-width: 1.05rem; padding: 0 0.25rem; font-size: 0.625rem; line-height: 1.05rem; color: #fff; background: #e5323b; box-shadow: 0 0 0 2px var(--portal-navy); }
+
+/* Account: avatar, name, ID, chevron. */
+.portal-header .profile-menu { padding-inline-start: var(--space-4); border-inline-start: 1px solid rgb(255 255 255 / 12%); }
+.portal-header .profile-menu__trigger { gap: var(--space-3); padding: var(--space-1); }
+.portal-header .profile-menu__avatar { width: 2.5rem; height: 2.5rem; color: var(--portal-royal); background: #e8eeff; box-shadow: 0 0 0 2px rgb(255 255 255 / 85%); }
+.portal-header .profile-menu__identity { max-width: 11rem; line-height: 1.25; font-size: 0.9375rem; }
+.portal-header .profile-menu__account-id { max-width: 11rem; margin-top: 0.125rem; font-size: 0.6875rem; color: #b8c2dc; }
+.portal-header .profile-menu__chevron { font-size: 1.1rem; line-height: 1; color: var(--nav-muted); }
+
+/* ---- Page frame ---------------------------------------------------------------------------- */
+.portal .app-shell--portal { display: block; max-width: none; margin: 0; padding: var(--space-6) var(--space-6) var(--space-7); }
+.portal .app-shell--portal .app-main { container: portal-main / inline-size; max-width: 90rem; margin-inline: auto; }
+.portal .site-footer { border-top-color: var(--portal-line); }
+.portal .demo-banner { margin-inline: 0; }
+
+/* ---- Sidebar (shared by drawer and fixed modes) ------------------------------------------- */
+.portal .app-shell--portal .app-sidebar { display: flex; flex-direction: column; gap: var(--space-3); padding: 0 0 var(--space-4); color: #e6eaf5; background: var(--portal-sidebar); border: 0; border-radius: 0; box-shadow: none; }
+.portal .app-sidebar__brand { display: grid; gap: 0.3rem; margin: 0 0 var(--space-2); padding: var(--space-4) var(--space-5) var(--space-3); min-height: var(--portal-header-height); text-decoration: none; }
+.portal .app-sidebar__brand .wordmark { font-size: 1.75rem; }
+.portal .app-sidebar__brand .wordmark__mark { width: 2.25rem; height: 2.25rem; }
+.app-sidebar__tagline { color: #c6cee4; font-size: 0.75rem; letter-spacing: 0.01em; white-space: nowrap; }
+.portal .app-nav { display: grid; gap: var(--space-2); padding-inline: var(--space-3); }
+.portal .app-nav__group--quiet { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.portal .app-nav__list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.25rem; }
+.portal .app-nav__list + .app-nav__group--quiet + .app-nav__list { padding-top: var(--space-2); border-top: 1px solid rgb(255 255 255 / 8%); }
+.portal .app-nav__link { position: relative; gap: 0.875rem; min-height: 2.75rem; padding: 0.45rem 0.875rem; color: #e6eaf5; font-size: 0.9375rem; font-weight: 500; border-radius: 0.5rem; }
+.portal .app-nav__link .nav-icon { width: 1.3rem; height: 1.3rem; flex-basis: 1.3rem; color: #c9d2ea; }
+.portal a.app-nav__link:hover, .portal .app-nav__button:hover { color: #fff; background: var(--portal-sidebar-hover); }
+.portal .app-nav__link.is-current { color: #fff; font-weight: 600; background: var(--portal-royal); box-shadow: 0 6px 16px rgb(23 72 213 / 35%); }
+.portal .app-nav__link.is-current .nav-icon { color: #fff; }
+.portal .app-nav__link.is-current:hover { background: #2453dd; }
+.portal .app-nav__label { min-width: 0; line-height: 1.25; }
+.portal .app-sidebar .app-nav__count { min-width: 1.35rem; margin-inline-start: auto; padding: 0 0.35rem; text-align: center; color: #fff; background: #e5323b; border: 0; border-radius: 999px; font-size: 0.75rem; line-height: 1.35rem; }
+.portal .app-sidebar :focus-visible { outline: 2px solid var(--focus-on-navy); outline-offset: -2px; box-shadow: none; }
+
+/* Promotional card: decorative, no money claims. */
+.sidebar-promo { position: relative; overflow: hidden; margin: var(--space-3) var(--space-3) 0; padding: var(--space-3) var(--space-4) var(--space-4); color: #fff; background: linear-gradient(160deg, #1b3fb0 0%, #12296f 55%, #0d1d52 100%); border: 1px solid rgb(255 255 255 / 10%); border-radius: var(--portal-radius); }
+.sidebar-promo::after { content: ""; position: absolute; inset-inline-end: -2.25rem; inset-block-end: -2.25rem; width: 4.75rem; height: 4.75rem; background: var(--portal-gold); transform: rotate(35deg); opacity: 0.95; }
+.sidebar-promo__art { display: block; width: 100%; max-width: 8.5rem; height: auto; margin: 0 auto var(--space-1); }
+.sidebar-promo__title { position: relative; z-index: 1; margin: 0 0 var(--space-2); font-size: 1.25rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.01em; }
+.sidebar-promo__title span { display: block; color: var(--portal-gold); }
+.sidebar-promo__list { position: relative; z-index: 1; display: grid; gap: 0.35rem; margin: 0; padding: 0; list-style: none; font-size: 0.8125rem; }
+.sidebar-promo__list li { display: flex; align-items: center; gap: 0.5rem; }
+.sidebar-promo__list li::before { content: ""; flex: none; width: 1rem; height: 1rem; border-radius: 50%; background: #22c55e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4.5 8.2 2.2 2.2 4.8-4.8' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% no-repeat; }
+
+/* ---- Wide screens: fixed sidebar, collapsible ---------------------------------------------- */
+@media (min-width: 64rem) {
+  body.portal { padding-inline-start: var(--portal-sidebar-width); transition: padding-inline-start 0.2s ease; }
+  .portal .app-shell--portal .app-sidebar {
+    position: fixed; z-index: 50; inset-block: 0; inset-inline-start: 0; width: var(--portal-sidebar-width);
+    max-height: none; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: thin; scrollbar-color: #2b3a6b transparent; transition: width 0.2s ease;
+  }
+  .portal .app-shell--portal .app-sidebar.is-collapsed { display: flex; }
+  .portal .drawer-close { display: none; }
+
+  .sidebar-collapsed body.portal { padding-inline-start: var(--portal-sidebar-collapsed); }
+  .sidebar-collapsed .portal .app-shell--portal .app-sidebar { width: var(--portal-sidebar-collapsed); overflow: visible; }
+  .sidebar-collapsed .portal .app-sidebar__brand { justify-items: center; padding-inline: 0; }
+  .sidebar-collapsed .portal .app-sidebar__brand .wordmark > span,
+  .sidebar-collapsed .portal .app-sidebar__tagline,
+  .sidebar-collapsed .portal .sidebar-promo { display: none; }
+  .sidebar-collapsed .portal .app-nav { padding-inline: 0.75rem; }
+  .sidebar-collapsed .portal .app-nav__link { justify-content: center; padding-inline: 0; }
+  /* The label stays in the accessibility tree and becomes the tooltip. */
+  .sidebar-collapsed .portal .app-nav__label {
+    position: absolute; z-index: 60; inset-inline-start: calc(100% + 0.75rem); top: 50%; transform: translate(-0.25rem, -50%);
+    padding: 0.35rem 0.65rem; white-space: nowrap; color: #fff; background: #0b1330; border-radius: 0.375rem; box-shadow: 0 6px 18px rgb(2 6 23 / 35%);
+    font-size: 0.8125rem; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+  .sidebar-collapsed .portal .app-nav__link:hover .app-nav__label,
+  .sidebar-collapsed .portal .app-nav__link:focus-visible .app-nav__label { opacity: 1; transform: translate(0, -50%); }
+  .sidebar-collapsed .portal .app-sidebar .app-nav__count { position: absolute; inset-block-start: 0.2rem; inset-inline-end: 0.35rem; min-width: 1.05rem; padding: 0 0.2rem; font-size: 0.625rem; line-height: 1.05rem; }
+  /* Short windows: keep the collapsed rail scrollable (tooltips may clip; labels remain announced). */
+  @media (max-height: 40rem) { .sidebar-collapsed .portal .app-shell--portal .app-sidebar { overflow-y: auto; } }
+}
+@media (min-width: 64rem) and (max-height: 50rem) { .portal .sidebar-promo__art { display: none; } }
+@media (min-width: 64rem) and (max-height: 42rem) { .portal .sidebar-promo { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  body.portal, .portal .app-sidebar, .portal .app-nav__label { transition: none !important; }
+}
+
+/* ---- Narrow screens: drawer ----------------------------------------------------------------- */
+@media (max-width: 63.99rem) {
+  .portal-header__inner { gap: var(--space-2); padding-inline: var(--space-3) var(--space-4); }
+  .portal-header__brand { display: inline-flex; }
+  .portal .app-shell--portal { padding: var(--space-5) var(--space-5) var(--space-6); }
+  /* Without JavaScript the menu simply sits above the content. */
+  .portal:not(.nav-enhanced) .app-shell--portal .app-sidebar { margin-bottom: var(--space-4); border-radius: var(--portal-radius); padding-top: var(--space-2); }
+  .portal .app-shell--portal .app-sidebar .drawer-close { margin: var(--space-3) var(--space-3) 0; width: auto; color: #fff; background: rgb(255 255 255 / 6%); border-color: rgb(255 255 255 / 18%); }
+  .nav-enhanced .portal .app-shell--portal .app-sidebar {
+    position: fixed; z-index: 100; inset-block: 0; inset-inline-start: 0; display: flex;
+    width: min(18.5rem, calc(100vw - 3rem)); max-height: none; margin: 0;
+    overflow-y: auto; overscroll-behavior: contain; box-shadow: 0 0 40px rgb(2 6 23 / 45%);
+    transform: translateX(0); visibility: visible; transition: transform 0.22s ease, visibility 0s linear;
+  }
+  .nav-enhanced .portal .app-shell--portal .app-sidebar.is-collapsed { transform: translateX(-105%); visibility: hidden; box-shadow: none; transition: transform 0.22s ease, visibility 0s linear 0.22s; }
+  .portal .nav-overlay { z-index: 90; background: rgb(8 14 38 / 62%); }
+  .portal .app-sidebar__brand { min-height: 0; padding-top: var(--space-3); }
+  .portal .profile-menu__identity, .portal .profile-menu__chevron { display: none; }
+  .portal-header .profile-menu { padding-inline-start: var(--space-2); }
+}
+@media (max-width: 40rem) {
+  .portal .app-shell--portal { padding: var(--space-4) var(--space-3) var(--space-6); }
+  .portal-header .header-tools { gap: var(--space-1); flex-basis: auto; }
+  .portal-header .language-form select { max-width: 4.75rem; padding-inline: 0.5rem 1.25rem; font-size: 0.8125rem; }
+  .portal-header .profile-menu { padding-inline-start: 0; border: 0; }
+  .portal-header .profile-menu__avatar { width: 2.25rem; height: 2.25rem; }
+}
+@media (max-width: 23rem) {
+  .portal-header__brand .wordmark > span { display: none; }
+}
+@media (forced-colors: active) {
+  .portal .app-nav__link.is-current { border: 1px solid ButtonText; }
+  .sidebar-collapsed .portal .app-nav__label { border: 1px solid CanvasText; }
+}

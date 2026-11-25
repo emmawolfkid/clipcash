@@ -64,6 +64,7 @@ class Organization(BaseModel):
             ("review_advertisers", "Can review and verify advertisers"),
             ("review_campaigns", "Can review and moderate advertising campaigns"),
             ("manage_advertiser_videos", "Can authorize advertisers to use videos"),
+            ("manage_campaigns", "Can create and manage campaigns on behalf of advertisers"),
         ]
         indexes = [models.Index(fields=["verification_status", "submitted_at"], name="adv_org_review_idx")]
         constraints = [

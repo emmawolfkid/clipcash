@@ -1,0 +1,7 @@
+/* UI-DASH-02: gradient icon tiles for quick actions (member and advertiser dashboards). */
+.dashboard-action-icon { display: grid; place-items: center; width: 3rem; height: 3rem; color: #fff; border-radius: 0.75rem; box-shadow: inset 0 -3px 0 rgb(0 0 0 / 12%), 0 6px 14px rgb(16 30 73 / 14%); }
+.dashboard-action-icon .nav-icon { width: 1.625rem; height: 1.625rem; }
+.dashboard-action-icon--purple { background: linear-gradient(145deg, #9b6bff, #6d3df2); }
+.dashboard-action-icon--orange { background: linear-gradient(145deg, #ffb13d, #ef7d12); }
+.dashboard-action-icon--blue { background: linear-gradient(145deg, #4f7dff, #2353e0); }
+.dashboard-action-icon--sky { background: linear-gradient(145deg, #3d8bff, #1565e0); }

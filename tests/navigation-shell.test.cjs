@@ -4,11 +4,17 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '../static/js/member-nav.js'), 'utf8');
-function fixture(hasSidebar) {
+function fixture(hasSidebar, collapsible=false) {
   let doc;
   class Element {
     constructor(name) { this.name=name; this.children=[]; this.inert=false; this.attrs={}; this.events={}; this.hidden=false; this.inert=false; this.open=false; const classes=new Set(); this.classList={add:x=>classes.add(x),remove:x=>classes.delete(x),contains:x=>classes.has(x),toggle:(x,on)=>on?classes.add(x):classes.delete(x)}; }
     append(...items) { items.forEach(x=>{x.parent=this;this.children.push(x);}); }
+    // UI-06B moves the header menu into the sidebar drawer on narrow screens (and back): DOM moves.
+    get parentNode() { return this.parent || null; }
+    get nextSibling() { const s=this.parent?this.parent.children:[]; return s[s.indexOf(this)+1] || null; }
+    detach() { if(this.parent){ const s=this.parent.children; s.splice(s.indexOf(this),1); this.parent=null; } }
+    appendChild(x) { x.detach(); x.parent=this; this.children.push(x); return x; }
+    insertBefore(x, ref) { x.detach(); x.parent=this; const i=ref?this.children.indexOf(ref):-1; if(i<0) this.children.push(x); else this.children.splice(i,0,x); return x; }
     contains(x) { return this===x || this.children.some(c=>c.contains(x)); }
     setAttribute(k,v) { this.attrs[k]=v; }
     getAttribute(k) { return this.attrs[k] || null; }
@@ -29,11 +35,13 @@ function fixture(hasSidebar) {
   html.append(body); body.append(header,overlay,shell,footer); header.append(toggle,publicMenu,profile); profile.append(summary); shell.append(...(hasSidebar?[side,main]:[main])); if(hasSidebar) {side.append(close,nav);nav.append(first,last);} else publicMenu.append(close,first,last);
   const queries={'.site-menu-toggle':toggle,'.app-nav__toggle':null,'.app-sidebar':hasSidebar?side:null,'[data-nav-overlay]':overlay,'.profile-menu':profile,'.tabs':null};
   doc={body,documentElement:html,activeElement:body,events:{},querySelector:s=>queries[s]||null,getElementById:id=>id==='site-menu'?publicMenu:null,addEventListener(k,f){(this.events[k] ||= []).push(f);}};
+  if(collapsible){ side.attrs['data-collapsible']='true'; side.attrs['data-drawer-query']='(max-width: 63.99rem)'; Object.assign(toggle.attrs,{'data-label-open':'Open navigation','data-label-collapse':'Collapse sidebar','data-label-expand':'Expand sidebar'}); }
+  const store={}; const localStorage={getItem:k=>k in store?store[k]:null,setItem:(k,v)=>{store[k]=String(v);}};
   const media={matches:true,addEventListener(k,f){this.change=f;}}, windowEvents={};
-  const win={matchMedia:()=>media,addEventListener(k,f){windowEvents[k]=f;},setTimeout:f=>f()};
+  const win={matchMedia:q=>{media.query=q;return media;},addEventListener(k,f){windowEvents[k]=f;},setTimeout:f=>f(),localStorage};
   vm.runInNewContext(source,{document:doc,window:win});
   function key(key,shiftKey=false) {let e={key,shiftKey,preventDefault(){this.prevented=true;}};(doc.events.keydown||[]).forEach(f=>f(e));return e;}
-  return {doc,media,windowEvents,body,toggle,panel,close,first,last,main,overlay,footer,profile,summary,key,change(wide){media.matches=!wide;media.change();}};
+  return {doc,html,store,side,media,windowEvents,body,toggle,panel,close,first,last,main,overlay,footer,profile,summary,key,change(wide){media.matches=!wide;media.change();}};
 }
 for(const sidebar of [true,false]) {
   const f=fixture(sidebar);
@@ -51,4 +59,30 @@ for(const sidebar of [true,false]) {
   f.profile.open=true; f.doc.events.click.forEach(fn=>fn({target:f.main})); assert.equal(f.profile.open,false);
   f.toggle.emit('click'); f.windowEvents.pagehide(); assert.equal(f.main.inert,false); f.windowEvents.pageshow(); assert.equal(f.overlay.hidden,true);
   console.log((sidebar?'Portal':'Public')+' drawer: focus wrap, Escape, backdrop, close/link dismissal, breakpoints, profile and history cleanup passed');
+}
+
+// UI-DASH-02: the member/advertiser portal sidebar opts in to desktop collapse (data-collapsible).
+{
+  const f = fixture(true, true);
+  assert.equal(f.media.query, '(max-width: 63.99rem)');
+  f.change(true);  // Wide screen: the menu button stays visible and collapses the sidebar instead.
+  assert.equal(f.toggle.hidden, false);
+  assert.equal(f.toggle.getAttribute('aria-expanded'), 'true');
+  assert.equal(f.toggle.getAttribute('aria-label'), 'Collapse sidebar');
+  f.toggle.emit('click');
+  assert.equal(f.html.classList.contains('sidebar-collapsed'), true);
+  assert.equal(f.toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(f.toggle.getAttribute('aria-label'), 'Expand sidebar');
+  assert.equal(f.store['clipcash.sidebar'], 'collapsed');
+  assert.equal(f.overlay.hidden, true);  // Collapsing is not a modal drawer.
+  f.toggle.emit('click');
+  assert.equal(f.html.classList.contains('sidebar-collapsed'), false);
+  assert.equal(f.store['clipcash.sidebar'], 'expanded');
+  f.change(false);  // Narrow screen: the same button opens the drawer.
+  assert.equal(f.toggle.getAttribute('aria-label'), 'Open navigation');
+  f.toggle.emit('click');
+  assert.equal(f.overlay.hidden, false);
+  f.key('Escape');
+  assert.equal(f.overlay.hidden, true);
+  console.log('Collapsible portal: desktop collapse/expand, labels, stored preference and narrow drawer passed');
 }

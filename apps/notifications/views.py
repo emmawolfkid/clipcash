@@ -31,6 +31,7 @@ class InboxView(LoginRequiredMixin, View):
         unread = request.GET.get("unread") == "1"
         notices = inbox.for_recipient(request.user, category=category, unread=unread)
         page = Paginator(notices, PAGE_SIZE).get_page(request.GET.get("page"))
+        page.object_list = inbox.localize(list(page.object_list))  # UI-DASH-03: reader's language.
         query = request.GET.copy()
         query.pop("page", None)
         return render(request, "notifications/inbox.html", {

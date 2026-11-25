@@ -22,6 +22,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop as N_
 
 from apps.accounts.throttling import Throttle
 from apps.advertising.models import AdvertiserMembership
@@ -106,7 +108,7 @@ def _deny(action, actor, target=None, reason="permission_missing"):
     record_security_event("support.action.denied", outcome=DENIED,
                           actor=actor if getattr(actor, "is_authenticated", False) else None, target=target,
                           metadata={"action": action, "reason": reason})
-    raise NotAuthorized("You are not allowed to do this.", code=reason)
+    raise NotAuthorized(_("You are not allowed to do this."), code=reason)
 
 
 def customer_organizations(user):
@@ -132,7 +134,7 @@ def visible_to_customer(user):
 def ticket_for_customer(user, reference):
     ticket = visible_to_customer(user).filter(reference=str(reference).upper()).first()
     if ticket is None:
-        raise NotFound("Ticket not found.")
+        raise NotFound(_("Ticket not found."))
     return ticket
 
 
@@ -141,7 +143,7 @@ def ticket_for_staff(user, reference):
         _deny("ticket.view", user)
     ticket = Ticket.objects.filter(reference=str(reference).upper()).first()
     if ticket is None:
-        raise NotFound("Ticket not found.")
+        raise NotFound(_("Ticket not found."))
     return ticket
 
 
@@ -151,21 +153,21 @@ def ticket_for_staff(user, reference):
 def _text(value, field, *, minimum, maximum):
     value = str(value or "").strip()
     if len(value) < minimum:
-        raise ValidationError({field: f"Please write at least {minimum} characters."})
+        raise ValidationError({field: _("Please write at least %(n)s characters.") % {"n": minimum}})
     if len(value) > maximum:
-        raise ValidationError({field: f"Please keep this to {maximum} characters or fewer."})
+        raise ValidationError({field: _("Please keep this to %(n)s characters or fewer.") % {"n": maximum}})
     return value
 
 
 def _submission(key):
     key = str(key or "")
     if not SUBMISSION_RE.match(key):
-        raise ValidationError("This form has expired. Reload the page and try again.")
+        raise ValidationError(_("This form has expired. Reload the page and try again."))
     return key
 
 
 def _new_reference():
-    return "CS-" + "".join(secrets.choice(REFERENCE_ALPHABET) for _ in range(8))
+    return "CS-" + "".join(secrets.choice(REFERENCE_ALPHABET) for _position in range(8))
 
 
 def _event(ticket, actor, action, from_value="", to_value=""):
@@ -195,7 +197,7 @@ def create_ticket(user, *, subject, category, description, submission_key, organ
     if not is_customer(user):
         _deny("ticket.create", user, reason="not_a_customer")
     if category not in Ticket.Category.values:
-        raise ValidationError({"category": "Choose a category."})
+        raise ValidationError({"category": _("Choose a category.")})
     subject = _text(subject, "subject", minimum=5, maximum=MAX_SUBJECT)
     description = _text(description, "description", minimum=10, maximum=MAX_BODY)
     submission_key = _submission(submission_key)
@@ -211,7 +213,7 @@ def create_ticket(user, *, subject, category, description, submission_key, organ
     try:
         with transaction.atomic():
             ticket = None
-            for _ in range(5):  # A reference collision is astronomically rare; retry anyway.
+            for _attempt in range(5):  # A reference collision is astronomically rare; retry anyway.
                 try:
                     with transaction.atomic():
                         ticket = Ticket.objects.create(
@@ -222,7 +224,7 @@ def create_ticket(user, *, subject, category, description, submission_key, organ
                     if "support_ticket_submitted_once" in str(error):
                         raise
             if ticket is None:
-                raise InvalidState("Could not create the ticket. Please try again.")
+                raise InvalidState(_("Could not create the ticket. Please try again."))
             TicketMessage.objects.create(ticket=ticket, author=user, body=description, submission_key=submission_key)
             _event(ticket, user, TicketEvent.Action.CREATED, "", S.OPEN)
             record_business_event("support.ticket.created", actor=user, target=ticket, metadata={
@@ -253,13 +255,13 @@ def customer_reply(user, ticket, *, body, submission_key):
         if duplicate is not None:
             return duplicate
         if ticket.status == S.CLOSED:
-            raise InvalidState("This ticket is closed. Please open a new ticket.", code="closed")
+            raise InvalidState(_("This ticket is closed. Please open a new ticket."), code="closed")
         reopened = False
         if ticket.status == S.RESOLVED:
             window = timedelta(days=settings.SUPPORT_REOPEN_DAYS)
             if ticket.resolved_at and now - ticket.resolved_at > window:
-                raise InvalidState(f"This ticket was resolved more than {settings.SUPPORT_REOPEN_DAYS} days ago. "
-                                   "Please open a new ticket.", code="reopen_window_passed")
+                raise InvalidState(_("This ticket was resolved more than %(days)s days ago. Please open a new ticket.")
+                                   % {"days": settings.SUPPORT_REOPEN_DAYS}, code="reopen_window_passed")
             reopened = True
         message = TicketMessage.objects.create(ticket=ticket, author=user, body=body, submission_key=submission_key)
         if ticket.status in (S.WAITING, S.RESOLVED):
@@ -286,20 +288,20 @@ def _require_manage(actor, action, ticket=None):
 
 def _check_expected(ticket, expected_status):
     if expected_status and ticket.status != expected_status:
-        raise InvalidState("This ticket changed since you opened it. Review it again.", code="stale")
+        raise InvalidState(_("This ticket changed since you opened it. Review it again."), code="stale")
 
 
 def assign(actor, ticket, assignee, *, expected_status=""):
     """Assign (or with ``assignee=None`` unassign). Assignees must be support agents."""
     _require_manage(actor, "ticket.assign", ticket)
     if assignee is not None and not agents().filter(pk=assignee.pk).exists():
-        raise ValidationError({"assignee": "Choose a staff member who handles support tickets."})
+        raise ValidationError({"assignee": _("Choose a staff member who handles support tickets.")})
     now = timezone.now()
     with transaction.atomic():
         ticket = _locked(ticket)
         _check_expected(ticket, expected_status)
         if ticket.status == S.CLOSED:
-            raise InvalidState("Closed tickets cannot be reassigned.", code="closed")
+            raise InvalidState(_("Closed tickets cannot be reassigned."), code="closed")
         if ticket.assignee_id == getattr(assignee, "pk", None):
             return ticket
         previous = ticket.assignee
@@ -331,9 +333,9 @@ def staff_reply(actor, ticket, *, body, internal, submission_key, then_status=""
         if duplicate is not None:
             return duplicate
         if ticket.status == S.CLOSED:
-            raise InvalidState("This ticket is closed.", code="closed")
+            raise InvalidState(_("This ticket is closed."), code="closed")
         if then_status and (internal or then_status not in STAFF_TRANSITIONS[ticket.status]):
-            raise ValidationError({"then_status": "Choose a valid next status."})
+            raise ValidationError({"then_status": _("Choose a valid next status.")})
         message = TicketMessage.objects.create(ticket=ticket, author=actor, body=body, internal=internal,
                                                from_staff=True, submission_key=submission_key)
         if then_status:
@@ -360,8 +362,9 @@ def set_status(actor, ticket, new_status, *, expected_status):
             return ticket
         _check_expected(ticket, expected_status)
         if new_status not in STAFF_TRANSITIONS.get(ticket.status, set()):
-            raise InvalidState(f"A {ticket.get_status_display().lower()} ticket cannot become "
-                               f"{Ticket.Status(new_status).label.lower() if new_status in S.values else new_status}.")
+            raise InvalidState(_("A %(old)s ticket cannot become %(new)s.") % {
+                "old": ticket.get_status_display().lower(),
+                "new": Ticket.Status(new_status).label.lower() if new_status in S.values else new_status})
         old = _set_status(ticket, actor, new_status, now)
         if old == S.RESOLVED and new_status == S.IN_PROGRESS:
             ticket.resolved_at = None
@@ -378,11 +381,11 @@ def set_status(actor, ticket, new_status, *, expected_status):
 def set_priority(actor, ticket, priority):
     _require_manage(actor, "ticket.priority", ticket)
     if priority not in Ticket.Priority.values:
-        raise ValidationError({"priority": "Choose a priority."})
+        raise ValidationError({"priority": _("Choose a priority.")})
     with transaction.atomic():
         ticket = _locked(ticket)
         if ticket.status == S.CLOSED:
-            raise InvalidState("Closed tickets cannot change.", code="closed")
+            raise InvalidState(_("Closed tickets cannot change."), code="closed")
         if ticket.priority == priority:
             return ticket
         old, ticket.priority = ticket.priority, priority
@@ -471,47 +474,59 @@ def _customer_link(ticket):
     return inbox.link_to("support:ticket", ticket.reference)
 
 
-def _notify(recipients, event, title, message, link, key, email=False):
+def _notify(recipients, event, title, message, link, key, email=False, params=None):
     from apps.notifications import inbox
 
     inbox.notify(recipients, f"support.{event}", category=inbox.Category.SUPPORT, title=title, message=message,
-                 link=link, dedupe_key=f"support.{event}:{key}", email=email)
+                 link=link, dedupe_key=f"support.{event}:{key}", email=email, params=params or {})
+
+
+def _category_label(ticket):
+    """The English category label; the inbox translates it for the reader ("__t" value)."""
+    from django.utils import translation
+
+    with translation.override("en"):
+        return str(ticket.get_category_display())
 
 
 def _notify_created(ticket):
-    _notify(ticket.requester, "received", f"We received your support request {ticket.reference}",
-            "ClipCash support will reply here. You can add details by replying to the ticket.",
-            _customer_link(ticket), ticket.pk)
-    _notify(list(agents()), "new_ticket", f"New support ticket {ticket.reference}",
-            f"Category: {ticket.get_category_display()}.", _staff_link(ticket), ticket.pk)
+    _notify(ticket.requester, "received", N_("We received your support request {reference}"),
+            N_("ClipCash support will reply here. You can add details by replying to the ticket."),
+            _customer_link(ticket), ticket.pk, params={"reference": ticket.reference})
+    _notify(list(agents()), "new_ticket", N_("New support ticket {reference}"), N_("Category: {category__t}."),
+            _staff_link(ticket), ticket.pk,
+            params={"reference": ticket.reference, "category__t": _category_label(ticket)})
 
 
 def _notify_assigned(ticket, actor):
     if ticket.assignee is not None and ticket.assignee_id != getattr(actor, "pk", None):
-        _notify(ticket.assignee, "assigned", f"Support ticket {ticket.reference} assigned to you",
-                f"Category: {ticket.get_category_display()}.", _staff_link(ticket),
-                f"{ticket.pk}:{ticket.assignee_id}:{ticket.updated_at.isoformat()}")
+        _notify(ticket.assignee, "assigned", N_("Support ticket {reference} assigned to you"),
+                N_("Category: {category__t}."), _staff_link(ticket),
+                f"{ticket.pk}:{ticket.assignee_id}:{ticket.updated_at.isoformat()}",
+                params={"reference": ticket.reference, "category__t": _category_label(ticket)})
 
 
 def _notify_customer_reply(ticket, message, reopened):
     recipients = [ticket.assignee] if ticket.assignee_id else list(agents())
-    title = (f"Support ticket {ticket.reference} was reopened" if reopened
-             else f"Customer replied on {ticket.reference}")
+    title = (N_("Support ticket {reference} was reopened") if reopened
+             else N_("Customer replied on {reference}"))
     _notify(recipients, "reopened" if reopened else "customer_replied", title,
-            "Open the ticket to read the reply.", _staff_link(ticket), message.pk)
+            N_("Open the ticket to read the reply."), _staff_link(ticket), message.pk,
+            params={"reference": ticket.reference})
 
 
 def _notify_staff_reply(ticket, message):
-    _notify(ticket.requester, "staff_replied", f"ClipCash support replied to {ticket.reference}",
-            "Open your ticket to read the reply.", _customer_link(ticket), message.pk, email=True)
+    _notify(ticket.requester, "staff_replied", N_("ClipCash support replied to {reference}"),
+            N_("Open your ticket to read the reply."), _customer_link(ticket), message.pk, email=True,
+            params={"reference": ticket.reference})
 
 
 def _notify_outcome(ticket):
     resolved = ticket.status == S.RESOLVED
-    title = (f"Your support ticket {ticket.reference} is resolved" if resolved
-             else f"Your support ticket {ticket.reference} is closed")
-    message = (f"If you still need help, reply within {settings.SUPPORT_REOPEN_DAYS} days to reopen it."
-               if resolved else "Open a new ticket if you need more help.")
+    title = (N_("Your support ticket {reference} is resolved") if resolved
+             else N_("Your support ticket {reference} is closed"))
+    message = (N_("If you still need help, reply within {days} days to reopen it.")
+               if resolved else N_("Open a new ticket if you need more help."))
     _notify(ticket.requester, "resolved" if resolved else "closed", title, message, _customer_link(ticket),
             f"{ticket.pk}:{ticket.status}:{(ticket.resolved_at if resolved else ticket.closed_at).isoformat()}",
-            email=resolved)
+            email=resolved, params={"reference": ticket.reference, "days": settings.SUPPORT_REOPEN_DAYS})

@@ -25,6 +25,7 @@ MAX_EVENT_BYTES = 1024
 viewing_feature = method_decorator(feature_required("advertisers"), name="dispatch")
 
 
+
 def summary(session):
     return {
         "state": session.state, "outcome": session.outcome, "open": session.is_open,
@@ -37,6 +38,7 @@ def summary(session):
 class WatchListView(VerifiedAccountRequiredMixin, View):
     def get(self, request):
         offers = services.campaign_offers(request.user)
+        services.with_thumbnails(offers)
         return render(request, "viewing/list.html", {
             "nav": "watch", "offers": [o for o in offers if not o["locked"]],
             "locked": [o for o in offers if o["locked"]]})

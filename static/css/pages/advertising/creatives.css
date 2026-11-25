@@ -1,0 +1,17 @@
+/* UI-DASH-02: video creatives (templates/advertising/creatives.html). */
+/* ---- Video creatives ------------------------------------------------------------------------- */
+.creative-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: var(--space-4); margin: 0 0 var(--space-4); padding: 0; list-style: none; }
+.creative-card { display: grid; grid-template-rows: auto 1fr; overflow: hidden; background: #fff; border: 1px solid var(--portal-line); border-radius: var(--portal-radius); box-shadow: var(--portal-shadow); }
+.creative-card__thumb { position: relative; aspect-ratio: 16 / 9; background: linear-gradient(160deg, #1f4ed8 0%, #12296f 60%, #0b1638 100%); }
+.creative-card__thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.creative-card__placeholder { display: grid; place-items: center; width: 100%; height: 100%; color: rgb(255 255 255 / 55%); }
+.creative-card__placeholder .nav-icon { width: 2.5rem; height: 2.5rem; }
+.creative-card__duration { position: absolute; inset: auto 0.5rem 0.5rem auto; padding: 0.1rem 0.4rem; color: #fff; background: rgb(2 6 23 / 78%); border-radius: 0.3rem; font-size: 0.75rem; font-weight: 700; }
+.creative-card__body { display: grid; gap: var(--space-2); align-content: start; padding: var(--space-4); }
+.creative-card__title { margin: 0; font-size: 1rem; font-weight: 700; overflow-wrap: anywhere; }
+.creative-card__badges { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; margin: 0; }
+.creative-card__category { color: var(--portal-muted); font-size: 0.75rem; }
+.creative-card__usage { margin: 0; font-size: 0.8125rem; color: var(--portal-muted); }
+.creative-card__warning { margin: 0; font-size: 0.8125rem; color: #92400e; }
+.creative-card__link { justify-self: start; color: var(--portal-royal); font-size: 0.8125rem; font-weight: 600; }
+

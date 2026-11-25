@@ -69,5 +69,23 @@
   --sidebar-width: 15rem;
   --gutter: clamp(0.75rem, 2vw, 1.5rem);
   --touch-target: 2.75rem;
+  /* UI-DASH-01: member portal palette (sampled from the approved dashboard reference). */
+  --portal-navy: #101e49;
+  --portal-sidebar: #101b3d;
+  --portal-sidebar-hover: #1c2a57;
+  --portal-royal: #1748d5;
+  --portal-royal-deep: #0f2f94;
+  --portal-gold: #ffd21c;
+  --portal-gold-hover: #f2c200;
+  --portal-bg: #f5f7fc;
+  --portal-green: #16852e;
+  --portal-text: #111827;
+  --portal-muted: #64748b;
+  --portal-line: #e3e8f2;
+  --portal-sidebar-width: 15.5rem;
+  --portal-sidebar-collapsed: 4.75rem;
+  --portal-header-height: 4rem;
+  --portal-radius: 0.875rem;
+  --portal-shadow: 0 1px 2px rgb(16 30 73 / 5%), 0 4px 14px rgb(16 30 73 / 6%);
 }
 

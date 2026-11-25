@@ -20,7 +20,7 @@ from apps.rewards.tests.helpers import RewardsTestCase
 TEMPLATES = settings.BASE_DIR / "templates"
 CSS = settings.BASE_DIR / "static/css"
 ADVERTISER_TEMPLATES = ("home", "onboard", "organization", "campaign_list", "campaign_detail", "campaign_form",
-                        "reports", "team", "profile")
+                        "reports", "team", "profile", "creatives")
 INVENTED_FIGURES = ("ROI", "Revenue", "Conversion", "Impressions", "Earnings", "Click-through")
 
 
@@ -67,7 +67,7 @@ class PageStructureTests(WorkspaceTestCase):
     def test_current_tab_is_marked_for_assistive_technology(self):
         response = self.client.get(self.url("reports"))
         self.assertContains(response, f'aria-current="page" href="{self.url("reports")}"')
-        self.assertContains(response, 'aria-label="Advertiser sections"')
+        self.assertContains(response, 'aria-label="Advertiser menu"')  # UI-DASH-02: sidebar, not tabs.
 
     def test_tables_have_captions_and_column_scopes(self):
         self.make_campaign()
@@ -269,7 +269,11 @@ class OverviewAndReportFigures(WorkspaceTestCase):
             for invented in INVENTED_FIGURES:
                 with self.subTest(path=path, figure=invented):
                     self.assertNotContains(page, invented)
-        self.assertNotContains(self.client.get(self.url("reports")), "export")
+        # UI-DASH-03 (owner-authorized): the Reports tab offers a CSV export, as a CSRF-protected POST
+        # form only (never a GET link); its privacy and isolation rules are tested in test_ui_dash03.
+        reports_page = self.client.get(self.url("reports")).content.decode()
+        self.assertIn(f'method="post" action="{self.url("reports_export")}"', reports_page)
+        self.assertNotIn(f'href="{self.url("reports_export")}', reports_page)
 
     def test_report_distinguishes_not_run_from_zero(self):
         now = timezone.now()
@@ -326,7 +330,9 @@ class ModuleAndMenuTests(SimpleTestCase):
             source = (TEMPLATES / f"advertising/{name}.html").read_text(encoding="utf-8")
             with self.subTest(template=name):
                 self.assertNotRegex(source, r"\bstyle=|<style")
-                self.assertNotRegex(source, r'class="[^"]*\b(stat|panel|card-grid|stat-grid)\b')
+                # UI-DASH-02: the generic console card components stay out of the workspace; the workspace's
+                # own prefixed classes (adv-stat, adv-panel, creative-card) follow the member portal design.
+                self.assertNotRegex(source, r'class="(?:[^"]*\s)?(stat|panel|card-grid|stat-grid)(?:\s[^"]*)?"')
                 self.assertIn("i18n", source)
 
     def test_shared_admin_components_were_left_for_the_console(self):
@@ -340,6 +346,8 @@ class ModuleAndMenuTests(SimpleTestCase):
             source = (TEMPLATES / f"advertising/{name}.html").read_text(encoding="utf-8")
             with self.subTest(template=name):
                 self.assertEqual("pages/advertising/campaign.css" in source, name == "campaign_detail")
+                self.assertEqual("pages/advertising/dashboard.css" in source, name == "organization")
+                self.assertEqual("pages/advertising/creatives.css" in source, name == "creatives")
 
     def test_workspace_table_badges_never_break_mid_word(self):
         css = (CSS / "components/workspace.css").read_text(encoding="utf-8")

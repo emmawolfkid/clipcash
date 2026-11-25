@@ -26,6 +26,7 @@ from django.db.models import BigIntegerField, Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.translation import gettext, gettext_noop
+from django.utils.translation import gettext as _
 
 from apps.advertising.models import Campaign, Organization
 from apps.audit.services import DENIED, record_business_event, record_security_event
@@ -96,13 +97,13 @@ def _require(check, actor, action, target=None, reason="permission_missing"):
         record_security_event("rewards.action.denied", outcome=DENIED,
                               actor=actor if getattr(actor, "is_authenticated", False) else None,
                               target=target, metadata={"action": action, "reason": reason})
-        raise NotAuthorized("You are not allowed to do this.", code=reason)
+        raise NotAuthorized(_("You are not allowed to do this."), code=reason)
 
 
 def _reason(text):
     text = (text or "").strip()
     if len(text) < MIN_REASON:
-        raise ValidationError({"reason": "Please give a reason (at least 5 characters)."})
+        raise ValidationError({"reason": _("Please give a reason (at least 5 characters).")})
     return text[:300]
 
 
@@ -115,7 +116,7 @@ def create_policy(actor, campaign, *, reward_amount, notes=""):
     try:
         amount = to_amount(reward_amount)
     except (ValueError, TypeError):
-        raise ValidationError({"reward_amount": "Enter a whole number of shillings."}) from None
+        raise ValidationError({"reward_amount": _("Enter a whole number of shillings.")}) from None
     with transaction.atomic():
         campaign = lock_own_rows(Campaign.objects).get(pk=campaign.pk)
         _check_policy_campaign(campaign, amount)
@@ -138,7 +139,7 @@ def _notify_member(reward, event, title, message):
     from apps.notifications import inbox
 
     inbox.notify(reward.member, f"rewards.{event}", category=inbox.Category.REWARD, title=title,
-                 message=message.format(name=reward.campaign.name), link=inbox.link_to("rewards:history"),
+                 message=message, params={"name": reward.campaign.name}, link=inbox.link_to("rewards:history"),
                  dedupe_key=f"rewards.{event}:{reward.pk}")
 
 
@@ -149,21 +150,22 @@ def _notify_approvers(policy, drafter):
     approvers = [user for user in inbox.staff_with_permission("rewards.approve_reward_policies")
                  if user.pk != drafter.pk]
     inbox.notify(approvers, "rewards.policy_review_needed", category=inbox.Category.REWARD,
-                 title="Demo reward policy awaiting a second approver",
-                 message=f"Version {policy.version} for “{policy.campaign.name}” needs approval by someone "
-                         "other than its author.",
+                 title=gettext_noop("Demo reward policy awaiting a second approver"),
+                 message=gettext_noop("Version {version} for “{name}” needs approval by someone other than its "
+                                      "author."),
+                 params={"version": policy.version, "name": policy.campaign.name},
                  link=inbox.link_to("administration:reward_policy", policy.pk),
                  dedupe_key=f"rewards.policy_review_needed:{policy.pk}")
 
 
 def _check_policy_campaign(campaign, amount):
     if campaign.status not in POLICY_CAMPAIGN_STATES or campaign.approved_revision != campaign.revision:
-        raise ValidationError({"campaign": "Demo reward policies need an approved campaign."})
+        raise ValidationError({"campaign": _("Demo reward policies need an approved campaign.")})
     if amount <= 0:
-        raise ValidationError({"reward_amount": "Enter an amount greater than zero."})
+        raise ValidationError({"reward_amount": _("Enter an amount greater than zero.")})
     if amount > campaign.demo_reward_per_view:
-        raise ValidationError({"reward_amount": f"Cannot exceed the campaign's approved maximum per view "
-                                                f"({campaign.demo_reward_per_view} credits)."})
+        raise ValidationError({"reward_amount": _("Cannot exceed the campaign's approved maximum per view (%(n)s "
+                                                  "credits).") % {"n": campaign.demo_reward_per_view}})
 
 
 def approve_policy(actor, policy, *, expected_status=P.DRAFT):
@@ -177,11 +179,11 @@ def approve_policy(actor, policy, *, expected_status=P.DRAFT):
         if policy.status == P.APPROVED and expected_status == P.APPROVED:
             return policy
         if policy.status != expected_status:
-            raise StaleDecision("This policy changed since you opened it.")
+            raise StaleDecision(_("This policy changed since you opened it."))
         if policy.status != P.DRAFT:
-            raise InvalidState("Only draft policies can be approved.")
+            raise InvalidState(_("Only draft policies can be approved."))
         if policy.campaign_revision != campaign.approved_revision or campaign.revision != campaign.approved_revision:
-            raise InvalidState("The campaign was changed after this draft. Create a new policy version.",
+            raise InvalidState(_("The campaign was changed after this draft. Create a new policy version."),
                                code="campaign_revision_changed")
         _check_policy_campaign(campaign, policy.reward_amount)
         now = timezone.now()
@@ -211,9 +213,9 @@ def reject_policy(actor, policy, *, reason, expected_status=P.DRAFT):
         if policy.status == P.REJECTED and expected_status == P.REJECTED:
             return policy
         if policy.status != expected_status:
-            raise StaleDecision("This policy changed since you opened it.")
+            raise StaleDecision(_("This policy changed since you opened it."))
         if policy.status != P.DRAFT:
-            raise InvalidState("Only draft policies can be rejected.")
+            raise InvalidState(_("Only draft policies can be rejected."))
         policy.status = P.REJECTED
         policy.decided_by = actor
         policy.decided_at = timezone.now()
@@ -233,7 +235,7 @@ def retire_policy(actor, policy, *, reason):
         if policy.status == P.RETIRED:
             return policy
         if policy.status != P.APPROVED:
-            raise InvalidState("Only approved policies can be retired.")
+            raise InvalidState(_("Only approved policies can be retired."))
         policy.status = P.RETIRED
         policy.effective_until = timezone.now()
         policy.decision_reason = reason
@@ -369,8 +371,8 @@ def fit_terms_to_approved_budget(actor, campaign):
     budget = CampaignRewardBudget.objects.select_for_update().filter(campaign_id=campaign.pk).first()
     consumed = budget.demo_consumed if budget else 0
     if consumed > campaign.demo_budget_amount:
-        raise ValidationError({"demo_budget_amount": f"The approved budget cannot be lower than the "
-                                                     f"{consumed} credits already awarded."})
+        raise ValidationError({"demo_budget_amount": _("The approved budget cannot be lower than the %(n)s credits "
+                                                       "already awarded.") % {"n": consumed}})
     terms = CampaignCreditTerms.objects.select_for_update().filter(campaign=campaign).first()
     if terms is None or terms.credit_budget <= campaign.demo_budget_amount:
         return terms
@@ -396,28 +398,28 @@ def update_credit_terms(actor, campaign, *, credit_budget, plan_ids, expected_ve
     try:
         credit_budget = int(credit_budget)
     except (TypeError, ValueError):
-        raise ValidationError({"credit_budget": "Enter a whole number of credits."}) from None
+        raise ValidationError({"credit_budget": _("Enter a whole number of credits.")}) from None
     if credit_budget < 0:
-        raise ValidationError({"credit_budget": "Enter zero or more credits."})
+        raise ValidationError({"credit_budget": _("Enter zero or more credits.")})
     plans = list(MembershipPlan.objects.filter(pk__in=list(plan_ids or [])))
     if len(plans) != len(set(plan_ids or [])):
-        raise ValidationError({"plans": "Choose plans from the list."})
+        raise ValidationError({"plans": _("Choose plans from the list.")})
     if any(plan.status != MembershipPlan.Status.ACTIVE for plan in plans):
-        raise ValidationError({"plans": "Only active membership plans can be chosen."})
+        raise ValidationError({"plans": _("Only active membership plans can be chosen.")})
     with transaction.atomic():
         campaign = lock_own_rows(Campaign.objects).get(pk=campaign.pk)
         budget = _locked_budget(campaign.pk)  # Lock order: campaign -> budget (as approvals use).
         terms = CampaignCreditTerms.objects.select_for_update().filter(campaign=campaign).first()
         current_version = terms.version if terms else 0
         if current_version != int(expected_version or 0):
-            raise StaleDecision("The credit terms changed since you opened them. Review and try again.")
+            raise StaleDecision(_("The credit terms changed since you opened them. Review and try again."))
         before = effective_terms(campaign)
         if credit_budget < budget.demo_consumed:
-            raise ValidationError({"credit_budget": f"The budget cannot be lower than the {budget.demo_consumed} "
-                                                    "credits already awarded."})
+            raise ValidationError({"credit_budget": _("The budget cannot be lower than the %(n)s credits already "
+                                                      "awarded.") % {"n": budget.demo_consumed}})
         if credit_budget > campaign.demo_budget_amount:
-            raise ValidationError({"credit_budget": "The budget cannot be more than the advertiser-approved campaign "
-                                                    f"budget of {campaign.demo_budget_amount} credits."})
+            raise ValidationError({"credit_budget": _("The budget cannot be more than the advertiser-approved campaign "
+                                                      "budget of %(n)s credits.") % {"n": campaign.demo_budget_amount}})
         new_plan_ids = frozenset(plan.pk for plan in plans)
         if terms is not None and credit_budget == terms.credit_budget and new_plan_ids == before.plan_ids:
             return terms  # Nothing changed.
@@ -480,9 +482,9 @@ def evaluate_session(session_id, *, actor=None):
         record_business_event("rewards.decision.qualified", actor=None, target=reward, metadata={
             "campaign": str(session.campaign_id), "policy_version": policy.version, "amount": amount,
             "demo_consumed": budget.demo_consumed})
-        _notify_member(reward, "recorded", "Demo reward recorded (simulated, not money)",
-                       "Your verified view of “{name}” earned a simulated demo reward. It is not money and "
-                       "cannot be withdrawn.")
+        _notify_member(reward, "recorded", gettext_noop("Demo reward recorded (simulated, not money)"),
+                       gettext_noop("Your verified view of “{name}” earned a simulated demo reward. It is not money and "
+                       "cannot be withdrawn."))
     return reward
 
 
@@ -524,8 +526,8 @@ def _reverse_locked(reward, *, actor, reason, source):
     reward.reversed_by = actor if getattr(actor, "is_authenticated", False) else None
     reward.reversal_reason = reason[:300]
     reward.save()
-    _notify_member(reward, "reversed", "Demo reward reversed (simulated)",
-                   "A simulated demo reward for “{name}” was reversed. No money was involved.")
+    _notify_member(reward, "reversed", gettext_noop("Demo reward reversed (simulated)"),
+                   gettext_noop("A simulated demo reward for “{name}” was reversed. No money was involved."))
     record_business_event("rewards.reward.reversed", actor=actor if reward.reversed_by else None, target=reward,
                           metadata={"campaign": str(reward.campaign_id), "amount": reward.amount, "source": source,
                                     "reason": reason[:100]})
@@ -549,10 +551,10 @@ def reverse_reward(actor, reward, *, reason, expected_status=R.QUALIFIED):
         if current.status == R.REVERSED and expected_status == R.REVERSED:
             return current
         if current.status != expected_status:
-            raise StaleDecision("This reward changed since you opened it.")
+            raise StaleDecision(_("This reward changed since you opened it."))
         if current.status != R.QUALIFIED:
-            raise InvalidState("Only recorded demo rewards can be reversed.")
-        reward, _ = _reverse_locked(current, actor=actor, reason=reason, source="administrative")
+            raise InvalidState(_("Only recorded demo rewards can be reversed."))
+        reward, _unused = _reverse_locked(current, actor=actor, reason=reason, source="administrative")
     return reward
 
 
@@ -566,7 +568,7 @@ def reconcile_reversals(limit=EVALUATION_BATCH):
             session = WatchSession.objects.select_for_update().get(pk=session_id)
             if session.outcome == Out.VERIFIED_EVIDENCE:
                 continue
-            _, changed = _reverse_locked(DemoReward(pk=reward_id), actor=None,
+            _unused, changed = _reverse_locked(DemoReward(pk=reward_id), actor=None,
                                          reason="Viewing session no longer verified", source="reconciliation")
             reversed_count += changed
     return reversed_count

@@ -27,6 +27,9 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q, Sum
 from django.utils import timezone
 from django.utils.crypto import salted_hmac
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_noop as N_
 
 from apps.accounts.phone_numbers import normalize_phone_number
 from apps.audit.services import DENIED, record_business_event, record_security_event
@@ -112,13 +115,13 @@ def _deny(action, actor, target=None, reason="permission_missing"):
     record_security_event("withdrawals.action.denied", outcome=DENIED,
                           actor=actor if getattr(actor, "is_authenticated", False) else None,
                           target=target, metadata={"action": action, "reason": reason})
-    raise NotAuthorized("You are not allowed to do this.", code=reason)
+    raise NotAuthorized(_("You are not allowed to do this."), code=reason)
 
 
 def _note(text, *, required=True):
     text = (text or "").strip()
     if required and len(text) < MIN_NOTE:
-        raise ValidationError({"note": "Please give a reason (at least 5 characters)."})
+        raise ValidationError({"note": _("Please give a reason (at least 5 characters).")})
     return text[:300]
 
 
@@ -136,24 +139,24 @@ def _clean_destination(kind, network, bank_code, identifier):
     provider = ""
     if kind == B.Kind.MOBILE_MONEY:
         if network not in B.Network.values:
-            errors["network"] = "Choose a mobile network."
+            errors["network"] = _("Choose a mobile network.")
         try:
             identifier = normalize_phone_number(identifier)
         except ValidationError:
             identifier = None
         if not identifier or not identifier.startswith("+255"):
-            errors["identifier"] = "Enter a Tanzanian mobile number, for example 0712345678."
+            errors["identifier"] = _("Enter a Tanzanian mobile number, for example 0712345678.")
         provider = network
     elif kind == B.Kind.BANK:
         bank_code = (bank_code or "").strip().upper()
         if not (2 <= len(bank_code) <= 12 and bank_code.isalnum()):
-            errors["bank_code"] = "Enter the bank code (2-12 letters or digits)."
+            errors["bank_code"] = _("Enter the bank code (2-12 letters or digits).")
         identifier = (identifier or "").replace(" ", "").replace("-", "")
         if not (identifier.isdigit() and 6 <= len(identifier) <= 20):
-            errors["identifier"] = "Enter the account number (6-20 digits)."
+            errors["identifier"] = _("Enter the account number (6-20 digits).")
         provider = bank_code
     else:
-        errors["kind"] = "Choose mobile money or bank."
+        errors["kind"] = _("Choose mobile money or bank.")
     if errors:
         raise ValidationError(errors)
     return provider, identifier
@@ -170,22 +173,22 @@ def add_beneficiary(member, *, kind, holder_name, identifier, network="", bank_c
         _deny("beneficiary.add", member, reason="not_eligible")
     holder_name = " ".join((holder_name or "").split())[:100]
     if len(holder_name) < 2:
-        raise ValidationError({"holder_name": "Enter the account holder's name."})
+        raise ValidationError({"holder_name": _("Enter the account holder's name.")})
     provider, normalized = _clean_destination(kind, network, bank_code, identifier)
     # Only well-formed attempts count, so typing mistakes do not use up the allowance.
     key = hashlib.sha256(f"withdrawals-beneficiary:{member.pk}".encode()).hexdigest()
     if ratelimit.hit(key, 86_400) > settings.WITHDRAWALS_BENEFICIARY_CHANGES_PER_DAY:
-        raise InvalidState("Too many beneficiary changes today. Please try again tomorrow.", code="rate_limited")
+        raise InvalidState(_("Too many beneficiary changes today. Please try again tomorrow."), code="rate_limited")
     digits = "".join(ch for ch in normalized if ch.isdigit())
     with transaction.atomic():
         get_user_model().objects.select_for_update().get(pk=member.pk)
         active = PayoutBeneficiary.objects.filter(member=member, status=B.Status.ACTIVE)
         if active.count() >= settings.WITHDRAWALS_MAX_BENEFICIARIES:
-            raise InvalidState("You can keep at most three payout destinations. Remove one first.",
+            raise InvalidState(_("You can keep at most three payout destinations. Remove one first."),
                                code="too_many")
         fingerprint = _fingerprint(kind, provider, normalized)
         if active.filter(kind=kind, identifier_fingerprint=fingerprint).exists():
-            raise ValidationError({"identifier": "This destination is already saved."})
+            raise ValidationError({"identifier": _("This destination is already saved.")})
         beneficiary = PayoutBeneficiary.objects.create(
             member=member, kind=kind, network=network if kind == B.Kind.MOBILE_MONEY else "",
             bank_code=provider if kind == B.Kind.BANK else "", holder_name=holder_name,
@@ -198,7 +201,7 @@ def add_beneficiary(member, *, kind, holder_name, identifier, network="", bank_c
 def beneficiary_for(member, beneficiary_id):
     beneficiary = PayoutBeneficiary.objects.filter(pk=beneficiary_id, member=member).first()
     if beneficiary is None:
-        raise NotFound("Payout destination not found.")
+        raise NotFound(_("Payout destination not found."))
     return beneficiary
 
 
@@ -207,7 +210,7 @@ def deactivate_beneficiary(member, beneficiary_id):
         beneficiary = (PayoutBeneficiary.objects.select_for_update()
                        .filter(pk=beneficiary_id, member=member).first())
         if beneficiary is None:
-            raise NotFound("Payout destination not found.")
+            raise NotFound(_("Payout destination not found."))
         if beneficiary.status == B.Status.DEACTIVATED:
             return beneficiary
         beneficiary.status = B.Status.DEACTIVATED
@@ -223,10 +226,10 @@ def demo_verify_beneficiary(member, beneficiary_id):
     provider = get_payout_provider()
     beneficiary = beneficiary_for(member, beneficiary_id)
     if beneficiary.status != B.Status.ACTIVE:
-        raise InvalidState("Removed destinations cannot be checked.")
+        raise InvalidState(_("Removed destinations cannot be checked."))
     ok, _reason = provider.validate_beneficiary(beneficiary)
     if not ok:
-        raise InvalidState("The demo check did not pass.")
+        raise InvalidState(_("The demo check did not pass."))
     with transaction.atomic():
         beneficiary = PayoutBeneficiary.objects.select_for_update().get(pk=beneficiary.pk)
         if beneficiary.verification != B.Verification.DEMO_VERIFIED:
@@ -252,18 +255,18 @@ class Eligibility:
 
 
 ELIGIBILITY_MESSAGES = {
-    "withdrawals_locked": "Withdrawals are not available yet. Real rewards and payouts are not active.",
-    "not_eligible_account": "Only verified, active member accounts can withdraw.",
-    "no_wallet": "Open your wallet first.",
-    "wallet_restricted": "Your wallet is under review.",
-    "insufficient_balance": "Your available wallet balance is not enough.",
-    "no_verified_beneficiary": "Add a verified payout destination.",
-    "beneficiary_cooling_off": "New payout destinations can be used after 24 hours.",
-    "below_minimum": "The amount is below the minimum withdrawal.",
-    "above_maximum": "The amount is above the maximum withdrawal.",
-    "daily_limit": "The amount would exceed your daily limit.",
-    "weekly_limit": "The amount would exceed your weekly limit.",
-    "frequency_limit": "Too many withdrawal requests today.",
+    "withdrawals_locked": gettext_lazy("Withdrawals are not available yet. Real rewards and payouts are not active."),
+    "not_eligible_account": gettext_lazy("Only verified, active member accounts can withdraw."),
+    "no_wallet": gettext_lazy("Open your wallet first."),
+    "wallet_restricted": gettext_lazy("Your wallet is under review."),
+    "insufficient_balance": gettext_lazy("Your available wallet balance is not enough."),
+    "no_verified_beneficiary": gettext_lazy("Add a verified payout destination."),
+    "beneficiary_cooling_off": gettext_lazy("New payout destinations can be used after 24 hours."),
+    "below_minimum": gettext_lazy("The amount is below the minimum withdrawal."),
+    "above_maximum": gettext_lazy("The amount is above the maximum withdrawal."),
+    "daily_limit": gettext_lazy("The amount would exceed your daily limit."),
+    "weekly_limit": gettext_lazy("The amount would exceed your weekly limit."),
+    "frequency_limit": gettext_lazy("Too many withdrawal requests today."),
 }
 
 
@@ -273,9 +276,9 @@ def _amount_or_none(amount):
     try:
         value = to_amount(amount)
     except (ValueError, TypeError):
-        raise ValidationError({"amount": "Enter a whole number of shillings."}) from None
+        raise ValidationError({"amount": _("Enter a whole number of shillings.")}) from None
     if value <= 0:
-        raise ValidationError({"amount": "Enter an amount greater than zero."})
+        raise ValidationError({"amount": _("Enter an amount greater than zero.")})
     return value
 
 
@@ -371,15 +374,15 @@ def _decide(withdrawal, action, from_status, *, actor=None, reason_code="", note
 # Demo scenarios only: every member text says so, and none states an amount or destination.
 
 MEMBER_NOTICES = {
-    D.REQUESTED: ("Demo withdrawal scenario created", "Staff created a demonstration withdrawal for you. "
-                  "It is a simulation: no money moves."),
-    D.APPROVED: ("Demo withdrawal approved (simulation)", "The demonstration withdrawal was approved. No money moves."),
-    D.REJECTED: ("Demo withdrawal rejected (simulation)", "The demonstration withdrawal was rejected."),
-    D.CANCELLED: ("Demo withdrawal cancelled (simulation)", "The demonstration withdrawal was cancelled."),
-    D.PAID: ("Demo payout completed (simulated)", "The simulated payout completed. No money was sent."),
-    D.FAILED: ("Demo payout failed (simulated)", "The simulated payout failed. No money was involved."),
-    D.EXPIRED: ("Demo withdrawal expired (simulation)", "The demonstration withdrawal expired before review."),
-    D.RETURNED: ("Demo payout returned (simulated)", "The simulated payout was returned. No money was involved."),
+    D.REQUESTED: (N_("Demo withdrawal scenario created"), N_("Staff created a demonstration withdrawal for you. "
+                  "It is a simulation: no money moves.")),
+    D.APPROVED: (N_("Demo withdrawal approved (simulation)"), N_("The demonstration withdrawal was approved. No money moves.")),
+    D.REJECTED: (N_("Demo withdrawal rejected (simulation)"), N_("The demonstration withdrawal was rejected.")),
+    D.CANCELLED: (N_("Demo withdrawal cancelled (simulation)"), N_("The demonstration withdrawal was cancelled.")),
+    D.PAID: (N_("Demo payout completed (simulated)"), N_("The simulated payout completed. No money was sent.")),
+    D.FAILED: (N_("Demo payout failed (simulated)"), N_("The simulated payout failed. No money was involved.")),
+    D.EXPIRED: (N_("Demo withdrawal expired (simulation)"), N_("The demonstration withdrawal expired before review.")),
+    D.RETURNED: (N_("Demo payout returned (simulated)"), N_("The simulated payout was returned. No money was involved.")),
 }
 
 
@@ -389,14 +392,14 @@ def _notify(withdrawal, action, actor):
     if action != "approval_recorded" and withdrawal.status in MEMBER_NOTICES:
         title, message = MEMBER_NOTICES[withdrawal.status]
         inbox.notify(withdrawal.member, f"withdrawals.{withdrawal.status.lower()}", category=inbox.Category.WITHDRAWAL,
-                     title=title, message=message, link=inbox.link_to("withdrawals:demo", withdrawal.pk),
+                     title=title, message=message, params={}, link=inbox.link_to("withdrawals:demo", withdrawal.pk),
                      dedupe_key=f"withdrawals.{withdrawal.status}:{withdrawal.pk}")
     if action == "created":
         reviewers = [user for user in inbox.staff_with_permission("withdrawals.review_withdrawals")
                      if user.pk not in (getattr(actor, "pk", None), withdrawal.member_id)]
         inbox.notify(reviewers, "withdrawals.review_needed", category=inbox.Category.WITHDRAWAL,
-                     title="Demo withdrawal awaiting review",
-                     message="A demonstration withdrawal needs a reviewer other than its creator.",
+                     title=N_("Demo withdrawal awaiting review"),
+                     message=N_("A demonstration withdrawal needs a reviewer other than its creator."), params={},
                      link=inbox.link_to("administration:withdrawal", withdrawal.pk),
                      dedupe_key=f"withdrawals.review_needed:{withdrawal.pk}")
 
@@ -428,21 +431,21 @@ def create_demo_withdrawal(actor, member, beneficiary, *, amount, idempotency_ke
         _deny("demo.create", actor, member, "self_service")
     key = str(idempotency_key or "").strip()
     if not 8 <= len(key) <= 64:
-        raise ValidationError({"idempotency_key": "Missing form token. Reload and try again."})
+        raise ValidationError({"idempotency_key": _("Missing form token. Reload and try again.")})
     existing = DemoWithdrawal.objects.filter(created_by=actor, idempotency_key=key).first()
     if existing is not None:
         return existing
     amount = _amount_or_none(amount)
     if amount is None:
-        raise ValidationError({"amount": "Enter a simulated amount."})
+        raise ValidationError({"amount": _("Enter a simulated amount.")})
     if not _member_ready(member):
-        raise InvalidState("The member's account is not eligible.", code="not_eligible_account")
+        raise InvalidState(_("The member's account is not eligible."), code="not_eligible_account")
     with transaction.atomic():
         get_user_model().objects.select_for_update().get(pk=member.pk)  # Serialize per member.
         beneficiary = PayoutBeneficiary.objects.filter(pk=beneficiary.pk, member=member,
                                                        status=B.Status.ACTIVE).first()
         if beneficiary is None:
-            raise NotFound("Choose an active payout destination of this member.")
+            raise NotFound(_("Choose an active payout destination of this member."))
         limits = _limit_reasons(member, amount, model="demo")
         if DemoWithdrawal.objects.filter(member=member, status__in=OPEN_DEMO).exists():
             limits.append("open_request_exists")
@@ -484,7 +487,7 @@ def _locked(withdrawal):
 
 def _check_stale(current, expected_status):
     if current.status != expected_status:
-        raise StaleDecision("This withdrawal changed since you opened it. Reload and review again.")
+        raise StaleDecision(_("This withdrawal changed since you opened it. Reload and review again."))
 
 
 def start_review(actor, withdrawal, *, expected_status):
@@ -496,7 +499,7 @@ def start_review(actor, withdrawal, *, expected_status):
             return current
         _check_stale(current, expected_status)
         if current.status != D.REQUESTED:
-            raise InvalidState("Only new requests can be taken into review.")
+            raise InvalidState(_("Only new requests can be taken into review."))
         current.status = D.UNDER_REVIEW
         current.reviewed_at = timezone.now()
         current.save()
@@ -519,9 +522,9 @@ def approve(actor, withdrawal, *, expected_status, note=""):
         current = _locked(withdrawal)
         _check_stale(current, expected_status)
         if current.status != D.UNDER_REVIEW:
-            raise InvalidState("Only requests under review can be approved.")
+            raise InvalidState(_("Only requests under review can be approved."))
         if actor.pk in (current.created_by_id, current.approved_by_id):
-            raise NotAuthorized("A different reviewer must approve.", code="self_approval")
+            raise NotAuthorized(_("A different reviewer must approve."), code="self_approval")
         now = timezone.now()
         if current.approved_by_id is None:
             current.approved_by = actor
@@ -547,14 +550,14 @@ def reject(actor, withdrawal, *, expected_status, reason_code, note=""):
     if not can_review(actor):
         _deny("demo.reject", actor, withdrawal)
     if reason_code not in REJECTION_REASONS:
-        raise ValidationError({"reason_code": "Choose a reason."})
+        raise ValidationError({"reason_code": _("Choose a reason.")})
     with transaction.atomic():
         current = _locked(withdrawal)
         if current.status == D.REJECTED:
             return current
         _check_stale(current, expected_status)
         if current.status not in (D.REQUESTED, D.UNDER_REVIEW, D.APPROVED):
-            raise InvalidState("Only requests that have not been paid out can be rejected.")
+            raise InvalidState(_("Only requests that have not been paid out can be rejected."))
         previous = current.status
         current.status = D.REJECTED
         current.reason_code = reason_code
@@ -574,7 +577,7 @@ def cancel(actor, withdrawal, *, reason_code="member_request", note=""):
         if current.status == D.CANCELLED:
             return current  # Duplicate cancellation: no new decision.
         if current.status not in (D.REQUESTED, D.UNDER_REVIEW, D.APPROVED):
-            raise InvalidState("A payout already started; it cannot be cancelled.")
+            raise InvalidState(_("A payout already started; it cannot be cancelled."))
         previous = current.status
         current.status = D.CANCELLED
         current.reason_code = reason_code if reason_code in REJECTION_REASONS else "other"
@@ -600,7 +603,7 @@ def initiate_payout(actor, withdrawal, *, expected_status=D.APPROVED):
             return current
         _check_stale(current, expected_status)
         if current.status != D.APPROVED:
-            raise InvalidState("Only approved requests can be paid out.")
+            raise InvalidState(_("Only approved requests can be paid out."))
         current.status = D.PAYOUT_PENDING
         current.payout_reference = "DPO-" + secrets.token_hex(8).upper()
         current.payout_initiated_by = actor
@@ -788,10 +791,10 @@ def simulate(actor, withdrawal, action):
     if not can_operate_payouts(actor):
         _deny("sandbox.simulate", actor, withdrawal)
     if action not in SIMULATOR_ACTIONS:
-        raise InvalidState("Unknown simulator action.")
+        raise InvalidState(_("Unknown simulator action."))
     withdrawal = DemoWithdrawal.objects.get(pk=withdrawal.pk)
     if not withdrawal.payout_reference:
-        raise InvalidState("Start the payout first.")
+        raise InvalidState(_("Start the payout first."))
     with transaction.atomic():
         record = SandboxPayout.objects.select_for_update().get(reference=withdrawal.payout_reference)
         record_business_event("withdrawals.sandbox.simulated", actor=actor, target=withdrawal,
@@ -802,7 +805,7 @@ def simulate(actor, withdrawal, action):
             record.status = SandboxPayout.Status.FAILED
         elif action == "return":
             if record.status != SandboxPayout.Status.SUCCEEDED:
-                raise InvalidState("Only completed payouts can be returned.")
+                raise InvalidState(_("Only completed payouts can be returned."))
             record.status = SandboxPayout.Status.RETURNED
         elif action == "timeout":
             record.unreachable = True

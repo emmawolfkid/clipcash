@@ -58,8 +58,18 @@ class MemberDashboardView(VerifiedAccountRequiredMixin, TemplateView):
             if features.is_enabled("memberships") else [])
         from apps.accounts.services import email_change_available
 
+        # UI-DASH-02: up to three sponsored videos the member can watch now, from the same delivery
+        # query as the Sponsored videos page (approval, schedule, targeting and plan checks included).
+        sponsored_offers = []
+        if features.is_enabled("advertisers"):
+            from apps.viewing import services as viewing
+
+            sponsored_offers = viewing.with_thumbnails(
+                [offer for offer in viewing.campaign_offers(self.request.user) if not offer["locked"]][:3])
+
         context.update({"nav": "dashboard", "summary": summary, "recent_videos": recent_videos,
                         "videos_locked": videos_locked, "dashboard_plans": dashboard_plans,
+                        "sponsored_offers": sponsored_offers,
                         "dashboard_networks": [*PayoutBeneficiary.Network.choices,
                                                (PayoutBeneficiary.Kind.BANK, PayoutBeneficiary.Kind.BANK.label)],
                         # REG-04: the unconfirmed-email reminder offers a way to correct the address.

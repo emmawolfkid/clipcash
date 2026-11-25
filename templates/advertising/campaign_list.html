@@ -8,12 +8,14 @@
   <input id="q" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search campaigns' %}">
   <label class="visually-hidden" for="f-status">{% translate "Status" %}</label>
   <select id="f-status" name="status"><option value="">{% translate "Any status" %}</option>{% for value, label in statuses %}<option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  {% if video_filter_id %}<input type="hidden" name="video" value="{{ video_filter_id }}">{% endif %}
   <button type="submit" class="button button--secondary">{% translate "Filter" %}</button>
 </form>
+{% if video_filter_id %}<p class="filter-chip">{% if video_filter %}{% blocktranslate with title=video_filter.title %}Showing campaigns that use “{{ title }}”.{% endblocktranslate %}{% else %}{% translate "Showing campaigns that use one video." %}{% endif %} <a href="{% url 'advertising:campaigns' organization.pk %}">{% translate "Show all campaigns" %}</a></p>{% endif %}
 {% if page.object_list %}
   {% translate "Campaigns, newest first" as list_caption %}{% include "advertising/_campaign_table.html" with campaigns=page.object_list caption=list_caption %}
   {% include "components/pagination.html" %}
-{% elif query or status %}
+{% elif query or status or video_filter_id %}
   <div class="empty-state"><p>{% translate "No campaigns match these filters." %}</p><a href="{% url 'advertising:campaigns' organization.pk %}">{% translate "Clear filters" %}</a></div>
 {% else %}<p class="empty-state">{% translate "No campaigns yet." %}</p>{% endif %}
 {% endblock %}

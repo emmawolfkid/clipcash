@@ -38,7 +38,8 @@ SEPARATION_OF_DUTIES = (
     "rewards.manage_reward_policies", "rewards.approve_reward_policies",
     "payments.approve_refunds", "wallets.manage_wallet_restrictions",
     "withdrawals.review_withdrawals", "withdrawals.operate_payout_sandbox",
-    "advertising.review_advertisers", "advertising.review_campaigns", "viewing.review_viewing",
+    "advertising.review_advertisers", "advertising.review_campaigns", "advertising.manage_campaigns",
+    "viewing.review_viewing",
 )
 UNDEFINED_ROLES = ("Finance Officer", "Support Officer", "Auditor")
 

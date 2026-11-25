@@ -3,7 +3,16 @@
 {% block console_content %}
 <div class="page-heading"><h1 class="page-title">{{ campaign.name }}</h1>
 <span class="badge badge--{{ campaign.status|lower }}">{{ campaign.get_status_display }}</span>{% if can.rewards %} <a href="{% url 'administration:campaign_credits' campaign.pk %}">{% translate "Credits and eligibility" %}</a>{% endif %}</div>
-<p class="lead">{{ campaign.organization.display_name }} · <span class="badge badge--{{ campaign.organization.verification_status|lower }}">{{ campaign.organization.get_verification_status_display }}</span></p>
+<p class="lead">{{ campaign.organization.display_name }} · <span class="badge badge--{{ campaign.organization.verification_status|lower }}">{{ campaign.organization.get_verification_status_display }}</span>{% if created_by_staff %} · <span class="badge badge--draft">{% translate "Created by ClipCash staff" %}</span>{% endif %}</p>
+{% if can_manage %}{# UI-DASH-03: staff acting for the organization. #}
+<div class="campaign-actions actions">
+  {% if campaign.is_editable %}<a class="button button--secondary" href="{% url 'administration:campaign_edit' campaign.pk %}">{% translate "Edit draft" %}</a>{% endif %}
+  {% if campaign.status == "DRAFT" %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="submit"><button class="button" type="submit"{% if campaign.organization.verification_status != "APPROVED" %} disabled aria-describedby="staff-submit-help"{% endif %}>{% translate "Submit for review" %}</button></form>{% endif %}
+  {% if campaign.status == "SUBMITTED" %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="withdraw"><button class="button button--secondary" type="submit">{% translate "Withdraw to draft" %}</button></form>{% endif %}
+  {% if campaign.status == "SCHEDULED" or campaign.status == "PAUSED" %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="reopen"><button class="button button--secondary" type="submit">{% translate "Change (needs new review)" %}</button></form>{% endif %}
+</div>
+{% if campaign.status == "DRAFT" and campaign.organization.verification_status != "APPROVED" %}<p class="lead" id="staff-submit-help">{% translate "Submitting becomes available once the advertiser is verified." %}</p>{% endif %}
+{% endif %}
 <div class="console-split">
   <section>
     <h2 class="workspace-section__title">{% translate "Details" %}</h2>
@@ -22,14 +31,15 @@
   </section>
   <section><h2 class="workspace-section__title">{% translate "Video preview" %}</h2>{% include "components/preview_player.html" %}</section>
 </div>
-<section class="workspace-section">
+{% if can_review %}<section class="workspace-section">
   <h2 class="workspace-section__title">{% translate "Decision" %}</h2>
+  {% if campaign.status == "SUBMITTED" and not can_approve %}<p class="notice" role="status">{% translate "You created this campaign, so a different reviewer must approve it." %}</p>{% endif %}
   <form method="post" class="form">{% csrf_token %}
     <input type="hidden" name="expected_revision" value="{{ campaign.revision }}">
     <label for="reason">{% translate "Notes / reason (required to reject, pause or cancel; shown to the advertiser)" %}</label>
     <textarea id="reason" name="reason" rows="2" maxlength="300"></textarea>
     <div class="actions">
-      {% if campaign.status == "SUBMITTED" %}<button class="button" name="action" value="approve" type="submit">{% translate "Approve" %}</button>
+      {% if campaign.status == "SUBMITTED" %}{% if can_approve %}<button class="button" name="action" value="approve" type="submit">{% translate "Approve" %}</button>{% endif %}
       <button class="button button--secondary" name="action" value="reject" type="submit">{% translate "Request changes" %}</button>{% endif %}
       {% if campaign.status == "SCHEDULED" or campaign.status == "ACTIVE" %}<button class="button button--secondary" name="action" value="pause" type="submit">{% translate "Pause" %}</button>{% endif %}
       {% if campaign.status == "PAUSED" %}<button class="button" name="action" value="resume" type="submit">{% translate "Resume" %}</button>{% endif %}
@@ -39,7 +49,7 @@
     <div class="actions confirm-form"><label><input type="checkbox" name="confirm" value="yes"> {% translate "Cancelling is permanent" %}</label>
       <button class="button button--secondary" name="action" value="cancel" type="submit">{% translate "Cancel campaign" %}</button></div>{% endif %}
   </form>
-</section>
+</section>{% endif %}
 {% include "components/campaign_performance.html" %}
 {% include "components/demo_budget_notice.html" %}
 {% endblock %}

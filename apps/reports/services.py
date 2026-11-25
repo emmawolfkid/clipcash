@@ -486,3 +486,31 @@ def advertiser_report(organization, period, campaigns):
 
 def privacy_minimum():
     return settings.ADVERTISING_REPORT_MIN_COUNT
+
+
+ADVERTISER_EXPORT_MAX_CAMPAIGNS = 500
+
+
+def advertiser_export_csv(user, organization, period):
+    """UI-DASH-03: the advertiser Reports tab as CSV, for that organization's team only (the view
+    resolves the organization through advertising.organization_for). Same D12-masked figures as the
+    page ("fewer than N"), no member identities, formula-safe cells, audited like staff exports."""
+    campaigns = list(organization.campaigns.order_by("-created_at")[:ADVERTISER_EXPORT_MAX_CAMPAIGNS])
+    report = advertiser_report(organization, period, campaigns)
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, lineterminator="\r\n")
+    writer.writerow([_cell(title) for title in (
+        _("Advertiser"), _("Campaign"), _("Status"), _("Runs from"), _("Runs until"), _("Period start"),
+        _("Period end"), _("Verified views"), _("Unique viewers (verified)"), _("Sessions started"), _("In review"),
+        _("Not verified"), _("Simulated rewards recorded"))])
+    for row in report["rows"]:
+        campaign = row["campaign"]
+        writer.writerow([_cell(organization.display_name), _cell(campaign.name), _cell(campaign.get_status_display()),
+                         campaign.starts_at.date().isoformat(), campaign.ends_at.date().isoformat(),
+                         period.first.isoformat(), period.last.isoformat(),
+                         *[_cell(row[key]) for key in ("verified", "viewers", "sessions", "in_review",
+                                                       "not_verified", "qualified")]])
+    record_security_event("reports.exported", outcome=SUCCESS, actor=user, target=organization, metadata={
+        "report": "advertiser", "start": period.first.isoformat(), "end": period.last.isoformat(),
+        "rows": len(report["rows"])})
+    return "﻿" + buffer.getvalue()  # BOM: spreadsheets then read names as UTF-8.

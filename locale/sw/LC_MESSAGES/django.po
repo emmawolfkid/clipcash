@@ -5584,3 +5584,5869 @@ msgstr "Kubonyeza hapa pekee hakuwezeshi uanachama wako, na kubonyeza tena hakuu
 
 msgid "Earlier requests for this plan"
 msgstr "Maombi ya awali kwa mpango huu"
+
+#: UI-DASH-01 member portal shell and dashboard
+msgid "No plan"
+msgstr "Hakuna mpango"
+
+msgid "Open navigation"
+msgstr "Fungua menyu"
+
+msgid "Toggle navigation"
+msgstr "Onyesha au ficha menyu"
+
+msgid "Collapse sidebar"
+msgstr "Kunja menyu ya pembeni"
+
+msgid "Expand sidebar"
+msgstr "Panua menyu ya pembeni"
+
+msgid "Main"
+msgstr "Kuu"
+
+msgid "Membership and finance"
+msgstr "Uanachama na fedha"
+
+msgid "Account and support"
+msgstr "Akaunti na msaada"
+
+msgid "unread"
+msgstr "hazijasomwa"
+
+msgid "Settings"
+msgstr "Mipangilio"
+
+msgid "Discover more!"
+msgstr "Gundua Zaidi!"
+
+msgid "Easy to use"
+msgstr "Rahisi kutumia"
+
+msgid "Short videos"
+msgstr "Video fupi"
+
+msgid "Verified activity"
+msgstr "Shughuli zilizothibitishwa"
+
+msgid "Welcome back, %(name)s"
+msgstr "Karibu tena, %(name)s"
+
+msgid "Watch videos, follow your verified activity and manage your membership."
+msgstr "Tazama video, fuatilia shughuli zako zilizothibitishwa na udhibiti uanachama wako."
+
+msgid "Your balance"
+msgstr "Salio lako"
+
+msgid "Hide balance"
+msgstr "Ficha salio"
+
+msgid "Show balance"
+msgstr "Onyesha salio"
+
+msgid "Not active yet"
+msgstr "Bado haijaanza"
+
+msgid "Withdraw"
+msgstr "Toa pesa"
+
+msgid "Videos watched"
+msgstr "Video zilizotazamwa"
+
+msgid "Verified today"
+msgstr "Zilizothibitishwa leo"
+
+msgid "None yet"
+msgstr "Bado hakuna"
+
+msgid "Short videos included in your membership."
+msgstr "Video fupi zilizo katika uanachama wako."
+
+msgid "Featured videos"
+msgstr "Video zilizochaguliwa"
+
+msgid "Choose a featured video"
+msgstr "Chagua video"
+
+msgid "Video %(n)s of %(total)s"
+msgstr "Video %(n)s kati ya %(total)s"
+
+msgid "View all"
+msgstr "Tazama zote"
+
+msgid "Your latest verified records and account events."
+msgstr "Rekodi zako za hivi karibuni zilizothibitishwa na matukio ya akaunti."
+
+msgid "Current"
+msgstr "Sasa"
+
+msgid "Select"
+msgstr "Chagua"
+
+msgid "Share my link"
+msgstr "Shiriki kiungo changu"
+
+msgid "Withdraw now"
+msgstr "Toa pesa sasa"
+
+msgid "Register or sign in"
+msgstr "Jisajili au ingia"
+
+msgid "Watch eligible videos"
+msgstr "Tazama video zinazostahili"
+
+msgid "Collect your rewards"
+msgstr "Kusanya zawadi zako"
+
+msgid "Check withdrawal availability"
+msgstr "Angalia upatikanaji wa kutoa pesa"
+
+#: UI-DASH-01 recent activity (apps/core/dashboard.py) and the status labels it shows
+msgid "Membership %(plan)s: %(status)s"
+msgstr "Uanachama %(plan)s: %(status)s"
+
+msgid "%(campaign)s: %(outcome)s"
+msgstr "%(campaign)s: %(outcome)s"
+
+msgid "%(campaign)s: %(status)s"
+msgstr "%(campaign)s: %(status)s"
+
+msgid "(TZS %(amount)s, simulated)"
+msgstr "(TZS %(amount)s, ya kuigiza)"
+
+msgid "Sandbox payment %(reference)s: %(status)s"
+msgstr "Malipo ya majaribio %(reference)s: %(status)s"
+
+msgid "Wallet opened"
+msgstr "Pochi imefunguliwa"
+
+msgid "Wallet lifted"
+msgstr "Ukaguzi wa pochi umeondolewa"
+
+msgid "Wallet placed under review"
+msgstr "Pochi imewekwa chini ya ukaguzi"
+
+msgid "%(reference)s: %(status)s"
+msgstr "%(reference)s: %(status)s"
+
+msgid "Account created and email confirmed"
+msgstr "Akaunti imeundwa na barua pepe imethibitishwa"
+
+msgid "Account created"
+msgstr "Akaunti imeundwa"
+
+msgid "Pending payment"
+msgstr "Inasubiri malipo"
+
+msgid "Not finished"
+msgstr "Haijakamilika"
+
+msgid "View verified"
+msgstr "Utazamaji umethibitishwa"
+
+msgid "Not enough watched"
+msgstr "Haijatazamwa vya kutosha"
+
+msgid "Not accepted"
+msgstr "Haijakubaliwa"
+
+msgid "Expired before playing"
+msgstr "Muda uliisha kabla ya kucheza"
+
+msgid "Demo: requested"
+msgstr "Majaribio: imeombwa"
+
+msgid "Demo: under review"
+msgstr "Majaribio: inakaguliwa"
+
+msgid "Demo: approved"
+msgstr "Majaribio: imeidhinishwa"
+
+msgid "Demo: payout pending"
+msgstr "Majaribio: malipo yanasubiri"
+
+msgid "Demo: payout status unknown"
+msgstr "Majaribio: hali ya malipo haijulikani"
+
+msgid "Demo: paid (simulated)"
+msgstr "Majaribio: imelipwa (kuigiza)"
+
+msgid "Demo: payout failed"
+msgstr "Majaribio: malipo yameshindwa"
+
+msgid "Demo: payout returned"
+msgstr "Majaribio: malipo yamerudishwa"
+
+msgid "Demo: rejected"
+msgstr "Majaribio: imekataliwa"
+
+msgid "Demo: cancelled"
+msgstr "Majaribio: imeghairiwa"
+
+msgid "Demo: expired"
+msgstr "Majaribio: muda umeisha"
+
+#: UI-DASH-02 translation audit: member, advertiser and advertising-workflow interface text
+msgid "Not available to demo accounts without a confirmed email address: it involves payments, financial records or business verification, which stay restricted in this demonstration."
+msgstr "Haipatikani kwa akaunti za majaribio zisizo na barua pepe iliyothibitishwa: inahusu malipo, kumbukumbu za fedha au uthibitisho wa biashara, ambavyo vimezuiliwa katika maonyesho haya."
+
+msgid "We could not sign you in with those details. Check your email, mobile number or username and your password (the password is case-sensitive)."
+msgstr "Hatukuweza kukuingiza kwa taarifa hizo. Kagua barua pepe, namba ya simu au jina la mtumiaji na nenosiri lako (nenosiri hutofautisha herufi kubwa na ndogo)."
+
+msgid "First name"
+msgstr "Jina la kwanza"
+
+msgid "Last name"
+msgstr "Jina la mwisho"
+
+msgid "Sign up with"
+msgstr "Jisajili kwa"
+
+msgid "Choose one, then fill in only that box. You will sign in with it."
+msgstr "Chagua moja, kisha jaza kisanduku hicho tu. Utaingia kwa kutumia hicho."
+
+msgid "You sign in with it, and a forgotten password can be reset by email to this address. Type it carefully: whoever owns the address can reset the password."
+msgstr "Utaingia kwa kuitumia, na nenosiri lililosahaulika linaweza kurejeshwa kupitia barua pepe kwa anwani hii. Iandike kwa uangalifu: mmiliki wa anwani hii anaweza kurejesha nenosiri."
+
+msgid "A Tanzanian mobile number, for example 0712 345 678. A mobile number cannot reset a forgotten password: add and confirm an email address in My account for that."
+msgstr "Namba ya simu ya Tanzania, kwa mfano 0712 345 678. Namba ya simu haiwezi kurejesha nenosiri lililosahaulika: kwa hilo ongeza na uthibitishe barua pepe katika Akaunti yangu."
+
+msgid "Mobile number, email or username"
+msgstr "Namba ya simu, barua pepe au jina la mtumiaji"
+
+msgid "Verification code"
+msgstr "Msimbo wa uthibitisho"
+
+msgid "The 6-digit code in the text message we sent you."
+msgstr "Msimbo wa tarakimu 6 ulio kwenye ujumbe mfupi tuliokutumia."
+
+msgid "You sign in with this mobile number. Add and confirm an email address before removing it."
+msgstr "Unaingia kwa namba hii ya simu. Ongeza na uthibitishe barua pepe kabla ya kuiondoa."
+
+msgid "0712 345 678, email or username"
+msgstr "0712 345 678, barua pepe au jina la mtumiaji"
+
+msgid "Enter your %(contact)s, or choose another way to sign up."
+msgstr "Weka %(contact)s yako, au chagua njia nyingine ya kujisajili."
+
+msgid "An email address, a mobile number or a username is required."
+msgstr "Barua pepe, namba ya simu au jina la mtumiaji linahitajika."
+
+msgid "Super Administrators must be created with create_superuser()."
+msgstr "Wasimamizi Wakuu lazima waundwe kwa create_superuser()."
+
+msgid "Superuser must have the Super Administrator role."
+msgstr "Msimamizi mkuu lazima awe na jukumu la Msimamizi Mkuu."
+
+msgid "Superuser must have an active account."
+msgstr "Msimamizi mkuu lazima awe na akaunti hai."
+
+msgid "%(fields)s are derived from role and status and cannot be set directly."
+msgstr "%(fields)s hutokana na jukumu na hali, na haviwezi kuwekwa moja kwa moja."
+
+msgid "Superuser must have %(flag)s=True."
+msgstr "Msimamizi mkuu lazima awe na %(flag)s=True."
+
+msgid "A user with this email address already exists."
+msgstr "Tayari kuna mtumiaji mwenye barua pepe hii."
+
+msgid "A user with this phone number already exists."
+msgstr "Tayari kuna mtumiaji mwenye namba hii ya simu."
+
+msgid "A user with this username already exists."
+msgstr "Tayari kuna mtumiaji mwenye jina hili la mtumiaji."
+
+msgid "An account needs a mobile number, an email address or a username."
+msgstr "Akaunti inahitaji namba ya simu, barua pepe au jina la mtumiaji."
+
+msgid "Super Administrator"
+msgstr "Msimamizi Mkuu"
+
+msgid "Content Manager"
+msgstr "Msimamizi wa Maudhui"
+
+msgid "Disabled"
+msgstr "Imezimwa"
+
+msgid "phone number"
+msgstr "namba ya simu"
+
+msgid "username"
+msgstr "jina la mtumiaji"
+
+msgid "phone verified"
+msgstr "simu imethibitishwa"
+
+msgid "staff status"
+msgstr "hali ya mfanyakazi"
+
+msgid "superuser status"
+msgstr "hali ya msimamizi mkuu"
+
+msgid "email verified"
+msgstr "barua pepe imethibitishwa"
+
+msgid "email needs confirmed ownership before sign-in"
+msgstr "barua pepe inahitaji umiliki uliothibitishwa kabla ya kuingia"
+
+msgid "updated at"
+msgstr "ilisasishwa"
+
+msgid "user"
+msgstr "mtumiaji"
+
+msgid "users"
+msgstr "watumiaji"
+
+msgid "pending email change"
+msgstr "badiliko la barua pepe linalosubiri"
+
+msgid "pending email changes"
+msgstr "mabadiliko ya barua pepe yanayosubiri"
+
+msgid "code hash"
+msgstr "hash ya msimbo"
+
+msgid "expires at"
+msgstr "inaisha"
+
+msgid "attempts"
+msgstr "majaribio"
+
+msgid "closed at"
+msgstr "ilifungwa"
+
+msgid "phone verification challenge"
+msgstr "uthibitisho wa simu"
+
+msgid "phone verification challenges"
+msgstr "uthibitisho wa simu"
+
+msgid "Optional for members. Used for password recovery once verified."
+msgstr "Si lazima kwa wanachama. Hutumika kurejesha nenosiri baada ya kuthibitishwa."
+
+msgid "Optional. Stored in international format, for example +255712345678."
+msgstr "Si lazima. Huhifadhiwa kwa muundo wa kimataifa, kwa mfano +255712345678."
+
+msgid "Ownership of the number was proven (by SMS). Not required to sign in; an unverified number is never used to recover an account."
+msgstr "Umiliki wa namba umethibitishwa (kwa SMS). Hauhitajiki kuingia; namba isiyothibitishwa haitumiki kamwe kurejesha akaunti."
+
+msgid "Derived from status: only ACTIVE accounts are active."
+msgstr "Hutokana na hali: akaunti zenye hali ya ACTIVE pekee ndizo hai."
+
+msgid "Derived from role: Super Administrators and Content Managers are staff."
+msgstr "Hutokana na jukumu: Wasimamizi Wakuu na Wasimamizi wa Maudhui ni wafanyakazi."
+
+msgid "Derived from role: only Super Administrators are superusers."
+msgstr "Hutokana na jukumu: Wasimamizi Wakuu pekee ndio wasimamizi wakuu wa mfumo."
+
+msgid "Created by public sign-up: the email address signs in and recovers the account only after its ownership is confirmed."
+msgstr "Imeundwa kwa usajili wa umma: barua pepe hutumika kuingia na kurejesha akaunti baada tu ya umiliki wake kuthibitishwa."
+
+msgid "Waiting for the code"
+msgstr "Inasubiri msimbo"
+
+msgid "Verified"
+msgstr "Imethibitishwa"
+
+msgid "Too many attempts"
+msgstr "Majaribio mengi mno"
+
+msgid "Replaced or no longer valid"
+msgstr "Imebadilishwa au si halali tena"
+
+msgid "Could not be sent"
+msgstr "Haikuweza kutumwa"
+
+msgid "At least one active Super Administrator must remain."
+msgstr "Lazima abaki angalau Msimamizi Mkuu mmoja aliye hai."
+
+msgid "Staff and superuser flags must match the role."
+msgstr "Alama za mfanyakazi na msimamizi mkuu lazima zilingane na jukumu."
+
+msgid "The active flag must match the account status."
+msgstr "Alama ya hai lazima ilingane na hali ya akaunti."
+
+msgid "An account cannot be returned to Pending."
+msgstr "Akaunti haiwezi kurudishwa kwenye hali ya Inasubiri."
+
+msgid "Your password must contain at least one letter and at least one number."
+msgstr "Nenosiri lako lazima liwe na angalau herufi moja na angalau tarakimu moja."
+
+msgid "Your password must contain at least %(min_length)d character."
+msgid_plural "Your password must contain at least %(min_length)d characters."
+msgstr[0] "Nenosiri lako lazima liwe na angalau herufi %(min_length)d."
+msgstr[1] "Nenosiri lako lazima liwe na angalau herufi %(min_length)d."
+
+msgid "Member passwords must contain at least one letter and at least one number."
+msgstr "Manenosiri ya wanachama lazima yawe na angalau herufi moja na angalau tarakimu moja."
+
+msgid "Use at least %(min)d characters, with at least one letter and at least one number. Spaces are allowed, so a short phrase of unrelated words with a number in it is easy to remember and hard to guess. Avoid your name, username, phone number or email address."
+msgstr "Tumia angalau herufi %(min)d, zikiwemo angalau herufi moja na tarakimu moja. Nafasi zinaruhusiwa, hivyo kifungu kifupi cha maneno yasiyohusiana chenye namba ni rahisi kukumbuka na kigumu kukisia. Epuka jina lako, jina la mtumiaji, namba ya simu au barua pepe."
+
+msgid "Staff accounts need at least %(min)d characters. Avoid your name, email address or phone number, and common passwords."
+msgstr "Akaunti za wafanyakazi zinahitaji angalau herufi %(min)d. Epuka jina lako, barua pepe au namba ya simu, na manenosiri yaliyozoeleka."
+
+msgid "Member passwords must contain at least %(member)d characters; staff passwords at least %(staff)d."
+msgstr "Manenosiri ya wanachama lazima yawe na angalau herufi %(member)d; ya wafanyakazi angalau %(staff)d."
+
+msgid "You are not allowed to manage accounts."
+msgstr "Huruhusiwi kusimamia akaunti."
+
+msgid "Only Super Administrators can create staff accounts."
+msgstr "Wasimamizi Wakuu pekee wanaweza kuunda akaunti za wafanyakazi."
+
+msgid "New accounts must be Pending or Active."
+msgstr "Akaunti mpya lazima ziwe Zinasubiri au Hai."
+
+msgid "Only Super Administrators can manage staff accounts or their own account."
+msgstr "Wasimamizi Wakuu pekee wanaweza kusimamia akaunti za wafanyakazi au akaunti zao wenyewe."
+
+msgid "Only Super Administrators can change roles."
+msgstr "Wasimamizi Wakuu pekee wanaweza kubadilisha majukumu."
+
+msgid "An account cannot move from %(old)s to %(new)s."
+msgstr "Akaunti haiwezi kuhama kutoka %(old)s kwenda %(new)s."
+
+msgid "Only Super Administrators can reactivate disabled accounts."
+msgstr "Wasimamizi Wakuu pekee wanaweza kuwezesha tena akaunti zilizozimwa."
+
+msgid "3 to 30 characters: letters, numbers, dots (.) and underscores (_). It must start with a letter. Capital letters do not matter: Amina.K and amina.k are the same username."
+msgstr "Herufi 3 hadi 30: herufi, tarakimu, nukta (.) na mistari ya chini (_). Lazima lianze na herufi. Herufi kubwa hazina tofauti: Amina.K na amina.k ni jina moja la mtumiaji."
+
+msgid "A username cannot contain @. To sign in with an email address, choose “Email address” instead."
+msgstr "Jina la mtumiaji haliwezi kuwa na @. Ili kuingia kwa barua pepe, chagua “Barua pepe” badala yake."
+
+msgid "A username must start with a letter, so it cannot be mistaken for a mobile number. To sign in with your number, choose “Mobile number” instead."
+msgstr "Jina la mtumiaji lazima lianze na herufi ili lisichanganywe na namba ya simu. Ili kuingia kwa namba yako, chagua “Namba ya simu” badala yake."
+
+msgid "Use only letters (a–z), numbers, dots (.) and underscores (_), with no spaces."
+msgstr "Tumia herufi (a–z), tarakimu, nukta (.) na mistari ya chini (_) pekee, bila nafasi."
+
+msgid "A username cannot contain two dots in a row or end with a dot."
+msgstr "Jina la mtumiaji haliwezi kuwa na nukta mbili mfululizo au kuishia na nukta."
+
+msgid "This username is reserved. Please choose another one."
+msgstr "Jina hili la mtumiaji limehifadhiwa. Tafadhali chagua jingine."
+
+msgid "A username must be between %(min)d and %(max)d characters long."
+msgstr "Jina la mtumiaji lazima liwe na herufi kati ya %(min)d na %(max)d."
+
+msgid "An account already uses this email address. Sign in instead, or reset your password."
+msgstr "Tayari kuna akaunti inayotumia barua pepe hii. Ingia badala yake, au rejesha nenosiri lako."
+
+msgid "This username is already taken. Please choose another one."
+msgstr "Jina hili la mtumiaji tayari linatumika. Tafadhali chagua jingine."
+
+msgid "If your email address still needs confirming, a link is on its way."
+msgstr "Ikiwa barua pepe yako bado inahitaji kuthibitishwa, kiungo kinakuja."
+
+msgid "Your mobile number is verified."
+msgstr "Namba yako ya simu imethibitishwa."
+
+msgid "If your mobile number can receive text messages, a code is on its way. It expires in %(m)s minutes."
+msgstr "Ikiwa namba yako ya simu inaweza kupokea ujumbe mfupi, msimbo unakuja. Unaisha baada ya dakika %(m)s."
+
+msgid "We could not send a code by SMS. Please try again later."
+msgstr "Hatukuweza kutuma msimbo kwa SMS. Tafadhali jaribu tena baadaye."
+
+msgid "Too many attempts. Please try again later."
+msgstr "Majaribio mengi mno. Tafadhali jaribu tena baadaye."
+
+msgid "Too many incorrect codes. Ask for a new code."
+msgstr "Misimbo isiyo sahihi ni mingi mno. Omba msimbo mpya."
+
+msgid "That code is not valid or has expired. Check it, or ask for a new code."
+msgstr "Msimbo huo si sahihi au umeisha muda. Ukague, au omba msimbo mpya."
+
+msgid "Too many codes were requested. Please try again later."
+msgstr "Misimbo mingi mno imeombwa. Tafadhali jaribu tena baadaye."
+
+msgid "This mobile number is already verified."
+msgstr "Namba hii ya simu tayari imethibitishwa."
+
+msgid "Add a mobile number to your account first."
+msgstr "Kwanza ongeza namba ya simu kwenye akaunti yako."
+
+msgid "Please wait %(s)s seconds before asking for another code."
+msgstr "Tafadhali subiri sekunde %(s)s kabla ya kuomba msimbo mwingine."
+
+msgid "Name shown to members"
+msgstr "Jina linaloonyeshwa kwa wanachama"
+
+msgid "Registered recipient name"
+msgstr "Jina la mpokeaji lililosajiliwa"
+
+msgid "display name"
+msgstr "jina la kuonyeshwa"
+
+msgid "contact phone"
+msgstr "simu ya mawasiliano"
+
+msgid "business registration number"
+msgstr "namba ya usajili wa biashara"
+
+msgid "tax identification number (TIN)"
+msgstr "namba ya utambulisho wa mlipakodi (TIN)"
+
+msgid "submitted for review"
+msgstr "imewasilishwa kwa ukaguzi"
+
+msgid "review reason"
+msgstr "sababu ya ukaguzi"
+
+msgid "advertisers"
+msgstr "watangazaji"
+
+msgid "advertiser team member"
+msgstr "mwanatimu wa mtangazaji"
+
+msgid "advertiser team members"
+msgstr "wanatimu wa mtangazaji"
+
+msgid "responded"
+msgstr "imejibiwa"
+
+msgid "advertiser invitation"
+msgstr "mwaliko wa mtangazaji"
+
+msgid "revoked"
+msgstr "imebatilishwa"
+
+msgid "advertiser video"
+msgstr "video ya mtangazaji"
+
+msgid "description"
+msgstr "maelezo"
+
+msgid "campaign type"
+msgstr "aina ya kampeni"
+
+msgid "demo budget (TZS)"
+msgstr "bajeti ya majaribio (TZS)"
+
+msgid "demo reward per view (TZS)"
+msgstr "zawadi ya majaribio kwa kila utazamaji (TZS)"
+
+msgid "currency"
+msgstr "sarafu"
+
+msgid "approved revision"
+msgstr "toleo lililoidhinishwa"
+
+msgid "review notes"
+msgstr "maelezo ya ukaguzi"
+
+msgid "activated"
+msgstr "ilianzishwa"
+
+msgid "paused by staff"
+msgstr "imesitishwa na wafanyakazi"
+
+msgid "ISO 3166-1 alpha-2 code, e.g. TZ."
+msgstr "Msimbo wa ISO 3166-1 alpha-2, kwa mfano TZ."
+
+msgid "reviewed by"
+msgstr "imekaguliwa na"
+
+msgid "created by"
+msgstr "iliundwa na"
+
+msgid "Owner"
+msgstr "Mmiliki"
+
+msgid "Campaign manager"
+msgstr "Msimamizi wa kampeni"
+
+msgid "Declined"
+msgstr "Imekataliwa"
+
+msgid "Revoked"
+msgstr "Imebatilishwa"
+
+msgid "Sponsored video view"
+msgstr "Utazamaji wa video inayodhaminiwa"
+
+msgid "Not funded (demonstration only)"
+msgstr "Haijafadhiliwa (maonyesho tu)"
+
+msgid "Awaiting reconciliation"
+msgstr "Inasubiri ulinganisho"
+
+msgid "Funding verified"
+msgstr "Ufadhili umethibitishwa"
+
+msgid "Funding rejected"
+msgstr "Ufadhili umekataliwa"
+
+msgid "An advertiser with this name already exists."
+msgstr "Tayari kuna mtangazaji mwenye jina hili."
+
+msgid "Eligible members can be shown this campaign."
+msgstr "Wanachama wanaostahili wanaweza kuonyeshwa kampeni hii."
+
+msgid "Advertiser features are switched off."
+msgstr "Huduma za watangazaji zimezimwa."
+
+msgid "This campaign type is not supported."
+msgstr "Aina hii ya kampeni haitumiki."
+
+msgid "The campaign is not active."
+msgstr "Kampeni haiendelei kwa sasa."
+
+msgid "The campaign has not started yet."
+msgstr "Kampeni bado haijaanza."
+
+msgid "The campaign has ended."
+msgstr "Kampeni imeisha."
+
+msgid "The advertiser is not approved."
+msgstr "Mtangazaji hajaidhinishwa."
+
+msgid "The video is no longer authorized for this advertiser."
+msgstr "Video hii haijaidhinishwa tena kwa mtangazaji huyu."
+
+msgid "The video is not published and ready."
+msgstr "Video haijachapishwa na kuwa tayari."
+
+msgid "The member's plan is not targeted."
+msgstr "Mpango wa mwanachama haujalengwa."
+
+msgid "You are not allowed to do this."
+msgstr "Huruhusiwi kufanya hivi."
+
+msgid "Advertiser not found."
+msgstr "Mtangazaji hakupatikana."
+
+msgid "Campaign not found."
+msgstr "Kampeni haikupatikana."
+
+msgid "Advertiser accounts are not available at the moment."
+msgstr "Akaunti za watangazaji hazipatikani kwa sasa."
+
+msgid "Unknown decision."
+msgstr "Uamuzi usiojulikana."
+
+msgid "Invitation not found."
+msgstr "Mwaliko haukupatikana."
+
+msgid "This invitation is no longer valid."
+msgstr "Mwaliko huu si halali tena."
+
+msgid "Campaigns cannot be created while the advertiser is not in good standing."
+msgstr "Kampeni haziwezi kuundwa wakati mtangazaji hayuko katika hali nzuri."
+
+msgid "The member is not eligible (%(reason)s)."
+msgstr "Mwanachama hastahili (%(reason)s)."
+
+msgid "You already have an advertiser application awaiting review."
+msgstr "Tayari una ombi la mtangazaji linalosubiri ukaguzi."
+
+msgid "A suspended advertiser cannot be changed. Please contact support."
+msgstr "Mtangazaji aliyesimamishwa hawezi kubadilishwa. Tafadhali wasiliana na usaidizi."
+
+msgid "Only rejected applications can be resubmitted."
+msgstr "Maombi yaliyokataliwa pekee ndiyo yanaweza kuwasilishwa upya."
+
+msgid "This advertiser changed since you opened it. Review it again."
+msgstr "Mtangazaji huyu amebadilika tangu ulipomfungua. Mkague tena."
+
+msgid "Invitations are not possible while the advertiser is not in good standing."
+msgstr "Mialiko haiwezekani wakati mtangazaji hayuko katika hali nzuri."
+
+msgid "This advertiser cannot accept new team members at the moment."
+msgstr "Mtangazaji huyu hawezi kupokea wanatimu wapya kwa sasa."
+
+msgid "Team member not found."
+msgstr "Mwanatimu hakupatikana."
+
+msgid "An advertiser must keep at least one owner."
+msgstr "Mtangazaji lazima abaki na angalau mmiliki mmoja."
+
+msgid "Archived videos cannot be used in campaigns."
+msgstr "Video zilizohifadhiwa kwenye kumbukumbu haziwezi kutumika kwenye kampeni."
+
+msgid "Rejected advertisers cannot receive videos."
+msgstr "Watangazaji waliokataliwa hawawezi kupewa video."
+
+msgid "Video authorization not found."
+msgstr "Idhini ya video haikupatikana."
+
+msgid "This campaign changed since you opened it. Reload and try again."
+msgstr "Kampeni hii imebadilika tangu ulipoifungua. Pakia upya na ujaribu tena."
+
+msgid "Only draft campaigns can be edited. Reopen it as a draft first."
+msgstr "Kampeni za rasimu pekee ndizo zinaweza kuhaririwa. Kwanza ifungue tena kama rasimu."
+
+msgid "Only drafts can be submitted for review."
+msgstr "Rasimu pekee ndizo zinaweza kuwasilishwa kwa ukaguzi."
+
+msgid "Your advertiser account must be approved before campaigns can be submitted."
+msgstr "Akaunti yako ya mtangazaji lazima iidhinishwe kabla ya kuwasilisha kampeni."
+
+msgid "The campaign video is not published and ready yet."
+msgstr "Video ya kampeni bado haijachapishwa na kuwa tayari."
+
+msgid "Only campaigns awaiting review can be withdrawn."
+msgstr "Kampeni zinazosubiri ukaguzi pekee ndizo zinaweza kuondolewa."
+
+msgid "Only scheduled or paused campaigns can be reopened for changes."
+msgstr "Kampeni zilizopangwa au zilizositishwa pekee ndizo zinaweza kufunguliwa tena kwa mabadiliko."
+
+msgid "The advertiser changed this campaign. Review the new version."
+msgstr "Mtangazaji amebadilisha kampeni hii. Kagua toleo jipya."
+
+msgid "Only campaigns awaiting review can be approved."
+msgstr "Kampeni zinazosubiri ukaguzi pekee ndizo zinaweza kuidhinishwa."
+
+msgid "Only campaigns awaiting review can be rejected."
+msgstr "Kampeni zinazosubiri ukaguzi pekee ndizo zinaweza kukataliwa."
+
+msgid "Only scheduled or active campaigns can be paused."
+msgstr "Kampeni zilizopangwa au zinazoendelea pekee ndizo zinaweza kusitishwa."
+
+msgid "Only paused campaigns can be resumed."
+msgstr "Kampeni zilizositishwa pekee ndizo zinaweza kuendelezwa."
+
+msgid "This campaign was paused by ClipCash staff. Please contact support."
+msgstr "Kampeni hii imesitishwa na wafanyakazi wa ClipCash. Tafadhali wasiliana na usaidizi."
+
+msgid "Finished campaigns cannot be cancelled."
+msgstr "Kampeni zilizomalizika haziwezi kughairiwa."
+
+msgid "Only completed, cancelled or rejected campaigns can be archived."
+msgstr "Kampeni zilizokamilika, zilizoghairiwa au zilizokataliwa pekee ndizo zinaweza kuhifadhiwa kwenye kumbukumbu."
+
+msgid "An advertiser that is %(status)s cannot be %(decision)s."
+msgstr "Mtangazaji mwenye hali ya “%(status)s” hawezi kupewa uamuzi wa “%(decision)s”."
+
+msgid "action"
+msgstr "kitendo"
+
+msgid "outcome"
+msgstr "matokeo"
+
+msgid "request id"
+msgstr "kitambulisho cha ombi"
+
+msgid "idempotency key"
+msgstr "ufunguo wa kuzuia marudio"
+
+msgid "Enter a whole number of shillings."
+msgstr "Weka idadi kamili ya shilingi."
+
+msgid "version"
+msgstr "toleo"
+
+msgid "priority"
+msgstr "kipaumbele"
+
+msgid "error class"
+msgstr "aina ya hitilafu"
+
+msgid "last seen"
+msgstr "ilionekana mara ya mwisho"
+
+msgid "Succeeded"
+msgstr "Imefaulu"
+
+msgid "The amount cannot be negative."
+msgstr "Kiasi hakiwezi kuwa hasi."
+
+msgid "Enter a valid amount in whole shillings."
+msgstr "Weka kiasi sahihi kwa shilingi kamili."
+
+msgid "Enter a valid https:// address."
+msgstr "Weka anwani sahihi ya https://."
+
+msgid "Enter a valid IANA time zone, for example Africa/Dar_es_Salaam."
+msgstr "Weka saa za eneo sahihi za IANA, kwa mfano Africa/Dar_es_Salaam."
+
+msgid "Choose one of the supported languages."
+msgstr "Chagua mojawapo ya lugha zinazotumika."
+
+msgid "Choose a reason"
+msgstr "Chagua sababu"
+
+msgid "Standard video library"
+msgstr "Maktaba ya kawaida ya video"
+
+msgid "Premium video library"
+msgstr "Maktaba ya video za hadhi ya juu"
+
+msgid "High-definition playback"
+msgstr "Uchezaji wa ubora wa juu (HD)"
+
+msgid "Whole Tanzanian shillings. Members pay exactly this amount."
+msgstr "Shilingi kamili za Kitanzania. Wanachama hulipa kiasi hiki hasa."
+
+msgid "How long a paid membership lasts, in days (1 to 3660)."
+msgstr "Muda wa uanachama uliolipiwa, kwa siku (1 hadi 3660)."
+
+msgid "Listed for members. Active status and listing do not enable payments."
+msgstr "Inaonyeshwa kwa wanachama. Hali ya hai na kuorodheshwa havifungui malipo."
+
+msgid "Entitlements"
+msgstr "Haki za ufikiaji"
+
+msgid "What this plan unlocks. Video access checks use these."
+msgstr "Kile ambacho mpango huu unafungua. Ukaguzi wa ufikiaji wa video hutumia hivi."
+
+msgid "Membership plan"
+msgstr "Mpango wa uanachama"
+
+msgid "Access ends at"
+msgstr "Ufikiaji unaisha"
+
+msgid "In the site time zone. Must be in the future and within the plan's own length."
+msgstr "Kwa saa za eneo la tovuti. Lazima iwe siku zijazo na ndani ya muda wa mpango wenyewe."
+
+msgid "Reason for the complimentary grant"
+msgstr "Sababu ya kutoa uanachama wa bure"
+
+msgid "Recorded in the audit trail."
+msgstr "Hurekodiwa kwenye kumbukumbu za ukaguzi."
+
+msgid "I confirm this is a complimentary demo membership: no payment was received or simulated."
+msgstr "Nathibitisha kuwa huu ni uanachama wa bure wa majaribio: hakuna malipo yaliyopokelewa wala kuigizwa."
+
+msgid "One benefit per line (at most %(n)s)."
+msgstr "Faida moja kwa kila mstari (zisizozidi %(n)s)."
+
+msgid "List at most %(n)s benefits of %(len)s characters each."
+msgstr "Orodhesha manufaa yasiyozidi %(n)s, kila moja likiwa na herufi zisizozidi %(len)s."
+
+msgid "code"
+msgstr "msimbo"
+
+msgid "price (TZS)"
+msgstr "bei (TZS)"
+
+msgid "duration (days)"
+msgstr "muda (siku)"
+
+msgid "entitlements"
+msgstr "haki za ufikiaji"
+
+msgid "display order"
+msgstr "mpangilio wa kuonyesha"
+
+msgid "publicly listed"
+msgstr "imeorodheshwa hadharani"
+
+msgid "membership plan"
+msgstr "mpango wa uanachama"
+
+msgid "membership plan version"
+msgstr "toleo la mpango wa uanachama"
+
+msgid "membership plan versions"
+msgstr "matoleo ya mpango wa uanachama"
+
+msgid "plan name"
+msgstr "jina la mpango"
+
+msgid "pending until"
+msgstr "inasubiri hadi"
+
+msgid "activation source"
+msgstr "chanzo cha uwezeshaji"
+
+msgid "verified payment reference"
+msgstr "kumbukumbu ya malipo yaliyothibitishwa"
+
+msgid "amount paid (TZS)"
+msgstr "kiasi kilicholipwa (TZS)"
+
+msgid "activated at"
+msgstr "iliwezeshwa"
+
+msgid "cancelled at"
+msgstr "iliighairiwa"
+
+msgid "cancellation reason"
+msgstr "sababu ya kughairi"
+
+msgid "suspended at"
+msgstr "ilisimamishwa"
+
+msgid "suspension reason"
+msgstr "sababu ya kusimamishwa"
+
+msgid "expired at"
+msgstr "iliisha"
+
+msgid "administrator note"
+msgstr "maelezo ya msimamizi"
+
+msgid "subscription"
+msgstr "uanachama"
+
+msgid "subscriptions"
+msgstr "uanachama"
+
+msgid "Entitlements must be a list without duplicates."
+msgstr "Haki za ufikiaji lazima ziwe orodha bila marudio."
+
+msgid "Inactive"
+msgstr "Haitumiki"
+
+msgid "Stable identifier; cannot be changed after creation."
+msgstr "Kitambulisho cha kudumu; hakiwezi kubadilishwa baada ya kuundwa."
+
+msgid "Verified payment"
+msgstr "Malipo yaliyothibitishwa"
+
+msgid "Complimentary grant"
+msgstr "Zawadi ya uanachama wa bure"
+
+msgid "Administrative extension (no payment)"
+msgstr "Nyongeza ya kiutawala (bila malipo)"
+
+msgid "Member request"
+msgstr "Ombi la mwanachama"
+
+msgid "Replaced by another choice"
+msgstr "Imebadilishwa kwa chaguo jingine"
+
+msgid "Not paid in time"
+msgstr "Haikulipwa kwa wakati"
+
+msgid "Administrative review"
+msgstr "Ukaguzi wa kiutawala"
+
+msgid "Policy violation"
+msgstr "Ukiukaji wa sera"
+
+msgid "Suspected fraud"
+msgstr "Udanganyifu unaoshukiwa"
+
+msgid "Account closed"
+msgstr "Akaunti imefungwa"
+
+msgid "List at most %(n)s benefits."
+msgstr "Orodhesha manufaa yasiyozidi %(n)s."
+
+msgid "Unknown entitlements: %(codes)s."
+msgstr "Haki za ufikiaji zisizojulikana: %(codes)s."
+
+msgid "Each benefit must be text of at most %(n)s characters."
+msgstr "Kila faida lazima iwe maandishi ya herufi zisizozidi %(n)s."
+
+msgid "Only Super Administrators manage membership plans."
+msgstr "Wasimamizi Wakuu pekee ndio husimamia mipango ya uanachama."
+
+msgid "Unknown plan status."
+msgstr "Hali ya mpango isiyojulikana."
+
+msgid "Your membership is suspended."
+msgstr "Uanachama wako umesimamishwa."
+
+msgid "The member's account is not eligible."
+msgstr "Akaunti ya mwanachama haistahili."
+
+msgid "Manual membership payments are not enabled."
+msgstr "Malipo ya uanachama kwa mkono hayajawezeshwa."
+
+msgid "The payment amount does not match the quoted price."
+msgstr "Kiasi cha malipo hakilingani na bei iliyotajwa."
+
+msgid "This payment reference was already used."
+msgstr "Kumbukumbu hii ya malipo imeshatumika."
+
+msgid "A payment for your current choice is being verified."
+msgstr "Malipo ya chaguo lako la sasa yanathibitishwa."
+
+msgid "Your account cannot take a membership yet."
+msgstr "Akaunti yako bado haiwezi kuchukua uanachama."
+
+msgid "Live payments are not enabled."
+msgstr "Malipo halisi hayajawezeshwa."
+
+msgid "A VerifiedPayment is required."
+msgstr "VerifiedPayment inahitajika."
+
+msgid "Unknown payment verifier."
+msgstr "Mthibitishaji wa malipo asiyejulikana."
+
+msgid "A payment reference is required."
+msgstr "Kumbukumbu ya malipo inahitajika."
+
+msgid "The payment could not be verified."
+msgstr "Malipo hayakuweza kuthibitishwa."
+
+msgid "The activation conflicted with an existing record."
+msgstr "Uwezeshaji umegongana na rekodi iliyopo."
+
+msgid "Complimentary grants are disabled."
+msgstr "Utoaji wa uanachama wa bure umezimwa."
+
+msgid "Only Super Administrators can grant complimentary memberships."
+msgstr "Wasimamizi Wakuu pekee wanaweza kutoa uanachama wa bure."
+
+msgid "You cannot grant a membership to yourself."
+msgstr "Huwezi kujipa uanachama mwenyewe."
+
+msgid "Choose a member and a plan."
+msgstr "Chagua mwanachama na mpango."
+
+msgid "Invalid operation id. Reload the page and try again."
+msgstr "Kitambulisho cha operesheni si sahihi. Pakia ukurasa upya na ujaribu tena."
+
+msgid "You can only cancel your own membership choice."
+msgstr "Unaweza kughairi chaguo lako la uanachama pekee."
+
+msgid "You are not allowed to manage subscriptions."
+msgstr "Huruhusiwi kusimamia uanachama."
+
+msgid "You cannot change your own membership."
+msgstr "Huwezi kubadilisha uanachama wako mwenyewe."
+
+msgid "A valid reason is required."
+msgstr "Sababu halali inahitajika."
+
+msgid "Only Super Administrators can extend memberships."
+msgstr "Wasimamizi Wakuu pekee wanaweza kuongeza muda wa uanachama."
+
+msgid "Renewal opens %(days)s days before your membership ends."
+msgstr "Usasishaji hufunguliwa siku %(days)s kabla ya uanachama wako kuisha."
+
+msgid "Complimentary memberships are for member accounts only."
+msgstr "Uanachama wa bure ni kwa akaunti za wanachama pekee."
+
+msgid "This member already has a current or scheduled membership. It is left unchanged."
+msgstr "Mwanachama huyu tayari ana uanachama wa sasa au uliopangwa. Haujabadilishwa."
+
+msgid "The price cannot exceed TZS %(amount)s."
+msgstr "Bei haiwezi kuzidi TZS %(amount)s."
+
+msgid "Enter a duration between 1 and %(days)s days."
+msgstr "Weka muda kati ya siku 1 na %(days)s."
+
+msgid "The member's account is not eligible, so access cannot be restored."
+msgstr "Akaunti ya mwanachama haistahili, hivyo ufikiaji hauwezi kurejeshwa."
+
+msgid "Before you buy a membership, confirm your email address: in My account, ask for a confirmation link and open it. Do not pay anything until then."
+msgstr "Kabla ya kununua uanachama, thibitisha barua pepe yako: katika Akaunti yangu, omba kiungo cha uthibitisho na ukifungue. Usilipe chochote kabla ya hapo."
+
+msgid "Before you buy a membership, add an email address in My account and open the confirmation link we send. Do not pay anything until then."
+msgstr "Kabla ya kununua uanachama, ongeza barua pepe katika Akaunti yangu na ufungue kiungo cha uthibitisho tutakachokutumia. Usilipe chochote kabla ya hapo."
+
+msgid "Before you buy a membership, verify your mobile number (or confirm an email address) in My account. Do not pay anything until then."
+msgstr "Kabla ya kununua uanachama, thibitisha namba yako ya simu (au barua pepe) katika Akaunti yangu. Usilipe chochote kabla ya hapo."
+
+msgid "recipient"
+msgstr "mpokeaji"
+
+msgid "kind"
+msgstr "aina"
+
+msgid "context"
+msgstr "muktadha"
+
+msgid "requested at"
+msgstr "iliombwa"
+
+msgid "sent at"
+msgstr "ilitumwa"
+
+msgid "delivery attempts"
+msgstr "majaribio ya kufikisha"
+
+msgid "skip reason"
+msgstr "sababu ya kurukwa"
+
+msgid "outbound email"
+msgstr "barua pepe inayotumwa"
+
+msgid "outbound emails"
+msgstr "barua pepe zinazotumwa"
+
+msgid "event"
+msgstr "tukio"
+
+msgid "title"
+msgstr "kichwa"
+
+msgid "link"
+msgstr "kiungo"
+
+msgid "event key"
+msgstr "ufunguo wa tukio"
+
+msgid "read at"
+msgstr "ilisomwa"
+
+msgid "notification"
+msgstr "taarifa"
+
+msgid "Sent"
+msgstr "Imetumwa"
+
+msgid "Expired before delivery"
+msgstr "Muda uliisha kabla ya kufikishwa"
+
+msgid "No longer applicable"
+msgstr "Haihusiki tena"
+
+msgid "Account and security"
+msgstr "Akaunti na usalama"
+
+msgid "Sponsored viewing"
+msgstr "Utazamaji wa matangazo"
+
+msgid "Demo withdrawals"
+msgstr "Utoaji wa majaribio"
+
+msgid "The file is empty."
+msgstr "Faili ni tupu."
+
+msgid "Upload a JPEG or PNG picture, or a PDF, of the payment confirmation."
+msgstr "Pakia picha ya JPEG au PNG, au PDF, ya uthibitisho wa malipo."
+
+msgid "The file is too large. The limit is %(mb)s MB."
+msgstr "Faili ni kubwa mno. Kikomo ni MB %(mb)s."
+
+msgid "Vodacom M-Pesa"
+msgstr "Vodacom M-Pesa"
+
+msgid "Airtel Money - Lipa"
+msgstr "Airtel Money - Lipa"
+
+msgid "Mixx by Yas"
+msgstr "Mixx by Yas"
+
+msgid "Bank transfer"
+msgstr "Uhamisho wa benki"
+
+msgid "Receipt (optional)"
+msgstr "Risiti (si lazima)"
+
+msgid "A screenshot (JPEG or PNG) or PDF of the provider's confirmation, up to 5 MB. It helps our team find your payment; the payment itself is still checked in the provider records."
+msgstr "Picha ya skrini (JPEG au PNG) au PDF ya uthibitisho wa mtoa huduma, hadi MB 5. Inasaidia timu yetu kupata malipo yako; malipo yenyewe bado hukaguliwa kwenye kumbukumbu za mtoa huduma."
+
+msgid "Provider transaction ID"
+msgstr "Kitambulisho cha muamala cha mtoa huduma"
+
+msgid "Type it from the provider statement or business portal, not from this page."
+msgstr "Kiandike kutoka kwenye taarifa ya mtoa huduma au tovuti ya biashara, si kutoka ukurasa huu."
+
+msgid "I found this payment in the official provider business records."
+msgstr "Nimeyapata malipo haya kwenye kumbukumbu rasmi za biashara za mtoa huduma."
+
+msgid "The amount received is exactly the amount due."
+msgstr "Kiasi kilichopokelewa ni sawa kabisa na kinachodaiwa."
+
+msgid "It was received into the account shown to the member."
+msgstr "Yalipokelewa kwenye akaunti aliyoonyeshwa mwanachama."
+
+msgid "Internal note (optional)"
+msgstr "Maelezo ya ndani (si lazima)"
+
+msgid "The member did not give one. Find the payment by amount, time and paying number, then type its transaction ID. It is recorded on this payment and can never back another membership."
+msgstr "Mwanachama hakutoa. Tafuta malipo kwa kiasi, muda na namba iliyolipa, kisha andika kitambulisho cha muamala wake. Hurekodiwa kwenye malipo haya na hakiwezi kamwe kutumika kwa uanachama mwingine."
+
+msgid "Reason (shown to the member)"
+msgstr "Sababu (inaonyeshwa kwa mwanachama)"
+
+msgid "Note to the member"
+msgstr "Ujumbe kwa mwanachama"
+
+msgid "Required for “Other”. Never include personal data of other people."
+msgstr "Inahitajika kwa “Mwingine”. Usiweke kamwe taarifa binafsi za watu wengine."
+
+msgid "Provider"
+msgstr "Mtoa huduma"
+
+msgid "For a bank transfer, use the bank's name below (for example “CRDB Bank transfer”) and the account number as the receiving number."
+msgstr "Kwa uhamisho wa benki, tumia jina la benki hapa chini (kwa mfano “Uhamisho wa CRDB Bank”) na namba ya akaunti kama namba ya kupokea."
+
+msgid "Leave empty to use the provider's usual name."
+msgstr "Acha wazi ili kutumia jina la kawaida la mtoa huduma."
+
+msgid "Digits only: the Lipa number, till number or bank account number."
+msgstr "Tarakimu pekee: namba ya Lipa, namba ya till au namba ya akaunti ya benki."
+
+msgid "Exactly as the provider shows it to the person paying."
+msgstr "Kama mtoa huduma anavyoonyesha kwa mtu anayelipa."
+
+msgid "Payment steps for members (optional)"
+msgstr "Hatua za malipo kwa wanachama (si lazima)"
+
+msgid "One step per line. Lines may start with “1.” or “-”, and **text** shows in bold."
+msgstr "Hatua moja kwa kila mstari. Mistari inaweza kuanza na “1.” au “-”, na **maandishi** huonekana kwa herufi nzito."
+
+msgid "Provider code"
+msgstr "Msimbo wa mtoa huduma"
+
+msgid "Only for an “Other provider”: a short, permanent code such as TIGO. It cannot be changed later."
+msgstr "Kwa “Mtoa huduma mwingine” pekee: msimbo mfupi wa kudumu kama TIGO. Hauwezi kubadilishwa baadaye."
+
+msgid "I checked the receiving number and recipient name against the provider's own account."
+msgstr "Nimekagua namba ya kupokea na jina la mpokeaji dhidi ya akaunti ya mtoa huduma mwenyewe."
+
+msgid "Type the transaction ID shown in the provider records."
+msgstr "Andika kitambulisho cha muamala kinachoonyeshwa kwenye kumbukumbu za mtoa huduma."
+
+msgid "Confirm that you found this payment in the provider records."
+msgstr "Thibitisha kuwa umeyapata malipo haya kwenye kumbukumbu za mtoa huduma."
+
+msgid "Confirm that exactly the amount due was received."
+msgstr "Thibitisha kuwa kiasi kinachodaiwa kimepokelewa kamili."
+
+msgid "Confirm that it reached the receiving account shown to the member."
+msgstr "Thibitisha kuwa yamefika kwenye akaunti ya kupokea aliyoonyeshwa mwanachama."
+
+msgid "The amount received is exactly %(amount)s."
+msgstr "Kiasi kilichopokelewa ni %(amount)s kamili."
+
+msgid "It was received into %(provider)s %(number)s (%(name)s)."
+msgstr "Yalipokelewa kwenye %(provider)s %(number)s (%(name)s)."
+
+msgid "I found this payment in the official %(provider)s business records."
+msgstr "Nimeyapata malipo haya kwenye kumbukumbu rasmi za biashara za %(provider)s."
+
+msgid "Enter the name members see for this provider."
+msgstr "Weka jina ambalo wanachama wanaona kwa mtoa huduma huyu."
+
+msgid "Confirm that you checked the details against the provider's account."
+msgstr "Thibitisha kuwa umekagua taarifa dhidi ya akaunti ya mtoa huduma."
+
+msgid "Other provider"
+msgstr "Mtoa huduma mwingine"
+
+msgid "Enter a provider code for this provider, for example TIGO."
+msgstr "Weka msimbo wa mtoa huduma huyu, kwa mfano TIGO."
+
+msgid "Choose a provider."
+msgstr "Chagua mtoa huduma."
+
+msgid "Choose a provider"
+msgstr "Chagua mtoa huduma"
+
+msgid "Membership payments are not open yet, so plans cannot be bought right now. Do not send any money."
+msgstr "Malipo ya uanachama bado hayajafunguliwa, hivyo mipango haiwezi kununuliwa sasa. Usitume pesa yoyote."
+
+msgid "Use 2 to 20 uppercase letters, digits or underscores, starting with a letter."
+msgstr "Tumia herufi kubwa, tarakimu au mistari ya chini 2 hadi 20, ukianza na herufi."
+
+msgid "Enter the provider name shown to customers (2 to 100 characters)."
+msgstr "Weka jina la mtoa huduma linaloonyeshwa kwa wateja (herufi 2 hadi 100)."
+
+msgid "Enter the receiving number: digits only, 4 to 15 of them."
+msgstr "Weka namba ya kupokea: tarakimu pekee, 4 hadi 15."
+
+msgid "Enter the recipient name shown by the provider when paying."
+msgstr "Weka jina la mpokeaji linaloonyeshwa na mtoa huduma wakati wa kulipa."
+
+msgid "Enter the transaction reference exactly as it appears in the provider confirmation message (letters and digits, 6 to 40 characters)."
+msgstr "Weka kumbukumbu ya muamala kama inavyoonekana kwenye ujumbe wa uthibitisho wa mtoa huduma (herufi na tarakimu, 6 hadi 40)."
+
+msgid "Confirm that you found this transaction in the official provider business records."
+msgstr "Thibitisha kuwa umeupata muamala huu kwenye kumbukumbu rasmi za biashara za mtoa huduma."
+
+msgid "Confirm that the payment was received into the receiving account shown to the member."
+msgstr "Thibitisha kuwa malipo yalipokelewa kwenye akaunti ya kupokea aliyoonyeshwa mwanachama."
+
+msgid "Confirm that the provider records show exactly the amount due."
+msgstr "Thibitisha kuwa kumbukumbu za mtoa huduma zinaonyesha kiasi kinachodaiwa kamili."
+
+msgid "Choose a payment method and get its instructions first."
+msgstr "Kwanza chagua njia ya malipo na upate maelekezo yake."
+
+msgid "This transaction reference has already been submitted. Each provider payment can be used for one membership only. Contact support if you think this is a mistake."
+msgstr "Kumbukumbu hii ya muamala imeshawasilishwa. Kila malipo ya mtoa huduma yanaweza kutumika kwa uanachama mmoja tu. Wasiliana na usaidizi ikiwa unadhani hili ni kosa."
+
+msgid "The receiving number does not match the issued instructions."
+msgstr "Namba ya kupokea hailingani na maelekezo yaliyotolewa."
+
+msgid "The registered recipient does not match the issued instructions."
+msgstr "Mpokeaji aliyesajiliwa halingani na maelekezo yaliyotolewa."
+
+msgid "Choose payment instructions for this membership."
+msgstr "Chagua maelekezo ya malipo kwa uanachama huu."
+
+msgid "This transaction reference is already used by another membership payment. Do not approve: check which member really paid, and reject with “already used” if needed."
+msgstr "Kumbukumbu hii ya muamala tayari inatumiwa na malipo mengine ya uanachama. Usiidhinishe: kagua ni mwanachama yupi aliyelipa kweli, na ukatae kwa “imeshatumika” ikihitajika."
+
+msgid "Sandbox (simulated)"
+msgstr "Mazingira ya majaribio (kuigiza)"
+
+msgid "Membership revenue"
+msgstr "Mapato ya uanachama"
+
+msgid "Advertiser restricted funds"
+msgstr "Fedha zilizozuiliwa za mtangazaji"
+
+msgid "environment"
+msgstr "mazingira"
+
+msgid "funds domain"
+msgstr "eneo la fedha"
+
+msgid "amount (TZS)"
+msgstr "kiasi (TZS)"
+
+msgid "provider"
+msgstr "mtoa huduma"
+
+msgid "provider reference"
+msgstr "kumbukumbu ya mtoa huduma"
+
+msgid "status reason"
+msgstr "sababu ya hali"
+
+msgid "provider confirmed"
+msgstr "mtoa huduma amethibitisha"
+
+msgid "reconciled"
+msgstr "imelinganishwa"
+
+msgid "provider amount"
+msgstr "kiasi cha mtoa huduma"
+
+msgid "provider currency"
+msgstr "sarafu ya mtoa huduma"
+
+msgid "payment intent"
+msgstr "ombi la malipo"
+
+msgid "sandbox provider transaction (simulated)"
+msgstr "muamala wa majaribio wa mtoa huduma (kuigiza)"
+
+msgid "provider event"
+msgstr "tukio la mtoa huduma"
+
+msgid "reconciliation exception"
+msgstr "tofauti ya ulinganisho"
+
+msgid "sandbox journal posting (simulated)"
+msgstr "ingizo la majaribio kwenye jarida (kuigiza)"
+
+msgid "sandbox advertiser funds"
+msgstr "fedha za majaribio za mtangazaji"
+
+msgid "sandbox campaign allocation"
+msgstr "mgao wa kampeni wa majaribio"
+
+msgid "refund request"
+msgstr "ombi la kurejeshewa pesa"
+
+msgid "payment dispute"
+msgstr "mgogoro wa malipo"
+
+msgid "membership activation preview (sandbox)"
+msgstr "hakiki ya uwezeshaji wa uanachama (majaribio)"
+
+msgid "method"
+msgstr "njia"
+
+msgid "provider label"
+msgstr "jina la mtoa huduma"
+
+msgid "receiving number"
+msgstr "namba ya kupokea"
+
+msgid "payment instructions"
+msgstr "maelekezo ya malipo"
+
+msgid "manual payment instruction"
+msgstr "maelekezo ya malipo kwa mkono"
+
+msgid "quoted amount (TZS)"
+msgstr "kiasi kilichotajwa (TZS)"
+
+msgid "paying phone number"
+msgstr "namba ya simu iliyolipa"
+
+msgid "reference key"
+msgstr "ufunguo wa kumbukumbu"
+
+msgid "payment date (stated by member)"
+msgstr "tarehe ya malipo (kwa maelezo ya mwanachama)"
+
+msgid "verified amount (TZS)"
+msgstr "kiasi kilichothibitishwa (TZS)"
+
+msgid "verified reference"
+msgstr "kumbukumbu iliyothibitishwa"
+
+msgid "receipt confirmed in provider records"
+msgstr "risiti imethibitishwa kwenye kumbukumbu za mtoa huduma"
+
+msgid "review note"
+msgstr "maelezo ya ukaguzi"
+
+msgid "rejection reason"
+msgstr "sababu ya kukataliwa"
+
+msgid "ledger entry"
+msgstr "ingizo la leja"
+
+msgid "manual membership payment"
+msgstr "malipo ya uanachama kwa mkono"
+
+msgid "stored file"
+msgstr "faili iliyohifadhiwa"
+
+msgid "file type"
+msgstr "aina ya faili"
+
+msgid "size (bytes)"
+msgstr "ukubwa (baiti)"
+
+msgid "SHA-256"
+msgstr "SHA-256"
+
+msgid "manual payment evidence"
+msgstr "ushahidi wa malipo kwa mkono"
+
+msgid "Callback"
+msgstr "Taarifa ya kurudishwa"
+
+msgid "Status check"
+msgstr "Ukaguzi wa hali"
+
+msgid "Unknown provider reference"
+msgstr "Kumbukumbu ya mtoa huduma isiyojulikana"
+
+msgid "Environment does not match"
+msgstr "Mazingira hayalingani"
+
+msgid "Payment arrived for a closed intent"
+msgstr "Malipo yamefika kwa ombi lililofungwa"
+
+msgid "Restricted funds shortfall"
+msgstr "Upungufu wa fedha zilizozuiliwa"
+
+msgid "Funding totals inconsistent"
+msgstr "Jumla za ufadhili hazilingani"
+
+msgid "Resolved in our favour"
+msgstr "Imetatuliwa kwa upande wetu"
+
+msgid "Would activate"
+msgstr "Ingewezesha"
+
+msgid "Would renew"
+msgstr "Ingesasisha"
+
+msgid "No matching transaction in the provider business records"
+msgstr "Hakuna muamala unaolingana kwenye kumbukumbu za biashara za mtoa huduma"
+
+msgid "So our team can contact you about this bank transfer. The transfer itself is checked in the bank's records."
+msgstr "Ili timu yetu iweze kuwasiliana nawe kuhusu uhamisho huu wa benki. Uhamisho wenyewe hukaguliwa kwenye kumbukumbu za benki."
+
+msgid "The receipt is too large. The limit is %(mb)s MB. Nothing was submitted."
+msgstr "Risiti ni kubwa mno. Kikomo ni MB %(mb)s. Hakuna kilichowasilishwa."
+
+msgid "The start date must not be after the end date."
+msgstr "Tarehe ya kuanza isiwe baada ya tarehe ya mwisho."
+
+msgid "Enter dates as YYYY-MM-DD."
+msgstr "Weka tarehe kwa muundo YYYY-MM-DD."
+
+msgid "Choose a period of at most %(days)d days."
+msgstr "Chagua kipindi kisichozidi siku %(days)d."
+
+msgid "approved campaign revision"
+msgstr "toleo la kampeni lililoidhinishwa"
+
+msgid "demo reward per verified view (TZS)"
+msgstr "zawadi ya majaribio kwa kila utazamaji uliohakikiwa (TZS)"
+
+msgid "notes"
+msgstr "maelezo"
+
+msgid "effective from"
+msgstr "inaanza kutumika"
+
+msgid "effective until"
+msgstr "inatumika hadi"
+
+msgid "decided"
+msgstr "iliamuliwa"
+
+msgid "decision reason"
+msgstr "sababu ya uamuzi"
+
+msgid "demo reward policy"
+msgstr "sera ya zawadi za majaribio"
+
+msgid "demo reward policies"
+msgstr "sera za zawadi za majaribio"
+
+msgid "campaign revision"
+msgstr "toleo la kampeni"
+
+msgid "policy version"
+msgstr "toleo la sera"
+
+msgid "simulated amount (TZS)"
+msgstr "kiasi cha kuigiza (TZS)"
+
+msgid "reason codes"
+msgstr "misimbo ya sababu"
+
+msgid "reversal reason"
+msgstr "sababu ya kubatilisha"
+
+msgid "demo reward"
+msgstr "zawadi ya majaribio"
+
+msgid "demo consumed (TZS, simulated)"
+msgstr "majaribio yaliyotumika (TZS, kuigiza)"
+
+msgid "updated"
+msgstr "ilisasishwa"
+
+msgid "campaign demo reward budget"
+msgstr "bajeti ya zawadi za majaribio za kampeni"
+
+msgid "total credit budget"
+msgstr "jumla ya bajeti ya krediti"
+
+msgid "campaign credit terms"
+msgstr "masharti ya krediti za kampeni"
+
+msgid "eligible membership plans"
+msgstr "mipango ya uanachama inayostahili"
+
+msgid "This policy changed since you opened it."
+msgstr "Sera hii imebadilika tangu ulipoifungua."
+
+msgid "Only draft policies can be approved."
+msgstr "Sera za rasimu pekee ndizo zinaweza kuidhinishwa."
+
+msgid "The campaign was changed after this draft. Create a new policy version."
+msgstr "Kampeni ilibadilishwa baada ya rasimu hii. Unda toleo jipya la sera."
+
+msgid "Only draft policies can be rejected."
+msgstr "Sera za rasimu pekee ndizo zinaweza kukataliwa."
+
+msgid "Only approved policies can be retired."
+msgstr "Sera zilizoidhinishwa pekee ndizo zinaweza kustaafishwa."
+
+msgid "The credit terms changed since you opened them. Review and try again."
+msgstr "Masharti ya krediti yamebadilika tangu ulipoyafungua. Kagua na ujaribu tena."
+
+msgid "This reward changed since you opened it."
+msgstr "Zawadi hii imebadilika tangu ulipoifungua."
+
+msgid "Only recorded demo rewards can be reversed."
+msgstr "Zawadi za majaribio zilizorekodiwa pekee ndizo zinaweza kubatilishwa."
+
+msgid "submission key"
+msgstr "ufunguo wa uwasilishaji"
+
+msgid "last activity"
+msgstr "shughuli ya mwisho"
+
+msgid "resolved at"
+msgstr "ilitatuliwa"
+
+msgid "support ticket"
+msgstr "tiketi ya usaidizi"
+
+msgid "from staff"
+msgstr "kutoka kwa wafanyakazi"
+
+msgid "support message"
+msgstr "ujumbe wa usaidizi"
+
+msgid "support messages"
+msgstr "jumbe za usaidizi"
+
+msgid "support ticket event"
+msgstr "tukio la tiketi ya usaidizi"
+
+msgid "support ticket events"
+msgstr "matukio ya tiketi ya usaidizi"
+
+msgid "Ticket not found."
+msgstr "Tiketi haikupatikana."
+
+msgid "This form has expired. Reload the page and try again."
+msgstr "Fomu hii imeisha muda. Pakia ukurasa upya na ujaribu tena."
+
+msgid "This ticket changed since you opened it. Review it again."
+msgstr "Tiketi hii imebadilika tangu ulipoifungua. Ikague tena."
+
+msgid "This ticket is closed. Please open a new ticket."
+msgstr "Tiketi hii imefungwa. Tafadhali fungua tiketi mpya."
+
+msgid "Closed tickets cannot be reassigned."
+msgstr "Tiketi zilizofungwa haziwezi kukabidhiwa upya."
+
+msgid "Closed tickets cannot change."
+msgstr "Tiketi zilizofungwa haziwezi kubadilika."
+
+msgid "Could not create the ticket. Please try again."
+msgstr "Tiketi haikuweza kuundwa. Tafadhali jaribu tena."
+
+msgid "A %(old)s ticket cannot become %(new)s."
+msgstr "Tiketi yenye hali ya “%(old)s” haiwezi kubadilika kuwa “%(new)s”."
+
+msgid "This ticket was resolved more than %(days)s days ago. Please open a new ticket."
+msgstr "Tiketi hii ilitatuliwa zaidi ya siku %(days)s zilizopita. Tafadhali fungua tiketi mpya."
+
+msgid "Leave blank to generate from the title. Fixed once published."
+msgstr "Acha wazi ili itengenezwe kutoka kwa kichwa. Haibadiliki baada ya kuchapishwa."
+
+msgid "Demo videos only: shown in the library."
+msgstr "Video za majaribio pekee: zinaonyeshwa kwenye maktaba."
+
+msgid "Leave blank to generate from the name."
+msgstr "Acha wazi ili itengenezwe kutoka kwa jina."
+
+msgid "slug"
+msgstr "slug"
+
+msgid "video category"
+msgstr "kundi la video"
+
+msgid "video categories"
+msgstr "makundi ya video"
+
+msgid "required entitlement"
+msgstr "haki ya ufikiaji inayohitajika"
+
+msgid "provider video id"
+msgstr "kitambulisho cha video cha mtoa huduma"
+
+msgid "provider library id"
+msgstr "kitambulisho cha maktaba ya mtoa huduma"
+
+msgid "provider status code"
+msgstr "msimbo wa hali wa mtoa huduma"
+
+msgid "duration (seconds)"
+msgstr "muda (sekunde)"
+
+msgid "thumbnail file"
+msgstr "faili ya picha ndogo"
+
+msgid "processing"
+msgstr "uchakataji"
+
+msgid "processing error"
+msgstr "hitilafu ya uchakataji"
+
+msgid "last synchronized"
+msgstr "ilisawazishwa mara ya mwisho"
+
+msgid "publication"
+msgstr "uchapishaji"
+
+msgid "published at"
+msgstr "ilichapishwa"
+
+msgid "archived at"
+msgstr "ilihifadhiwa kwenye kumbukumbu"
+
+msgid "Bunny Stream"
+msgstr "Bunny Stream"
+
+msgid "Demo sample (no real media)"
+msgstr "Sampuli ya majaribio (bila video halisi)"
+
+msgid "Waiting for upload"
+msgstr "Inasubiri kupakiwa"
+
+msgid "Uploading"
+msgstr "Inapakiwa"
+
+msgid "Processing"
+msgstr "Inachakatwa"
+
+msgid "Ready"
+msgstr "Iko tayari"
+
+msgid "Published"
+msgstr "Imechapishwa"
+
+msgid "Membership entitlement needed to play this video."
+msgstr "Haki ya uanachama inayohitajika kucheza video hii."
+
+msgid "A category with this name already exists."
+msgstr "Tayari kuna kundi lenye jina hili."
+
+msgid "Demo videos are disabled here."
+msgstr "Video za majaribio zimezimwa hapa."
+
+msgid "Upload preparation is already in progress. Try again in a moment."
+msgstr "Maandalizi ya upakiaji tayari yanaendelea. Jaribu tena baada ya muda mfupi."
+
+msgid "Demo videos have no uploads."
+msgstr "Video za majaribio hazina upakiaji."
+
+msgid "Archived videos cannot receive uploads."
+msgstr "Video zilizohifadhiwa kwenye kumbukumbu haziwezi kupakiwa upya."
+
+msgid "This video already has media."
+msgstr "Video hii tayari ina faili."
+
+msgid "This file type is not supported."
+msgstr "Aina hii ya faili haitumiki."
+
+msgid "Still processing at the provider"
+msgstr "Bado inachakatwa kwa mtoa huduma"
+
+msgid "Only archived Bunny videos can have their media deleted."
+msgstr "Video za Bunny zilizohifadhiwa kwenye kumbukumbu pekee ndizo zinaweza kufutiwa faili zake."
+
+msgid "Only archived videos can have media deleted."
+msgstr "Video zilizohifadhiwa kwenye kumbukumbu pekee ndizo zinaweza kufutiwa faili."
+
+msgid "Archived videos cannot be edited."
+msgstr "Video zilizohifadhiwa kwenye kumbukumbu haziwezi kuhaririwa."
+
+msgid "Files must be smaller than %(size)s MB."
+msgstr "Faili lazima ziwe ndogo kuliko MB %(size)s."
+
+msgid "This video is already published."
+msgstr "Video hii tayari imechapishwa."
+
+msgid "Only draft videos can be published."
+msgstr "Video za rasimu pekee ndizo zinaweza kuchapishwa."
+
+msgid "The video must finish processing before it can be published."
+msgstr "Video lazima imalize kuchakatwa kabla ya kuchapishwa."
+
+msgid "Choose an active category before publishing."
+msgstr "Chagua kundi linalotumika kabla ya kuchapisha."
+
+msgid "Demo videos cannot be published here."
+msgstr "Video za majaribio haziwezi kuchapishwa hapa."
+
+msgid "Only published videos can be unpublished."
+msgstr "Video zilizochapishwa pekee ndizo zinaweza kuondolewa kwenye uchapishaji."
+
+msgid "This video is already archived."
+msgstr "Video hii tayari imehifadhiwa kwenye kumbukumbu."
+
+msgid "state"
+msgstr "hali"
+
+msgid "fraud flags"
+msgstr "alama za udanganyifu"
+
+msgid "review"
+msgstr "ukaguzi"
+
+msgid "qualifying view number"
+msgstr "namba ya utazamaji unaostahili"
+
+msgid "credits offered at start"
+msgstr "krediti zilizotolewa mwanzoni"
+
+msgid "must start by"
+msgstr "lazima ianze kabla ya"
+
+msgid "last evidence"
+msgstr "ushahidi wa mwisho"
+
+msgid "video length (ms)"
+msgstr "urefu wa video (ms)"
+
+msgid "required watch (ms)"
+msgstr "muda wa kutazama unaohitajika (ms)"
+
+msgid "plausible watch time (ms)"
+msgstr "muda wa kutazama unaokubalika (ms)"
+
+msgid "continuous coverage (ms)"
+msgstr "utazamaji mfululizo (ms)"
+
+msgid "watch session"
+msgstr "kipindi cha kutazama"
+
+msgid "Ready to play"
+msgstr "Tayari kuchezwa"
+
+msgid "Watching"
+msgstr "Inatazamwa"
+
+msgid "Finished"
+msgstr "Imemalizika"
+
+msgid "Stopped"
+msgstr "Imesimamishwa"
+
+msgid "Not required"
+msgstr "Haihitajiki"
+
+msgid "Confirmed by staff"
+msgstr "Imethibitishwa na wafanyakazi"
+
+msgid "Rejected by staff"
+msgstr "Imekataliwa na wafanyakazi"
+
+msgid "Please sign in to watch sponsored videos."
+msgstr "Tafadhali ingia ili kutazama video zinazodhaminiwa."
+
+msgid "Your account cannot watch sponsored videos at the moment."
+msgstr "Akaunti yako haiwezi kutazama video zinazodhaminiwa kwa sasa."
+
+msgid "Please confirm your email address first."
+msgstr "Tafadhali kwanza thibitisha barua pepe yako."
+
+msgid "An active membership is needed to watch sponsored videos."
+msgstr "Uanachama hai unahitajika ili kutazama video zinazodhaminiwa."
+
+msgid "This campaign is for members of other plans."
+msgstr "Kampeni hii ni kwa wanachama wa mipango mingine."
+
+msgid "You have already watched this campaign the maximum number of times."
+msgstr "Tayari umetazama kampeni hii idadi ya juu kabisa ya mara zinazoruhusiwa."
+
+msgid "You cannot watch campaigns of an advertiser you work for."
+msgstr "Huwezi kutazama kampeni za mtangazaji unayemfanyia kazi."
+
+msgid "This campaign is not available to you right now."
+msgstr "Kampeni hii haipatikani kwako kwa sasa."
+
+msgid "Session not found."
+msgstr "Kipindi hakikupatikana."
+
+msgid "This session was reviewed or changed since you opened it."
+msgstr "Kipindi hiki kimekaguliwa au kimebadilika tangu ulipokifungua."
+
+msgid "Only sessions awaiting review can be decided."
+msgstr "Vipindi vinavyosubiri ukaguzi pekee ndivyo vinaweza kuamuliwa."
+
+msgid "Only verified views can be revoked."
+msgstr "Mitazamo iliyohakikiwa pekee ndiyo inaweza kubatilishwa."
+
+msgid "classification"
+msgstr "uainishaji"
+
+msgid "funding class"
+msgstr "aina ya ufadhili"
+
+msgid "scope"
+msgstr "wigo"
+
+msgid "scope id"
+msgstr "kitambulisho cha wigo"
+
+msgid "overdraft protected"
+msgstr "imelindwa dhidi ya kuzidisha"
+
+msgid "debit balance"
+msgstr "salio la deni"
+
+msgid "ledger account"
+msgstr "akaunti ya leja"
+
+msgid "ledger accounts"
+msgstr "akaunti za leja"
+
+msgid "posting type"
+msgstr "aina ya ingizo"
+
+msgid "total amount"
+msgstr "jumla ya kiasi"
+
+msgid "posted at"
+msgstr "ilirekodiwa"
+
+msgid "source type"
+msgstr "aina ya chanzo"
+
+msgid "source id"
+msgstr "kitambulisho cha chanzo"
+
+msgid "external reference"
+msgstr "kumbukumbu ya nje"
+
+msgid "fingerprint"
+msgstr "alama ya utambulisho"
+
+msgid "posted by"
+msgstr "ilirekodiwa na"
+
+msgid "journal entry"
+msgstr "ingizo la jarida"
+
+msgid "journal entries"
+msgstr "maingizo ya jarida"
+
+msgid "line"
+msgstr "mstari"
+
+msgid "side"
+msgstr "upande"
+
+msgid "memo"
+msgstr "maelezo"
+
+msgid "journal line"
+msgstr "mstari wa jarida"
+
+msgid "journal lines"
+msgstr "mistari ya jarida"
+
+msgid "member wallet"
+msgstr "pochi ya mwanachama"
+
+msgid "lift reason"
+msgstr "sababu ya kuondoa"
+
+msgid "lifted"
+msgstr "imeondolewa"
+
+msgid "wallet restriction"
+msgstr "kizuizi cha pochi"
+
+msgid "bucket"
+msgstr "kundi"
+
+msgid "detail"
+msgstr "maelezo"
+
+msgid "resolution note"
+msgstr "maelezo ya utatuzi"
+
+msgid "wallet discrepancy"
+msgstr "tofauti ya pochi"
+
+msgid "wallet discrepancies"
+msgstr "tofauti za pochi"
+
+msgid "Frozen"
+msgstr "Imegandishwa"
+
+msgid "Posted"
+msgstr "Imerekodiwa"
+
+msgid "Provider or bank reference; unique per source type when set."
+msgstr "Kumbukumbu ya mtoa huduma au benki; ya kipekee kwa kila aina ya chanzo inapowekwa."
+
+msgid "related entry"
+msgstr "ingizo linalohusiana"
+
+msgid "reverses"
+msgstr "inabatilisha"
+
+msgid "Debit"
+msgstr "Kutoa"
+
+msgid "Credit"
+msgstr "Kuingiza"
+
+msgid "Restricted"
+msgstr "Imezuiliwa"
+
+msgid "Security hold"
+msgstr "Kizuizi cha usalama"
+
+msgid "Fraud review"
+msgstr "Ukaguzi wa udanganyifu"
+
+msgid "Compliance review"
+msgstr "Ukaguzi wa uzingatiaji"
+
+msgid "Lift requested"
+msgstr "Kuondolewa kumeombwa"
+
+msgid "Lifted"
+msgstr "Imeondolewa"
+
+msgid "Advertiser-funded reward"
+msgstr "Zawadi inayofadhiliwa na mtangazaji"
+
+msgid "Withdrawal reserved"
+msgstr "Utoaji umetengwa"
+
+msgid "Withdrawal paid"
+msgstr "Utoaji umelipwa"
+
+msgid "Withdrawal released"
+msgstr "Utoaji umeachiliwa"
+
+msgid "Authorized correction"
+msgstr "Marekebisho yaliyoidhinishwa"
+
+msgid "Reversal"
+msgstr "Ubatilishaji"
+
+msgid "Reserved"
+msgstr "Imetengwa"
+
+msgid "In"
+msgstr "Ndani"
+
+msgid "Out"
+msgstr "Nje"
+
+msgid "Your wallet is open. It holds no money yet."
+msgstr "Pochi yako imefunguliwa. Bado haina pesa yoyote."
+
+msgid "This account cannot have a member wallet."
+msgstr "Akaunti hii haiwezi kuwa na pochi ya mwanachama."
+
+msgid "Wallet not found."
+msgstr "Pochi haikupatikana."
+
+msgid "Only active restrictions can be lifted."
+msgstr "Vizuizi vinavyotumika pekee ndivyo vinaweza kuondolewa."
+
+msgid "The person who requested the lift cannot approve it."
+msgstr "Mtu aliyeomba kuondolewa hawezi kukuidhinisha."
+
+msgid "mobile network"
+msgstr "mtandao wa simu"
+
+msgid "last four digits"
+msgstr "tarakimu nne za mwisho"
+
+msgid "checked"
+msgstr "imekaguliwa"
+
+msgid "payout beneficiary"
+msgstr "mpokeaji wa malipo"
+
+msgid "withdrawal request (real, locked)"
+msgstr "ombi la utoaji (halisi, limefungwa)"
+
+msgid "demo reference"
+msgstr "kumbukumbu ya majaribio"
+
+msgid "needs two approvers"
+msgstr "inahitaji waidhinishaji wawili"
+
+msgid "risk flags"
+msgstr "alama za hatari"
+
+msgid "reason code"
+msgstr "msimbo wa sababu"
+
+msgid "simulated payout reference"
+msgstr "kumbukumbu ya malipo ya kuigiza"
+
+msgid "demo withdrawal (simulated)"
+msgstr "utoaji wa majaribio (kuigiza)"
+
+msgid "demo withdrawal decision"
+msgstr "uamuzi wa utoaji wa majaribio"
+
+msgid "sandbox payout (simulated)"
+msgstr "malipo ya majaribio (kuigiza)"
+
+msgid "payout event"
+msgstr "tukio la malipo"
+
+msgid "withdrawal exception"
+msgstr "tofauti ya utoaji"
+
+msgid "Mobile money"
+msgstr "Pesa kwa simu"
+
+msgid "Bank account"
+msgstr "Akaunti ya benki"
+
+msgid "Airtel Money"
+msgstr "Airtel Money"
+
+msgid "Halotel HaloPesa"
+msgstr "Halotel HaloPesa"
+
+msgid "Demo check passed (not a real verification)"
+msgstr "Ukaguzi wa majaribio umefaulu (si uthibitisho halisi)"
+
+msgid "Requested"
+msgstr "Imeombwa"
+
+msgid "Payout pending"
+msgstr "Malipo yanasubiri"
+
+msgid "Returned"
+msgstr "Imerudishwa"
+
+msgid "Withdrawals are not available yet. Real rewards and payouts are not active."
+msgstr "Utoaji wa pesa bado haupatikani. Zawadi halisi na malipo bado hayajaanza."
+
+msgid "Only verified, active member accounts can withdraw."
+msgstr "Akaunti za wanachama zilizothibitishwa na hai pekee ndizo zinaweza kutoa pesa."
+
+msgid "Open your wallet first."
+msgstr "Kwanza fungua pochi yako."
+
+msgid "Your wallet is under review."
+msgstr "Pochi yako inakaguliwa."
+
+msgid "Your available wallet balance is not enough."
+msgstr "Salio linalopatikana kwenye pochi yako halitoshi."
+
+msgid "Add a verified payout destination."
+msgstr "Ongeza njia ya kupokea malipo iliyothibitishwa."
+
+msgid "New payout destinations can be used after 24 hours."
+msgstr "Njia mpya za kupokea malipo zinaweza kutumika baada ya saa 24."
+
+msgid "The amount is below the minimum withdrawal."
+msgstr "Kiasi kiko chini ya kiwango cha chini cha kutoa."
+
+msgid "The amount is above the maximum withdrawal."
+msgstr "Kiasi kinazidi kiwango cha juu cha kutoa."
+
+msgid "The amount would exceed your daily limit."
+msgstr "Kiasi kingezidi kikomo chako cha siku."
+
+msgid "The amount would exceed your weekly limit."
+msgstr "Kiasi kingezidi kikomo chako cha wiki."
+
+msgid "Too many withdrawal requests today."
+msgstr "Maombi ya kutoa pesa ni mengi mno leo."
+
+msgid "Too many beneficiary changes today. Please try again tomorrow."
+msgstr "Mabadiliko ya wapokeaji ni mengi mno leo. Tafadhali jaribu tena kesho."
+
+msgid "Payout destination not found."
+msgstr "Njia ya kupokea malipo haikupatikana."
+
+msgid "Removed destinations cannot be checked."
+msgstr "Njia zilizoondolewa haziwezi kukaguliwa."
+
+msgid "The demo check did not pass."
+msgstr "Ukaguzi wa majaribio haukufaulu."
+
+msgid "This withdrawal changed since you opened it. Reload and review again."
+msgstr "Utoaji huu umebadilika tangu ulipoufungua. Pakia upya na ukague tena."
+
+msgid "Unknown simulator action."
+msgstr "Kitendo cha kuigiza kisichojulikana."
+
+msgid "Start the payout first."
+msgstr "Kwanza anzisha malipo."
+
+msgid "You can keep at most three payout destinations. Remove one first."
+msgstr "Unaweza kuwa na njia zisizozidi tatu za kupokea malipo. Kwanza ondoa moja."
+
+msgid "Choose an active payout destination of this member."
+msgstr "Chagua njia hai ya kupokea malipo ya mwanachama huyu."
+
+msgid "Only new requests can be taken into review."
+msgstr "Maombi mapya pekee ndiyo yanaweza kuchukuliwa kwa ukaguzi."
+
+msgid "Only requests under review can be approved."
+msgstr "Maombi yanayokaguliwa pekee ndiyo yanaweza kuidhinishwa."
+
+msgid "A different reviewer must approve."
+msgstr "Mkaguzi mwingine lazima aidhinishe."
+
+msgid "Only requests that have not been paid out can be rejected."
+msgstr "Maombi ambayo hayajalipwa pekee ndiyo yanaweza kukataliwa."
+
+msgid "A payout already started; it cannot be cancelled."
+msgstr "Malipo tayari yameanza; hayawezi kughairiwa."
+
+msgid "Only approved requests can be paid out."
+msgstr "Maombi yaliyoidhinishwa pekee ndiyo yanaweza kulipwa."
+
+msgid "Only completed payouts can be returned."
+msgstr "Malipo yaliyokamilika pekee ndiyo yanaweza kurudishwa."
+
+msgid "Payout destination saved (masked)."
+msgstr "Njia ya kupokea malipo imehifadhiwa (imefichwa sehemu)."
+
+msgid "Demo checks are not available here."
+msgstr "Ukaguzi wa majaribio haupatikani hapa."
+
+msgid "Payout destination removed."
+msgstr "Njia ya kupokea malipo imeondolewa."
+
+msgid "Demo check passed. This is not a real account verification."
+msgstr "Ukaguzi wa majaribio umefaulu. Huu si uthibitisho halisi wa akaunti."
+
+msgid "Bad request"
+msgstr "Ombi baya"
+
+msgid "The request could not be understood."
+msgstr "Ombi halikueleweka."
+
+msgid "Access denied"
+msgstr "Ufikiaji umekataliwa"
+
+msgid "You do not have permission to view this page."
+msgstr "Huna ruhusa ya kuona ukurasa huu."
+
+msgid "Request expired"
+msgstr "Ombi limeisha muda"
+
+msgid "Your session or form has expired. Go back, refresh the page and try again."
+msgstr "Kipindi au fomu yako imeisha muda. Rudi nyuma, pakia ukurasa upya na ujaribu tena."
+
+msgid "Page not found"
+msgstr "Ukurasa haukupatikana"
+
+msgid "The page you requested does not exist."
+msgstr "Ukurasa uliouomba haupo."
+
+msgid "Something went wrong"
+msgstr "Kuna tatizo limetokea"
+
+msgid "An unexpected error occurred. Please try again later."
+msgstr "Hitilafu isiyotarajiwa imetokea. Tafadhali jaribu tena baadaye."
+
+msgid "Registration no."
+msgstr "Namba ya usajili"
+
+msgid "TIN"
+msgstr "TIN"
+
+msgid "Last decision"
+msgstr "Uamuzi wa mwisho"
+
+msgid "Verification decision"
+msgstr "Uamuzi wa uthibitisho"
+
+msgid "Reason (required to reject or suspend; shown to the advertiser)"
+msgstr "Sababu (inahitajika kukataa au kusimamisha; inaonyeshwa kwa mtangazaji)"
+
+msgid "Approve"
+msgstr "Idhinisha"
+
+msgid "Reject"
+msgstr "Kataa"
+
+msgid "Suspend"
+msgstr "Simamisha"
+
+msgid "Reinstate"
+msgstr "Rejesha"
+
+msgid "Waiting for the advertiser to update and resubmit."
+msgstr "Inasubiri mtangazaji asasishe na kuwasilisha upya."
+
+msgid "Authorized videos"
+msgstr "Video zilizoidhinishwa"
+
+msgid "No videos authorized yet."
+msgstr "Bado hakuna video zilizoidhinishwa."
+
+msgid "Authorize video"
+msgstr "Idhinisha video"
+
+msgid "Advertisers"
+msgstr "Watangazaji"
+
+msgid "Search name"
+msgstr "Tafuta jina"
+
+msgid "No advertisers in this list."
+msgstr "Hakuna watangazaji kwenye orodha hii."
+
+msgid "Credits and eligibility"
+msgstr "Krediti na ustahiki"
+
+msgid "Not authorized"
+msgstr "Haijaidhinishwa"
+
+msgid "Not ready/published"
+msgstr "Haiko tayari/haijachapishwa"
+
+msgid "per view"
+msgstr "kwa kila utazamaji"
+
+msgid "Review notes"
+msgstr "Maelezo ya ukaguzi"
+
+msgid "Eligibility"
+msgstr "Ustahiki"
+
+msgid "Decision"
+msgstr "Uamuzi"
+
+msgid "Notes / reason (required to reject, pause or cancel; shown to the advertiser)"
+msgstr "Maelezo / sababu (inahitajika kukataa, kusitisha au kughairi; inaonyeshwa kwa mtangazaji)"
+
+msgid "Request changes"
+msgstr "Omba mabadiliko"
+
+msgid "Campaign review"
+msgstr "Ukaguzi wa kampeni"
+
+msgid "Campaign or advertiser"
+msgstr "Kampeni au mtangazaji"
+
+msgid "No campaigns in this list."
+msgstr "Hakuna kampeni kwenye orodha hii."
+
+msgid "Showing campaigns that use “%(title)s”."
+msgstr "Inaonyesha kampeni zinazotumia “%(title)s”."
+
+msgid "Showing campaigns that use one video."
+msgstr "Inaonyesha kampeni zinazotumia video moja."
+
+msgid "Show all campaigns"
+msgstr "Onyesha kampeni zote"
+
+msgid "Video creatives"
+msgstr "Video za matangazo"
+
+msgid "Videos ClipCash has authorized for your advertiser account. ClipCash uploads and processes each video securely; choose one when you create a campaign."
+msgstr "Video ambazo ClipCash imeidhinisha kwa akaunti yako ya mtangazaji. ClipCash hupakia na kuchakata kila video kwa usalama; chagua moja unapounda kampeni."
+
+msgid "Not playable right now. Campaigns using it are not shown to members until ClipCash fixes this."
+msgstr "Haichezeki kwa sasa. Kampeni zinazoitumia hazionyeshwi kwa wanachama hadi ClipCash itakaporekebisha hili."
+
+msgid "Used in %(n)s campaign"
+msgid_plural "Used in %(n)s campaigns"
+msgstr[0] "Inatumika katika kampeni %(n)s"
+msgstr[1] "Inatumika katika kampeni %(n)s"
+
+msgid "%(n)s running or scheduled"
+msgid_plural "%(n)s running or scheduled"
+msgstr[0] "%(n)s inaendelea au imepangwa"
+msgstr[1] "%(n)s zinaendelea au zimepangwa"
+
+msgid "View campaigns"
+msgstr "Tazama kampeni"
+
+msgid "Preview a creative from any campaign that uses it. To add or replace a video, contact ClipCash support."
+msgstr "Hakiki video kutoka kampeni yoyote inayoitumia. Ili kuongeza au kubadilisha video, wasiliana na usaidizi wa ClipCash."
+
+msgid "No videos are authorized for your account yet. ClipCash adds approved videos after reviewing your advertiser application."
+msgstr "Bado hakuna video zilizoidhinishwa kwa akaunti yako. ClipCash huongeza video zilizoidhinishwa baada ya kukagua ombi lako la mtangazaji."
+
+msgid "Advertiser dashboard"
+msgstr "Dashibodi ya mtangazaji"
+
+msgid "Plan sponsored video campaigns, follow their review and see verified viewing results."
+msgstr "Panga kampeni za video zinazodhaminiwa, fuatilia ukaguzi wake na uone matokeo ya utazamaji uliohakikiwa."
+
+msgid "Total campaigns"
+msgstr "Jumla ya kampeni"
+
+msgid "%(n)s draft"
+msgid_plural "%(n)s drafts"
+msgstr[0] "Rasimu %(n)s"
+msgstr[1] "Rasimu %(n)s"
+
+msgid "%(n)s approved, scheduled"
+msgid_plural "%(n)s approved, scheduled"
+msgstr[0] "%(n)s imeidhinishwa, imepangwa"
+msgstr[1] "%(n)s zimeidhinishwa, zimepangwa"
+
+msgid "%(n)s paused"
+msgid_plural "%(n)s paused"
+msgstr[0] "%(n)s imesitishwa"
+msgstr[1] "%(n)s zimesitishwa"
+
+msgid "%(n)s with changes requested"
+msgid_plural "%(n)s with changes requested"
+msgstr[0] "%(n)s imeombewa mabadiliko"
+msgstr[1] "%(n)s zimeombewa mabadiliko"
+
+msgid "%(n)s cancelled"
+msgid_plural "%(n)s cancelled"
+msgstr[0] "%(n)s imeghairiwa"
+msgstr[1] "%(n)s zimeghairiwa"
+
+msgid "Start as a draft"
+msgstr "Anza kama rasimu"
+
+msgid "Manage and track"
+msgstr "Simamia na fuatilia"
+
+msgid "%(n)s authorized video"
+msgid_plural "%(n)s authorized videos"
+msgstr[0] "Video %(n)s iliyoidhinishwa"
+msgstr[1] "Video %(n)s zilizoidhinishwa"
+
+msgid "Verified viewing results"
+msgstr "Matokeo ya utazamaji uliohakikiwa"
+
+msgid "Verified views from %(first)s to %(last)s."
+msgstr "Mitazamo iliyohakikiwa kuanzia %(first)s hadi %(last)s."
+
+msgid "Campaign performance"
+msgstr "Utendaji wa kampeni"
+
+msgid "All time, from server-verified viewing. Small counts are shown as a range to protect viewers' privacy."
+msgstr "Tangu mwanzo, kutoka kwa utazamaji uliohakikiwa na seva. Idadi ndogo huonyeshwa kama kiwango ili kulinda faragha ya watazamaji."
+
+msgid "Advertiser workspace"
+msgstr "Eneo la kazi la mtangazaji"
+
+msgid "Advertiser menu"
+msgstr "Menyu ya mtangazaji"
+
+msgid "Organization"
+msgstr "Shirika"
+
+msgid "Organization profile"
+msgstr "Wasifu wa shirika"
+
+msgid "Advertiser accounts"
+msgstr "Akaunti za watangazaji"
+
+msgid "Member dashboard"
+msgstr "Dashibodi ya mwanachama"
+
+msgid "Watch in full; ClipCash verifies each view on the server."
+msgstr "Tazama hadi mwisho; ClipCash huhakiki kila utazamaji kwenye seva."
+
+msgid "not money"
+msgstr "si pesa"
+
+#: UI-DASH-02 activity type labels (templates/members/_activity_kind.html)
+msgid "Viewing"
+msgstr "Utazamaji"
+
+msgid "Demo reward"
+msgstr "Zawadi ya majaribio"
+
+msgid "Payment"
+msgstr "Malipo"
+
+msgid "Withdrawal"
+msgstr "Utoaji wa pesa"
+
+#: UI-DASH-03 translation completion: administrator console, notifications and remaining interface text
+msgid "ClipCash administration"
+msgstr "Usimamizi wa ClipCash"
+
+msgid "No effect while restricted demo mode (DJANGO_RESTRICTED_DEMO) is on: public registration stays closed."
+msgstr "Haina athari wakati hali ya maonyesho yenye vikwazo (DJANGO_RESTRICTED_DEMO) imewashwa: usajili wa umma unabaki umefungwa."
+
+msgid "Identity"
+msgstr "Utambulisho"
+
+msgid "Company and support"
+msgstr "Kampuni na usaidizi"
+
+msgid "Regional defaults"
+msgstr "Mipangilio ya msingi ya kikanda"
+
+msgid "Availability"
+msgstr "Upatikanaji"
+
+msgid "Change tracking"
+msgstr "Ufuatiliaji wa mabadiliko"
+
+msgid "Locked off: %(names)s. They cannot be enabled in this phase."
+msgstr "Zimefungwa: %(names)s. Haziwezi kuwezeshwa katika awamu hii."
+
+msgid "Financial features"
+msgstr "Huduma za kifedha"
+
+msgid "queued for retry"
+msgstr "zimewekwa kwenye foleni ya kujaribu tena"
+
+msgid "Retry selected failed or cancelled jobs"
+msgstr "Jaribu tena kazi zilizochaguliwa zilizoshindwa au kughairiwa"
+
+msgid "Cancel selected pending or failed jobs"
+msgstr "Ghairi kazi zilizochaguliwa zinazosubiri au zilizoshindwa"
+
+msgid "Enable selected scheduled tasks"
+msgstr "Wezesha kazi zilizopangwa zilizochaguliwa"
+
+msgid "Pause selected scheduled tasks"
+msgstr "Sitisha kazi zilizopangwa zilizochaguliwa"
+
+msgid "The configuration was changed by someone else. Reload the page and try again."
+msgstr "Mipangilio imebadilishwa na mtu mwingine. Pakia ukurasa upya na ujaribu tena."
+
+msgid "%(count)s scheduled task(s) updated."
+msgstr "Kazi zilizopangwa %(count)s zimesasishwa."
+
+msgid "%(count)s job(s) %(verb)s."
+msgstr "Kazi %(count)s: %(verb)s."
+
+msgid "%(count)s job(s) were not eligible."
+msgstr "Kazi %(count)s hazikustahili."
+
+msgid "Background worker has not reported recently"
+msgstr "Mfanyakazi wa nyuma hajatoa taarifa hivi karibuni"
+
+msgid "Job queue is backing up"
+msgstr "Foleni ya kazi inazidi kujaa"
+
+msgid "Jobs held past their time limit"
+msgstr "Kazi zilizoshikiliwa kupita muda wake"
+
+msgid "Shared cache is unavailable"
+msgstr "Hifadhi ya muda ya pamoja haipatikani"
+
+msgid "Too many player events"
+msgstr "Matukio mengi mno ya kicheza video"
+
+msgid "Gaps between player updates"
+msgstr "Mapengo kati ya taarifa za kicheza video"
+
+msgid "Impossible playback speed"
+msgstr "Kasi ya kucheza isiyowezekana"
+
+msgid "Invalid player evidence"
+msgstr "Ushahidi batili wa kicheza video"
+
+msgid "Large jumps in the video"
+msgstr "Miruko mikubwa ndani ya video"
+
+msgid "Balance should be zero"
+msgstr "Salio linapaswa kuwa sifuri"
+
+msgid "Provider record does not match"
+msgstr "Rekodi ya mtoa huduma hailingani"
+
+msgid "Payout has no final status"
+msgstr "Malipo hayana hali ya mwisho"
+
+msgid "Unknown payout reference"
+msgstr "Kumbukumbu ya malipo isiyojulikana"
+
+msgid "Membership suspended."
+msgstr "Uanachama umesimamishwa."
+
+msgid "Membership reinstated."
+msgstr "Uanachama umerejeshwa."
+
+msgid "Membership cancelled. No refund or ledger reversal was made."
+msgstr "Uanachama umeghairiwa. Hakuna marejesho ya pesa wala ubatilishaji wa leja uliofanywa."
+
+msgid "Suspend membership"
+msgstr "Simamisha uanachama"
+
+msgid "Access to membership content stops immediately. The period keeps running; reinstating later does not add the lost time back."
+msgstr "Ufikiaji wa maudhui ya uanachama unasimama mara moja. Kipindi kinaendelea kuhesabiwa; kurejesha baadaye hakuongezi muda uliopotea."
+
+msgid "Reinstate membership"
+msgstr "Rejesha uanachama"
+
+msgid "Access is restored until the period's original end. A period that has already ended becomes expired instead, and an ineligible account is refused."
+msgstr "Ufikiaji unarejeshwa hadi mwisho wa awali wa kipindi. Kipindi kilichokwisha huwekwa kuwa kimeisha badala yake, na akaunti isiyostahili hukataliwa."
+
+msgid "Cancel membership"
+msgstr "Ghairi uanachama"
+
+msgid "Access ends immediately and cannot be restored. No refund is made and no payment or ledger entry is reversed; refunds follow the separate manual procedure."
+msgstr "Ufikiaji unaisha mara moja na hauwezi kurejeshwa. Hakuna marejesho ya pesa na hakuna malipo wala ingizo la leja linalobatilishwa; marejesho hufuata utaratibu tofauti wa mkono."
+
+msgid "Extend membership"
+msgstr "Ongeza muda wa uanachama"
+
+msgid "Adds a separate period after the member's current access ends, on the same plan. It is an administrative adjustment: no payment is recorded and nothing is charged."
+msgstr "Huongeza kipindi tofauti baada ya ufikiaji wa sasa wa mwanachama kuisha, kwenye mpango uleule. Ni marekebisho ya kiutawala: hakuna malipo yanayorekodiwa na hakuna kinachotozwa."
+
+msgid "That action is not available for this membership in its current state."
+msgstr "Kitendo hicho hakipatikani kwa uanachama huu katika hali yake ya sasa."
+
+msgid "Membership extended until %(end)s. No payment was recorded."
+msgstr "Uanachama umeongezwa hadi %(end)s. Hakuna malipo yaliyorekodiwa."
+
+msgid "This extension was already made (until %(end)s); nothing was added."
+msgstr "Nyongeza hii ilishafanywa (hadi %(end)s); hakuna kilichoongezwa."
+
+msgid "This period had already ended, so it was marked expired. Access was not restored."
+msgstr "Kipindi hiki kilikuwa kimeshaisha, hivyo kimewekwa kuwa kimeisha. Ufikiaji haukurejeshwa."
+
+msgid "Membership payments awaiting verification"
+msgstr "Malipo ya uanachama yanayosubiri uthibitisho"
+
+msgid "Advertisers awaiting review"
+msgstr "Watangazaji wanaosubiri ukaguzi"
+
+msgid "Campaigns awaiting review"
+msgstr "Kampeni zinazosubiri ukaguzi"
+
+msgid "Stuck video uploads"
+msgstr "Upakiaji wa video uliokwama"
+
+msgid "Viewing sessions awaiting review"
+msgstr "Vipindi vya utazamaji vinavyosubiri ukaguzi"
+
+msgid "Demo reward policies awaiting approval"
+msgstr "Sera za zawadi za majaribio zinazosubiri idhini"
+
+msgid "Sandbox payment exceptions"
+msgstr "Tofauti za malipo ya majaribio"
+
+msgid "Sandbox refunds awaiting approval"
+msgstr "Marejesho ya majaribio yanayosubiri idhini"
+
+msgid "Sandbox disputes"
+msgstr "Migogoro ya majaribio"
+
+msgid "Wallet reconciliation findings"
+msgstr "Matokeo ya ulinganisho wa pochi"
+
+msgid "Demo withdrawals in review"
+msgstr "Utoaji wa majaribio unaokaguliwa"
+
+msgid "Demo withdrawals with unknown payout status"
+msgstr "Utoaji wa majaribio wenye hali ya malipo isiyojulikana"
+
+msgid "Demo withdrawal exceptions"
+msgstr "Tofauti za utoaji wa majaribio"
+
+msgid "Another administrator changed this plan's price or duration while you were editing. Your changes were not saved. The current terms are shown above the form; check them and save again."
+msgstr "Msimamizi mwingine amebadilisha bei au muda wa mpango huu ulipokuwa ukihariri. Mabadiliko yako hayakuhifadhiwa. Masharti ya sasa yanaonyeshwa juu ya fomu; yakague na uhifadhi tena."
+
+msgid "Scheduled"
+msgstr "Zimepangwa"
+
+msgid "%(plan)s plan created"
+msgstr "Mpango %(plan)s umeundwa"
+
+msgid "%(plan)s plan saved."
+msgstr "Mpango %(plan)s umehifadhiwa."
+
+msgid "This provider already has an active payment method. Edit it from the payment methods page instead."
+msgstr "Mtoa huduma huyu tayari ana njia hai ya malipo. Ihariri kutoka ukurasa wa njia za malipo badala yake."
+
+msgid "Nothing changed. Edit a detail, or cancel."
+msgstr "Hakuna kilichobadilika. Hariri taarifa fulani, au ghairi."
+
+msgid "%(provider)s payment details published. Members see them from now on; earlier instructions and pending payments keep their original details."
+msgstr "Taarifa za malipo za %(provider)s zimechapishwa. Wanachama wanaziona kuanzia sasa; maelekezo ya awali na malipo yanayosubiri yanabaki na taarifa zake za awali."
+
+msgid "A different reviewer must verify a client organization you registered."
+msgstr "Mkaguzi mwingine lazima athibitishe shirika la mteja ulilolisajili."
+
+msgid "A different reviewer must approve a campaign you created."
+msgstr "Mkaguzi mwingine lazima aidhinishe kampeni uliyoiunda."
+
+msgid "Client organization registered. Another reviewer verifies it."
+msgstr "Shirika la mteja limesajiliwa. Mkaguzi mwingine atalithibitisha."
+
+msgid "This payment was already confirmed. Nothing changed."
+msgstr "Malipo haya yalishathibitishwa. Hakuna kilichobadilika."
+
+msgid "Payment rejected. The member was notified and can send corrected details."
+msgstr "Malipo yamekataliwa. Mwanachama amejulishwa na anaweza kutuma taarifa zilizosahihishwa."
+
+msgid "Payment steps for members"
+msgstr "Hatua za malipo kwa wanachama"
+
+msgid "This payment method was changed by someone else while you were reviewing it. Nothing was published. Check the current details and try again."
+msgstr "Njia hii ya malipo imebadilishwa na mtu mwingine ulipokuwa ukiikagua. Hakuna kilichochapishwa. Kagua taarifa za sasa na ujaribu tena."
+
+msgid "You are not allowed to authorize this video for the advertiser. Ask a colleague who manages advertiser videos."
+msgstr "Huruhusiwi kuidhinisha video hii kwa mtangazaji. Muulize mwenzako anayesimamia video za watangazaji."
+
+msgid "Payment confirmed. %(plan)s starts on %(start)s, when the current membership ends, and runs until %(end)s. The member has been notified."
+msgstr "Malipo yamethibitishwa. %(plan)s utaanza %(start)s, uanachama wa sasa utakapoisha, na utaendelea hadi %(end)s. Mwanachama amejulishwa."
+
+msgid "Payment confirmed. %(plan)s membership is active now, until %(end)s. The member has been notified."
+msgstr "Malipo yamethibitishwa. Uanachama wa %(plan)s uko hai sasa, hadi %(end)s. Mwanachama amejulishwa."
+
+msgid "%(provider)s retired. Members can no longer choose it; payments already submitted can still be reviewed."
+msgstr "%(provider)s imeondolewa. Wanachama hawawezi tena kuichagua; malipo yaliyokwisha wasilishwa bado yanaweza kukaguliwa."
+
+msgid "%(provider)s reactivated with the same details. Members can choose it again."
+msgstr "%(provider)s imewezeshwa tena kwa taarifa zilezile. Wanachama wanaweza kuichagua tena."
+
+msgid "Campaign saved as a draft for %(name)s."
+msgstr "Kampeni imehifadhiwa kama rasimu kwa %(name)s."
+
+msgid "Published, ready videos. Upload new videos under Video management."
+msgstr "Video zilizochapishwa na ziko tayari. Pakia video mpya katika Usimamizi wa video."
+
+msgid "The client organization this campaign belongs to."
+msgstr "Shirika la mteja ambalo kampeni hii ni yake."
+
+msgid "You have exported many reports recently. Please wait a while."
+msgstr "Umepakua ripoti nyingi hivi karibuni. Tafadhali subiri kwa muda."
+
+msgid "Search by actor email, target id or name, or request id."
+msgstr "Tafuta kwa barua pepe ya mtendaji, kitambulisho au jina la kinacholengwa, au kitambulisho cha ombi."
+
+msgid "Actor"
+msgstr "Mtendaji"
+
+msgid "Target"
+msgstr "Kinacholengwa"
+
+msgid "Request"
+msgstr "Ombi"
+
+msgid "actor"
+msgstr "mtendaji"
+
+msgid "target"
+msgstr "kinacholengwa"
+
+msgid "metadata"
+msgstr "maelezo ya ziada"
+
+msgid "occurred at"
+msgstr "ilitokea"
+
+msgid "source"
+msgstr "chanzo"
+
+msgid "actor id"
+msgstr "kitambulisho cha mtendaji"
+
+msgid "actor email"
+msgstr "barua pepe ya mtendaji"
+
+msgid "actor role"
+msgstr "jukumu la mtendaji"
+
+msgid "target app"
+msgstr "programu lengwa"
+
+msgid "target model"
+msgstr "modeli lengwa"
+
+msgid "target id"
+msgstr "kitambulisho lengwa"
+
+msgid "IP address"
+msgstr "Anwani ya IP"
+
+msgid "user agent"
+msgstr "kivinjari kilichotumika"
+
+msgid "audit event"
+msgstr "tukio la ukaguzi"
+
+msgid "audit events"
+msgstr "matukio ya ukaguzi"
+
+msgid "Failure"
+msgstr "Kushindwa"
+
+msgid "Denied"
+msgstr "Imekataliwa"
+
+msgid "Web"
+msgstr "Wavuti"
+
+msgid "Admin"
+msgstr "Msimamizi"
+
+msgid "System"
+msgstr "Mfumo"
+
+msgid "Command line"
+msgstr "Mstari wa amri"
+
+msgid "Public registration"
+msgstr "Usajili wa umma"
+
+msgid "Membership features"
+msgstr "Huduma za uanachama"
+
+msgid "Video features"
+msgstr "Huduma za video"
+
+msgid "Advertiser features"
+msgstr "Huduma za watangazaji"
+
+msgid "Real-money rewards"
+msgstr "Zawadi za pesa halisi"
+
+msgid "Live payments"
+msgstr "Malipo halisi"
+
+msgid "Withdrawals and payouts"
+msgstr "Utoaji na malipo"
+
+msgid "Manual membership payments (staff verified)"
+msgstr "Malipo ya uanachama kwa mkono (yanathibitishwa na wafanyakazi)"
+
+msgid "created at"
+msgstr "iliundwa"
+
+msgid "platform name"
+msgstr "jina la jukwaa"
+
+msgid "platform description"
+msgstr "maelezo ya jukwaa"
+
+msgid "company name"
+msgstr "jina la kampuni"
+
+msgid "company address"
+msgstr "anwani ya kampuni"
+
+msgid "support email"
+msgstr "barua pepe ya usaidizi"
+
+msgid "support phone"
+msgstr "simu ya usaidizi"
+
+msgid "default time zone"
+msgstr "saa za eneo za msingi"
+
+msgid "default currency"
+msgstr "sarafu ya msingi"
+
+msgid "default language"
+msgstr "lugha ya msingi"
+
+msgid "maintenance mode"
+msgstr "hali ya matengenezo"
+
+msgid "maintenance message"
+msgstr "ujumbe wa matengenezo"
+
+msgid "public registration"
+msgstr "usajili wa umma"
+
+msgid "membership features"
+msgstr "huduma za uanachama"
+
+msgid "video features"
+msgstr "huduma za video"
+
+msgid "advertiser features"
+msgstr "huduma za watangazaji"
+
+msgid "site configuration"
+msgstr "mipangilio ya tovuti"
+
+msgid "job type"
+msgstr "aina ya kazi"
+
+msgid "payload"
+msgstr "data ya kazi"
+
+msgid "run after"
+msgstr "endesha baada ya"
+
+msgid "max attempts"
+msgstr "majaribio ya juu"
+
+msgid "started at"
+msgstr "ilianza"
+
+msgid "finished at"
+msgstr "ilimalizika"
+
+msgid "lease expires at"
+msgstr "muda wa kushikilia unaisha"
+
+msgid "worker"
+msgstr "mfanyakazi"
+
+msgid "error summary"
+msgstr "muhtasari wa hitilafu"
+
+msgid "background job"
+msgstr "kazi ya nyuma"
+
+msgid "background jobs"
+msgstr "kazi za nyuma"
+
+msgid "last run started"
+msgstr "mzunguko wa mwisho ulianza"
+
+msgid "last run seconds"
+msgstr "sekunde za mzunguko wa mwisho"
+
+msgid "jobs in last run"
+msgstr "kazi katika mzunguko wa mwisho"
+
+msgid "succeeded in last run"
+msgstr "zilifaulu katika mzunguko wa mwisho"
+
+msgid "failed or retried in last run"
+msgstr "zilishindwa au kujaribiwa tena katika mzunguko wa mwisho"
+
+msgid "total jobs"
+msgstr "jumla ya kazi"
+
+msgid "cache healthy"
+msgstr "hifadhi ya muda iko sawa"
+
+msgid "cache checked at"
+msgstr "hifadhi ya muda ilikaguliwa"
+
+msgid "worker heartbeat"
+msgstr "ishara ya uhai ya mfanyakazi"
+
+msgid "worker heartbeats"
+msgstr "ishara za uhai za mfanyakazi"
+
+msgid "enabled"
+msgstr "imewezeshwa"
+
+msgid "next run"
+msgstr "mzunguko unaofuata"
+
+msgid "last enqueued"
+msgstr "iliwekwa kwenye foleni mara ya mwisho"
+
+msgid "scheduled task"
+msgstr "kazi iliyopangwa"
+
+msgid "scheduled tasks"
+msgstr "kazi zilizopangwa"
+
+msgid "International format, for example +255712345678."
+msgstr "Muundo wa kimataifa, kwa mfano +255712345678."
+
+msgid "Used when a visitor has not chosen a language and the browser expresses no preference."
+msgstr "Hutumika mgeni asipochagua lugha na kivinjari hakionyeshi upendeleo."
+
+msgid "When on, only signed-in staff can use the site."
+msgstr "Ikiwashwa, wafanyakazi walioingia pekee ndio wanaweza kutumia tovuti."
+
+msgid "updated by"
+msgstr "ilisasishwa na"
+
+msgid "Running"
+msgstr "Inaendelea"
+
+msgid "Waiting to retry"
+msgstr "Inasubiri kujaribu tena"
+
+msgid "Transient"
+msgstr "Ya muda"
+
+msgid "Permanent"
+msgstr "Ya kudumu"
+
+msgid "Unexpected"
+msgstr "Isiyotarajiwa"
+
+msgid "Lease expired"
+msgstr "Muda wa kushikilia umeisha"
+
+msgid "Interrupted"
+msgstr "Imekatizwa"
+
+msgid "Lower runs first."
+msgstr "Ndogo zaidi huendeshwa kwanza."
+
+msgid "These settings cannot be changed here: %(fields)s."
+msgstr "Mipangilio hii haiwezi kubadilishwa hapa: %(fields)s."
+
+msgid "expiry"
+msgstr "mwisho wa muda"
+
+msgid "Make selected plans active"
+msgstr "Wezesha mipango iliyochaguliwa"
+
+msgid "Deactivate selected plans (hidden, not purchasable)"
+msgstr "Zima mipango iliyochaguliwa (imefichwa, hainunuliki)"
+
+msgid "Archive selected plans (permanent)"
+msgstr "Hifadhi mipango iliyochaguliwa kwenye kumbukumbu (kudumu)"
+
+msgid "Suspend memberships"
+msgstr "Simamisha uanachama"
+
+msgid "Suspend selected memberships"
+msgstr "Simamisha uanachama uliochaguliwa"
+
+msgid "Cancel memberships"
+msgstr "Ghairi uanachama"
+
+msgid "Cancel selected memberships (immediate)"
+msgstr "Ghairi uanachama uliochaguliwa (mara moja)"
+
+msgid "Reinstate selected suspended memberships"
+msgstr "Rejesha uanachama uliosimamishwa uliochaguliwa"
+
+msgid "%(n)s plan(s) updated."
+msgstr "Mipango %(n)s imesasishwa."
+
+msgid "Period ended, not yet processed"
+msgstr "Kipindi kimeisha, bado hakijachakatwa"
+
+msgid "%(n)s subscription(s) reinstated."
+msgstr "Uanachama %(n)s umerejeshwa."
+
+msgid "Expiring within %(n)s days"
+msgstr "Unaisha ndani ya siku %(n)s"
+
+msgid "%(n)s subscription(s) updated."
+msgstr "Uanachama %(n)s umesasishwa."
+
+msgid "%(n)s were not eligible."
+msgstr "%(n)s hazikustahili."
+
+msgid "In the site time zone. Must be in the future and at most %(days)s days from now."
+msgstr "Kwa saa za eneo la tovuti. Lazima iwe siku zijazo na isizidi siku %(days)s kuanzia sasa."
+
+msgid "I confirm this is a complimentary membership: no payment was received, and no payment, ledger or wallet record is created."
+msgstr "Nathibitisha kuwa huu ni uanachama wa bure: hakuna malipo yaliyopokelewa, na hakuna rekodi ya malipo, leja au pochi inayoundwa."
+
+msgid "Reason in your own words"
+msgstr "Sababu kwa maneno yako mwenyewe"
+
+msgid "Recorded in the audit trail with your account. Never shown to the member."
+msgstr "Hurekodiwa kwenye kumbukumbu za ukaguzi pamoja na akaunti yako. Haionyeshwi kamwe kwa mwanachama."
+
+msgid "I have checked this membership and want to make this change."
+msgstr "Nimeukagua uanachama huu na ninataka kufanya badiliko hili."
+
+msgid "I understand cancellation ends access immediately, cannot be undone, and does not refund or reverse any payment."
+msgstr "Naelewa kuwa kughairi kunamaliza ufikiaji mara moja, hakuwezi kutenduliwa, na hakurejeshi wala kubatilisha malipo yoyote."
+
+msgid "Extend by (days)"
+msgstr "Ongeza kwa (siku)"
+
+msgid "Recorded in the audit trail and on the extension period. Never shown to the member."
+msgstr "Hurekodiwa kwenye kumbukumbu za ukaguzi na kwenye kipindi cha nyongeza. Haionyeshwi kamwe kwa mwanachama."
+
+msgid "I confirm this is an administrative extension: no payment was received, and no payment, ledger or wallet record is created."
+msgstr "Nathibitisha kuwa hii ni nyongeza ya kiutawala: hakuna malipo yaliyopokelewa, na hakuna rekodi ya malipo, leja au pochi inayoundwa."
+
+msgid "Tick the confirmation box to continue."
+msgstr "Weka alama kwenye kisanduku cha uthibitisho ili kuendelea."
+
+msgid "Between %(min)s and %(max)s days."
+msgstr "Kati ya siku %(min)s na %(max)s."
+
+msgid "A background job failed"
+msgstr "Kazi ya nyuma imeshindwa"
+
+msgid "Job type {job_type} failed after {attempts} attempt(s). Check Operational health."
+msgstr "Kazi ya aina {job_type} imeshindwa baada ya majaribio {attempts}. Kagua Afya ya uendeshaji."
+
+msgid "title template"
+msgstr "kiolezo cha kichwa"
+
+msgid "message template"
+msgstr "kiolezo cha ujumbe"
+
+msgid "template values"
+msgstr "thamani za kiolezo"
+
+msgid "Memberships"
+msgstr "Uanachama"
+
+msgid "Simulated rewards"
+msgstr "Zawadi za kuigiza"
+
+msgid "Demo budgets"
+msgstr "Bajeti za majaribio"
+
+msgid "Real money"
+msgstr "Pesa halisi"
+
+msgid "Simulated rewards qualified"
+msgstr "Zawadi za kuigiza zilizostahili"
+
+msgid "Top campaigns by verified views"
+msgstr "Kampeni zinazoongoza kwa mitazamo iliyohakikiwa"
+
+msgid "New members"
+msgstr "Wanachama wapya"
+
+msgid "Memberships activated"
+msgstr "Uanachama uliowezeshwa"
+
+msgid "Current memberships"
+msgstr "Uanachama wa sasa"
+
+msgid "Active members"
+msgstr "Wanachama hai"
+
+msgid "New members and activated memberships"
+msgstr "Wanachama wapya na uanachama uliowezeshwa"
+
+msgid "Activations by source"
+msgstr "Uwezeshaji kwa chanzo"
+
+msgid "Campaigns created"
+msgstr "Kampeni zilizoundwa"
+
+msgid "Campaigns created, by status"
+msgstr "Kampeni zilizoundwa, kwa hali"
+
+msgid "Verified rate"
+msgstr "Kiwango cha uhakiki"
+
+msgid "Sessions and verified views"
+msgstr "Vipindi na mitazamo iliyohakikiwa"
+
+msgid "From session to result"
+msgstr "Kutoka kipindi hadi matokeo"
+
+msgid "Tickets opened"
+msgstr "Tiketi zilizofunguliwa"
+
+msgid "Tickets resolved"
+msgstr "Tiketi zilizotatuliwa"
+
+msgid "Open tickets"
+msgstr "Tiketi zilizo wazi"
+
+msgid "Tickets opened and resolved"
+msgstr "Tiketi zilizofunguliwa na kutatuliwa"
+
+msgid "Tickets opened, by category"
+msgstr "Tiketi zilizofunguliwa, kwa kundi"
+
+msgid "Failed jobs"
+msgstr "Kazi zilizoshindwa"
+
+msgid "Emails queued"
+msgstr "Barua pepe kwenye foleni"
+
+msgid "Emails failed"
+msgstr "Barua pepe zilizoshindwa"
+
+msgid "Job queue"
+msgstr "Foleni ya kazi"
+
+msgid "Emails queued and failed jobs"
+msgstr "Barua pepe kwenye foleni na kazi zilizoshindwa"
+
+msgid "Qualified"
+msgstr "Zilizostahili"
+
+msgid "Simulated amount (TZS)"
+msgstr "Kiasi cha kuigiza (TZS)"
+
+msgid "Payments created"
+msgstr "Malipo yaliyoundwa"
+
+msgid "Settled sandbox amount (TZS)"
+msgstr "Kiasi cha majaribio kilichokamilika (TZS)"
+
+msgid "Open exceptions"
+msgstr "Tofauti zilizo wazi"
+
+msgid "Requests"
+msgstr "Maombi"
+
+msgid "Paid (simulated)"
+msgstr "Imelipwa (kuigiza)"
+
+msgid "Paid demo amount (TZS)"
+msgstr "Kiasi cha majaribio kilicholipwa (TZS)"
+
+msgid "In approved campaigns (TZS)"
+msgstr "Katika kampeni zilizoidhinishwa (TZS)"
+
+msgid "Campaigns with real funding"
+msgstr "Kampeni zenye ufadhili halisi"
+
+msgid "Unexpected wallet balances"
+msgstr "Salio za pochi zisizotarajiwa"
+
+msgid "Activated"
+msgstr "Umewezeshwa"
+
+msgid "Emails"
+msgstr "Barua pepe"
+
+msgid "Count"
+msgstr "Idadi"
+
+msgid "Real money (locked, 0)"
+msgstr "Pesa halisi (imefungwa, 0)"
+
+msgid "Sandbox (test data, not money)"
+msgstr "Majaribio (data ya majaribio, si pesa)"
+
+msgid "Simulated demo rewards (not money)"
+msgstr "Zawadi za majaribio za kuigiza (si pesa)"
+
+msgid "Demo withdrawals (no money moves)"
+msgstr "Utoaji wa majaribio (hakuna pesa inayohamishwa)"
+
+msgid "Sandbox amount (TZS)"
+msgstr "Kiasi cha majaribio (TZS)"
+
+msgid "Viewing by campaign"
+msgstr "Utazamaji kwa kampeni"
+
+msgid "Members who registered"
+msgstr "Wanachama waliojisajili"
+
+msgid "Memberships created, by status"
+msgstr "Uanachama ulioundwa, kwa hali"
+
+msgid "Membership activations, by source"
+msgstr "Uwezeshaji wa uanachama, kwa chanzo"
+
+msgid "All members today"
+msgstr "Wanachama wote leo"
+
+msgid "Advertisers who applied, by verification status"
+msgstr "Watangazaji walioomba, kwa hali ya uthibitisho"
+
+msgid "Viewing sessions, by outcome"
+msgstr "Vipindi vya utazamaji, kwa matokeo"
+
+msgid "Demo budget of campaigns created (TZS)"
+msgstr "Bajeti ya majaribio ya kampeni zilizoundwa (TZS)"
+
+msgid "Real campaign funding"
+msgstr "Ufadhili halisi wa kampeni"
+
+msgid "Demo reward decisions"
+msgstr "Maamuzi ya zawadi za majaribio"
+
+msgid "Demo rewards by campaign"
+msgstr "Zawadi za majaribio kwa kampeni"
+
+msgid "Reward policies today, by status"
+msgstr "Sera za zawadi leo, kwa hali"
+
+msgid "Sandbox payments, by status"
+msgstr "Malipo ya majaribio, kwa hali"
+
+msgid "Sandbox payments, by purpose"
+msgstr "Malipo ya majaribio, kwa madhumuni"
+
+msgid "Reconciliation exceptions, by reason"
+msgstr "Tofauti za ulinganisho, kwa sababu"
+
+msgid "Refunds and disputes"
+msgstr "Marejesho na migogoro"
+
+msgid "Sandbox journal balances (debit minus credit)"
+msgstr "Salio za jarida la majaribio (deni toa mkopo)"
+
+msgid "Real wallets"
+msgstr "Pochi halisi"
+
+msgid "Demo withdrawals, by status"
+msgstr "Utoaji wa majaribio, kwa hali"
+
+msgid "Demo withdrawal exceptions, by code"
+msgstr "Tofauti za utoaji wa majaribio, kwa msimbo"
+
+msgid "Demo withdrawal queues today"
+msgstr "Foleni za utoaji wa majaribio leo"
+
+msgid "Background jobs, by status"
+msgstr "Kazi za nyuma, kwa hali"
+
+msgid "Background jobs, by type"
+msgstr "Kazi za nyuma, kwa aina"
+
+msgid "Emails, by status"
+msgstr "Barua pepe, kwa hali"
+
+msgid "Emails, by kind"
+msgstr "Barua pepe, kwa aina"
+
+msgid "Job queue today"
+msgstr "Foleni ya kazi leo"
+
+msgid "Audit events, by outcome"
+msgstr "Matukio ya ukaguzi, kwa matokeo"
+
+msgid "Audit events, by category"
+msgstr "Matukio ya ukaguzi, kwa kundi"
+
+msgid "Denied actions, by category"
+msgstr "Vitendo vilivyokataliwa, kwa kundi"
+
+msgid "Denied financial actions"
+msgstr "Vitendo vya kifedha vilivyokataliwa"
+
+msgid "Most denied actions"
+msgstr "Vitendo vilivyokataliwa zaidi"
+
+msgid "Tickets opened, by status"
+msgstr "Tiketi zilizofunguliwa, kwa hali"
+
+msgid "Tickets opened, by priority"
+msgstr "Tiketi zilizofunguliwa, kwa kipaumbele"
+
+msgid "Open tickets today"
+msgstr "Tiketi zilizo wazi leo"
+
+msgid "today"
+msgstr "leo"
+
+msgid "Measure"
+msgstr "Kipimo"
+
+msgid "Source"
+msgstr "Chanzo"
+
+msgid "Outcome"
+msgstr "Matokeo"
+
+msgid "Demo budget (TZS)"
+msgstr "Bajeti ya majaribio (TZS)"
+
+msgid "Value"
+msgstr "Thamani"
+
+msgid "Scope"
+msgstr "Wigo"
+
+msgid "Demo amount (TZS)"
+msgstr "Kiasi cha majaribio (TZS)"
+
+msgid "Code"
+msgstr "Msimbo"
+
+msgid "Job type"
+msgstr "Aina ya kazi"
+
+msgid "Kind"
+msgstr "Aina"
+
+msgid "Action"
+msgstr "Kitendo"
+
+msgid "Priority"
+msgstr "Kipaumbele"
+
+msgid "Registrations, memberships and activations."
+msgstr "Usajili, uanachama na uwezeshaji."
+
+msgid "Advertisers and campaigns"
+msgstr "Watangazaji na kampeni"
+
+msgid "Applications, campaigns and verified viewing."
+msgstr "Maombi, kampeni na utazamaji uliohakikiwa."
+
+msgid "Demo reward decisions. Simulated, never money."
+msgstr "Maamuzi ya zawadi za majaribio. Ya kuigiza, kamwe si pesa."
+
+msgid "Sandbox payments and reconciliation. Test data, never money."
+msgstr "Malipo ya majaribio na ulinganisho. Data ya majaribio, kamwe si pesa."
+
+msgid "Demo withdrawal requests and exceptions. No money moves."
+msgstr "Maombi na tofauti za utoaji wa majaribio. Hakuna pesa inayohamishwa."
+
+msgid "Background jobs and email delivery."
+msgstr "Kazi za nyuma na utumaji wa barua pepe."
+
+msgid "Audit and security"
+msgstr "Ukaguzi na usalama"
+
+msgid "Audit events and denied actions, without identities."
+msgstr "Matukio ya ukaguzi na vitendo vilivyokataliwa, bila utambulisho."
+
+msgid "Tickets and support activity."
+msgstr "Tiketi na shughuli za usaidizi."
+
+msgid "Registered"
+msgstr "Waliosajiliwa"
+
+msgid "Active today"
+msgstr "Hai leo"
+
+msgid "Suspended or disabled"
+msgstr "Zilizosimamishwa au kuzimwa"
+
+msgid "Members"
+msgstr "Wanachama"
+
+msgid "In approved campaigns"
+msgstr "Katika kampeni zilizoidhinishwa"
+
+msgid "All except cancelled or archived"
+msgstr "Zote isipokuwa zilizoghairiwa au kuhifadhiwa kwenye kumbukumbu"
+
+msgid "Simulated amount, qualified (TZS)"
+msgstr "Kiasi cha kuigiza, kilichostahili (TZS)"
+
+msgid "Refunds requested"
+msgstr "Marejesho yaliyoombwa"
+
+msgid "Disputes opened"
+msgstr "Migogoro iliyofunguliwa"
+
+msgid "Wallets"
+msgstr "Pochi"
+
+msgid "Open reconciliation findings"
+msgstr "Matokeo ya ulinganisho yaliyo wazi"
+
+msgid "Unexpected balances"
+msgstr "Salio zisizotarajiwa"
+
+msgid "Unknown result"
+msgstr "Matokeo yasiyojulikana"
+
+msgid "Failed in the last 24 hours"
+msgstr "Zilizoshindwa katika saa 24 zilizopita"
+
+msgid "Problems"
+msgstr "Matatizo"
+
+msgid "Tickets closed"
+msgstr "Tiketi zilizofungwa"
+
+msgid "Customer messages"
+msgstr "Jumbe za wateja"
+
+msgid "Staff replies"
+msgstr "Majibu ya wafanyakazi"
+
+msgid "Internal notes"
+msgstr "Maelezo ya ndani"
+
+msgid "Section"
+msgstr "Sehemu"
+
+msgid "Funds type"
+msgstr "Aina ya fedha"
+
+msgid "Period start"
+msgstr "Mwanzo wa kipindi"
+
+msgid "Period end"
+msgstr "Mwisho wa kipindi"
+
+msgid "As of"
+msgstr "Hadi"
+
+msgid "Row"
+msgstr "Safu"
+
+msgid "Runs from"
+msgstr "Inaanza"
+
+msgid "Runs until"
+msgstr "Inaisha"
+
+msgid "platform"
+msgstr "jukwaa"
+
+msgid "Demo reward reversed (simulated)"
+msgstr "Zawadi ya majaribio imebatilishwa (kuigiza)"
+
+msgid "A simulated demo reward for “{name}” was reversed. No money was involved."
+msgstr "Zawadi ya majaribio ya kuigiza ya “{name}” imebatilishwa. Hakuna pesa iliyohusika."
+
+msgid "Demo reward policy awaiting a second approver"
+msgstr "Sera ya zawadi za majaribio inasubiri mwidhinishaji wa pili"
+
+msgid "Version {version} for “{name}” needs approval by someone other than its author."
+msgstr "Toleo {version} la “{name}” linahitaji idhini ya mtu mwingine asiye mwandishi wake."
+
+msgid "Demo reward recorded (simulated, not money)"
+msgstr "Zawadi ya majaribio imerekodiwa (kuigiza, si pesa)"
+
+msgid "Your verified view of “{name}” earned a simulated demo reward. It is not money and cannot be withdrawn."
+msgstr "Utazamaji wako uliohakikiwa wa “{name}” umepata zawadi ya majaribio ya kuigiza. Si pesa na hauwezi kuitoa."
+
+msgid "Internal note added."
+msgstr "Maelezo ya ndani yameongezwa."
+
+msgid "Reply sent."
+msgstr "Jibu limetumwa."
+
+msgid "Assignment updated."
+msgstr "Ukabidhi umesasishwa."
+
+msgid "Status updated."
+msgstr "Hali imesasishwa."
+
+msgid "Choose a staff member who handles support tickets."
+msgstr "Chagua mfanyakazi anayeshughulikia tiketi za usaidizi."
+
+msgid "Priority updated."
+msgstr "Kipaumbele kimesasishwa."
+
+msgid "Unknown action."
+msgstr "Kitendo kisichojulikana."
+
+msgid "reversal"
+msgstr "ubatilishaji"
+
+msgid "balance (normal side)"
+msgstr "salio (upande wa kawaida)"
+
+msgid "total"
+msgstr "jumla"
+
+msgid "Is a reversal"
+msgstr "Ni ubatilishaji"
+
+msgid "Has been reversed"
+msgstr "Imebatilishwa"
+
+msgid "Not reversed"
+msgstr "Haijabatilishwa"
+
+msgid "This applies immediately to the subscriptions below and is recorded in the audit log."
+msgstr "Hii inatumika mara moja kwa uanachama ulio hapa chini na hurekodiwa kwenye kumbukumbu za ukaguzi."
+
+msgid "Confirm"
+msgstr "Thibitisha"
+
+msgid "Go back"
+msgstr "Rudi nyuma"
+
+msgid "None yet."
+msgstr "Bado hakuna."
+
+msgid "Create campaign for this advertiser"
+msgstr "Unda kampeni kwa mtangazaji huyu"
+
+msgid "Invite the client's people"
+msgstr "Alika watu wa mteja"
+
+msgid "They see the invitation after signing in with a confirmed address, and then manage campaigns in their own workspace."
+msgstr "Wanaona mwaliko baada ya kuingia kwa anwani iliyothibitishwa, kisha husimamia kampeni katika eneo lao la kazi."
+
+msgid "Send invitation"
+msgstr "Tuma mwaliko"
+
+msgid "Register a client"
+msgstr "Sajili mteja"
+
+msgid "All advertisers"
+msgstr "Watangazaji wote"
+
+msgid "For a business that advertises through ClipCash staff. It starts as awaiting review; you can invite the client's owner from its page afterwards."
+msgstr "Kwa biashara inayotangaza kupitia wafanyakazi wa ClipCash. Huanza ikisubiri ukaguzi; unaweza kumwalika mmiliki wa mteja kutoka ukurasa wake baadaye."
+
+msgid "Register client"
+msgstr "Sajili mteja"
+
+msgid "No activity in this period."
+msgstr "Hakuna shughuli katika kipindi hiki."
+
+msgid "Show the figures"
+msgstr "Onyesha takwimu"
+
+msgid "Analytics"
+msgstr "Uchambuzi"
+
+msgid "Trends from the platform's own records. You see only the areas you are permitted to report on. Figures contain no personal details."
+msgstr "Mwenendo kutoka kumbukumbu za jukwaa lenyewe. Unaona tu maeneo unayoruhusiwa kutolea ripoti. Takwimu hazina taarifa binafsi."
+
+msgid "Showing the default period."
+msgstr "Inaonyesha kipindi cha msingi."
+
+msgid "Analytics period"
+msgstr "Kipindi cha uchambuzi"
+
+msgid "Open report"
+msgstr "Fungua ripoti"
+
+msgid "Financial categories"
+msgstr "Makundi ya kifedha"
+
+msgid "These categories are different things and are never added together. Only real money is money, and it stays locked."
+msgstr "Makundi haya ni vitu tofauti na hayaongezwi pamoja kamwe. Pesa halisi pekee ndiyo pesa, na inabaki imefungwa."
+
+msgid "Created by ClipCash staff"
+msgstr "Imeundwa na wafanyakazi wa ClipCash"
+
+msgid "Edit draft"
+msgstr "Hariri rasimu"
+
+msgid "Submitting becomes available once the advertiser is verified."
+msgstr "Kuwasilisha kunapatikana baada ya mtangazaji kuthibitishwa."
+
+msgid "You created this campaign, so a different reviewer must approve it."
+msgstr "Wewe ndiye uliyeunda kampeni hii, hivyo mkaguzi mwingine lazima aiidhinishe."
+
+msgid "Steps: save a draft, submit it for review, then another reviewer approves it. Members see the advertisement only after approval, within its schedule."
+msgstr "Hatua: hifadhi rasimu, iwasilishe kwa ukaguzi, kisha mkaguzi mwingine aiidhinishe. Wanachama wanaona tangazo baada ya kuidhinishwa tu, ndani ya ratiba yake."
+
+msgid "The campaign belongs to this organization; its team sees it in their workspace."
+msgstr "Kampeni ni ya shirika hili; timu yake inaiona katika eneo lao la kazi."
+
+msgid "Register a new client"
+msgstr "Sajili mteja mpya"
+
+msgid "If the advertiser is not yet authorized to use the chosen video, it is authorized when you save (recorded in the audit trail)."
+msgstr "Ikiwa mtangazaji bado hajaidhinishwa kutumia video uliyochagua, ataidhinishwa unapohifadhi (hurekodiwa kwenye kumbukumbu za ukaguzi)."
+
+msgid "Video management"
+msgstr "Usimamizi wa video"
+
+msgid "Performance and CSV export"
+msgstr "Utendaji na upakuaji wa CSV"
+
+msgid "Campaign lists"
+msgstr "Orodha za kampeni"
+
+msgid "Deactivate category"
+msgstr "Zima kundi"
+
+msgid "Activate category"
+msgstr "Wezesha kundi"
+
+msgid "While a category is inactive, it and all of its videos are hidden from members. Reactivating shows them again."
+msgstr "Kundi likiwa limezimwa, lenyewe na video zake zote hufichwa kwa wanachama. Kuliwezesha tena huzionyesha upya."
+
+msgid "Video categories"
+msgstr "Makundi ya video"
+
+msgid "Slug"
+msgstr "Slug"
+
+msgid "Order"
+msgstr "Mpangilio"
+
+msgid "No categories yet."
+msgstr "Bado hakuna makundi."
+
+msgid "New category"
+msgstr "Kundi jipya"
+
+msgid "Operational health"
+msgstr "Afya ya uendeshaji"
+
+msgid "Based on stored data only. External services are never contacted from this page, so a configured service shows Not checked rather than Healthy."
+msgstr "Inategemea data iliyohifadhiwa pekee. Huduma za nje hazitafutwi kamwe kutoka ukurasa huu, hivyo huduma iliyosanidiwa huonyesha Haijakaguliwa badala ya Iko sawa."
+
+msgid "Health checks"
+msgstr "Ukaguzi wa afya"
+
+msgid "Area"
+msgstr "Eneo"
+
+msgid "Detail"
+msgstr "Maelezo"
+
+msgid "No health checks are available for your role."
+msgstr "Hakuna ukaguzi wa afya unaopatikana kwa jukumu lako."
+
+msgid "Client address resolution (your request)"
+msgstr "Utambuzi wa anwani ya mteja (ombi lako)"
+
+msgid "Connection from"
+msgstr "Muunganisho kutoka"
+
+msgid "X-Forwarded-For entries"
+msgstr "Maingizo ya X-Forwarded-For"
+
+msgid "none"
+msgstr "hakuna"
+
+msgid "Trusted proxies configured"
+msgstr "Proksi zinazoaminika zimesanidiwa"
+
+msgid "Connection from a trusted proxy network"
+msgstr "Muunganisho kutoka mtandao wa proksi unaoaminika"
+
+msgid "No network list (every connection is treated as the proxy)"
+msgstr "Hakuna orodha ya mitandao (kila muunganisho huchukuliwa kama proksi)"
+
+msgid "No: forwarded headers ignored"
+msgstr "Hapana: vichwa vilivyopelekwa vimepuuzwa"
+
+msgid "Resolved client address"
+msgstr "Anwani ya mteja iliyotambuliwa"
+
+msgid "Not resolved: per-IP limits skipped"
+msgstr "Haijatambuliwa: vikomo kwa kila IP vimerukwa"
+
+msgid "The resolved address must be your own public address (check it with a what-is-my-IP service). Then send a request with a made-up X-Forwarded-For header: the resolved address must not change."
+msgstr "Anwani iliyotambuliwa lazima iwe anwani yako ya umma (ikague kwa huduma ya kuonyesha IP yako). Kisha tuma ombi lenye kichwa cha X-Forwarded-For cha kubuni: anwani iliyotambuliwa haipaswi kubadilika."
+
+msgid "Complimentary membership"
+msgstr "Uanachama wa bure"
+
+msgid "Complimentary demo membership"
+msgstr "Uanachama wa bure wa majaribio"
+
+msgid "Back to member"
+msgstr "Rudi kwa mwanachama"
+
+msgid "This grants membership access without any payment. It is not a payment, records no money, creates no payment, ledger, wallet, reward-funding or withdrawal entry, and ends automatically at the expiry you set."
+msgstr "Hii inatoa ufikiaji wa uanachama bila malipo yoyote. Si malipo, hairekodi pesa, haiundi ingizo la malipo, leja, pochi, ufadhili wa zawadi wala utoaji, na huisha yenyewe katika muda uliouweka."
+
+msgid "A grant can last at most %(days)s days."
+msgstr "Zawadi ya uanachama inaweza kudumu siku zisizozidi %(days)s."
+
+msgid "Current membership"
+msgstr "Uanachama wa sasa"
+
+msgid "None"
+msgstr "Hakuna"
+
+msgid "Pending choice"
+msgstr "Chaguo linalosubiri"
+
+msgid "This account is not eligible for a membership (it must be active with a confirmed email address). The grant will be refused."
+msgstr "Akaunti hii haistahili uanachama (lazima iwe hai yenye barua pepe iliyothibitishwa). Zawadi itakataliwa."
+
+msgid "This member already has a membership. It is never replaced, shortened or extended here; the grant will be refused."
+msgstr "Mwanachama huyu tayari ana uanachama. Haubadilishwi, haupunguzwi wala kuongezwa hapa; zawadi itakataliwa."
+
+msgid "This member has a plan choice waiting for payment. A grant of the same plan uses that choice; a different plan, or a choice with a payment awaiting verification, is refused."
+msgstr "Mwanachama huyu ana chaguo la mpango linalosubiri malipo. Zawadi ya mpango uleule hutumia chaguo hilo; mpango tofauti, au chaguo lenye malipo yanayosubiri uthibitisho, hukataliwa."
+
+msgid "Review and confirm"
+msgstr "Kagua na uthibitishe"
+
+msgid "version %(v)s, kept as granted"
+msgstr "toleo %(v)s, limebaki kama lilivyotolewa"
+
+msgid "Included"
+msgstr "Imejumuishwa"
+
+msgid "Access starts"
+msgstr "Ufikiaji unaanza"
+
+msgid "Immediately on confirmation"
+msgstr "Mara moja baada ya kuthibitisha"
+
+msgid "Access ends"
+msgstr "Ufikiaji unaisha"
+
+msgid "about %(left)s"
+msgstr "takriban %(left)s"
+
+msgid "TZS 0 — complimentary, no payment"
+msgstr "TZS 0 — bure, bila malipo"
+
+msgid "Tick the confirmation box to grant the membership."
+msgstr "Weka alama kwenye kisanduku cha uthibitisho ili kutoa uanachama."
+
+msgid "The grant is recorded in the audit trail with your account and the reason."
+msgstr "Zawadi hurekodiwa kwenye kumbukumbu za ukaguzi pamoja na akaunti yako na sababu."
+
+msgid "Grant complimentary membership"
+msgstr "Toa uanachama wa bure"
+
+msgid "Start again"
+msgstr "Anza upya"
+
+msgid "Grant details"
+msgstr "Maelezo ya zawadi"
+
+msgid "Time zone: %(time_zone)s."
+msgstr "Saa za eneo: %(time_zone)s."
+
+msgid "The form expired. Reload the page and try again."
+msgstr "Fomu imeisha muda. Pakia ukurasa upya na ujaribu tena."
+
+msgid "Review grant"
+msgstr "Kagua zawadi"
+
+msgid "Sign-in active"
+msgstr "Kuingia kuko hai"
+
+msgid "Joined"
+msgstr "Alijiunga"
+
+msgid "until %(d)s"
+msgstr "hadi %(d)s"
+
+msgid "None current"
+msgstr "Hakuna wa sasa"
+
+msgid "Not opened"
+msgstr "Haijafunguliwa"
+
+msgid "Manage account (admin)"
+msgstr "Simamia akaunti (msimamizi)"
+
+msgid "Grant complimentary demo membership"
+msgstr "Toa uanachama wa bure wa majaribio"
+
+msgid "Account status changes use the reviewed account workflow. Membership changes are made from the membership history below, each with a reason and a confirmation."
+msgstr "Mabadiliko ya hali ya akaunti hutumia utaratibu wa akaunti uliokaguliwa. Mabadiliko ya uanachama hufanywa kutoka historia ya uanachama hapa chini, kila moja likiwa na sababu na uthibitisho."
+
+msgid "No access while suspended."
+msgstr "Hakuna ufikiaji wakati umesimamishwa."
+
+msgid "Origin"
+msgstr "Chanzo"
+
+msgid "This period"
+msgstr "Kipindi hiki"
+
+msgid "%(left)s left"
+msgstr "%(left)s zimebaki"
+
+msgid "includes %(n)s later period"
+msgid_plural "includes %(n)s later periods"
+msgstr[0] "kinajumuisha kipindi %(n)s cha baadaye"
+msgstr[1] "kinajumuisha vipindi %(n)s vya baadaye"
+
+msgid "No current membership."
+msgstr "Hakuna uanachama wa sasa."
+
+msgid "None."
+msgstr "Hakuna."
+
+msgid "Membership history"
+msgstr "Historia ya uanachama"
+
+msgid "Newest first. Each period keeps the terms and origin it was activated with."
+msgstr "Vipya kwanza. Kila kipindi hubaki na masharti na chanzo kilichowezeshwa nacho."
+
+msgid "Not activated"
+msgstr "Haujawezeshwa"
+
+msgid "Chosen %(d)s"
+msgstr "Lilichaguliwa %(d)s"
+
+msgid "Extend"
+msgstr "Ongeza muda"
+
+msgid "Membership audit trail"
+msgstr "Kumbukumbu za ukaguzi wa uanachama"
+
+msgid "%(n)s day"
+msgid_plural "%(n)s days"
+msgstr[0] "Siku %(n)s"
+msgstr[1] "Siku %(n)s"
+
+msgid "No membership events yet."
+msgstr "Bado hakuna matukio ya uanachama."
+
+msgid "Recent activity (safe summaries)"
+msgstr "Shughuli za hivi karibuni (muhtasari salama)"
+
+msgid "Member directory"
+msgstr "Orodha ya wanachama"
+
+msgid "Search by email"
+msgstr "Tafuta kwa barua pepe"
+
+msgid "Latest membership"
+msgstr "Uanachama wa hivi karibuni"
+
+msgid "No members found."
+msgstr "Hakuna wanachama waliopatikana."
+
+msgid "Access currently ends"
+msgstr "Ufikiaji kwa sasa unaisha"
+
+msgid "%(n)s later administrative extension follows this change: it is suspended, reinstated or cancelled together with this membership, so it cannot restore access on its own."
+msgid_plural "%(n)s later administrative extensions follow this change: they are suspended, reinstated or cancelled together with this membership, so they cannot restore access on their own."
+msgstr[0] "Nyongeza %(n)s ya kiutawala ya baadaye inafuata badiliko hili: husimamishwa, kurejeshwa au kughairiwa pamoja na uanachama huu, hivyo haiwezi kurejesha ufikiaji yenyewe."
+msgstr[1] "Nyongeza %(n)s za kiutawala za baadaye zinafuata badiliko hili: husimamishwa, kurejeshwa au kughairiwa pamoja na uanachama huu, hivyo haziwezi kurejesha ufikiaji zenyewe."
+
+msgid "This member also has %(n)s other later period scheduled (for example a paid renewal). It is not changed here; manage it separately in the membership history."
+msgid_plural "This member also has %(n)s other later periods scheduled (for example paid renewals). They are not changed here; manage them separately in the membership history."
+msgstr[0] "Mwanachama huyu pia ana kipindi %(n)s kingine cha baadaye kilichopangwa (kwa mfano usasishaji uliolipiwa). Hakibadilishwi hapa; kisimamie kando katika historia ya uanachama."
+msgstr[1] "Mwanachama huyu pia ana vipindi %(n)s vingine vya baadaye vilivyopangwa (kwa mfano usasishaji uliolipiwa). Havibadilishwi hapa; visimamie kando katika historia ya uanachama."
+
+msgid "The extension starts when access currently ends and adds the number of days you enter, on the same plan and entitlements."
+msgstr "Nyongeza huanza ufikiaji wa sasa unapoisha na huongeza idadi ya siku unazoweka, kwenye mpango na haki zilezile."
+
+msgid "Reason and confirmation"
+msgstr "Sababu na uthibitisho"
+
+msgid "Keep it unchanged"
+msgstr "Uache bila kubadilisha"
+
+msgid "Back to membership payments"
+msgstr "Rudi kwenye malipo ya uanachama"
+
+msgid "%(plan)s membership payment"
+msgstr "Malipo ya uanachama wa %(plan)s"
+
+msgid "What the member told us"
+msgstr "Alichotueleza mwanachama"
+
+msgid "Amount due"
+msgstr "Kiasi kinachodaiwa"
+
+msgid "Not the registered number (allowed)"
+msgstr "Si namba iliyosajiliwa (inaruhusiwa)"
+
+msgid "Not given"
+msgstr "Haikutolewa"
+
+msgid "Member's transaction ID"
+msgstr "Kitambulisho cha muamala cha mwanachama"
+
+msgid "Not given by the member"
+msgstr "Haikutolewa na mwanachama"
+
+msgid "Paid on (stated)"
+msgstr "Ililipwa tarehe (kwa maelezo)"
+
+msgid "Submitted %(when)s"
+msgstr "Imewasilishwa %(when)s"
+
+msgid "Download"
+msgstr "Pakua"
+
+msgid "Member's evidence, not proof"
+msgstr "Ushahidi wa mwanachama, si uthibitisho"
+
+msgid "Activation unlocks:"
+msgstr "Uwezeshaji unafungua:"
+
+msgid "This plan unlocks nothing."
+msgstr "Mpango huu haufungui chochote."
+
+msgid "This transaction ID is also on other submissions."
+msgstr "Kitambulisho hiki cha muamala kipo pia kwenye mawasilisho mengine."
+
+msgid "Only one can be confirmed. Check which member really paid."
+msgstr "Moja tu linaweza kuthibitishwa. Kagua ni mwanachama yupi aliyelipa kweli."
+
+msgid "The same receipt file was attached to other submissions."
+msgstr "Faili ileile ya risiti iliambatishwa kwenye mawasilisho mengine."
+
+msgid "A reused screenshot is a warning sign: check the provider records carefully."
+msgstr "Picha ya skrini iliyotumika tena ni ishara ya tahadhari: kagua kumbukumbu za mtoa huduma kwa makini."
+
+msgid "This plan includes no video access, so the member will not be able to watch videos after activation. Ask a Super Administrator to check the plan's entitlements."
+msgstr "Mpango huu haujumuishi ufikiaji wa video, hivyo mwanachama hataweza kutazama video baada ya uwezeshaji. Muombe Msimamizi Mkuu akague haki za mpango."
+
+msgid "Verify in the provider records"
+msgstr "Thibitisha kwenye kumbukumbu za mtoa huduma"
+
+msgid "Open the %(provider)s business statement or portal yourself and find this transaction ID for %(amount)s."
+msgstr "Fungua taarifa au tovuti ya biashara ya %(provider)s wewe mwenyewe na utafute kitambulisho hiki cha muamala kwa %(amount)s."
+
+msgid "Open the %(provider)s business statement or portal yourself. The member gave no transaction ID: search for %(amount)s by date and paying number."
+msgstr "Fungua taarifa au tovuti ya biashara ya %(provider)s wewe mwenyewe. Mwanachama hakutoa kitambulisho cha muamala: tafuta %(amount)s kwa tarehe na namba iliyolipa."
+
+msgid "Confirm what you checked"
+msgstr "Thibitisha ulichokagua"
+
+msgid "Confirm Payment & Activate Membership"
+msgstr "Thibitisha malipo na uwezeshe uanachama"
+
+msgid "Type the provider transaction ID and tick all three confirmations to continue."
+msgstr "Andika kitambulisho cha muamala cha mtoa huduma na uweke alama kwenye uthibitisho wote watatu ili kuendelea."
+
+msgid "Activates the membership immediately, records the fee in the ledger and notifies the member."
+msgstr "Huwezesha uanachama mara moja, hurekodi ada kwenye leja na humjulisha mwanachama."
+
+msgid "Can't find this payment? Reject it"
+msgstr "Huwezi kupata malipo haya? Yakatae"
+
+msgid "The member sees the reason and can send corrected details. If money arrived but cannot be matched, say so in the note and follow the refund procedure; nothing is refunded automatically."
+msgstr "Mwanachama huona sababu na anaweza kutuma taarifa zilizosahihishwa. Ikiwa pesa ilifika lakini haiwezi kulinganishwa, sema hivyo kwenye maelezo na ufuate utaratibu wa marejesho; hakuna kinachorejeshwa chenyewe."
+
+msgid "Reject payment"
+msgstr "Kataa malipo"
+
+msgid "You can view this payment but not approve or reject it."
+msgstr "Unaweza kuona malipo haya lakini huwezi kuyaidhinisha wala kuyakataa."
+
+msgid "%(plan)s runs from %(start)s until %(end)s."
+msgstr "%(plan)s unaanza %(start)s hadi %(end)s."
+
+msgid "Confirmed by %(who)s on %(when)s · provider transaction ID %(ref)s"
+msgstr "Imethibitishwa na %(who)s tarehe %(when)s · kitambulisho cha muamala cha mtoa huduma %(ref)s"
+
+msgid "Note:"
+msgstr "Kumbuka:"
+
+msgid "Payment rejected"
+msgstr "Malipo yamekataliwa"
+
+msgid "Rejected by %(who)s on %(when)s. The member can send corrected details."
+msgstr "Yamekataliwa na %(who)s tarehe %(when)s. Mwanachama anaweza kutuma taarifa zilizosahihishwa."
+
+msgid "The member withdrew this verification request."
+msgstr "Mwanachama ameondoa ombi hili la uthibitisho."
+
+msgid "Member and account"
+msgstr "Mwanachama na akaunti"
+
+msgid "Sign-in"
+msgstr "Kuingia"
+
+msgid "Registered phone"
+msgstr "Simu iliyosajiliwa"
+
+msgid "email not confirmed"
+msgstr "barua pepe haijathibitishwa"
+
+msgid "Other submissions"
+msgstr "Mawasilisho mengine"
+
+msgid "Technical details"
+msgstr "Maelezo ya kiufundi"
+
+msgid "Membership status"
+msgstr "Hali ya uanachama"
+
+msgid "Transaction key (single use)"
+msgstr "Ufunguo wa muamala (matumizi mara moja)"
+
+msgid "Verified transaction key"
+msgstr "Ufunguo wa muamala uliothibitishwa"
+
+msgid "Verified amount"
+msgstr "Kiasi kilichothibitishwa"
+
+msgid "Activation reference"
+msgstr "Kumbukumbu ya uwezeshaji"
+
+msgid "Ledger entry"
+msgstr "Ingizo la leja"
+
+msgid "Receipt file"
+msgstr "Faili ya risiti"
+
+msgid "Record ID"
+msgstr "Kitambulisho cha rekodi"
+
+msgid "Audit history (%(n)s event)"
+msgid_plural "Audit history (%(n)s events)"
+msgstr[0] "Historia ya ukaguzi (tukio %(n)s)"
+msgstr[1] "Historia ya ukaguzi (matukio %(n)s)"
+
+msgid "How to handle problem payments"
+msgstr "Jinsi ya kushughulikia malipo yenye tatizo"
+
+msgid "Not in the provider records yet:"
+msgstr "Bado haipo kwenye kumbukumbu za mtoa huduma:"
+
+msgid "wait and check again later the same day. If it never appears, reject with “No matching transaction”; the member can resubmit the same reference if it appears later."
+msgstr "subiri na ukague tena baadaye siku hiyo hiyo. Ikiwa haitaonekana kabisa, kataa kwa “Hakuna muamala unaolingana”; mwanachama anaweza kuwasilisha kumbukumbu ileile tena ikionekana baadaye."
+
+msgid "Partial or larger amount received:"
+msgstr "Kiasi pungufu au kikubwa zaidi kimepokelewa:"
+
+msgid "do not approve. Reject with “The amount received does not match” and write the amount actually received in the note. Then follow the refund procedure (return the money received, or ask the member to pay the full price as a new payment after the refund)."
+msgstr "usiidhinishe. Kataa kwa “Kiasi kilichopokelewa hakilingani” na uandike kiasi kilichopokelewa hasa kwenye maelezo. Kisha fuata utaratibu wa marejesho (rejesha pesa iliyopokelewa, au mwombe mwanachama alipe bei kamili kama malipo mapya baada ya marejesho)."
+
+msgid "Different paying number:"
+msgstr "Namba tofauti iliyolipa:"
+
+msgid "if the reference and amount match but the phone differs, confirm with the member through support before approving; if the payment is someone else's, reject with “different phone number”."
+msgstr "ikiwa kumbukumbu na kiasi vinalingana lakini simu ni tofauti, thibitisha na mwanachama kupitia usaidizi kabla ya kuidhinisha; ikiwa malipo ni ya mtu mwingine, kataa kwa “namba tofauti ya simu”."
+
+msgid "Same reference on another submission:"
+msgstr "Kumbukumbu ileile kwenye wasilisho jingine:"
+
+msgid "only one submission per provider transaction can be approved. Reject the others with “already used”."
+msgstr "wasilisho moja tu kwa kila muamala wa mtoa huduma linaweza kuidhinishwa. Kataa mengine kwa “imeshatumika”."
+
+msgid "Member paid twice:"
+msgstr "Mwanachama amelipa mara mbili:"
+
+msgid "approve the submission that matches; record the second provider transaction in a support ticket and follow the refund procedure. Nothing is refunded automatically."
+msgstr "idhinisha wasilisho linalolingana; rekodi muamala wa pili wa mtoa huduma kwenye tiketi ya usaidizi na ufuate utaratibu wa marejesho. Hakuna kinachorejeshwa chenyewe."
+
+msgid "Refunds are paid outside ClipCash by the account owner from the provider business account, recorded in a support ticket, and reversed in the ledger only by a Super Administrator. See the PAY-01 procedure document."
+msgstr "Marejesho hulipwa nje ya ClipCash na mmiliki wa akaunti kutoka akaunti ya biashara ya mtoa huduma, hurekodiwa kwenye tiketi ya usaidizi, na hubatilishwa kwenye leja na Msimamizi Mkuu pekee. Tazama hati ya utaratibu wa PAY-01."
+
+msgid "Payment Methods"
+msgstr "Njia za malipo"
+
+msgid "Where members send their membership payments. Every payment is still checked by staff before a membership starts."
+msgstr "Mahali wanachama wanapotuma malipo ya uanachama. Kila malipo bado hukaguliwa na wafanyakazi kabla ya uanachama kuanza."
+
+msgid "Verification queue"
+msgstr "Foleni ya uthibitisho"
+
+msgid "Add Payment Method"
+msgstr "Ongeza njia ya malipo"
+
+msgid "Payments switched off."
+msgstr "Malipo yamezimwa."
+
+msgid "Manual membership payments are switched off in this deployment."
+msgstr "Malipo ya uanachama kwa mkono yamezimwa katika usakinishaji huu."
+
+msgid "Active methods"
+msgstr "Njia zinazotumika"
+
+msgid "Registered recipient"
+msgstr "Mpokeaji aliyesajiliwa"
+
+msgid "Live since"
+msgstr "Hai tangu"
+
+msgid "Steps shown to members"
+msgstr "Hatua zinazoonyeshwa kwa wanachama"
+
+msgid "Retire"
+msgstr "Ondoa"
+
+msgid "No active payment methods."
+msgstr "Hakuna njia za malipo zinazotumika."
+
+msgid "Members cannot pay for a membership until you add one."
+msgstr "Wanachama hawawezi kulipia uanachama hadi uongeze moja."
+
+msgid "Retired method (%(n)s)"
+msgid_plural "Retired methods (%(n)s)"
+msgstr[0] "Njia iliyoondolewa (%(n)s)"
+msgstr[1] "Njia zilizoondolewa (%(n)s)"
+
+msgid "Retired methods are hidden from members. Payments already submitted to them can still be reviewed."
+msgstr "Njia zilizoondolewa hufichwa kwa wanachama. Malipo yaliyokwisha wasilishwa kwao bado yanaweza kukaguliwa."
+
+msgid "Retired %(when)s"
+msgstr "Iliondolewa %(when)s"
+
+msgid "Reactivate"
+msgstr "Wezesha tena"
+
+msgid "Version history (%(n)s)"
+msgid_plural "Version history (%(n)s)"
+msgstr[0] "Historia ya matoleo (%(n)s)"
+msgstr[1] "Historia ya matoleo (%(n)s)"
+
+msgid "Every change publishes a new version; nothing is deleted. Members' payment requests keep the version they were shown."
+msgstr "Kila badiliko huchapisha toleo jipya; hakuna kinachofutwa. Maombi ya malipo ya wanachama hubaki na toleo walilooneshwa."
+
+msgid "Published %(when)s by %(who)s"
+msgstr "Ilichapishwa %(when)s na %(who)s"
+
+msgid "replaced"
+msgstr "imebadilishwa"
+
+msgid "Replaced"
+msgstr "Imebadilishwa"
+
+msgid "No payment methods have been published yet."
+msgstr "Bado hakuna njia za malipo zilizochapishwa."
+
+msgid "Find each payment in the official provider business records, then confirm it to activate the membership."
+msgstr "Tafuta kila malipo kwenye kumbukumbu rasmi za biashara za mtoa huduma, kisha uyathibitishe ili kuwezesha uanachama."
+
+msgid "Payment methods"
+msgstr "Njia za malipo"
+
+msgid "No payment methods are published, so members cannot submit new payments. Waiting submissions can still be reviewed."
+msgstr "Hakuna njia za malipo zilizochapishwa, hivyo wanachama hawawezi kuwasilisha malipo mapya. Mawasilisho yanayosubiri bado yanaweza kukaguliwa."
+
+msgid "Filter payments by status"
+msgstr "Chuja malipo kwa hali"
+
+msgid "Search payments"
+msgstr "Tafuta malipo"
+
+msgid "Name, email, phone or reference"
+msgstr "Jina, barua pepe, simu au kumbukumbu"
+
+msgid "Transaction ID"
+msgstr "Kitambulisho cha muamala"
+
+msgid "Review"
+msgstr "Kagua"
+
+msgid "View"
+msgstr "Tazama"
+
+msgid "No membership payments match your search."
+msgstr "Hakuna malipo ya uanachama yanayolingana na utafutaji wako."
+
+msgid "Nothing to review. New payments appear here as members submit them."
+msgstr "Hakuna cha kukagua. Malipo mapya yanaonekana hapa wanachama wanapoyawasilisha."
+
+msgid "No membership payments here yet."
+msgstr "Bado hakuna malipo ya uanachama hapa."
+
+msgid "Edit payment method"
+msgstr "Hariri njia ya malipo"
+
+msgid "Back to payment methods"
+msgstr "Rudi kwenye njia za malipo"
+
+msgid "Check and publish"
+msgstr "Kagua na uchapishe"
+
+msgid "Edit %(provider)s"
+msgstr "Hariri %(provider)s"
+
+msgid "Members will be told to pay to these details. Check them against the provider's own account before publishing."
+msgstr "Wanachama wataelekezwa kulipa kwa taarifa hizi. Zikague dhidi ya akaunti ya mtoa huduma mwenyewe kabla ya kuchapisha."
+
+msgid "Publishing saves a new version. Payment requests already made keep the details they were shown."
+msgstr "Kuchapisha huhifadhi toleo jipya. Maombi ya malipo yaliyokwisha fanywa hubaki na taarifa walizooneshwa."
+
+msgid "Add where members can send their membership payment."
+msgstr "Ongeza mahali wanachama wanaweza kutuma malipo yao ya uanachama."
+
+msgid "Details to publish"
+msgstr "Taarifa za kuchapisha"
+
+msgid "What changes"
+msgstr "Kinachobadilika"
+
+msgid "Before:"
+msgstr "Kabla:"
+
+msgid "After:"
+msgstr "Baada:"
+
+msgid "This adds %(provider)s as a new way to pay. Members can choose it as soon as you publish."
+msgstr "Hii inaongeza %(provider)s kama njia mpya ya kulipa. Wanachama wanaweza kuichagua mara tu utakapochapisha."
+
+msgid "Members will see"
+msgstr "Wanachama wataona"
+
+msgid "Confirm and publish"
+msgstr "Thibitisha na uchapishe"
+
+msgid "Change details"
+msgstr "Badilisha taarifa"
+
+msgid "Payment method details"
+msgstr "Taarifa za njia ya malipo"
+
+msgid "Advanced: provider code"
+msgstr "Kina: msimbo wa mtoa huduma"
+
+msgid "Review details"
+msgstr "Kagua taarifa"
+
+msgid "Nothing is published until you confirm on the next screen."
+msgstr "Hakuna kinachochapishwa hadi uthibitishe kwenye skrini inayofuata."
+
+msgid "Retire payment method"
+msgstr "Ondoa njia ya malipo"
+
+msgid "Reactivate payment method"
+msgstr "Wezesha njia ya malipo tena"
+
+msgid "Retire %(provider)s?"
+msgstr "Ondoa %(provider)s?"
+
+msgid "Reactivate %(provider)s?"
+msgstr "Wezesha tena %(provider)s?"
+
+msgid "Members can no longer choose this method for new payments."
+msgstr "Wanachama hawawezi tena kuchagua njia hii kwa malipo mapya."
+
+msgid "%(n)s payment waiting for verification keeps these details and can still be confirmed or rejected."
+msgid_plural "%(n)s payments waiting for verification keep these details and can still be confirmed or rejected."
+msgstr[0] "Malipo %(n)s yanayosubiri uthibitisho yanabaki na taarifa hizi na bado yanaweza kuthibitishwa au kukataliwa."
+msgstr[1] "Malipo %(n)s yanayosubiri uthibitisho yanabaki na taarifa hizi na bado yanaweza kuthibitishwa au kukataliwa."
+
+msgid "Nothing is deleted. You can reactivate it later."
+msgstr "Hakuna kinachofutwa. Unaweza kuiwezesha tena baadaye."
+
+msgid "Members can choose this method again, with exactly the details above."
+msgstr "Wanachama wanaweza kuchagua njia hii tena, kwa taarifa zilezile zilizo hapo juu."
+
+msgid "If the number or recipient has changed, reactivate and then edit it, or add it as new details."
+msgstr "Ikiwa namba au mpokeaji amebadilika, wezesha tena kisha uhariri, au uiongeze kama taarifa mpya."
+
+msgid "Retire method"
+msgstr "Ondoa njia"
+
+msgid "Reactivate method"
+msgstr "Wezesha njia tena"
+
+msgid "Live database figures you are permitted to see. Sandbox payments, simulated demo rewards and real wallet balances are separate and never added together."
+msgstr "Takwimu za hifadhidata unazoruhusiwa kuona. Malipo ya majaribio, zawadi za majaribio za kuigiza na salio halisi za pochi ni tofauti na haziongezwi pamoja kamwe."
+
+msgid "Video provider: DEMO. No Bunny Stream connection; demo videos are labelled as samples."
+msgstr "Mtoa huduma wa video: DEMO. Hakuna muunganisho wa Bunny Stream; video za majaribio zimewekwa alama kama sampuli."
+
+msgid "Open items"
+msgstr "Mambo yaliyo wazi"
+
+msgid "Needs attention"
+msgstr "Inahitaji kushughulikiwa"
+
+msgid "Open items you can act on"
+msgstr "Mambo yaliyo wazi unayoweza kushughulikia"
+
+msgid "Item"
+msgstr "Kipengele"
+
+msgid "Nothing is waiting in the areas you can see."
+msgstr "Hakuna kinachosubiri katika maeneo unayoweza kuona."
+
+msgid "By area"
+msgstr "Kwa eneo"
+
+msgid "Current figures by area"
+msgstr "Takwimu za sasa kwa eneo"
+
+msgid "Current figures"
+msgstr "Takwimu za sasa"
+
+msgid "%(a)s active, %(v)s email-confirmed, %(r)s suspended or disabled."
+msgstr "%(a)s hai, %(v)s wenye barua pepe iliyothibitishwa, %(r)s waliosimamishwa au kuzimwa."
+
+msgid "Demo budgets in approved campaigns: %(t)s (configuration, not funding). Funded campaigns: %(f)s."
+msgstr "Bajeti za majaribio katika kampeni zilizoidhinishwa: %(t)s (mipangilio, si ufadhili). Kampeni zilizofadhiliwa: %(f)s."
+
+msgid "%(p)s awaiting review, %(r)s revoked."
+msgstr "%(p)s zinasubiri ukaguzi, %(r)s zimebatilishwa."
+
+msgid "Demo / simulated"
+msgstr "Majaribio / kuigiza"
+
+msgid "simulated, not money"
+msgstr "kuigiza, si pesa"
+
+msgid "%(q)s recorded, %(v)s reversed, %(x)s not eligible. %(d)s policy drafts awaiting approval."
+msgstr "%(q)s zimerekodiwa, %(v)s zimebatilishwa, %(x)s hazikustahili. Rasimu %(d)s za sera zinasubiri idhini."
+
+msgid "%(e)s exceptions, %(r)s refunds awaiting approval, %(d)s disputes, %(v)s membership previews (never activated). Not real cash."
+msgstr "Tofauti %(e)s, marejesho %(r)s yanayosubiri idhini, migogoro %(d)s, hakiki %(v)s za uanachama (hazijawahi kuwezeshwa). Si pesa halisi."
+
+msgid "%(n)s wallet"
+msgid_plural "%(n)s wallets"
+msgstr[0] "Pochi %(n)s"
+msgstr[1] "Pochi %(n)s"
+
+msgid "%(r)s restricted, %(f)s open findings, %(u)s unexpected balances. Every balance must be TZS 0."
+msgstr "%(r)s zimezuiliwa, matokeo %(f)s yaliyo wazi, salio %(u)s zisizotarajiwa. Kila salio lazima liwe TZS 0."
+
+msgid "%(q)s in review, %(u)s with unknown payout status, %(e)s exceptions. Real withdrawals are locked."
+msgstr "%(q)s zinakaguliwa, %(u)s zenye hali ya malipo isiyojulikana, tofauti %(e)s. Utoaji halisi umefungwa."
+
+msgid "Background jobs"
+msgstr "Kazi za nyuma"
+
+msgid "%(f)s failed in 24 h."
+msgstr "%(f)s zimeshindwa katika saa 24."
+
+msgid "Your role has no dashboard sections. Use the menu for the areas you can access."
+msgstr "Jukumu lako halina sehemu za dashibodi. Tumia menyu kwa maeneo unayoweza kufikia."
+
+msgid "All payments"
+msgstr "Malipo yote"
+
+msgid "Purpose / domain"
+msgstr "Madhumuni / eneo"
+
+msgid "Payer"
+msgstr "Mlipaji"
+
+msgid "provider reported"
+msgstr "mtoa huduma ameripoti"
+
+msgid "Provider ref."
+msgstr "Kumb. ya mtoa huduma"
+
+msgid "Confirmed / reconciled / settled"
+msgstr "Imethibitishwa / imelinganishwa / imekamilika"
+
+msgid "Membership preview"
+msgstr "Hakiki ya uanachama"
+
+msgid "not activated"
+msgstr "haijawezeshwa"
+
+msgid "Sandbox provider simulator"
+msgstr "Kiigizaji cha mtoa huduma wa majaribio"
+
+msgid "Acts as the external provider and sends a signed notice through the normal verification path."
+msgstr "Hufanya kazi kama mtoa huduma wa nje na hutuma taarifa iliyosainiwa kupitia njia ya kawaida ya uthibitisho."
+
+msgid "Refund"
+msgstr "Marejesho"
+
+msgid "requested by"
+msgstr "imeombwa na"
+
+msgid "Note"
+msgstr "Maelezo"
+
+msgid "Approve refund (second person)"
+msgstr "Idhinisha marejesho (mtu wa pili)"
+
+msgid "Refund reason"
+msgstr "Sababu ya marejesho"
+
+msgid "Request full refund"
+msgstr "Omba marejesho kamili"
+
+msgid "Dispute"
+msgstr "Mgogoro"
+
+msgid "frozen"
+msgstr "imegandishwa"
+
+msgid "shortfall"
+msgstr "upungufu"
+
+msgid "Resolution note"
+msgstr "Maelezo ya utatuzi"
+
+msgid "Won"
+msgstr "Imeshinda"
+
+msgid "Lost (chargeback)"
+msgstr "Imepotea (urejeshaji wa mtoa huduma)"
+
+msgid "Provider events"
+msgstr "Matukio ya mtoa huduma"
+
+msgid "Received"
+msgstr "Imepokelewa"
+
+msgid "Authenticated"
+msgstr "Imethibitishwa uhalali"
+
+msgid "Summary"
+msgstr "Muhtasari"
+
+msgid "Sandbox journal postings"
+msgstr "Maingizo ya jarida la majaribio"
+
+msgid "Exceptions"
+msgstr "Tofauti"
+
+msgid "Audit history"
+msgstr "Historia ya ukaguzi"
+
+msgid "Reconciliation exceptions"
+msgstr "Tofauti za ulinganisho"
+
+msgid "Exceptions are never accepted as money. Retry re-checks the provider's own record; Reject closes the payment (any money is returned outside ClipCash); Dismiss records a note."
+msgstr "Tofauti hazikubaliwi kamwe kama pesa. Jaribu tena hukagua upya rekodi ya mtoa huduma; Kataa hufunga malipo (pesa yoyote hurejeshwa nje ya ClipCash); Puuza hurekodi maelezo."
+
+msgid "Retry"
+msgstr "Jaribu tena"
+
+msgid "Dismiss"
+msgstr "Puuza"
+
+msgid "No exceptions."
+msgstr "Hakuna tofauti."
+
+msgid "Sandbox funding"
+msgstr "Ufadhili wa majaribio"
+
+msgid "Advertiser funding"
+msgstr "Ufadhili wa mtangazaji"
+
+msgid "Sandbox funding by advertiser"
+msgstr "Ufadhili wa majaribio kwa mtangazaji"
+
+msgid "Unallocated"
+msgstr "Haijagawiwa"
+
+msgid "No settled sandbox deposits yet."
+msgstr "Bado hakuna amana za majaribio zilizokamilika."
+
+msgid "Sandbox campaign allocations"
+msgstr "Migao ya kampeni ya majaribio"
+
+msgid "Real campaign funding status stays 'Not funded': sandbox allocations are reports only."
+msgstr "Hali halisi ya ufadhili wa kampeni inabaki 'Haijafadhiliwa': migao ya majaribio ni ripoti tu."
+
+msgid "Sandbox journal balances"
+msgstr "Salio za jarida la majaribio"
+
+msgid "Sum of all balances: %(total)s (always 0: every posting is balanced)."
+msgstr "Jumla ya salio zote: %(total)s (daima 0: kila ingizo limesawazishwa)."
+
+msgid "%(n)s open exception"
+msgid_plural "%(n)s open exceptions"
+msgstr[0] "Tofauti %(n)s iliyo wazi"
+msgstr[1] "Tofauti %(n)s zilizo wazi"
+
+msgid "Funding and sandbox journal"
+msgstr "Ufadhili na jarida la majaribio"
+
+msgid "Any purpose"
+msgstr "Madhumuni yoyote"
+
+msgid "No payments match."
+msgstr "Hakuna malipo yanayolingana."
+
+msgid "New plan"
+msgstr "Mpango mpya"
+
+msgid "New membership plan"
+msgstr "Mpango mpya wa uanachama"
+
+msgid "All plans"
+msgstr "Mipango yote"
+
+msgid "Current terms"
+msgstr "Masharti ya sasa"
+
+msgid "Publicly listed"
+msgstr "Imeorodheshwa hadharani"
+
+msgid "Payment availability"
+msgstr "Upatikanaji wa malipo"
+
+msgid "Open: members can buy active, listed plans with a manual payment. Staff verify each payment in the official provider records before the membership starts."
+msgstr "Wazi: wanachama wanaweza kununua mipango hai iliyoorodheshwa kwa malipo ya mkono. Wafanyakazi huthibitisha kila malipo kwenye kumbukumbu rasmi za mtoa huduma kabla ya uanachama kuanza."
+
+msgid "This plan is not offered to members because it is inactive or not listed."
+msgstr "Mpango huu hautolewi kwa wanachama kwa sababu umezimwa au haujaorodheshwa."
+
+msgid "Closed: manual membership payments are switched on, but no payment method is published. Publish payment details under Membership payments to open purchases."
+msgstr "Imefungwa: malipo ya uanachama kwa mkono yamewashwa, lakini hakuna njia ya malipo iliyochapishwa. Chapisha taarifa za malipo katika Malipo ya uanachama ili kufungua ununuzi."
+
+msgid "Sandbox only: simulated payments never activate a membership."
+msgstr "Majaribio pekee: malipo ya kuigiza hayawezeshi uanachama kamwe."
+
+msgid "Payments disabled: manual membership payments are not switched on for this site. Members can see listed plans but cannot buy them."
+msgstr "Malipo yamezimwa: malipo ya uanachama kwa mkono hayajawashwa kwa tovuti hii. Wanachama wanaweza kuona mipango iliyoorodheshwa lakini hawawezi kuinunua."
+
+msgid "Automatic payment gateways are not used: gateway payments stay locked off."
+msgstr "Malango ya malipo ya kiotomatiki hayatumiki: malipo ya malango yanabaki yamefungwa."
+
+msgid "Current members"
+msgstr "Wanachama wa sasa"
+
+msgid "Choices awaiting payment"
+msgstr "Machaguo yanayosubiri malipo"
+
+msgid "%(n)s payment awaiting verification"
+msgid_plural "%(n)s payments awaiting verification"
+msgstr[0] "Malipo %(n)s yanasubiri uthibitisho"
+msgstr[1] "Malipo %(n)s yanasubiri uthibitisho"
+
+msgid "Members who already chose this plan keep the price and length they were quoted, even if you change them now. Their payments are verified against that quoted amount."
+msgstr "Wanachama waliokwisha chagua mpango huu hubaki na bei na muda walioambiwa, hata ukibadilisha sasa. Malipo yao huthibitishwa dhidi ya kiasi hicho kilichotajwa."
+
+msgid "Archived plans cannot be changed or reactivated."
+msgstr "Mipango iliyohifadhiwa kwenye kumbukumbu haiwezi kubadilishwa wala kuwezeshwa tena."
+
+msgid "Activate plan"
+msgstr "Wezesha mpango"
+
+msgid "Deactivate plan"
+msgstr "Zima mpango"
+
+msgid "Archive permanently"
+msgstr "Hifadhi kwenye kumbukumbu kwa kudumu"
+
+msgid "Deactivating stops new purchases only. Current memberships continue until they end, and payments already submitted can still be verified."
+msgstr "Kuzima huzuia ununuzi mpya pekee. Uanachama wa sasa unaendelea hadi uishe, na malipo yaliyokwisha wasilishwa bado yanaweza kuthibitishwa."
+
+msgid "Edit plan"
+msgstr "Hariri mpango"
+
+msgid "Plan details"
+msgstr "Maelezo ya mpango"
+
+msgid "Price and length history"
+msgstr "Historia ya bei na muda"
+
+msgid "Plan versions"
+msgstr "Matoleo ya mpango"
+
+msgid "Version"
+msgstr "Toleo"
+
+msgid "Set each plan's price (whole TZS, up to %(max)s) and length in days. Changes apply to new choices immediately; existing choices, submitted payments and memberships keep the price and length they were quoted."
+msgstr "Weka bei ya kila mpango (TZS kamili, hadi %(max)s) na muda kwa siku. Mabadiliko yanatumika kwa machaguo mapya mara moja; machaguo yaliyopo, malipo yaliyowasilishwa na uanachama hubaki na bei na muda walioambiwa."
+
+msgid "Awaiting payment / verification"
+msgstr "Unasubiri malipo / uthibitisho"
+
+msgid "not listed"
+msgstr "haujaorodheshwa"
+
+msgid "No plans yet. Create the first one."
+msgstr "Bado hakuna mipango. Unda wa kwanza."
+
+msgid "Export CSV"
+msgstr "Pakua CSV"
+
+msgid "Exports are audited. Per-campaign counts below %(minimum)s are hidden in the file."
+msgstr "Upakuaji hukaguliwa. Idadi kwa kila kampeni chini ya %(minimum)s hufichwa kwenye faili."
+
+msgid "As of today"
+msgstr "Hadi leo"
+
+msgid "In this period"
+msgstr "Katika kipindi hiki"
+
+msgid "Only the first rows are shown."
+msgstr "Safu za kwanza pekee ndizo zinaonyeshwa."
+
+msgid "Nothing recorded in this period."
+msgstr "Hakuna kilichorekodiwa katika kipindi hiki."
+
+msgid "Figures come from the platform's own records. Real money stays locked; sandbox, simulated and demo figures are reported separately and are never money."
+msgstr "Takwimu zinatoka kumbukumbu za jukwaa lenyewe. Pesa halisi inabaki imefungwa; takwimu za majaribio, kuigiza na maonyesho huripotiwa kando na kamwe si pesa."
+
+msgid "All reward policies"
+msgstr "Sera zote za zawadi"
+
+msgid "Credits are non-cash. They are not money, cannot be withdrawn and do not touch wallets. A member is shown the credits per view when a session starts, and a verified view earns exactly that amount while the budget lasts. Changes here never rewrite past awards."
+msgstr "Krediti si pesa taslimu. Si pesa, haziwezi kutolewa na haziguswi na pochi. Mwanachama huoneshwa krediti kwa kila utazamaji kipindi kinapoanza, na utazamaji uliohakikiwa hupata kiasi hicho hasa bajeti ikiwepo. Mabadiliko hapa hayaandiki upya tuzo za awali kamwe."
+
+msgid "Effective rules"
+msgstr "Kanuni zinazotumika"
+
+msgid "Campaign status"
+msgstr "Hali ya kampeni"
+
+msgid "Credits per verified view"
+msgstr "Krediti kwa kila utazamaji uliohakikiwa"
+
+msgid "policy"
+msgstr "sera"
+
+msgid "None: no approved policy, so views earn no credits"
+msgstr "Hakuna: hakuna sera iliyoidhinishwa, hivyo utazamaji haupati krediti"
+
+msgid "Maximum per view (approved with the campaign)"
+msgstr "Kiwango cha juu kwa kila utazamaji (kimeidhinishwa na kampeni)"
+
+msgid "Eligible plans"
+msgstr "Mipango inayostahili"
+
+msgid "Every plan that includes the video"
+msgstr "Kila mpango unaojumuisha video"
+
+msgid "From the approved campaign"
+msgstr "Kutoka kampeni iliyoidhinishwa"
+
+msgid "Total credit budget"
+msgstr "Jumla ya bajeti ya krediti"
+
+msgid "approved campaign budget %(max)s"
+msgstr "bajeti ya kampeni iliyoidhinishwa %(max)s"
+
+msgid "Awarded"
+msgstr "Zimetolewa"
+
+msgid "Remaining"
+msgstr "Iliyobaki"
+
+msgid "Not enough for another view"
+msgstr "Haitoshi kwa utazamaji mwingine"
+
+msgid "Qualifying view"
+msgstr "Utazamaji unaostahili"
+
+msgid "Verified by the server; at most %(n)s credited view per member, and one per day."
+msgid_plural "Verified by the server; at most %(n)s credited views per member, and one per day."
+msgstr[0] "Huhakikiwa na seva; utazamaji usiozidi %(n)s unaopata krediti kwa kila mwanachama, na mmoja kwa siku."
+msgstr[1] "Huhakikiwa na seva; utazamaji usiozidi %(n)s unaopata krediti kwa kila mwanachama, na mmoja kwa siku."
+
+msgid "Plans requested by the advertiser"
+msgstr "Mipango iliyoombwa na mtangazaji"
+
+msgid "Change eligible plans and budget"
+msgstr "Badilisha mipango inayostahili na bajeti"
+
+msgid "Eligible membership plans (none ticked: every plan that includes the video)"
+msgstr "Mipango ya uanachama inayostahili (bila alama: kila mpango unaojumuisha video)"
+
+msgid "Total credit budget (whole credits)"
+msgstr "Jumla ya bajeti ya krediti (krediti kamili)"
+
+msgid "Between the %(n)s credits already awarded and the advertiser-approved campaign budget of %(max)s credits."
+msgstr "Kati ya krediti %(n)s zilizokwisha tolewa na bajeti ya kampeni iliyoidhinishwa na mtangazaji ya krediti %(max)s."
+
+msgid "Save credit terms"
+msgstr "Hifadhi masharti ya krediti"
+
+msgid "Change credits per verified view"
+msgstr "Badilisha krediti kwa kila utazamaji uliohakikiwa"
+
+msgid "A new rate is a policy draft. A different administrator must approve it; sessions already started keep the rate they were shown."
+msgstr "Kiwango kipya ni rasimu ya sera. Msimamizi mwingine lazima akiidhinishe; vipindi vilivyokwisha anza hubaki na kiwango walichooneshwa."
+
+msgid "Credits per verified view (1 to %(max)s)"
+msgstr "Krediti kwa kila utazamaji uliohakikiwa (1 hadi %(max)s)"
+
+msgid "Notes"
+msgstr "Maelezo"
+
+msgid "Save rate draft"
+msgstr "Hifadhi rasimu ya kiwango"
+
+msgid "Same video in other campaigns"
+msgstr "Video ileile katika kampeni nyingine"
+
+msgid "credits per view"
+msgstr "krediti kwa kila utazamaji"
+
+msgid "No other campaign uses this video."
+msgstr "Hakuna kampeni nyingine inayotumia video hii."
+
+msgid "Rate history"
+msgstr "Historia ya viwango"
+
+msgid "Credit terms changes"
+msgstr "Mabadiliko ya masharti ya krediti"
+
+msgid "budget"
+msgstr "bajeti"
+
+msgid "No changes yet."
+msgstr "Bado hakuna mabadiliko."
+
+msgid "Demo reward policies"
+msgstr "Sera za zawadi za majaribio"
+
+msgid "Credits per view"
+msgstr "Krediti kwa kila utazamaji"
+
+msgid "Effective"
+msgstr "Inatumika"
+
+msgid "credits and eligibility"
+msgstr "krediti na ustahiki"
+
+msgid "rev."
+msgstr "toleo"
+
+msgid "No demo reward policies yet."
+msgstr "Bado hakuna sera za zawadi za majaribio."
+
+msgid "New policy draft"
+msgstr "Rasimu mpya ya sera"
+
+msgid "Approved campaign"
+msgstr "Kampeni iliyoidhinishwa"
+
+msgid "max"
+msgstr "juu"
+
+msgid "Credits per verified view (whole credits)"
+msgstr "Krediti kwa kila utazamaji uliohakikiwa (krediti kamili)"
+
+msgid "A different administrator must approve the draft."
+msgstr "Msimamizi mwingine lazima aidhinishe rasimu."
+
+msgid "No approved campaigns."
+msgstr "Hakuna kampeni zilizoidhinishwa."
+
+msgid "Demo reward policy"
+msgstr "Sera ya zawadi za majaribio"
+
+msgid "All policies"
+msgstr "Sera zote"
+
+msgid "Non-cash"
+msgstr "Si pesa taslimu"
+
+msgid "Campaign revision"
+msgstr "Toleo la kampeni"
+
+msgid "current approved"
+msgstr "iliyoidhinishwa sasa"
+
+msgid "Created by"
+msgstr "Imeundwa na"
+
+msgid "Decided by"
+msgstr "Imeamuliwa na"
+
+msgid "Demo rewards under this policy"
+msgstr "Zawadi za majaribio chini ya sera hii"
+
+msgid "Reason (required to reject or retire)"
+msgstr "Sababu (inahitajika kukataa au kustaafisha)"
+
+msgid "Approved policies cannot be edited. Past demo rewards keep the policy they were recorded under."
+msgstr "Sera zilizoidhinishwa haziwezi kuhaririwa. Zawadi za majaribio za awali hubaki na sera zilizorekodiwa chini yake."
+
+msgid "Version history"
+msgstr "Historia ya matoleo"
+
+msgid "Policies"
+msgstr "Sera"
+
+msgid "Evaluate verified views now"
+msgstr "Tathmini utazamaji uliohakikiwa sasa"
+
+msgid "%(n)s verified view waiting"
+msgid_plural "%(n)s verified views waiting"
+msgstr[0] "Utazamaji %(n)s uliohakikiwa unasubiri"
+msgstr[1] "Utazamaji %(n)s uliohakikiwa unasubiri"
+
+msgid "Campaign totals (simulated)"
+msgstr "Jumla za kampeni (kuigiza)"
+
+msgid "Simulated totals by campaign"
+msgstr "Jumla za kuigiza kwa kampeni"
+
+msgid "Recorded"
+msgstr "Zimerekodiwa"
+
+msgid "Demo consumed / allocated"
+msgstr "Majaribio yaliyotumika / yaliyotengwa"
+
+msgid "rules"
+msgstr "kanuni"
+
+msgid "No demo reward decisions yet."
+msgstr "Bado hakuna maamuzi ya zawadi za majaribio."
+
+msgid "Not-eligible reasons:"
+msgstr "Sababu za kutostahili:"
+
+msgid "Member email"
+msgstr "Barua pepe ya mwanachama"
+
+msgid "Decided"
+msgstr "Imeamuliwa"
+
+msgid "Reverse"
+msgstr "Batilisha"
+
+msgid "No demo rewards match these filters."
+msgstr "Hakuna zawadi za majaribio zinazolingana na vichujio hivi."
+
+msgid "Security summary"
+msgstr "Muhtasari wa usalama"
+
+msgid "Last %(h)s hours. Audit records are permanent; this page shows no event metadata."
+msgstr "Saa %(h)s zilizopita. Kumbukumbu za ukaguzi ni za kudumu; ukurasa huu hauonyeshi maelezo ya ziada ya matukio."
+
+msgid "Full audit log"
+msgstr "Kumbukumbu kamili za ukaguzi"
+
+msgid "Refused financial actions"
+msgstr "Vitendo vya kifedha vilivyokataliwa"
+
+msgid "Denied, by area"
+msgstr "Vilivyokataliwa, kwa eneo"
+
+msgid "Refused financial actions cover payments, wallets, withdrawals, rewards and the ledger."
+msgstr "Vitendo vya kifedha vilivyokataliwa vinahusu malipo, pochi, utoaji, zawadi na leja."
+
+msgid "Recent staff actions"
+msgstr "Vitendo vya wafanyakazi vya hivi karibuni"
+
+msgid "Time"
+msgstr "Muda"
+
+msgid "Staff"
+msgstr "Wafanyakazi"
+
+msgid "No staff actions in this period."
+msgstr "Hakuna vitendo vya wafanyakazi katika kipindi hiki."
+
+msgid "Recent events"
+msgstr "Matukio ya hivi karibuni"
+
+msgid "Recent audit events"
+msgstr "Matukio ya ukaguzi ya hivi karibuni"
+
+msgid "No events in this period."
+msgstr "Hakuna matukio katika kipindi hiki."
+
+msgid "Support queue"
+msgstr "Foleni ya usaidizi"
+
+msgid "Filter tickets"
+msgstr "Chuja tiketi"
+
+msgid "Reference (CS-…) or subject"
+msgstr "Kumbukumbu (CS-…) au mada"
+
+msgid "Any category"
+msgstr "Kundi lolote"
+
+msgid "Any priority"
+msgstr "Kipaumbele chochote"
+
+msgid "Assignee"
+msgstr "Aliyekabidhiwa"
+
+msgid "Anyone"
+msgstr "Yeyote"
+
+msgid "Assigned to me"
+msgstr "Zilizokabidhiwa kwangu"
+
+msgid "Customer"
+msgstr "Mteja"
+
+msgid "Last activity"
+msgstr "Shughuli ya mwisho"
+
+msgid "Ticket"
+msgstr "Tiketi"
+
+msgid "Manage"
+msgstr "Simamia"
+
+msgid "me"
+msgstr "mimi"
+
+msgid "Assign"
+msgstr "Kabidhi"
+
+msgid "Set priority"
+msgstr "Weka kipaumbele"
+
+msgid "Change status"
+msgstr "Badilisha hali"
+
+msgid "Reply or add an internal note"
+msgstr "Jibu au ongeza maelezo ya ndani"
+
+msgid "Replies are emailed to the customer. Internal notes are never shown or sent to the customer."
+msgstr "Majibu hutumwa kwa mteja kwa barua pepe. Maelezo ya ndani hayaonyeshwi wala kutumwa kwa mteja kamwe."
+
+msgid "This ticket is closed and can no longer change."
+msgstr "Tiketi hii imefungwa na haiwezi kubadilika tena."
+
+msgid "All videos"
+msgstr "Video zote"
+
+msgid "Publication"
+msgstr "Uchapishaji"
+
+msgid "Last checked"
+msgstr "Ilikaguliwa mara ya mwisho"
+
+msgid "Demo sample: no real upload or processing took place."
+msgstr "Sampuli ya majaribio: hakuna upakiaji wala uchakataji halisi uliofanyika."
+
+msgid "Publish"
+msgstr "Chapisha"
+
+msgid "Unpublish"
+msgstr "Ondoa kwenye uchapishaji"
+
+msgid "Check status"
+msgstr "Kagua hali"
+
+msgid "Deleting the media is permanent"
+msgstr "Kufuta faili ni kwa kudumu"
+
+msgid "Delete media from Bunny"
+msgstr "Futa faili kutoka Bunny"
+
+msgid "Publishing becomes available when processing is ready."
+msgstr "Kuchapisha kunapatikana uchakataji unapokamilika."
+
+msgid "Upload video file"
+msgstr "Pakia faili ya video"
+
+msgid "MP4, MOV, WebM, MKV or AVI, up to %(mb)s MB. The file goes directly to Bunny Stream."
+msgstr "MP4, MOV, WebM, MKV au AVI, hadi MB %(mb)s. Faili huenda moja kwa moja kwa Bunny Stream."
+
+msgid "Video file"
+msgstr "Faili ya video"
+
+msgid "New video"
+msgstr "Video mpya"
+
+msgid "Demo mode: this creates a labelled demo record. No file is uploaded and no processing takes place."
+msgstr "Hali ya majaribio: hii inaunda rekodi ya majaribio yenye alama. Hakuna faili inayopakiwa wala uchakataji unaofanyika."
+
+msgid "Create the video first; you can then upload the file directly to Bunny Stream."
+msgstr "Unda video kwanza; kisha unaweza kupakia faili moja kwa moja kwa Bunny Stream."
+
+msgid "Search title or slug"
+msgstr "Tafuta kichwa au slug"
+
+msgid "inactive"
+msgstr "imezimwa"
+
+msgid "Any processing"
+msgstr "Uchakataji wowote"
+
+msgid "Title"
+msgstr "Kichwa"
+
+msgid "No videos found."
+msgstr "Hakuna video zilizopatikana."
+
+msgid "Viewing session"
+msgstr "Kipindi cha utazamaji"
+
+msgid "All sessions"
+msgstr "Vipindi vyote"
+
+msgid "State"
+msgstr "Hali"
+
+msgid "Counted view"
+msgstr "Utazamaji uliohesabiwa"
+
+msgid "Started / closed"
+msgstr "Kilianza / kilifungwa"
+
+msgid "Evidence (server-side summary)"
+msgstr "Ushahidi (muhtasari wa seva)"
+
+msgid "Video length"
+msgstr "Urefu wa video"
+
+msgid "unknown"
+msgstr "haijulikani"
+
+msgid "Required"
+msgstr "Inahitajika"
+
+msgid "Credited playing time"
+msgstr "Muda wa kucheza uliohesabiwa"
+
+msgid "Continuous coverage"
+msgstr "Utazamaji mfululizo"
+
+msgid "Heartbeats"
+msgstr "Ishara za uhai"
+
+msgid "duplicates"
+msgstr "marudio"
+
+msgid "out of order"
+msgstr "nje ya mpangilio"
+
+msgid "invalid"
+msgstr "batili"
+
+msgid "too fast"
+msgstr "kasi mno"
+
+msgid "Seeks"
+msgstr "Kurukaruka"
+
+msgid "forward"
+msgstr "mbele"
+
+msgid "Speed anomalies / gaps"
+msgstr "Kasi isiyo ya kawaida / mapengo"
+
+msgid "Flags"
+msgstr "Alama"
+
+msgid "Browser evidence is untrusted. A verified result means ClipCash's rules passed, not proof of attention."
+msgstr "Ushahidi wa kivinjari hauaminiki. Matokeo yaliyohakikiwa yanamaanisha kanuni za ClipCash zimefaulu, si uthibitisho wa umakini."
+
+msgid "Review decision"
+msgstr "Uamuzi wa ukaguzi"
+
+msgid "Reason (required)"
+msgstr "Sababu (inahitajika)"
+
+msgid "Confirm view (false positive)"
+msgstr "Thibitisha utazamaji (tahadhari isiyo sahihi)"
+
+msgid "Reject view"
+msgstr "Kataa utazamaji"
+
+msgid "Confirming keeps the server's evidence; it cannot add watch time. No decision creates a reward."
+msgstr "Kuthibitisha huhifadhi ushahidi wa seva; hakuwezi kuongeza muda wa kutazama. Hakuna uamuzi unaounda zawadi."
+
+msgid "Revoke verified view"
+msgstr "Batilisha utazamaji uliohakikiwa"
+
+msgid "Revoking is permanent and reverses any demo reward for this view"
+msgstr "Kubatilisha ni kwa kudumu na hubatilisha zawadi yoyote ya majaribio ya utazamaji huu"
+
+msgid "Revoke view"
+msgstr "Batilisha utazamaji"
+
+msgid "Viewing review"
+msgstr "Ukaguzi wa utazamaji"
+
+msgid "Viewing sessions"
+msgstr "Vipindi vya utazamaji"
+
+msgid "Campaign name"
+msgstr "Jina la kampeni"
+
+msgid "Any outcome"
+msgstr "Matokeo yoyote"
+
+msgid "Any state"
+msgstr "Hali yoyote"
+
+msgid "Flag"
+msgstr "Alama"
+
+msgid "Any flag"
+msgstr "Alama yoyote"
+
+msgid "Session"
+msgstr "Kipindi"
+
+msgid "No sessions match these filters."
+msgstr "Hakuna vipindi vinavyolingana na vichujio hivi."
+
+msgid "Repeated problems (last 30 days)"
+msgstr "Matatizo yanayojirudia (siku 30 zilizopita)"
+
+msgid "Members with repeated problems"
+msgstr "Wanachama wenye matatizo yanayojirudia"
+
+msgid "Rejected or suspicious sessions"
+msgstr "Vipindi vilivyokataliwa au vyenye shaka"
+
+msgid "No repeated problems."
+msgstr "Hakuna matatizo yanayojirudia."
+
+msgid "All wallets"
+msgstr "Pochi zote"
+
+msgid "Inspection is recorded in the audit log. There are no balance controls: wallets hold no money in this phase."
+msgstr "Ukaguzi hurekodiwa kwenye kumbukumbu za ukaguzi. Hakuna vidhibiti vya salio: pochi hazina pesa katika awamu hii."
+
+msgid "Available / pending / reserved"
+msgstr "Inayopatikana / inayosubiri / iliyotengwa"
+
+msgid "Ledger accounts"
+msgstr "Akaunti za leja"
+
+msgid "Restrictions"
+msgstr "Vizuizi"
+
+msgid "Why lift?"
+msgstr "Kwa nini kuondoa?"
+
+msgid "Lift reason"
+msgstr "Sababu ya kuondoa"
+
+msgid "Request lift"
+msgstr "Omba kuondolewa"
+
+msgid "Approve lift (second person)"
+msgstr "Idhinisha kuondoa (mtu wa pili)"
+
+msgid "No restrictions."
+msgstr "Hakuna vizuizi."
+
+msgid "Restriction"
+msgstr "Kizuizi"
+
+msgid "Place restriction"
+msgstr "Weka kizuizi"
+
+msgid "None. Wallet transactions are not active in this phase."
+msgstr "Hakuna. Miamala ya pochi haitumiki katika awamu hii."
+
+msgid "Reconciliation findings"
+msgstr "Matokeo ya ulinganisho"
+
+msgid "No findings."
+msgstr "Hakuna matokeo."
+
+msgid "Member wallets"
+msgstr "Pochi za wanachama"
+
+msgid "%(n)s open discrepancy"
+msgid_plural "%(n)s open discrepancies"
+msgstr[0] "Tofauti %(n)s iliyo wazi"
+msgstr[1] "Tofauti %(n)s iliyo wazi"
+
+msgid "Wallet number or exact member email"
+msgstr "Namba ya pochi au barua pepe kamili ya mwanachama"
+
+msgid "Wallet number or exact email"
+msgstr "Namba ya pochi au barua pepe kamili"
+
+msgid "Find"
+msgstr "Tafuta"
+
+msgid "No wallets found."
+msgstr "Hakuna pochi zilizopatikana."
+
+msgid "Wallet reconciliation"
+msgstr "Ulinganisho wa pochi"
+
+msgid "Checks wallets against the ledger. Findings are reported, never corrected automatically, and resolving one does not change any financial record."
+msgstr "Hukagua pochi dhidi ya leja. Matokeo huripotiwa, hayarekebishwi yenyewe kamwe, na kutatua moja hakubadilishi rekodi yoyote ya kifedha."
+
+msgid "Run reconciliation now"
+msgstr "Endesha ulinganisho sasa"
+
+msgid "Found"
+msgstr "Ilipatikana"
+
+msgid "Wallet / account"
+msgstr "Pochi / akaunti"
+
+msgid "Resolve"
+msgstr "Tatua"
+
+msgid "Payout beneficiaries"
+msgstr "Wapokeaji wa malipo"
+
+msgid "Masked view. ClipCash does not store full account or phone numbers."
+msgstr "Mwonekano uliofichwa sehemu. ClipCash haihifadhi namba kamili za akaunti au simu."
+
+msgid "Exact member email"
+msgstr "Barua pepe kamili ya mwanachama"
+
+msgid "No beneficiaries."
+msgstr "Hakuna wapokeaji."
+
+msgid "All demo withdrawals"
+msgstr "Utoaji wote wa majaribio"
+
+msgid "Destination (snapshot)"
+msgstr "Mahali pa kupokea (picha ya wakati huo)"
+
+msgid "Risk"
+msgstr "Hatari"
+
+msgid "High: two approvers required"
+msgstr "Juu: waidhinishaji wawili wanahitajika"
+
+msgid "Standard"
+msgstr "Kawaida"
+
+msgid "Created / approved / payout by"
+msgstr "Imeundwa / imeidhinishwa / imelipwa na"
+
+msgid "Simulated payout ref."
+msgstr "Kumb. ya malipo ya kuigiza"
+
+msgid "Reason code (reject/cancel)"
+msgstr "Msimbo wa sababu (kataa/ghairi)"
+
+msgid "Start review"
+msgstr "Anza ukaguzi"
+
+msgid "Second approval"
+msgstr "Idhini ya pili"
+
+msgid "Start simulated payout"
+msgstr "Anza malipo ya kuigiza"
+
+msgid "Payout simulator"
+msgstr "Kiigizaji cha malipo"
+
+msgid "Decision history"
+msgstr "Historia ya maamuzi"
+
+msgid "Payout events"
+msgstr "Matukio ya malipo"
+
+msgid "not authenticated"
+msgstr "haijathibitishwa uhalali"
+
+msgid "Withdrawal exceptions"
+msgstr "Tofauti za utoaji"
+
+msgid "Uncertain payouts are reconciled with the same reference. They are never re-sent with a new one."
+msgstr "Malipo yasiyo na uhakika hulinganishwa kwa kumbukumbu ileile. Hayatumwi upya kamwe kwa kumbukumbu mpya."
+
+msgid "Withdrawals (demo)"
+msgstr "Utoaji (majaribio)"
+
+msgid "Beneficiaries"
+msgstr "Wapokeaji"
+
+msgid "Real withdrawals are locked: wallets hold TZS 0 and the database refuses real requests. Everything below is a simulation."
+msgstr "Utoaji halisi umefungwa: pochi zina TZS 0 na hifadhidata inakataa maombi halisi. Kila kitu hapa chini ni kuigiza."
+
+msgid "Reference or exact email"
+msgstr "Kumbukumbu au barua pepe kamili"
+
+msgid "High risk only"
+msgstr "Hatari kubwa pekee"
+
+msgid "Two approvers"
+msgstr "Waidhinishaji wawili"
+
+msgid "No demo withdrawals."
+msgstr "Hakuna utoaji wa majaribio."
+
+msgid "New demo scenario"
+msgstr "Mfano mpya wa majaribio"
+
+msgid "Find member"
+msgstr "Tafuta mwanachama"
+
+msgid "Destination (masked)"
+msgstr "Mahali pa kupokea (pamefichwa sehemu)"
+
+msgid "Simulated amount (whole TZS)"
+msgstr "Kiasi cha kuigiza (TZS kamili)"
+
+msgid "Create demo request"
+msgstr "Unda ombi la majaribio"
+
+msgid "This member has no active payout destination."
+msgstr "Mwanachama huyu hana njia hai ya kupokea malipo."
+
+msgid "No eligible member with that email."
+msgstr "Hakuna mwanachama anayestahili mwenye barua pepe hiyo."
+
+msgid "Download CSV"
+msgstr "Pakua CSV"
+
+msgid "Same figures as this page, including privacy ranges. No viewer identities."
+msgstr "Takwimu zilezile za ukurasa huu, pamoja na viwango vya faragha. Bila utambulisho wa watazamaji."
+
+msgid "Still processing"
+msgstr "Bado inachakatwa"
+
+msgid "Processing failed"
+msgstr "Uchakataji umeshindwa"
+
+msgid "Video archived"
+msgstr "Video imehifadhiwa kwenye kumbukumbu"
+
+msgid "Video not authorized"
+msgstr "Video haijaidhinishwa"
+
+msgid "Preview temporarily unavailable"
+msgstr "Hakiki haipatikani kwa muda"
+
+msgid "Preview not available"
+msgstr "Hakiki haipatikani"
+
+msgid "The video service is still processing this video. The preview appears when it is ready."
+msgstr "Huduma ya video bado inachakata video hii. Hakiki itaonekana itakapokuwa tayari."
+
+msgid "The video service could not process this video. Upload it again under Video management."
+msgstr "Huduma ya video haikuweza kuchakata video hii. Ipakie tena katika Usimamizi wa video."
+
+msgid "This video was archived and can no longer be shown."
+msgstr "Video hii imehifadhiwa kwenye kumbukumbu na haiwezi kuonyeshwa tena."
+
+msgid "The video service has not confirmed this video yet, so it cannot be previewed or shown to members."
+msgstr "Huduma ya video bado haijathibitisha video hii, hivyo haiwezi kuhakikiwa wala kuonyeshwa kwa wanachama."
+
+msgid "The video service could not be reached. Try again in a few minutes."
+msgstr "Huduma ya video haikupatikana. Jaribu tena baada ya dakika chache."
+
+msgid "Maintenance"
+msgstr "Matengenezo"
+
+msgid "We will be back soon"
+msgstr "Tutarudi hivi karibuni"
+
+msgid "%(name)s is undergoing maintenance. Please try again later."
+msgstr "%(name)s iko katika matengenezo. Tafadhali jaribu tena baadaye."
+
+msgid "Your email address is confirmed"
+msgstr "Barua pepe yako imethibitishwa"
+
+msgid "You can now use every member feature that needs a confirmed address."
+msgstr "Sasa unaweza kutumia kila huduma ya mwanachama inayohitaji anwani iliyothibitishwa."
+
+msgid "An email address change was requested"
+msgstr "Ombi la kubadilisha barua pepe limetumwa"
+
+msgid "Nothing changes until the new address is confirmed. If this was not you, cancel it from your account and change your password."
+msgstr "Hakuna kinachobadilika hadi anwani mpya ithibitishwe. Ikiwa si wewe, ighairi kutoka akaunti yako na ubadilishe nenosiri lako."
+
+msgid "Your phone number was changed"
+msgstr "Namba yako ya simu imebadilishwa"
+
+msgid "If this was not you, change your password now and contact ClipCash."
+msgstr "Ikiwa si wewe, badilisha nenosiri lako sasa na uwasiliane na ClipCash."
+
+msgid "Your email address was changed"
+msgstr "Barua pepe yako imebadilishwa"
+
+msgid "Use the new address to sign in. If this was not you, contact ClipCash now."
+msgstr "Tumia anwani mpya kuingia. Ikiwa si wewe, wasiliana na ClipCash sasa."
+
+msgid "Your account is active again"
+msgstr "Akaunti yako iko hai tena"
+
+msgid "You can sign in and use ClipCash as before."
+msgstr "Unaweza kuingia na kutumia ClipCash kama awali."
+
+msgid "Your password was reset"
+msgstr "Nenosiri lako limerejeshwa"
+
+msgid "If you did not do this, reset your password again now and contact ClipCash."
+msgstr "Ikiwa si wewe uliyefanya hivi, rejesha nenosiri lako tena sasa na uwasiliane na ClipCash."
+
+msgid "Your password was changed"
+msgstr "Nenosiri lako limebadilishwa"
+
+msgid "Other sessions were signed out. If this was not you, reset your password now."
+msgstr "Vipindi vingine vimetolewa. Ikiwa si wewe, rejesha nenosiri lako sasa."
+
+msgid "Campaign submitted for review"
+msgstr "Kampeni imewasilishwa kwa ukaguzi"
+
+msgid "ClipCash staff will review “{name}”."
+msgstr "Wafanyakazi wa ClipCash watakagua “{name}”."
+
+msgid "Campaign approved"
+msgstr "Kampeni imeidhinishwa"
+
+msgid "“{name}” was approved and will run on its scheduled dates."
+msgstr "“{name}” imeidhinishwa na itaendeshwa katika tarehe zilizopangwa."
+
+msgid "Changes requested for a campaign"
+msgstr "Mabadiliko yameombwa kwa kampeni"
+
+msgid "“{name}” needs changes before it can run. Open it to see the reviewer's note."
+msgstr "“{name}” inahitaji mabadiliko kabla ya kuendeshwa. Ifungue kuona maelezo ya mkaguzi."
+
+msgid "Campaign is now running"
+msgstr "Kampeni sasa inaendelea"
+
+msgid "“{name}” started and is shown to eligible members."
+msgstr "“{name}” imeanza na inaonyeshwa kwa wanachama wanaostahili."
+
+msgid "Campaign finished"
+msgstr "Kampeni imemalizika"
+
+msgid "“{name}” reached its end date."
+msgstr "“{name}” imefikia tarehe yake ya mwisho."
+
+msgid "Campaign paused by ClipCash"
+msgstr "Kampeni imesitishwa na ClipCash"
+
+msgid "“{name}” is paused. Open it for details."
+msgstr "“{name}” imesitishwa. Ifungue kwa maelezo."
+
+msgid "Campaign resumed"
+msgstr "Kampeni imeendelea tena"
+
+msgid "“{name}” is running again."
+msgstr "“{name}” inaendelea tena."
+
+msgid "Campaign cancelled by ClipCash"
+msgstr "Kampeni imeghairiwa na ClipCash"
+
+msgid "“{name}” was cancelled. Open it for details."
+msgstr "“{name}” imeghairiwa. Ifungue kwa maelezo."
+
+msgid "Your advertiser account is approved"
+msgstr "Akaunti yako ya mtangazaji imeidhinishwa"
+
+msgid "You can now submit campaigns for review."
+msgstr "Sasa unaweza kuwasilisha kampeni kwa ukaguzi."
+
+msgid "Your advertiser application was not approved"
+msgstr "Ombi lako la mtangazaji halikuidhinishwa"
+
+msgid "Open your advertiser page for the reason and to apply again."
+msgstr "Fungua ukurasa wako wa mtangazaji kuona sababu na kuomba tena."
+
+msgid "Your advertiser account is suspended"
+msgstr "Akaunti yako ya mtangazaji imesimamishwa"
+
+msgid "Campaigns are paused. Open your advertiser page for details."
+msgstr "Kampeni zimesitishwa. Fungua ukurasa wako wa mtangazaji kwa maelezo."
+
+msgid "Your advertiser account is active again"
+msgstr "Akaunti yako ya mtangazaji iko hai tena"
+
+msgid "You can manage and submit campaigns again."
+msgstr "Unaweza kusimamia na kuwasilisha kampeni tena."
+
+msgid "You were invited to an advertiser team"
+msgstr "Umealikwa kwenye timu ya mtangazaji"
+
+msgid "Advertiser application awaiting review"
+msgstr "Ombi la mtangazaji linasubiri ukaguzi"
+
+msgid "{organization} applied to advertise."
+msgstr "{organization} imeomba kutangaza."
+
+msgid "Campaign awaiting review"
+msgstr "Kampeni inasubiri ukaguzi"
+
+msgid "“{name}” from {organization} was submitted."
+msgstr "“{name}” kutoka {organization} imewasilishwa."
+
+msgid "{organization} invited you as owner. Accept or decline on your advertiser page."
+msgstr "{organization} imekualika kama mmiliki. Kubali au kataa kwenye ukurasa wako wa mtangazaji."
+
+msgid "{organization} invited you as campaign manager. Accept or decline on your advertiser page."
+msgstr "{organization} imekualika kama msimamizi wa kampeni. Kubali au kataa kwenye ukurasa wako wa mtangazaji."
+
+msgid "Your {plan} membership was reinstated"
+msgstr "Uanachama wako wa {plan} umerejeshwa"
+
+msgid "Access is restored until {end}."
+msgstr "Ufikiaji umerejeshwa hadi {end}."
+
+msgid "You have demonstration access until {end}. No payment was taken and nothing renews automatically."
+msgstr "Una ufikiaji wa maonyesho hadi {end}. Hakuna malipo yaliyochukuliwa na hakuna kinachojisasisha chenyewe."
+
+msgid "You have complimentary access until {end}. No payment was taken and nothing renews automatically."
+msgstr "Una ufikiaji wa bure hadi {end}. Hakuna malipo yaliyochukuliwa na hakuna kinachojisasisha chenyewe."
+
+msgid "Complimentary {plan} membership granted"
+msgstr "Umepewa uanachama wa bure wa {plan}"
+
+msgid "Your {plan} membership ends soon"
+msgstr "Uanachama wako wa {plan} unaisha hivi karibuni"
+
+msgid "Access ends on {end}. Nothing renews automatically; you can choose a plan when you are ready."
+msgstr "Ufikiaji unaisha {end}. Hakuna kinachojisasisha chenyewe; unaweza kuchagua mpango utakapokuwa tayari."
+
+msgid "Your {plan} membership was extended"
+msgstr "Uanachama wako wa {plan} umeongezwa muda"
+
+msgid "Access now continues until {end}. No payment was taken and nothing renews automatically."
+msgstr "Ufikiaji sasa unaendelea hadi {end}. Hakuna malipo yaliyochukuliwa na hakuna kinachojisasisha chenyewe."
+
+msgid "Access runs until {end}."
+msgstr "Ufikiaji unaendelea hadi {end}."
+
+msgid "Access runs from {start} until {end}."
+msgstr "Ufikiaji unaanza {start} hadi {end}."
+
+msgid "Your {plan} membership is active"
+msgstr "Uanachama wako wa {plan} uko hai"
+
+msgid "Your {plan} membership was suspended"
+msgstr "Uanachama wako wa {plan} umesimamishwa"
+
+msgid "Access is paused. Contact ClipCash if you think this is a mistake."
+msgstr "Ufikiaji umesitishwa. Wasiliana na ClipCash ikiwa unadhani hili ni kosa."
+
+msgid "Your {plan} membership has ended"
+msgstr "Uanachama wako wa {plan} umeisha"
+
+msgid "Membership content is no longer available. Nothing renews automatically."
+msgstr "Maudhui ya uanachama hayapatikani tena. Hakuna kinachojisasisha chenyewe."
+
+msgid "Your {plan} membership choice expired"
+msgstr "Chaguo lako la uanachama wa {plan} limeisha muda"
+
+msgid "It was not activated in time. You can choose a plan again at any time."
+msgstr "Haukuwezeshwa kwa wakati. Unaweza kuchagua mpango tena wakati wowote."
+
+msgid "Your {plan} membership was cancelled"
+msgstr "Uanachama wako wa {plan} umeghairiwa"
+
+msgid "Access has ended. Contact ClipCash if you have questions."
+msgstr "Ufikiaji umeisha. Wasiliana na ClipCash ikiwa una maswali."
+
+msgid "We received your support request {reference}"
+msgstr "Tumepokea ombi lako la usaidizi {reference}"
+
+msgid "ClipCash support will reply here. You can add details by replying to the ticket."
+msgstr "Usaidizi wa ClipCash utajibu hapa. Unaweza kuongeza maelezo kwa kujibu tiketi."
+
+msgid "New support ticket {reference}"
+msgstr "Tiketi mpya ya usaidizi {reference}"
+
+msgid "Category: {category__t}."
+msgstr "Kundi: {category__t}."
+
+msgid "Support ticket {reference} was reopened"
+msgstr "Tiketi ya usaidizi {reference} imefunguliwa tena"
+
+msgid "Customer replied on {reference}"
+msgstr "Mteja amejibu kwenye {reference}"
+
+msgid "Open the ticket to read the reply."
+msgstr "Fungua tiketi kusoma jibu."
+
+msgid "ClipCash support replied to {reference}"
+msgstr "Usaidizi wa ClipCash umejibu {reference}"
+
+msgid "Open your ticket to read the reply."
+msgstr "Fungua tiketi yako kusoma jibu."
+
+msgid "Your support ticket {reference} is resolved"
+msgstr "Tiketi yako ya usaidizi {reference} imetatuliwa"
+
+msgid "Your support ticket {reference} is closed"
+msgstr "Tiketi yako ya usaidizi {reference} imefungwa"
+
+msgid "If you still need help, reply within {days} days to reopen it."
+msgstr "Ikiwa bado unahitaji msaada, jibu ndani ya siku {days} ili kuifungua tena."
+
+msgid "Open a new ticket if you need more help."
+msgstr "Fungua tiketi mpya ikiwa unahitaji msaada zaidi."
+
+msgid "Support ticket {reference} assigned to you"
+msgstr "Tiketi ya usaidizi {reference} imekabidhiwa kwako"
+
+msgid "Video upload did not complete"
+msgstr "Upakiaji wa video haukukamilika"
+
+msgid "“{title}” was not uploaded. You can try again."
+msgstr "“{title}” haikupakiwa. Unaweza kujaribu tena."
+
+msgid "Video is ready"
+msgstr "Video iko tayari"
+
+msgid "“{title}” finished processing and can be published."
+msgstr "“{title}” imemaliza kuchakatwa na inaweza kuchapishwa."
+
+msgid "Video processing failed"
+msgstr "Uchakataji wa video umeshindwa"
+
+msgid "“{title}” could not be processed. Open it to upload again."
+msgstr "“{title}” haikuweza kuchakatwa. Ifungue ili kupakia tena."
+
+msgid "Your view was confirmed"
+msgstr "Utazamaji wako umethibitishwa"
+
+msgid "Staff confirmed your view of “{name}”."
+msgstr "Wafanyakazi wamethibitisha utazamaji wako wa “{name}”."
+
+msgid "Your view was not accepted"
+msgstr "Utazamaji wako haukukubaliwa"
+
+msgid "After review, your view of “{name}” was not accepted."
+msgstr "Baada ya ukaguzi, utazamaji wako wa “{name}” haukukubaliwa."
+
+msgid "A verified view was withdrawn"
+msgstr "Utazamaji uliohakikiwa umeondolewa"
+
+msgid "Your verified view of “{name}” no longer counts."
+msgstr "Utazamaji wako uliohakikiwa wa “{name}” hauhesabiwi tena."
+
+msgid "Viewing sessions are awaiting review"
+msgstr "Vipindi vya utazamaji vinasubiri ukaguzi"
+
+msgid "At least one sponsored view was flagged for a staff decision."
+msgstr "Angalau utazamaji mmoja wa matangazo umewekwa alama kwa uamuzi wa wafanyakazi."
+
+msgid "Demo withdrawal scenario created"
+msgstr "Mfano wa utoaji wa majaribio umeundwa"
+
+msgid "Staff created a demonstration withdrawal for you. It is a simulation: no money moves."
+msgstr "Wafanyakazi wamekuundia utoaji wa maonyesho. Ni kuigiza: hakuna pesa inayohamishwa."
+
+msgid "Demo withdrawal approved (simulation)"
+msgstr "Utoaji wa majaribio umeidhinishwa (kuigiza)"
+
+msgid "The demonstration withdrawal was approved. No money moves."
+msgstr "Utoaji wa maonyesho umeidhinishwa. Hakuna pesa inayohamishwa."
+
+msgid "Demo withdrawal rejected (simulation)"
+msgstr "Utoaji wa majaribio umekataliwa (kuigiza)"
+
+msgid "The demonstration withdrawal was rejected."
+msgstr "Utoaji wa maonyesho umekataliwa."
+
+msgid "Demo withdrawal cancelled (simulation)"
+msgstr "Utoaji wa majaribio umeghairiwa (kuigiza)"
+
+msgid "The demonstration withdrawal was cancelled."
+msgstr "Utoaji wa maonyesho umeghairiwa."
+
+msgid "Demo payout completed (simulated)"
+msgstr "Malipo ya majaribio yamekamilika (kuigiza)"
+
+msgid "The simulated payout completed. No money was sent."
+msgstr "Malipo ya kuigiza yamekamilika. Hakuna pesa iliyotumwa."
+
+msgid "Demo payout failed (simulated)"
+msgstr "Malipo ya majaribio yameshindwa (kuigiza)"
+
+msgid "The simulated payout failed. No money was involved."
+msgstr "Malipo ya kuigiza yameshindwa. Hakuna pesa iliyohusika."
+
+msgid "Demo withdrawal expired (simulation)"
+msgstr "Utoaji wa majaribio umeisha muda (kuigiza)"
+
+msgid "The demonstration withdrawal expired before review."
+msgstr "Utoaji wa maonyesho uliisha muda kabla ya ukaguzi."
+
+msgid "Demo payout returned (simulated)"
+msgstr "Malipo ya majaribio yamerudishwa (kuigiza)"
+
+msgid "The simulated payout was returned. No money was involved."
+msgstr "Malipo ya kuigiza yamerudishwa. Hakuna pesa iliyohusika."
+
+msgid "Demo withdrawal awaiting review"
+msgstr "Utoaji wa majaribio unasubiri ukaguzi"
+
+msgid "A demonstration withdrawal needs a reviewer other than its creator."
+msgstr "Utoaji wa maonyesho unahitaji mkaguzi asiye muundaji wake."
+
+#: UI-DASH-03 translation completion: administrator console, notifications and remaining interface text
+msgid "Enter a whole number of credits."
+msgstr "Weka idadi kamili ya krediti."
+
+msgid "Choose a video your advertiser account is authorized to use."
+msgstr "Chagua video ambayo akaunti yako ya mtangazaji imeidhinishwa kuitumia."
+
+msgid "The reward per view cannot exceed the budget."
+msgstr "Zawadi kwa kila utazamaji haiwezi kuzidi bajeti."
+
+msgid "This video is archived."
+msgstr "Video hii imehifadhiwa kwenye kumbukumbu."
+
+msgid "Enter a date and time with a timezone."
+msgstr "Weka tarehe na muda pamoja na saa za eneo."
+
+msgid "The end must be after the start."
+msgstr "Mwisho lazima uwe baada ya mwanzo."
+
+msgid "Only active membership plans can be targeted."
+msgstr "Mipango ya uanachama inayotumika pekee ndiyo inaweza kulengwa."
+
+msgid "Please give a reason (at least 5 characters)."
+msgstr "Tafadhali toa sababu (angalau herufi 5)."
+
+msgid "Choose a valid role."
+msgstr "Chagua jukumu sahihi."
+
+msgid "Enter an amount greater than zero."
+msgstr "Weka kiasi kikubwa kuliko sifuri."
+
+msgid "This person is already on the team."
+msgstr "Mtu huyu tayari yuko kwenye timu."
+
+msgid "An invitation is already waiting for this address."
+msgstr "Tayari kuna mwaliko unaosubiri kwa anwani hii."
+
+msgid "Campaigns can run for at most %(days)s days."
+msgstr "Kampeni zinaweza kuendeshwa kwa siku zisizozidi %(days)s."
+
+msgid "The end must be in the future."
+msgstr "Mwisho lazima uwe siku zijazo."
+
+msgid "The budget cannot be lower than the %(n)s credits already awarded for this campaign."
+msgstr "Bajeti haiwezi kuwa chini ya krediti %(n)s zilizokwisha tolewa kwa kampeni hii."
+
+msgid "Verified identity details cannot be changed here. Please contact support."
+msgstr "Taarifa za utambulisho zilizothibitishwa haziwezi kubadilishwa hapa. Tafadhali wasiliana na usaidizi."
+
+msgid "Metadata must be an object."
+msgstr "Maelezo ya ziada lazima yawe kitu (object)."
+
+msgid "Enter a complete date and time."
+msgstr "Weka tarehe na muda kamili."
+
+msgid "The expiry must be in the future."
+msgstr "Mwisho wa muda lazima uwe siku zijazo."
+
+msgid "Enter a price of at least TZS 1 in whole shillings."
+msgstr "Weka bei ya angalau TZS 1 kwa shilingi kamili."
+
+msgid "Give a reason of at least %(n)s characters."
+msgstr "Toa sababu yenye angalau herufi %(n)s."
+
+msgid "Keep the reason to %(n)s characters or fewer."
+msgstr "Sababu isizidi herufi %(n)s."
+
+msgid "The expiry cannot be later than the plan's own length (%(days)s days from now)."
+msgstr "Mwisho wa muda hauwezi kuzidi muda wa mpango wenyewe (siku %(days)s kuanzia sasa)."
+
+msgid "Choose between %(min)s and %(max)s days."
+msgstr "Chagua kati ya siku %(min)s na %(max)s."
+
+msgid "A complimentary membership can last at most %(days)s days from now."
+msgstr "Uanachama wa bure unaweza kudumu siku zisizozidi %(days)s kuanzia sasa."
+
+msgid "Missing form token. Reload the page and try again."
+msgstr "Tokeni ya fomu haipo. Pakia ukurasa upya na ujaribu tena."
+
+msgid "Unsupported currency."
+msgstr "Sarafu isiyotumika."
+
+msgid "Deposits must be between TZS %(min)s and TZS %(max)s."
+msgstr "Amana lazima ziwe kati ya TZS %(min)s na TZS %(max)s."
+
+msgid "Demo reward policies need an approved campaign."
+msgstr "Sera za zawadi za majaribio zinahitaji kampeni iliyoidhinishwa."
+
+msgid "Enter zero or more credits."
+msgstr "Weka krediti sifuri au zaidi."
+
+msgid "Choose plans from the list."
+msgstr "Chagua mipango kutoka kwenye orodha."
+
+msgid "Only active membership plans can be chosen."
+msgstr "Mipango ya uanachama inayotumika pekee ndiyo inaweza kuchaguliwa."
+
+msgid "Cannot exceed the campaign's approved maximum per view (%(n)s credits)."
+msgstr "Haiwezi kuzidi kiwango cha juu kilichoidhinishwa kwa kila utazamaji wa kampeni (krediti %(n)s)."
+
+msgid "The approved budget cannot be lower than the %(n)s credits already awarded."
+msgstr "Bajeti iliyoidhinishwa haiwezi kuwa chini ya krediti %(n)s zilizokwisha tolewa."
+
+msgid "The budget cannot be lower than the %(n)s credits already awarded."
+msgstr "Bajeti haiwezi kuwa chini ya krediti %(n)s zilizokwisha tolewa."
+
+msgid "The budget cannot be more than the advertiser-approved campaign budget of %(n)s credits."
+msgstr "Bajeti haiwezi kuzidi bajeti ya kampeni iliyoidhinishwa na mtangazaji ya krediti %(n)s."
+
+msgid "Choose a category."
+msgstr "Chagua kundi."
+
+msgid "Choose a priority."
+msgstr "Chagua kipaumbele."
+
+msgid "Please write at least %(n)s characters."
+msgstr "Tafadhali andika angalau herufi %(n)s."
+
+msgid "Please keep this to %(n)s characters or fewer."
+msgstr "Tafadhali usizidi herufi %(n)s."
+
+msgid "Choose a valid next status."
+msgstr "Chagua hali inayofuata iliyo sahihi."
+
+msgid "Choose an active category."
+msgstr "Chagua kundi linalotumika."
+
+msgid "The address of a published video cannot change."
+msgstr "Anwani ya video iliyochapishwa haiwezi kubadilika."
+
+msgid "Choose a restriction type."
+msgstr "Chagua aina ya kizuizi."
+
+msgid "Choose a mobile network."
+msgstr "Chagua mtandao wa simu."
+
+msgid "Enter a Tanzanian mobile number, for example 0712345678."
+msgstr "Weka namba ya simu ya Tanzania, kwa mfano 0712345678."
+
+msgid "Choose mobile money or bank."
+msgstr "Chagua pesa kwa simu au benki."
+
+msgid "Enter the bank code (2-12 letters or digits)."
+msgstr "Weka msimbo wa benki (herufi au tarakimu 2-12)."
+
+msgid "Enter the account number (6-20 digits)."
+msgstr "Weka namba ya akaunti (tarakimu 6-20)."
+
+msgid "Enter the account holder's name."
+msgstr "Weka jina la mmiliki wa akaunti."
+
+msgid "Missing form token. Reload and try again."
+msgstr "Tokeni ya fomu haipo. Pakia upya na ujaribu tena."
+
+msgid "Enter a simulated amount."
+msgstr "Weka kiasi cha kuigiza."
+
+msgid "This destination is already saved."
+msgstr "Mahali hapa pa kupokea tayari pamehifadhiwa."
+
+#: UI-DASH-03: labels passed to template tags (include ... label=_(...), yesno:_(...))
+msgid "Activate account"
+msgstr "Wezesha akaunti"
+
+msgid "Audit logs"
+msgstr "Kumbukumbu za ukaguzi"
+
+msgid "Confirm new email address"
+msgstr "Thibitisha barua pepe mpya"
+
+msgid "Create category"
+msgstr "Unda kundi"
+
+msgid "Create invitation"
+msgstr "Unda mwaliko"
+
+msgid "Create video"
+msgstr "Unda video"
+
+msgid "Django administration"
+msgstr "Usimamizi wa Django"
+
+msgid "Django site admin"
+msgstr "Usimamizi wa tovuti ya Django"
+
+msgid "My notifications"
+msgstr "Taarifa zangu"
+
+msgid "None on the account"
+msgstr "Hakuna kwenye akaunti"
+
+msgid "Save category"
+msgstr "Hifadhi kundi"
+
+msgid "Save plan"
+msgstr "Hifadhi mpango"
+
+msgid "Send link"
+msgstr "Tuma kiungo"
+
+msgid "Send reset link"
+msgstr "Tuma kiungo cha kurejesha"
+
+msgid "System settings"
+msgstr "Mipangilio ya mfumo"
+
+msgid "User accounts (admin)"
+msgstr "Akaunti za watumiaji (msimamizi)"
+
+msgid "Yes,No"
+msgstr "Ndiyo,Hapana"
+
+#: apps/payments/manual.py
+msgid "We received your request to verify your payment for {plan} ({amount}, reference {ref}). Your membership starts after our team confirms the payment in the provider business records."
+msgstr "Tumepokea ombi lako la kuhakiki malipo yako ya {plan} ({amount}, kumbukumbu {ref}). Uanachama wako unaanza baada ya timu yetu kuthibitisha malipo katika rekodi za biashara za mtoa huduma."
+
+#: apps/payments/manual.py
+msgid "We received your request to verify your payment for {plan} ({amount}, no transaction reference given). Your membership starts after our team confirms the payment in the provider business records."
+msgstr "Tumepokea ombi lako la kuhakiki malipo yako ya {plan} ({amount}, hakuna kumbukumbu ya muamala iliyotolewa). Uanachama wako unaanza baada ya timu yetu kuthibitisha malipo katika rekodi za biashara za mtoa huduma."
+
+#: apps/payments/manual.py
+msgid "Your payment of {amount} (reference {ref}) was confirmed. Your {plan} membership is active until {expires}."
+msgstr "Malipo yako ya {amount} (kumbukumbu {ref}) yamethibitishwa. Uanachama wako wa {plan} unatumika hadi {expires}."
+
+#: apps/payments/manual.py
+msgid "We could not confirm your payment for {plan} (reference {ref}): {reason__tl}. {note}You can submit corrected details or contact support."
+msgstr "Hatukuweza kuthibitisha malipo yako ya {plan} (kumbukumbu {ref}): {reason__tl}. {note}Unaweza kuwasilisha taarifa zilizorekebishwa au kuwasiliana na usaidizi."
+
+#: apps/payments/manual.py
+msgid "We could not confirm your payment for {plan} (no transaction reference given): {reason__tl}. {note}You can submit corrected details or contact support."
+msgstr "Hatukuweza kuthibitisha malipo yako ya {plan} (hakuna kumbukumbu ya muamala iliyotolewa): {reason__tl}. {note}Unaweza kuwasilisha taarifa zilizorekebishwa au kuwasiliana na usaidizi."

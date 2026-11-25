@@ -1,0 +1,41 @@
+{% load i18n static %}{# UI-DASH-02: advertiser workspace navigation. Same portal sidebar (collapse, drawer, tooltips) as members; #}
+{# only destinations the advertising app really has. Member wallet/membership links are not shown here. #}
+  <aside class="app-sidebar app-sidebar--advertiser" tabindex="-1" data-collapsible data-drawer-query="(max-width: 63.99rem)">
+    <button type="button" class="drawer-close" data-nav-close hidden>{% translate "Close navigation" %} <span aria-hidden="true">×</span></button>
+    <a class="app-sidebar__brand" href="{% if organization %}{% url 'advertising:organization' organization.pk %}{% else %}{% url 'advertising:home' %}{% endif %}">{% include "components/wordmark.html" %}<span class="app-sidebar__tagline">{% translate "Advertiser workspace" %}</span></a>
+    {% with url_name=request.resolver_match.url_name %}
+    <nav id="member-menu" class="app-nav" aria-label="{% translate 'Advertiser menu' %}">
+      {% if organization %}
+      <p class="app-nav__group app-nav__group--quiet" id="adv-nav-overview">{% translate "Overview" %}</p>
+      <ul class="app-nav__list" aria-labelledby="adv-nav-overview">
+        <li><a class="app-nav__link{% if tab == 'overview' %} is-current{% endif %}"{% if tab == 'overview' %} aria-current="page"{% endif %} href="{% url 'advertising:organization' organization.pk %}">{% include "components/nav_icon.html" with icon="dashboard" %}<span class="app-nav__label">{% translate "Dashboard" %}</span></a></li>
+      </ul>
+      <p class="app-nav__group app-nav__group--quiet" id="adv-nav-advertising">{% translate "Advertising" %}</p>
+      <ul class="app-nav__list" aria-labelledby="adv-nav-advertising">
+        <li><a class="app-nav__link{% if tab == 'campaigns' and url_name != 'campaign_create' %} is-current{% endif %}"{% if tab == 'campaigns' and url_name != 'campaign_create' %} aria-current="page"{% endif %} href="{% url 'advertising:campaigns' organization.pk %}">{% include "components/nav_icon.html" with icon="advertiser" %}<span class="app-nav__label">{% translate "Campaigns" %}</span></a></li>
+        {% if organization.verification_status != "SUSPENDED" and organization.verification_status != "REJECTED" %}<li><a class="app-nav__link{% if url_name == 'campaign_create' %} is-current{% endif %}"{% if url_name == 'campaign_create' %} aria-current="page"{% endif %} href="{% url 'advertising:campaign_create' organization.pk %}">{% include "components/nav_icon.html" with icon="plus" %}<span class="app-nav__label">{% translate "New campaign" %}</span></a></li>{% endif %}
+        <li><a class="app-nav__link{% if tab == 'creatives' %} is-current{% endif %}"{% if tab == 'creatives' %} aria-current="page"{% endif %} href="{% url 'advertising:creatives' organization.pk %}">{% include "components/nav_icon.html" with icon="film" %}<span class="app-nav__label">{% translate "Video creatives" %}</span></a></li>
+      </ul>
+      <p class="app-nav__group app-nav__group--quiet" id="adv-nav-performance">{% translate "Performance" %}</p>
+      <ul class="app-nav__list" aria-labelledby="adv-nav-performance">
+        <li><a class="app-nav__link{% if tab == 'reports' %} is-current{% endif %}"{% if tab == 'reports' %} aria-current="page"{% endif %} href="{% url 'advertising:reports' organization.pk %}">{% include "components/nav_icon.html" with icon="activity" %}<span class="app-nav__label">{% translate "Reports" %}</span></a></li>
+      </ul>
+      <p class="app-nav__group app-nav__group--quiet" id="adv-nav-organization">{% translate "Organization" %}</p>
+      <ul class="app-nav__list" aria-labelledby="adv-nav-organization">
+        <li><a class="app-nav__link{% if tab == 'team' %} is-current{% endif %}"{% if tab == 'team' %} aria-current="page"{% endif %} href="{% url 'advertising:team' organization.pk %}">{% include "components/nav_icon.html" with icon="users" %}<span class="app-nav__label">{% translate "Team" %}</span></a></li>
+        <li><a class="app-nav__link{% if tab == 'profile' %} is-current{% endif %}"{% if tab == 'profile' %} aria-current="page"{% endif %} href="{% url 'advertising:profile' organization.pk %}">{% include "components/nav_icon.html" with icon="building" %}<span class="app-nav__label">{% translate "Organization profile" %}</span></a></li>
+        {% if sandbox_payments %}<li><a class="app-nav__link{% if tab == 'funding' %} is-current{% endif %}"{% if tab == 'funding' %} aria-current="page"{% endif %} href="{% url 'payments:funding' organization.pk %}">{% include "components/nav_icon.html" with icon="wallet" %}<span class="app-nav__label">{% translate "Funding (sandbox)" %}</span></a></li>{% endif %}
+      </ul>
+      {% endif %}
+      <p class="app-nav__group app-nav__group--quiet" id="adv-nav-account">{% translate "Account" %}</p>
+      <ul class="app-nav__list" aria-labelledby="adv-nav-account">
+        <li><a class="app-nav__link{% if url_name == 'home' %} is-current{% endif %}"{% if url_name == 'home' %} aria-current="page"{% endif %} href="{% url 'advertising:home' %}">{% include "components/nav_icon.html" with icon="advertiser" %}<span class="app-nav__label">{% translate "Advertiser accounts" %}</span></a></li>
+        <li><a class="app-nav__link" href="{% url 'notifications:inbox' %}">{% include "components/nav_icon.html" with icon="notifications" %}<span class="app-nav__label">{% translate "Notifications" %}</span>{% if unread_notifications %} <span class="badge badge--pending app-nav__count">{% if unread_notifications > 99 %}99+{% else %}{{ unread_notifications }}{% endif %}<span class="visually-hidden"> {% translate "unread" %}</span></span>{% endif %}</a></li>
+        <li><a class="app-nav__link" href="{% url 'support:tickets' %}">{% include "components/nav_icon.html" with icon="support" %}<span class="app-nav__label">{% translate "Support" %}</span></a></li>
+        <li><a class="app-nav__link" href="{% url 'accounts:profile' %}">{% include "components/nav_icon.html" with icon="profile" %}<span class="app-nav__label">{% translate "Settings" %}</span></a></li>
+        <li><a class="app-nav__link" href="{% url 'dashboard' %}">{% include "components/nav_icon.html" with icon="logout-alt" %}<span class="app-nav__label">{% translate "Member dashboard" %}</span></a></li>
+        <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit" class="app-nav__link app-nav__button">{% include "components/nav_icon.html" with icon="logout" %}<span class="app-nav__label">{% translate "Sign out" %}</span></button></form></li>
+      </ul>
+    </nav>
+    {% endwith %}
+  </aside>

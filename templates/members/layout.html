@@ -1,9 +1,14 @@
 {% extends "base.html" %}{% load i18n static %}
-{% block layout_styles %}<link rel="stylesheet" href="{% static 'css/layouts/member.css' %}">{% endblock %}
+{% block layout_styles %}<link rel="stylesheet" href="{% static 'css/layouts/member.css' %}">{% if user.is_authenticated %}
+<link rel="stylesheet" href="{% static 'css/layouts/member-portal.css' %}">{% endif %}{% endblock %}
+{# UI-DASH-01: signed-in members get the portal shell (fixed collapsible sidebar + top bar). Public browsing keeps the site header. #}
+{% block head_scripts %}{% if user.is_authenticated %}{% include "components/member_portal_head.html" %}{% endif %}{% endblock %}
+{% block body_class %}{% if user.is_authenticated %} class="portal"{% endif %}{% endblock %}
+{% block site_header %}{% if user.is_authenticated %}{% include "components/member_header.html" %}{% else %}{{ block.super }}{% endif %}{% endblock %}
 {% block main %}
-<div class="app-shell{% if nav == 'dashboard' or nav == 'profile' %} app-shell--overview{% endif %}{% if not user.is_authenticated %} app-shell--plain{% endif %}">
+<div class="app-shell{% if user.is_authenticated %} app-shell--portal{% endif %}{% if nav == 'dashboard' or nav == 'profile' %} app-shell--overview{% endif %}{% if not user.is_authenticated %} app-shell--plain{% endif %}">
   {% if user.is_authenticated %}
-  {% include "components/member_sidebar.html" %}
+  {% block sidebar %}{% include "components/member_sidebar.html" %}{% endblock %}
   {% endif %}
   <main id="content" class="app-main" tabindex="-1">
     {% if breadcrumbs %}<nav class="breadcrumbs" aria-label="{% translate 'Breadcrumb' %}"><ol>{% for label, url_name in breadcrumbs %}<li><a href="{% url url_name %}">{% translate label %}</a></li>{% endfor %}<li aria-current="page">{% block crumb %}{% endblock %}</li></ol></nav>{% endif %}

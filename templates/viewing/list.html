@@ -9,7 +9,8 @@
 {% if offers %}
 <ul class="video-grid">{% for o in offers %}{% with campaign=o.campaign %}
   <li class="video-card"><a class="video-card__link" href="{% if o.open_session %}{% url 'viewing:session' o.open_session.pk %}{% else %}{% url 'viewing:campaign' campaign.pk %}{% endif %}">
-    <div class="video-card__thumb"><span class="video-card__placeholder" aria-hidden="true">{{ campaign.name|slice:":1" }}</span>
+    <div class="video-card__thumb">{% if o.thumbnail %}<img src="{{ o.thumbnail }}" alt="" loading="lazy" width="320" height="180">{% else %}<span class="video-card__placeholder" aria-hidden="true">{{ campaign.name|slice:":1" }}</span>{% endif %}
+      <span class="video-card__play" aria-hidden="true">&#9654;</span>
       {% if campaign.video.duration_display %}<span class="video-card__duration">{{ campaign.video.duration_display }}</span>{% endif %}</div>
     <div class="video-card__body"><span class="sponsored-label">{% translate "Sponsored" %}</span><h2 class="video-card__title">{{ campaign.name }}</h2>
       <p class="credit-offer">{% if o.credits %}{% blocktranslate with credits=o.credits|credits %}{{ credits }} per verified view{% endblocktranslate %}{% else %}{% translate "No credits for this campaign" %}{% endif %}</p>

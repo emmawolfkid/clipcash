@@ -4,6 +4,8 @@ services.organization_for(), so another advertiser's ID is simply "not found".
 All changes are POST, CSRF-protected and go through the services.
 """
 
+from uuid import UUID
+
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
@@ -128,10 +130,18 @@ class InvitationResponseView(AdvertiserBaseView):
 @advertisers_feature
 class OrganizationView(AdvertiserBaseView):
     def get(self, request, organization_id):
-        recent = (self.organization.campaigns.select_related("video").prefetch_related("target_plans")
-                  .order_by("-created_at")[:5])
+        from apps.reports import services as reports
+
+        recent = list(self.organization.campaigns.select_related("video").prefetch_related("target_plans")
+                      .order_by("-created_at")[:5])
+        # UI-DASH-02: recent campaigns' results for the default reporting period, from the same
+        # masked (D12) reporting service as the Reports page. Nothing is computed here.
+        period = reports.period_from()
+        performance = reports.advertiser_report(self.organization, period, recent)
         return render(request, "advertising/organization.html", self.context(
-            tab="overview", report=services.organization_report(self.organization), recent=recent))
+            tab="overview", report=services.organization_report(self.organization), recent=recent,
+            period=period, performance=performance,
+            n_creatives=services.granted_videos(self.organization).count()))
 
 
 @advertisers_feature
@@ -152,6 +162,62 @@ class ReportsView(AdvertiserBaseView):
         return render(request, "advertising/reports.html", self.context(
             tab="reports", period=period, page=page, page_query=params.urlencode(),
             report=reports.advertiser_report(self.organization, period, list(page.object_list))))
+
+
+@advertisers_feature
+class ReportsExportView(AdvertiserBaseView):
+    """UI-DASH-03: CSV of the Reports tab (POST, CSRF-protected). Only this organization's team can
+    reach it (organization_for() makes other organizations "not found"); figures are D12-masked,
+    cells are formula-safe, exports are rate-limited and audited (reports.exported)."""
+
+    def post(self, request, organization_id):
+        from django.http import HttpResponse
+        from django.urls import reverse
+        from django.utils.http import urlencode
+
+        from apps.reports import services as reports
+
+        first, last = request.POST.get("from", "")[:10], request.POST.get("to", "")[:10]
+        back = f"{reverse('advertising:reports', args=[organization_id])}?{urlencode({'from': first, 'to': last})}"
+        try:
+            period = reports.period_from(first, last)
+        except reports.PeriodError as error:
+            messages.error(request, str(error))
+            return redirect(back)
+        if reports.EXPORTS_PER_HOUR.is_limited(request.user.pk):
+            reports.deny(request.user, "export", "advertiser", "rate_limited")
+            messages.error(request, _("You have exported many reports recently. Please wait a while."))
+            return redirect(back)
+        reports.EXPORTS_PER_HOUR.hit(request.user.pk)
+        content = reports.advertiser_export_csv(request.user, self.organization, period)
+        response = HttpResponse(content, content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = (f'attachment; filename="clipcash-campaigns-{period.first.isoformat()}-'
+                                           f'{period.last.isoformat()}.csv"')
+        response["Cache-Control"] = "no-store"
+        return response
+
+
+@advertisers_feature
+class CreativesView(AdvertiserBaseView):
+    """UI-DASH-02: the videos ClipCash has authorized for this organization (staff upload them
+    through the video console and grant them; advertisers do not upload). Read-only: thumbnails
+    are the same short-lived signed URLs as the member library; counts cover only this
+    organization's campaigns."""
+
+    def get(self, request, organization_id):
+        from django.db.models import Count, Q as Filter
+
+        from apps.videos.services import thumbnail_url
+
+        own = Filter(campaigns__organization=self.organization)
+        live = own & Filter(campaigns__status__in=[Campaign.Status.SCHEDULED, Campaign.Status.ACTIVE])
+        videos = list(services.granted_videos(self.organization).annotate(
+            n_campaigns=Count("campaigns", filter=own, distinct=True),
+            n_running=Count("campaigns", filter=live, distinct=True)))
+        for video in videos:
+            video.thumbnail = thumbnail_url(video)
+            video.available = services.video_available(video)
+        return render(request, "advertising/creatives.html", self.context(tab="creatives", videos=videos))
 
 
 @advertisers_feature
@@ -239,12 +305,21 @@ class CampaignListView(AdvertiserBaseView):
             qs = qs.filter(Q(name__icontains=query) | Q(description__icontains=query))
         if status in Campaign.Status.values:
             qs = qs.filter(status=status)
+        # UI-DASH-02: "View campaigns" from a video creative. Only this organization's campaigns.
+        video = None
+        try:
+            video_id = UUID(request.GET.get("video", ""))
+        except ValueError:
+            video_id = None
+        if video_id:
+            video = services.granted_videos(self.organization).filter(pk=video_id).first()
+            qs = qs.filter(video_id=video_id)
         page = Paginator(qs, 20).get_page(request.GET.get("page"))
         params = request.GET.copy()
         params.pop("page", None)
         return render(request, "advertising/campaign_list.html", self.context(
             tab="campaigns", page=page, query=query, status=status, statuses=Campaign.Status.choices,
-            page_query=params.urlencode()))
+            page_query=params.urlencode(), video_filter=video, video_filter_id=video_id))
 
 
 @advertisers_feature

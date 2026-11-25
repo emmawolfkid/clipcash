@@ -89,7 +89,9 @@ class VideoTestCase(MembershipTestCase):
         """Bypass Bunny for setup: mark a video as processed with a remote id."""
         Video.objects.filter(pk=video.pk).update(
             provider_video_id=video.provider_video_id or guid(), provider_library_id="12345",
-            processing_status=Video.Processing.READY, duration_seconds=95, **extra)
+            processing_status=Video.Processing.READY, duration_seconds=95,
+            # UI-DASH-03: a processed provider video has been synced; previews require that confirmation.
+            **{"last_synced_at": timezone.now(), **extra})
         video.refresh_from_db()
         return video
 

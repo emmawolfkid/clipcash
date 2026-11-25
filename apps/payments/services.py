@@ -27,6 +27,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q, Sum
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.advertising.models import AdvertiserMembership, Campaign, Organization
 from apps.audit.services import DENIED, record_business_event, record_security_event
@@ -123,7 +124,7 @@ def _require(check, actor, action, target=None):
 def _reason(text):
     text = (text or "").strip()
     if len(text) < MIN_REASON:
-        raise ValidationError({"reason": "Please give a reason (at least 5 characters)."})
+        raise ValidationError({"reason": _("Please give a reason (at least 5 characters).")})
     return text[:300]
 
 
@@ -194,7 +195,7 @@ def sandbox_balances():
 def _idempotency_key(value):
     value = str(value or "").strip()
     if not 8 <= len(value) <= 64:
-        raise ValidationError({"idempotency_key": "Missing form token. Reload the page and try again."})
+        raise ValidationError({"idempotency_key": _("Missing form token. Reload the page and try again.")})
     return value
 
 
@@ -246,7 +247,7 @@ def create_membership_intent(member, subscription, *, idempotency_key):
     if subscription.status != Subscription.Status.PENDING or subscription.pending_until <= timezone.now():
         raise InvalidState("This membership is not awaiting payment.", code="not_pending")
     if subscription.currency != "TZS":
-        raise ValidationError({"currency": "Unsupported currency."})
+        raise ValidationError({"currency": _("Unsupported currency.")})
     try:
         return _new_intent(payer=member, purpose=Purpose.MEMBERSHIP, amount=subscription.price_amount,
                            idempotency_key=key, subscription=subscription)[0]
@@ -267,10 +268,10 @@ def create_deposit_intent(user, organization, *, amount, idempotency_key):
     try:
         amount = to_amount(amount)
     except (ValueError, TypeError):
-        raise ValidationError({"amount": "Enter a whole number of shillings."}) from None
+        raise ValidationError({"amount": _("Enter a whole number of shillings.")}) from None
     if not settings.PAYMENTS_DEPOSIT_MIN <= amount <= settings.PAYMENTS_DEPOSIT_MAX:
-        raise ValidationError({"amount": f"Deposits must be between TZS {settings.PAYMENTS_DEPOSIT_MIN:,} "
-                                         f"and TZS {settings.PAYMENTS_DEPOSIT_MAX:,}."})
+        raise ValidationError({"amount": _("Deposits must be between TZS %(min)s and TZS %(max)s.") % {
+            "min": f"{settings.PAYMENTS_DEPOSIT_MIN:,}", "max": f"{settings.PAYMENTS_DEPOSIT_MAX:,}"}})
     return _new_intent(payer=user, purpose=Purpose.ADVERTISER_DEPOSIT, amount=amount, idempotency_key=key,
                        organization=organization)[0]
 
@@ -522,9 +523,9 @@ def allocate(user, organization, campaign, *, amount):
     try:
         amount = to_amount(amount)
     except (ValueError, TypeError):
-        raise ValidationError({"amount": "Enter a whole number of shillings."}) from None
+        raise ValidationError({"amount": _("Enter a whole number of shillings.")}) from None
     if amount <= 0:
-        raise ValidationError({"amount": "Enter an amount greater than zero."})
+        raise ValidationError({"amount": _("Enter an amount greater than zero.")})
     refusal = None
     with transaction.atomic():
         funds = _locked_funds(organization.pk)  # Serializes allocations for this advertiser.

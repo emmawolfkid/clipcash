@@ -86,3 +86,38 @@ class InviteForm(forms.Form):
 class ReasonForm(forms.Form):
     reason = forms.CharField(label=_("Reason"), max_length=300, required=False,
                              widget=forms.Textarea(attrs={"rows": 2}))
+
+
+class StaffCampaignForm(CampaignForm):
+    """UI-DASH-03: the advertiser campaign form for staff acting for an organization. Same fields
+    and validation (the service re-checks everything); staff also choose the organization and may
+    pick any published, ready video (the view authorizes it for the organization if needed)."""
+
+    organization = forms.ModelChoiceField(label=_("Advertiser"), queryset=Organization.objects.none(),
+                                          help_text=_("The client organization this campaign belongs to."))
+
+    field_order = ["organization", "name", "description", "video", "starts_at", "ends_at", "target_plans",
+                   "max_views_per_member", "demo_budget_amount", "demo_reward_per_view"]
+
+    def __init__(self, *args, organization=None, **kwargs):
+        super().__init__(*args, organization=organization, **kwargs)
+        V = Organization.Verification
+        self.fields["organization"].queryset = Organization.objects.filter(
+            verification_status__in=[V.APPROVED, V.PENDING]).order_by("display_name")
+        if organization is not None:
+            self.fields["organization"].initial = organization.pk
+        editing = not self.instance._state.adding  # UUID primary keys exist before saving.
+        if editing:  # The owning organization never changes.
+            self.fields["organization"].disabled = True
+            self.fields["organization"].initial = self.instance.organization_id
+        videos = Q(publication_status=Video.Publication.PUBLISHED, processing_status=Video.Processing.READY)
+        if editing:
+            videos |= Q(pk=self.instance.video_id)
+        self.fields["video"].queryset = Video.objects.filter(videos).order_by("title")
+        self.fields["video"].help_text = _("Published, ready videos. Upload new videos under Video management.")
+        self.order_fields(self.field_order)
+
+    def values(self):
+        data, plans = super().values()
+        data.pop("organization", None)
+        return data, plans

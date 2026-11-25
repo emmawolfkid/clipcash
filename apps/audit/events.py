@@ -197,7 +197,7 @@ EVENT_TYPES = {
         _event("video.provider.sync_failed", Category.CONTENT, BUSINESS, ["job_type", "error_class"]),
         _event("video.action.denied", Category.CONTENT, SECURITY, ["action", "reason"]),
         # Advertisers and campaigns (demo budgets are not money; no payment data)
-        _event("advertiser.created", Category.ADVERTISING, BUSINESS, ["country"]),
+        _event("advertiser.created", Category.ADVERTISING, BUSINESS, ["country", "on_behalf"]),
         _event("advertiser.updated", Category.ADVERTISING, BUSINESS, ["fields"]),
         _event("advertiser.resubmitted", Category.ADVERTISING, BUSINESS),
         *[_event(f"advertiser.verification.{name}", Category.ADVERTISING, BUSINESS, ["from_status", "reason"])
@@ -210,7 +210,7 @@ EVENT_TYPES = {
         _event("advertiser.video.granted", Category.ADVERTISING, BUSINESS, ["video"]),
         _event("advertiser.video.revoked", Category.ADVERTISING, BUSINESS, ["video"]),
         _event("advertiser.action.denied", Category.ADVERTISING, SECURITY, ["action", "reason"]),
-        _event("campaign.created", Category.ADVERTISING, BUSINESS, ["revision"]),
+        _event("campaign.created", Category.ADVERTISING, BUSINESS, ["revision", "on_behalf"]),
         _event("campaign.updated", Category.ADVERTISING, BUSINESS, ["revision", "fields"]),
         *[_event(f"campaign.{name}", Category.ADVERTISING, BUSINESS, ["from_status", "revision", "reason"])
           for name in ("submitted", "withdrawn", "approved", "rejected", "activated", "paused", "resumed",

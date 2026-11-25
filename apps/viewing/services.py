@@ -30,6 +30,9 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_noop as N_
 
 from apps.advertising import services as advertising
 from apps.advertising.models import AdvertiserMembership, AdvertiserVideo, Campaign, Organization
@@ -99,23 +102,23 @@ class StaleDecision(ViewingError):
 
 
 DENIAL_MESSAGES = {
-    "not_authenticated": "Please sign in to watch sponsored videos.",
-    "account_inactive": "Your account cannot watch sponsored videos at the moment.",
-    "email_unverified": "Please confirm your email address first.",
-    "no_membership": "An active membership is needed to watch sponsored videos.",
-    "membership_suspended": "Your membership is suspended.",
-    "entitlement_missing": "Your membership plan does not include this video.",
-    "plan_not_targeted": "This campaign is for members of other plans.",
-    "limit_reached": "You have already watched this campaign the maximum number of times.",
-    "daily_limit": "You already have a verified view of this campaign today. Come back tomorrow.",
-    "too_many_attempts": "Too many attempts. Please try again later.",
-    "own_campaign": "You cannot watch campaigns of an advertiser you work for.",
-    "feature_disabled": "Sponsored videos are not available at the moment.",
+    "not_authenticated": gettext_lazy("Please sign in to watch sponsored videos."),
+    "account_inactive": gettext_lazy("Your account cannot watch sponsored videos at the moment."),
+    "email_unverified": gettext_lazy("Please confirm your email address first."),
+    "no_membership": gettext_lazy("An active membership is needed to watch sponsored videos."),
+    "membership_suspended": gettext_lazy("Your membership is suspended."),
+    "entitlement_missing": gettext_lazy("Your membership plan does not include this video."),
+    "plan_not_targeted": gettext_lazy("This campaign is for members of other plans."),
+    "limit_reached": gettext_lazy("You have already watched this campaign the maximum number of times."),
+    "daily_limit": gettext_lazy("You already have a verified view of this campaign today. Come back tomorrow."),
+    "too_many_attempts": gettext_lazy("Too many attempts. Please try again later."),
+    "own_campaign": gettext_lazy("You cannot watch campaigns of an advertiser you work for."),
+    "feature_disabled": gettext_lazy("Sponsored videos are not available at the moment."),
 }
 
 
 def denial_message(reason):
-    return DENIAL_MESSAGES.get(reason, "This campaign is not available to you right now.")
+    return DENIAL_MESSAGES.get(reason, _("This campaign is not available to you right now."))
 
 
 # --- Thresholds ------------------------------------------------------------------------
@@ -164,7 +167,7 @@ def start_session(member, campaign_id):
     """
     campaign = Campaign.objects.filter(pk=campaign_id).first()
     if campaign is None:
-        raise NotFound("Campaign not found.")
+        raise NotFound(_("Campaign not found."))
     result, reason, flags = _start_locked(member, campaign)
     if reason:
         record_security_event("viewing.session.denied", outcome=DENIED,
@@ -254,7 +257,7 @@ def session_for(member, session_id):
                                                    "video__category")
                .filter(pk=session_id, member=member).first())
     if session is None:
-        raise NotFound("Session not found.")
+        raise NotFound(_("Session not found."))
     return session
 
 
@@ -324,8 +327,20 @@ def _throttle_key(member):
     return hashlib.sha256(f"viewing-events:{member.pk}".encode()).hexdigest()
 
 
+def _is_terminal(payload):
+    """The player's final "ended" event (validated later like any other event)."""
+    return isinstance(payload, dict) and payload.get("state") == "ended"
+
+
 def record_event(member, session_id, payload):
-    """Apply one heartbeat. Returns EventResult; rejected evidence is counted, never credited."""
+    """Apply one heartbeat. Returns EventResult; rejected evidence is counted, never credited.
+
+    UI-DASH-03: the 1-second minimum interval between events stops floods of heartbeats. The
+    terminal "ended" event is exempt from that interval only: players send it the moment the video
+    finishes, often within a second of the last heartbeat, and refusing it left the session open.
+    It is still subject to the per-minute and per-session limits and to every evidence rule in
+    _apply_event (sequence, duplicates, position, speed, credit capped at server time), and it
+    closes the session, so the exemption can be used once per session at most."""
     over_limit = ratelimit.hit(_throttle_key(member), 60) > settings.VIEWING_MAX_EVENTS_PER_MINUTE
     now = timezone.now()
     audit = None
@@ -333,7 +348,7 @@ def record_event(member, session_id, payload):
         session = (WatchSession.objects.select_for_update().select_related("member")
                    .filter(pk=session_id, member=member).first())
         if session is None:
-            raise NotFound("Session not found.")
+            raise NotFound(_("Session not found."))
         if not session.is_open:
             return EventResult(False, "session_closed", session, 409)
         if now >= session.expires_at:
@@ -344,8 +359,9 @@ def record_event(member, session_id, payload):
             _invalidate(session, now, reason)
             return EventResult(False, reason, session, 409)
 
-        if over_limit or (session.last_event_at and _ms(now - session.last_event_at)
-                          < settings.VIEWING_MIN_EVENT_INTERVAL_MS):
+        too_soon = bool(session.last_event_at and _ms(now - session.last_event_at)
+                        < settings.VIEWING_MIN_EVENT_INTERVAL_MS)
+        if over_limit or (too_soon and not _is_terminal(payload)):
             session.rate_rejection_count += 1
             session.save(update_fields=["rate_rejection_count", "updated_at"])
             audit = _rejection_audit(session, "rate_limited", session.rate_rejection_count)
@@ -534,9 +550,9 @@ def _close(session, now, *, trigger):
 # fraud signals, flags or reviewer notes. Reviewers get at most one queue reminder a day.
 
 MEMBER_NOTICES = {
-    "review_confirmed": ("Your view was confirmed", "Staff confirmed your view of “{name}”."),
-    "review_rejected": ("Your view was not accepted", "After review, your view of “{name}” was not accepted."),
-    "revoked": ("A verified view was withdrawn", "Your verified view of “{name}” no longer counts."),
+    "review_confirmed": (N_("Your view was confirmed"), N_("Staff confirmed your view of “{name}”.")),
+    "review_rejected": (N_("Your view was not accepted"), N_("After review, your view of “{name}” was not accepted.")),
+    "revoked": (N_("A verified view was withdrawn"), N_("Your verified view of “{name}” no longer counts.")),
 }
 
 
@@ -545,7 +561,7 @@ def _notify_member(session, event):
 
     title, message = MEMBER_NOTICES[event]
     inbox.notify(session.member, f"viewing.{event}", category=inbox.Category.VIEWING, title=title,
-                 message=message.format(name=session.campaign.name), link=inbox.link_to("viewing:history"),
+                 message=message, params={"name": session.campaign.name}, link=inbox.link_to("viewing:history"),
                  dedupe_key=f"viewing.{event}:{session.pk}")
 
 
@@ -553,8 +569,8 @@ def _notify_reviewers(now):
     from apps.notifications import inbox
 
     inbox.notify(inbox.staff_with_permission("viewing.review_viewing"), "viewing.review_needed",
-                 category=inbox.Category.VIEWING, title="Viewing sessions are awaiting review",
-                 message="At least one sponsored view was flagged for a staff decision.",
+                 category=inbox.Category.VIEWING, title=N_("Viewing sessions are awaiting review"),
+                 message=N_("At least one sponsored view was flagged for a staff decision."), params={},
                  link=inbox.link_to("administration:viewing"), dedupe_key=f"viewing.review_needed:{now.date()}")
 
 
@@ -563,7 +579,7 @@ def finish_session(member, session_id):
     with transaction.atomic():
         session = WatchSession.objects.select_for_update().filter(pk=session_id, member=member).first()
         if session is None:
-            raise NotFound("Session not found.")
+            raise NotFound(_("Session not found."))
         if session.is_open:
             _close(session, timezone.now(), trigger="member")
     return session
@@ -594,7 +610,7 @@ def review_session(actor, session, decision, *, expected_status, reason):
     """Staff decision on a suspicious session. ``confirm`` keeps the server's evidence (the
     database refuses VERIFIED without it); ``reject`` releases the counted view."""
     if decision not in ("confirm", "reject"):
-        raise InvalidState("Unknown decision.")
+        raise InvalidState(_("Unknown decision."))
     if not can_review_viewing(actor):
         record_security_event("viewing.session.denied", outcome=DENIED,
                               actor=actor if getattr(actor, "is_authenticated", False) else None,
@@ -605,16 +621,16 @@ def review_session(actor, session, decision, *, expected_status, reason):
         raise Denied("You cannot review your own viewing.", code="self_review")
     reason = (reason or "").strip()
     if len(reason) < MIN_REVIEW_REASON:
-        raise ValidationError({"reason": "Please give a reason (at least 5 characters)."})
+        raise ValidationError({"reason": _("Please give a reason (at least 5 characters).")})
     target = Rev.CONFIRMED if decision == "confirm" else Rev.REJECTED
     with transaction.atomic():
         session = WatchSession.objects.select_for_update().get(pk=session.pk)
         if session.review_status == target and expected_status == target:
             return session  # Same decision submitted twice.
         if session.review_status != expected_status:
-            raise StaleDecision("This session was reviewed or changed since you opened it.")
+            raise StaleDecision(_("This session was reviewed or changed since you opened it."))
         if session.review_status != Rev.PENDING:
-            raise InvalidState("Only sessions awaiting review can be decided.")
+            raise InvalidState(_("Only sessions awaiting review can be decided."))
         session.review_status = target
         session.reviewed_by = actor
         session.reviewed_at = timezone.now()
@@ -647,13 +663,13 @@ def revoke_verified_session(actor, session, *, reason):
         raise Denied("You cannot review your own viewing.", code="self_review")
     reason = (reason or "").strip()
     if len(reason) < MIN_REVIEW_REASON:
-        raise ValidationError({"reason": "Please give a reason (at least 5 characters)."})
+        raise ValidationError({"reason": _("Please give a reason (at least 5 characters).")})
     with transaction.atomic():
         session = WatchSession.objects.select_for_update().get(pk=session.pk)
         if session.outcome == Out.REJECTED and session.review_status == Rev.REJECTED:
             return session  # Already revoked or rejected.
         if session.outcome != Out.VERIFIED_EVIDENCE:
-            raise InvalidState("Only verified views can be revoked.")
+            raise InvalidState(_("Only verified views can be revoked."))
         session.outcome = Out.REJECTED
         session.review_status = Rev.REJECTED
         session.reviewed_by = actor
@@ -706,6 +722,16 @@ def available_campaigns(member, now=None, limit=50):
         if left > 0 or campaign.pk in open_sessions:
             rows.append((campaign, max(0, left), open_sessions.get(campaign.pk)))
     return rows
+
+
+def with_thumbnails(offers):
+    """UI-DASH-02: signed, short-lived thumbnails (the video library's helper) for offers the member
+    can watch now. Plan-locked offers keep a placeholder, like locked library videos."""
+    from apps.videos.services import thumbnail_url
+
+    for offer in offers:
+        offer["thumbnail"] = "" if offer["locked"] else thumbnail_url(offer["campaign"].video)
+    return offers
 
 
 def campaign_offers(member, now=None, limit=50):

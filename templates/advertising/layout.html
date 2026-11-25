@@ -2,4 +2,7 @@
 {% block layout_styles %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'css/layouts/advertiser.css' %}">
+<link rel="stylesheet" href="{% static 'css/layouts/advertiser-portal.css' %}">
 {% endblock %}
+{# UI-DASH-02: the advertiser workspace has its own sidebar; the header, collapse and drawer are shared. #}
+{% block sidebar %}{% include "components/advertiser_sidebar.html" %}{% endblock %}

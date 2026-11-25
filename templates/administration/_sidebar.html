@@ -22,10 +22,11 @@
         {% if can.categories %}{% include "administration/_nav_link.html" with target="administration:categories" key="categories" label=_("Categories") %}{% endif %}
         {% if can.viewing %}{% include "administration/_nav_link.html" with target="administration:viewing" key="viewing" label=_("Viewing review") %}{% endif %}
       </ul>{% endif %}
-      {% if can.advertisers or can.campaigns %}<p class="app-nav__group" id="console-advertising">{% translate "Advertising" %}</p>
+      {% if can.advertisers or can.campaigns or can.campaign_manage %}<p class="app-nav__group" id="console-advertising">{% translate "Advertising" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-advertising">
         {% if can.advertisers %}{% include "administration/_nav_link.html" with target="administration:advertisers" key="advertisers" label=_("Advertisers") %}{% endif %}
         {% if can.campaigns %}{% include "administration/_nav_link.html" with target="administration:campaigns" key="campaigns" label=_("Campaigns") %}{% endif %}
+        {% if can.campaign_manage %}{% include "administration/_nav_link.html" with target="administration:campaign_create" key="campaign_new" label=_("New campaign") %}{% endif %}
       </ul>{% endif %}
       {% if can.rewards or can.payments or can.wallets or can.withdrawals %}<p class="app-nav__group" id="console-finance">{% translate "Financial simulation" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-finance">

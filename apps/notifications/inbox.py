@@ -16,13 +16,17 @@ token or account data.
 This module never imports business apps; they import it.
 """
 
+from datetime import date, datetime
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext
 
 from .models import Notification
 from .services import SkipEmail, enqueue_email, register_email_kind
@@ -31,17 +35,44 @@ Category = Notification.Category
 NOTICE_EMAIL = "notifications.notice"
 MAX_TITLE = 120
 MAX_MESSAGE = 400
+DATES_KEY = "__dates__"  # Names of the params that hold an ISO date-time (UI-DASH-03 closure).
 
 
-def when(moment):
-    """A date and time for notice text, in the site time zone (e.g. "4 Nov 2026, 18:00 EAT")."""
+def _site_local(moment):
     import zoneinfo
 
     from apps.core.services import get_site_configuration
 
-    zone = zoneinfo.ZoneInfo(get_site_configuration().default_timezone)
-    local = moment.astimezone(zone)
+    return moment.astimezone(zoneinfo.ZoneInfo(get_site_configuration().default_timezone))
+
+
+def when(moment):
+    """A date and time for stored (English) notice text, in the site time zone
+    (e.g. "4 Nov 2026, 18:00 EAT"). This is the text kept in history and sent by email."""
+    local = _site_local(moment)
     return f"{local.day} {local:%b %Y, %H:%M} {local.tzname()}"
+
+
+def local_when(moment):
+    """The same moment for display in the active language: Django's locale-aware month names
+    (e.g. "4 November 2026, 18:00 EAT", Swahili "4 Novemba 2026, 18:00 EAT"). A plain date is shown
+    without a time (e.g. "4 Novemba 2026")."""
+    if not isinstance(moment, datetime):
+        return date_format(moment, "j F Y")
+    local = _site_local(moment)
+    return f"{date_format(local, 'j F Y, H:i')} {local.tzname()}"
+
+
+def _english_value(key, value):
+    if isinstance(value, datetime):
+        return when(value)
+    if isinstance(value, date):
+        return f"{value:%d %b %Y}"
+    return str(value).lower() if key.endswith("__tl") else str(value)
+
+
+def _parse_moment(text):
+    return datetime.fromisoformat(text) if "T" in text else date.fromisoformat(text)
 
 
 def link_to(url_name, *args):
@@ -58,16 +89,49 @@ def safe_link(link):
     return link if url_has_allowed_host_and_scheme(link, allowed_hosts=None) else ""
 
 
-def notify(recipients, kind, *, category, title, message="", link="", dedupe_key, email=False):
+def _render(template, params):
+    """Fill a "{key}" template. Always formatted, so a template whose values are missing fails loudly
+    (KeyError) instead of showing raw placeholders."""
+    return template.format(**params)
+
+
+def notify(recipients, kind, *, category, title, message="", link="", dedupe_key, email=False, params=None):
     """Create one notice per recipient (an account or an iterable of accounts).
 
     Inactive accounts and duplicates are skipped silently. Returns the number of new
     notices. ``dedupe_key`` must identify the event (e.g. "campaign.approved:<id>:<rev>").
+
+    UI-DASH-03: with ``params`` (a dict, possibly empty) ``title`` and ``message`` are English source
+    templates marked with gettext_noop, using "{key}" placeholders filled from ``params`` (plain
+    values: names, references, dates). The rendered English text is stored as before (inbox
+    history, emails); the templates let the inbox show the notice in the reader's language. Keys
+    ending in "__t" hold interface labels that are translated too; other values (campaign names,
+    references) are shown as recorded. Without ``params`` the text is stored as given (legacy).
+    Keys ending in "__tl" are translated and then lower-cased (a label used mid-sentence).
+    A ``datetime`` or ``date`` value is stored as ISO 8601 (its key listed under DATES_KEY) and
+    shown with the reader's language's month names; the stored English text uses ``when``
+    (or "04 Nov 2026" for a date).
     """
     if not dedupe_key or len(dedupe_key) > 160:
         raise ValidationError("A notification needs an event key of at most 160 characters.")
     if not title:
         raise ValidationError("A notification needs a title.")
+    templates = params is not None
+    stored, english, dates = {}, {}, []
+    for key, value in (params or {}).items():
+        key = str(key)
+        english[key] = _english_value(key, value)
+        if isinstance(value, date):
+            stored[key] = value.isoformat()
+            dates.append(key)
+        else:
+            stored[key] = str(value)
+    params = dict(stored, **{DATES_KEY: dates}) if dates else stored
+    title_template, message_template = (str(title), str(message or "")) if templates else ("", "")
+    if templates:
+        title, message = _render(str(title), english), _render(str(message or ""), english)
+    else:
+        title, message = str(title), str(message or "")
     link = safe_link(link)
     if not hasattr(recipients, "__iter__"):
         recipients = [recipients]
@@ -84,7 +148,8 @@ def notify(recipients, kind, *, category, title, message="", link="", dedupe_key
             with transaction.atomic():  # Savepoint: a duplicate never breaks the caller's transaction.
                 notice = Notification.objects.create(
                     recipient=user, category=category, kind=kind[:64], title=title[:MAX_TITLE],
-                    message=message[:MAX_MESSAGE], link=link, dedupe_key=dedupe_key)
+                    message=message[:MAX_MESSAGE], link=link, dedupe_key=dedupe_key,
+                    title_template=title_template[:200], message_template=message_template[:500], params=params)
         except IntegrityError:
             continue  # A concurrent writer stored this event for this account first.
         created += 1
@@ -93,6 +158,29 @@ def notify(recipients, kind, *, category, title, message="", link="", dedupe_key
         if email and user.email and user.email_verified:
             enqueue_email(NOTICE_EMAIL, recipient=user.email, user=user, context={"notification": str(notice.pk)})
     return created
+
+
+def localize(notices):
+    """UI-DASH-03: set each notice's title and message in the active language (not saved). Older
+    notices without templates, and any template that cannot be filled, keep their stored text.
+    Dates listed under DATES_KEY are formatted for the active language; dates in notices stored
+    before that (plain text) are shown as recorded."""
+    for notice in notices:
+        if not notice.title_template:
+            continue
+        stored = dict(notice.params or {})
+        dates = stored.pop(DATES_KEY, None) or []
+        params = {key: gettext(value) if key.endswith("__t") else
+                  gettext(value).lower() if key.endswith("__tl") else value for key, value in stored.items()}
+        try:
+            for key in dates:
+                params[key] = local_when(_parse_moment(stored[key]))
+            title = _render(gettext(notice.title_template), params)
+            message = _render(gettext(notice.message_template), params) if notice.message_template else ""
+        except (KeyError, IndexError, ValueError, TypeError):
+            continue
+        notice.title, notice.message = title[:MAX_TITLE], message[:MAX_MESSAGE]
+    return notices
 
 
 def staff_with_permission(*perms):

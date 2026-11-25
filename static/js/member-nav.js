@@ -1,11 +1,15 @@
 /* Shared navigation. No requests, notification mutations or business-state changes. */
 (function () {
   "use strict";
-  var narrow = window.matchMedia("(max-width: 52rem)");
   var siteToggle = document.querySelector(".site-menu-toggle");
   var sidebarToggle = document.querySelector(".app-nav__toggle");
   var siteMenu = document.getElementById("site-menu");
   var sidebar = document.querySelector(".app-sidebar");
+  // UI-DASH-01: the member portal sidebar names its own drawer breakpoint and opts in to
+  // desktop collapse. Console shells keep the original 52rem drawer and no collapse.
+  var narrow = window.matchMedia((sidebar && sidebar.getAttribute("data-drawer-query")) || "(max-width: 52rem)");
+  var collapsible = Boolean(sidebar && sidebar.getAttribute("data-collapsible") !== null);
+  var STORAGE_KEY = "clipcash.sidebar";
   var sidebarMenu = sidebar && sidebar.querySelector(".app-nav");
   var overlay = document.querySelector("[data-nav-overlay]");
   var panel = sidebar || siteMenu;
@@ -29,6 +33,15 @@
         if (!profile.contains(document.activeElement)) { closeProfile(false); }
       }, 0);
     });
+  }
+
+  // UI-DASH-01: the portal top bar shows a bare select like the reference; choosing a language
+  // submits the same CSRF-protected set_language form. Without JS the "Change" button remains.
+  var languageForm = document.querySelector(".portal-header .language-form");
+  var languageSelect = languageForm && languageForm.querySelector("select");
+  if (languageSelect) {
+    document.documentElement.classList.add("js-language-auto");
+    languageSelect.addEventListener("change", function () { languageForm.submit(); });
   }
 
   if (!panel || !toggle) { return; }
@@ -106,20 +119,37 @@
     (current || focusable()[0] || panel).focus();
     if (current && current.scrollIntoView) { current.scrollIntoView({ block: "nearest" }); }
   }
+  function isCollapsed() { return document.documentElement.classList.contains("sidebar-collapsed"); }
+  function labelToggle() {
+    if (!collapsible) { return; }
+    var key = narrow.matches ? "data-label-open" : (isCollapsed() ? "data-label-expand" : "data-label-collapse");
+    var label = toggle.getAttribute(key);
+    if (label) { toggle.setAttribute("aria-label", label); }
+    if (!narrow.matches) { toggle.setAttribute("aria-expanded", isCollapsed() ? "false" : "true"); }
+  }
+  function setCollapsed(collapsed) {
+    document.documentElement.classList.toggle("sidebar-collapsed", collapsed);
+    try { window.localStorage.setItem(STORAGE_KEY, collapsed ? "collapsed" : "expanded"); } catch (error) { /* Optional. */ }
+    labelToggle();
+  }
   function apply() {
     var hadFocus = panel.contains(document.activeElement);
     // Release the old modal before changing breakpoint; never leave the document inert.
     closeDrawer(false);
     placeSiteMenu();
-    toggle.hidden = !narrow.matches;
+    toggle.hidden = !narrow.matches && !collapsible;
+    labelToggle();
     if (closeButton) { closeButton.hidden = !narrow.matches; }
     if (narrow.matches && hadFocus) { toggle.focus(); }
-    if (!narrow.matches && (document.activeElement === toggle || document.activeElement === closeButton)) {
+    if (!narrow.matches && !collapsible && (document.activeElement === toggle || document.activeElement === closeButton)) {
       (focusable()[0] || panel).focus();
     }
   }
   toggle.addEventListener("click", function () {
-    if (!narrow.matches) { return; }
+    if (!narrow.matches) {
+      if (collapsible) { setCollapsed(!isCollapsed()); }
+      return;
+    }
     if (open) { closeDrawer(true); } else { openDrawer(); }
   });
   if (closeButton) { closeButton.addEventListener("click", function () { closeDrawer(true); }); }

@@ -20,6 +20,8 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop as N_
 
 from apps.audit.services import DENIED, record_business_event, record_security_event
 from apps.core import features
@@ -97,7 +99,7 @@ def can_use_video_console(user):
 
 def _require(check, actor, action, target=None):
     if not check(actor):
-        error = NotAuthorized("You are not allowed to do this.")
+        error = NotAuthorized(_("You are not allowed to do this."))
         record_security_event("video.action.denied", outcome=DENIED,
                               actor=actor if getattr(actor, "is_authenticated", False) else None,
                               target=target, metadata={"action": action, "reason": error.code})
@@ -158,7 +160,7 @@ VIDEO_FIELDS = ("title", "slug", "description", "category", "required_entitlemen
 
 def _check_category(category):
     if category is not None and not category.is_active:
-        raise ValidationError({"category": "Choose an active category."})
+        raise ValidationError({"category": _("Choose an active category.")})
 
 
 def create_video(actor, **values):
@@ -167,7 +169,7 @@ def create_video(actor, **values):
     _check_category(values.get("category"))
     provider_code = default_provider_code()
     if provider_code == Video.Provider.DEMO and not demo_allowed():
-        raise ProviderUnavailable("Demo videos are disabled here.")
+        raise ProviderUnavailable(_("Demo videos are disabled here."))
     if provider_code == Video.Provider.BUNNY:
         values.pop("duration_seconds", None)  # Comes from Bunny after processing.
     values["slug"] = values.get("slug") or slugify(values.get("title", ""))[:160]
@@ -190,9 +192,9 @@ def update_video(actor, video, changes):
     with transaction.atomic():
         video = Video.objects.select_for_update().get(pk=video.pk)
         if video.publication_status == PUB.ARCHIVED:
-            raise InvalidState("Archived videos cannot be edited.")
+            raise InvalidState(_("Archived videos cannot be edited."))
         if "slug" in changes and changes["slug"] != video.slug and video.published_at is not None:
-            raise ValidationError({"slug": "The address of a published video cannot change."})
+            raise ValidationError({"slug": _("The address of a published video cannot change.")})
         if "duration_seconds" in changes and video.provider != Video.Provider.DEMO:
             changes.pop("duration_seconds")
         if "category" in changes and changes["category"] != video.category:
@@ -224,7 +226,7 @@ def _ensure_remote_video(video):
         video.refresh_from_db()
         if video.provider_video_id:
             return video
-        raise InvalidState("Upload preparation is already in progress. Try again in a moment.", code="in_progress")
+        raise InvalidState(_("Upload preparation is already in progress. Try again in a moment."), code="in_progress")
     try:
         provider = get_provider(video.provider)
         remote_id = provider.create_video(video.title)
@@ -246,16 +248,17 @@ def prepare_upload(actor, video, *, filename, size, content_type):
     _require(can_manage_videos, actor, "video.upload", video)
     video = Video.objects.get(pk=video.pk)
     if video.provider != Video.Provider.BUNNY:
-        raise UploadRejected("Demo videos have no uploads.", code="demo")
+        raise UploadRejected(_("Demo videos have no uploads."), code="demo")
     if video.publication_status == PUB.ARCHIVED:
-        raise InvalidState("Archived videos cannot receive uploads.")
+        raise InvalidState(_("Archived videos cannot receive uploads."))
     if video.processing_status not in (P.PENDING, P.UPLOADING, P.FAILED):
-        raise InvalidState("This video already has media.", code="has_media")
+        raise InvalidState(_("This video already has media."), code="has_media")
     if content_type not in settings.VIDEO_UPLOAD_CONTENT_TYPES:
-        raise UploadRejected("This file type is not supported.", code="file_type")
+        raise UploadRejected(_("This file type is not supported."), code="file_type")
     max_bytes = settings.VIDEO_UPLOAD_MAX_MB * 1024 * 1024
     if type(size) is not int or size <= 0 or size > max_bytes:
-        raise UploadRejected(f"Files must be smaller than {settings.VIDEO_UPLOAD_MAX_MB} MB.", code="file_size")
+        raise UploadRejected(_("Files must be smaller than %(size)s MB.") % {"size": settings.VIDEO_UPLOAD_MAX_MB},
+                             code="file_size")
 
     video = _ensure_remote_video(video)
     try:
@@ -295,6 +298,7 @@ def _notify_video(video, event, title, message):
     creator = video.created_by if video.created_by_id and video.created_by.is_active else None
     recipients = [creator] if creator else inbox.staff_with_permission("videos.manage_videos")
     inbox.notify(recipients, f"video.{event}", category=inbox.Category.VIDEO, title=title, message=message,
+                 params={"title": video.title},
                  link=inbox.link_to("administration:video_detail", video.pk),
                  dedupe_key=f"video.{event}:{video.pk}:{video.updated_at.isoformat() if video.updated_at else ''}")
 
@@ -310,8 +314,8 @@ def report_upload_failed(actor, video, reason):
         video.processing_error = "The upload did not complete. You can try again."
         video.save(update_fields=["processing_status", "processing_error", "updated_at"])
         record_business_event("video.upload.failed", actor=actor, target=video, metadata={"reason": reason})
-        _notify_video(video, "failed", "Video upload did not complete",
-                      f"“{video.title}” was not uploaded. You can try again.")
+        _notify_video(video, "failed", N_("Video upload did not complete"),
+                      N_("“{title}” was not uploaded. You can try again."))
     return video
 
 
@@ -355,20 +359,20 @@ def sync_video(video_id):
             video.processing_error = ""
             record_business_event("video.processing.completed", actor=None, target=video,
                                   metadata={"duration_seconds": video.duration_seconds or 0})
-            _notify_video(video, "ready", "Video is ready", f"“{video.title}” finished processing and can be "
-                          "published.")
+            _notify_video(video, "ready", N_("Video is ready"),
+                          N_("“{title}” finished processing and can be published."))
         elif info.processing == P.FAILED and video.processing_status != P.FAILED:
             video.processing_status = P.FAILED
             video.processing_error = info.error[:200]
             record_business_event("video.processing.failed", actor=None, target=video,
                                   metadata={"status_code": info.status_code})
-            _notify_video(video, "failed", "Video processing failed",
-                          f"“{video.title}” could not be processed. Open it to upload again.")
+            _notify_video(video, "failed", N_("Video processing failed"),
+                          N_("“{title}” could not be processed. Open it to upload again."))
         elif info.processing == P.PROCESSING and video.processing_status in (P.PENDING, P.UPLOADING):
             video.processing_status = P.PROCESSING  # Bunny received the upload.
         video.save()
     if outcome in (P.PROCESSING, P.UPLOADING):
-        raise RetryableJobError("Still processing at the provider")
+        raise RetryableJobError(_("Still processing at the provider"))
     return outcome
 
 
@@ -418,29 +422,29 @@ def _publication_change(actor, video, action, check, new_status):
 def publish(actor, video):
     def check(v):
         if v.publication_status == PUB.PUBLISHED:
-            raise InvalidState("This video is already published.", code="already_published")
+            raise InvalidState(_("This video is already published."), code="already_published")
         if v.publication_status != PUB.DRAFT:
-            raise InvalidState("Only draft videos can be published.")
+            raise InvalidState(_("Only draft videos can be published."))
         if v.processing_status != P.READY:
-            raise InvalidState("The video must finish processing before it can be published.", code="not_ready")
+            raise InvalidState(_("The video must finish processing before it can be published."), code="not_ready")
         if v.category is not None and not v.category.is_active:
-            raise InvalidState("Choose an active category before publishing.", code="inactive_category")
+            raise InvalidState(_("Choose an active category before publishing."), code="inactive_category")
         if v.is_demo and not demo_allowed():
-            raise InvalidState("Demo videos cannot be published here.", code="demo")
+            raise InvalidState(_("Demo videos cannot be published here."), code="demo")
     return _publication_change(actor, video, "published", check, PUB.PUBLISHED)
 
 
 def unpublish(actor, video):
     def check(v):
         if v.publication_status != PUB.PUBLISHED:
-            raise InvalidState("Only published videos can be unpublished.")
+            raise InvalidState(_("Only published videos can be unpublished."))
     return _publication_change(actor, video, "unpublished", check, PUB.DRAFT)
 
 
 def archive(actor, video):
     def check(v):
         if v.publication_status == PUB.ARCHIVED:
-            raise InvalidState("This video is already archived.")
+            raise InvalidState(_("This video is already archived."))
     return _publication_change(actor, video, "archived", check, PUB.ARCHIVED)
 
 
@@ -451,7 +455,7 @@ def request_media_deletion(actor, video):
     _require(is_super_admin, actor, "video.delete_media", video)
     video = Video.objects.get(pk=video.pk)
     if video.publication_status != PUB.ARCHIVED or video.provider != Video.Provider.BUNNY or not video.provider_video_id:
-        raise InvalidState("Only archived Bunny videos can have their media deleted.")
+        raise InvalidState(_("Only archived Bunny videos can have their media deleted."))
     with transaction.atomic():
         enqueue("videos.delete_media", {"video_id": str(video.pk)}, idempotency_key=f"video-delete:{video.pk}")
         record_business_event("video.media.deletion_requested", actor=actor, target=video)
@@ -460,7 +464,7 @@ def request_media_deletion(actor, video):
 def delete_media(video_id):
     video = Video.objects.get(pk=video_id)
     if video.publication_status != PUB.ARCHIVED:
-        raise PermanentJobError("Only archived videos can have media deleted.")
+        raise PermanentJobError(_("Only archived videos can have media deleted."))
     try:
         get_provider(video.provider).delete_video(video.provider_video_id)  # HTTP, no transaction.
     except ProviderTemporaryError as error:

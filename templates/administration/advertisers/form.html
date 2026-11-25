@@ -1,0 +1,12 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Register a client" %}{% endblock %}
+{% block console_content %}
+{# UI-DASH-03: a client organization without a ClipCash account. Another reviewer verifies it. #}
+<p><a href="{% url 'administration:advertisers' %}">{% translate "All advertisers" %}</a></p>
+<div class="page-heading"><div class="page-heading__text"><h1 class="page-title">{% translate "Register a client" %}</h1>
+  <p class="page-intro">{% translate "For a business that advertises through ClipCash staff. It starts as awaiting review; you can invite the client's owner from its page afterwards." %}</p></div></div>
+<form class="form" method="post" novalidate>{% csrf_token %}
+  {% include "advertising/_organization_fields.html" %}
+  <div class="settings-actions"><button type="submit" class="button">{% translate "Register client" %}</button></div>
+</form>
+{% endblock %}

@@ -1,5 +1,6 @@
 """Notification jobs and operational alerts (Phase 15-A)."""
 
+from django.utils.translation import gettext_noop
 from datetime import timedelta
 
 from django.conf import settings
@@ -29,8 +30,9 @@ def alert_operators_of_failed_job(sender, job, **kwargs):
     Once per job; the text names the job type only (never its payload or error text)."""
     inbox.notify(
         inbox.staff_with_permission("core.view_operations"), "operations.job.failed",
-        category=inbox.Category.OPERATIONS, title="A background job failed",
-        message=f"Job type {job.job_type} failed after {job.attempts} attempt(s). Check Operational health.",
+        category=inbox.Category.OPERATIONS, title=gettext_noop("A background job failed"),
+        message=gettext_noop("Job type {job_type} failed after {attempts} attempt(s). Check Operational health."),
+        params={"job_type": job.job_type, "attempts": job.attempts},
         link=inbox.link_to("administration:health"), dedupe_key=f"job.failed:{job.pk}")
 
 

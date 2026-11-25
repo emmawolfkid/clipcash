@@ -1,7 +1,8 @@
 {% extends "administration/layout.html" %}{% load i18n %}
 {% block title %}{% translate "Advertisers" %}{% endblock %}
 {% block console_content %}
-<h1 class="page-title">{% translate "Advertisers" %}</h1>
+<div class="page-heading"><h1 class="page-title">{% translate "Advertisers" %}</h1>
+{% if can.campaign_manage %}<a class="button" href="{% url 'administration:advertiser_create' %}">{% translate "Register a client" %}</a>{% endif %}</div>
 <form class="toolbar" method="get">
   <label class="visually-hidden" for="q">{% translate "Search" %}</label>
   <input id="q" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search name' %}">

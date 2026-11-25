@@ -96,6 +96,12 @@ class Notification(BaseModel):
     link = models.CharField(_("link"), max_length=200, blank=True)
     dedupe_key = models.CharField(_("event key"), max_length=160)
     read_at = models.DateTimeField(_("read at"), null=True, blank=True)
+    # UI-DASH-03: English source templates ("{name}" placeholders) and their plain values, so the
+    # inbox shows newer notices in the reader's language. Empty for older notices, which keep
+    # showing their stored text. ``title``/``message`` always hold the English text as sent.
+    title_template = models.CharField(_("title template"), max_length=200, blank=True, default="")
+    message_template = models.CharField(_("message template"), max_length=500, blank=True, default="")
+    params = models.JSONField(_("template values"), default=dict, blank=True)
 
     class Meta:
         verbose_name = _("notification")

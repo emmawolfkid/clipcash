@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 
 from django.db.models import Count, Q, Sum
 from django.urls import reverse
+from django.utils.translation import gettext as _
 
 from apps.core import features
 
@@ -86,9 +87,15 @@ def _sponsored(user):
 
     if not features.is_enabled("advertisers"):
         return {"enabled": False}
+    from django.utils import timezone
+
     rows = available_campaigns(user)  # Bulk pre-filter (no N+1); authoritative checks happen on start.
+    # UI-DASH-01: "today" starts at local midnight (TIME_ZONE); same verified outcome as the total.
+    today = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
+    verified = Q(outcome=WatchSession.Outcome.VERIFIED_EVIDENCE)
     counts = WatchSession.objects.filter(member=user).aggregate(
-        verified=Count("id", filter=Q(outcome=WatchSession.Outcome.VERIFIED_EVIDENCE)),
+        today=Count("id", filter=verified & Q(finalized_at__gte=today)),
+        verified=Count("id", filter=verified),
         review=Count("id", filter=Q(outcome=WatchSession.Outcome.SUSPICIOUS_REVIEW)),
         total=Count("id"))
     return {"enabled": True, "available": len(rows), "top": rows[:3], **counts}
@@ -160,47 +167,55 @@ def member_activity(user, limit=ACTIVITY_LIMIT):
     from apps.wallets.models import Wallet, WalletRestriction
     from apps.withdrawals.models import DemoWithdrawal
 
+    # UI-DASH-01: sentence frames are translated at request time (member_activity runs per
+    # request, in the member's language); names and references stay as recorded data.
     items = []
     for sub in Subscription.objects.filter(member=user).order_by("-updated_at")[:limit]:
         items.append(Activity(sub.updated_at, "membership",
-                              f"Membership {sub.plan_name}: {sub.get_status_display().lower()}",
+                              _("Membership %(plan)s: %(status)s")
+                              % {"plan": sub.plan_name, "status": sub.get_status_display().lower()},
                               reverse("memberships:subscription_detail", args=[sub.pk])
                               if features.is_enabled("memberships") else ""))
     sessions = (WatchSession.objects.select_related("campaign").filter(member=user, finalized_at__isnull=False)
                 .order_by("-finalized_at")[:limit])
     for session in sessions:
         items.append(Activity(session.finalized_at, "viewing",
-                              f"{session.campaign.name}: {session.get_outcome_display()}",
+                              _("%(campaign)s: %(outcome)s")
+                              % {"campaign": session.campaign.name, "outcome": session.get_outcome_display()},
                               reverse("viewing:session", args=[session.pk]) if features.is_enabled("advertisers")
                               else ""))
     rewards = (DemoReward.objects.select_related("campaign").filter(member=user)
                .order_by("-decided_at")[:limit])
     for reward in rewards:
         when = reward.reversed_at or reward.decided_at
-        text = f"{reward.campaign.name}: {reward.get_status_display()}"
+        text = _("%(campaign)s: %(status)s") % {"campaign": reward.campaign.name, "status": reward.get_status_display()}
         if reward.amount:
-            text += f" (TZS {reward.amount}, simulated)"
+            text += " " + _("(TZS %(amount)s, simulated)") % {"amount": reward.amount}
         items.append(Activity(when, "reward", text, reverse("rewards:history") if features.is_enabled("advertisers")
                               else "", simulated=True))
     for intent in PaymentIntent.objects.filter(payer=user).order_by("-updated_at")[:limit]:
         items.append(Activity(intent.updated_at, "payment",
-                              f"Sandbox payment {intent.reference}: {intent.get_status_display().lower()}",
+                              _("Sandbox payment %(reference)s: %(status)s")
+                              % {"reference": intent.reference, "status": intent.get_status_display().lower()},
                               reverse("payments:intent", args=[intent.pk]), simulated=True))
     wallet = Wallet.objects.filter(member=user).first()
     if wallet is not None:
-        items.append(Activity(wallet.created_at, "wallet", "Wallet opened", reverse("wallets:wallet")))
+        items.append(Activity(wallet.created_at, "wallet", _("Wallet opened"), reverse("wallets:wallet")))
         for restriction in WalletRestriction.objects.filter(wallet=wallet).order_by("-updated_at")[:limit]:
             # Reasons and reviewer identities are staff-only; members see the state.
-            state = "lifted" if restriction.status == WalletRestriction.Status.LIFTED else "placed under review"
-            items.append(Activity(restriction.updated_at, "wallet", f"Wallet {state}", reverse("wallets:wallet")))
+            text = (_("Wallet lifted") if restriction.status == WalletRestriction.Status.LIFTED
+                    else _("Wallet placed under review"))
+            items.append(Activity(restriction.updated_at, "wallet", text, reverse("wallets:wallet")))
     for demo in DemoWithdrawal.objects.filter(member=user).order_by("-updated_at")[:limit]:
-        items.append(Activity(demo.updated_at, "withdrawal", f"{demo.reference}: {demo.get_status_display()}",
+        items.append(Activity(demo.updated_at, "withdrawal",
+                              _("%(reference)s: %(status)s")
+                              % {"reference": demo.reference, "status": demo.get_status_display()},
                               reverse("withdrawals:demo", args=[demo.pk]), simulated=True))
     # PRD-03B: every sign-up method gets the same entry (email, mobile number or username).
     if user.email_verified:
-        items.append(Activity(user.date_joined, "account", "Account created and email confirmed"))
+        items.append(Activity(user.date_joined, "account", _("Account created and email confirmed")))
     else:
-        items.append(Activity(user.date_joined, "account", "Account created"))
+        items.append(Activity(user.date_joined, "account", _("Account created")))
     items = [item for item in items if item.when]
     items.sort(key=lambda item: item.when, reverse=True)
     return items[:limit]

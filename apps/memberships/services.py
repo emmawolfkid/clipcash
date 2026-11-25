@@ -35,6 +35,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, connection, transaction
 from django.db.models import Max
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop as N_
 
 from apps.audit.services import DENIED, FAILURE, record_business_event, record_security_event
 from apps.core import features
@@ -160,14 +162,15 @@ def _clean_plan_values(values):
     if "price_amount" in values:
         price = values["price_amount"]
         if isinstance(price, bool) or not isinstance(price, int) or price <= 0:
-            raise ValidationError({"price_amount": "Enter a price of at least TZS 1 in whole shillings."})
+            raise ValidationError({"price_amount": _("Enter a price of at least TZS 1 in whole shillings.")})
         if price > settings.MEMBERSHIPS_MAX_PLAN_PRICE:
-            raise ValidationError({"price_amount": f"The price cannot exceed TZS "
-                                                   f"{settings.MEMBERSHIPS_MAX_PLAN_PRICE:,}."})
+            raise ValidationError({"price_amount": _("The price cannot exceed TZS %(amount)s.")
+                                                   % {"amount": f"{settings.MEMBERSHIPS_MAX_PLAN_PRICE:,}"}})
     if "duration_days" in values:
         days = values["duration_days"]
         if isinstance(days, bool) or not isinstance(days, int) or not 1 <= days <= MAX_DURATION_DAYS:
-            raise ValidationError({"duration_days": f"Enter a duration between 1 and {MAX_DURATION_DAYS} days."})
+            raise ValidationError({"duration_days": _("Enter a duration between 1 and %(days)s days.")
+                                                    % {"days": MAX_DURATION_DAYS}})
     for key in ("name", "description"):
         if key in values:
             values[key] = (values[key] or "").strip()
@@ -188,7 +191,7 @@ def _snapshot_version(plan, actor):
 
 def create_plan(actor, *, code, **values):
     if not is_super_admin(actor):
-        error = NotAuthorized("Only Super Administrators manage membership plans.")
+        error = NotAuthorized(_("Only Super Administrators manage membership plans."))
         _deny("plan.create", error, actor)
         raise error
     unknown = set(values) - set(PLAN_EDITABLE)
@@ -212,7 +215,7 @@ def update_plan(actor, plan, changes, *, expected_version=None):
     snapshots. ``expected_version`` (the version the editor saw) refuses an edit of
     terms that another administrator changed in the meantime."""
     if not is_super_admin(actor):
-        error = NotAuthorized("Only Super Administrators manage membership plans.")
+        error = NotAuthorized(_("Only Super Administrators manage membership plans."))
         _deny("plan.update", error, actor, plan)
         raise error
     unknown = set(changes) - set(PLAN_EDITABLE)
@@ -249,11 +252,11 @@ def update_plan(actor, plan, changes, *, expected_version=None):
 
 def set_plan_status(actor, plan, status):
     if not is_super_admin(actor):
-        error = NotAuthorized("Only Super Administrators manage membership plans.")
+        error = NotAuthorized(_("Only Super Administrators manage membership plans."))
         _deny("plan.status", error, actor, plan)
         raise error
     if status not in MembershipPlan.Status.values:
-        raise ValidationError("Unknown plan status.")
+        raise ValidationError(_("Unknown plan status."))
     with transaction.atomic():
         plan = MembershipPlan.objects.select_for_update().get(pk=plan.pk)
         if plan.status == status:
@@ -298,21 +301,22 @@ def _prepare_pending(member, plan, now, *, enforce_window):
     """Inside a transaction with the member locked."""
     current, queued = _current_and_queued(member, now)
     if current is not None and current.status == S.SUSPENDED:
-        raise NotEligible("Your membership is suspended.", code="membership_suspended")
+        raise NotEligible(_("Your membership is suspended."), code="membership_suspended")
     if queued is not None:
         raise RenewalNotAllowed("A renewal is already scheduled.", code="already_renewed")
     if current is not None and enforce_window:
         window = timedelta(days=settings.MEMBERSHIPS_RENEWAL_WINDOW_DAYS)
         if current.expires_at - now > window:
             raise RenewalNotAllowed(
-                f"Renewal opens {settings.MEMBERSHIPS_RENEWAL_WINDOW_DAYS} days before your membership ends.",
+                _("Renewal opens %(days)s days before your membership ends.")
+                % {"days": settings.MEMBERSHIPS_RENEWAL_WINDOW_DAYS},
                 code="too_early")
     existing = Subscription.objects.select_for_update().filter(member=member, status=S.PENDING).first()
     if existing is not None:
         if existing.plan_version_id == plan.versions.get(version=plan.version).pk and existing.pending_until > now:
             return existing, False
         if has_open_manual_payment(existing):
-            raise NotEligible("A payment for your current choice is being verified.", code="payment_under_review")
+            raise NotEligible(_("A payment for your current choice is being verified."), code="payment_under_review")
         _transition(existing, S.CANCELLED, actor=None, now=now, reason=R.REPLACED, audit_actor=member)
     return _new_pending(member, plan, now, renewal_of=current), True
 
@@ -324,7 +328,7 @@ def choose_plan(member, plan):
             raise PlanUnavailable("Memberships are not available.", code="feature_disabled")
         eligible, reason = new_payment_eligibility(member)  # PRD-01: a verified contact first.
         if not eligible:
-            raise NotEligible("Your account cannot take a membership yet.", code=reason)
+            raise NotEligible(_("Your account cannot take a membership yet."), code=reason)
         now = timezone.now()
         with transaction.atomic():
             member = _lock_member(member)
@@ -408,42 +412,50 @@ def _notify_member(subscription, old, new, reason):
     are not notified; reasons for suspension or cancellation are never stated."""
     from apps.notifications import inbox
 
-    plan = subscription.plan_name
+    # UI-DASH-03: English source templates (gettext_noop) and plain values; the inbox shows them in
+    # the reader's language. The stored and emailed text is the English rendering, as before.
+    # Dates are passed as datetimes so each reader sees the month in their own language.
+    params = {"plan": subscription.plan_name, "end": subscription.expires_at or ""}
     notice = None
     if new == S.ACTIVE and old == S.SUSPENDED:
-        notice = ("reinstated", f"Your {plan} membership was reinstated",
-                  f"Access is restored until {inbox.when(subscription.expires_at)}.", False)
+        notice = ("reinstated", N_("Your {plan} membership was reinstated"),
+                  N_("Access is restored until {end}."), False)
     elif new == S.ACTIVE and subscription.activation_source == Subscription.Source.COMPLIMENTARY:
         # PAY-LIVE-01E: a production grant is complimentary access, not a demonstration.
-        access = "demonstration access" if settings.RESTRICTED_DEMO_MODE else "complimentary access"
-        notice = ("complimentary", f"Complimentary {plan} membership granted",
-                  f"You have {access} until {inbox.when(subscription.expires_at)}. "
-                  "No payment was taken and nothing renews automatically.", True)
+        message = (N_("You have demonstration access until {end}. No payment was taken and nothing renews "
+                      "automatically.") if settings.RESTRICTED_DEMO_MODE else
+                   N_("You have complimentary access until {end}. No payment was taken and nothing renews "
+                      "automatically."))
+        notice = ("complimentary", N_("Complimentary {plan} membership granted"), message, True)
     elif new == S.ACTIVE and subscription.activation_source == Subscription.Source.EXTENSION:
-        notice = ("extended", f"Your {plan} membership was extended",
-                  f"Access now continues until {inbox.when(subscription.expires_at)}. No payment was taken "
-                  "and nothing renews automatically.", True)
+        notice = ("extended", N_("Your {plan} membership was extended"),
+                  N_("Access now continues until {end}. No payment was taken and nothing renews automatically."),
+                  True)
     elif new == S.ACTIVE:
-        starts = "" if subscription.starts_at <= timezone.now() else f" from {inbox.when(subscription.starts_at)}"
-        notice = ("activated", f"Your {plan} membership is active",
-                  f"Access runs{starts} until {inbox.when(subscription.expires_at)}.", True)
+        if subscription.starts_at <= timezone.now():
+            message = N_("Access runs until {end}.")
+        else:
+            message = N_("Access runs from {start} until {end}.")
+            params["start"] = subscription.starts_at
+        notice = ("activated", N_("Your {plan} membership is active"), message, True)
     elif new == S.SUSPENDED:
-        notice = ("suspended", f"Your {plan} membership was suspended",
-                  "Access is paused. Contact ClipCash if you think this is a mistake.", True)
+        notice = ("suspended", N_("Your {plan} membership was suspended"),
+                  N_("Access is paused. Contact ClipCash if you think this is a mistake."), True)
     elif new == S.EXPIRED:
-        notice = ("expired", f"Your {plan} membership has ended",
-                  "Membership content is no longer available. Nothing renews automatically.", True)
+        notice = ("expired", N_("Your {plan} membership has ended"),
+                  N_("Membership content is no longer available. Nothing renews automatically."), True)
     elif new == S.CANCELLED and old == S.PENDING and reason == R.UNPAID_TIMEOUT:
-        notice = ("choice_expired", f"Your {plan} membership choice expired",
-                  "It was not activated in time. You can choose a plan again at any time.", False)
+        notice = ("choice_expired", N_("Your {plan} membership choice expired"),
+                  N_("It was not activated in time. You can choose a plan again at any time."), False)
     elif new == S.CANCELLED and old in (S.ACTIVE, S.SUSPENDED):
-        notice = ("cancelled", f"Your {plan} membership was cancelled",
-                  "Access has ended. Contact ClipCash if you have questions.", True)
+        notice = ("cancelled", N_("Your {plan} membership was cancelled"),
+                  N_("Access has ended. Contact ClipCash if you have questions."), True)
     if notice is None:
         return
     event, title, message, email = notice
     inbox.notify(subscription.member, f"membership.{event}", category=inbox.Category.MEMBERSHIP, title=title,
-                 message=message, link=inbox.link_to("memberships:subscription_detail", subscription.pk),
+                 message=message, params=params,
+                 link=inbox.link_to("memberships:subscription_detail", subscription.pk),
                  dedupe_key=f"membership.{event}:{subscription.pk}:{old}", email=email)
 
 
@@ -469,9 +481,10 @@ def send_expiry_reminders(now=None, limit=500):
             continue
         sent += inbox.notify(
             subscription.member, "membership.expiring", category=inbox.Category.MEMBERSHIP,
-            title=f"Your {subscription.plan_name} membership ends soon",
-            message=f"Access ends on {inbox.when(subscription.expires_at)}. Nothing renews automatically; "
-                    "you can choose a plan when you are ready.",
+            title=N_("Your {plan} membership ends soon"),
+            message=N_("Access ends on {end}. Nothing renews automatically; you can choose a plan when you are "
+                       "ready."),
+            params={"plan": subscription.plan_name, "end": subscription.expires_at},
             link=inbox.link_to("memberships:mine"), dedupe_key=f"membership.expiring:{subscription.pk}", email=True)
     return sent
 
@@ -491,7 +504,7 @@ def _activate(subscription, *, source, payment_reference, amount_paid, actor, no
         raise PlanUnavailable("The plan is no longer available.")
     eligible, reason = member_eligibility(subscription.member)
     if not eligible:
-        raise NotEligible("The member's account is not eligible.", code=reason)
+        raise NotEligible(_("The member's account is not eligible."), code=reason)
     latest_end = (Subscription.objects.filter(member=subscription.member, status__in=[S.ACTIVE, S.SUSPENDED],
                                               expires_at__gt=now)
                   .aggregate(end=Max("expires_at"))["end"])
@@ -543,16 +556,16 @@ def register_payment_verifier(name, verify):
 def activate_with_verified_payment(subscription_id, payment):
     try:
         if not _feature_enabled("live_payments"):
-            raise PaymentVerificationError("Live payments are not enabled.", code="payments_disabled")
+            raise PaymentVerificationError(_("Live payments are not enabled."), code="payments_disabled")
         if not isinstance(payment, VerifiedPayment):
-            raise PaymentVerificationError("A VerifiedPayment is required.")
+            raise PaymentVerificationError(_("A VerifiedPayment is required."))
         verify = PAYMENT_VERIFIERS.get(payment.verifier)
         if verify is None:
-            raise PaymentVerificationError("Unknown payment verifier.", code="unknown_verifier")
+            raise PaymentVerificationError(_("Unknown payment verifier."), code="unknown_verifier")
         if not payment.reference or len(payment.reference) > 100:
-            raise PaymentVerificationError("A payment reference is required.")
+            raise PaymentVerificationError(_("A payment reference is required."))
         if verify(payment) is not True:
-            raise PaymentVerificationError("The payment could not be verified.")
+            raise PaymentVerificationError(_("The payment could not be verified."))
         now = timezone.now()
         with transaction.atomic():
             subscription = Subscription.objects.select_related("plan").get(pk=subscription_id)
@@ -560,16 +573,16 @@ def activate_with_verified_payment(subscription_id, payment):
             subscription = Subscription.objects.select_for_update().select_related("plan", "member").get(
                 pk=subscription_id)
             if payment.currency != subscription.currency or payment.amount != subscription.price_amount:
-                raise PaymentVerificationError("The payment amount does not match the quoted price.",
+                raise PaymentVerificationError(_("The payment amount does not match the quoted price."),
                                                code="amount_mismatch")
             if Subscription.objects.filter(payment_reference=payment.reference).exists():
-                raise PaymentVerificationError("This payment reference was already used.",
+                raise PaymentVerificationError(_("This payment reference was already used."),
                                                code="duplicate_reference")
             return _activate(subscription, source=Subscription.Source.PAYMENT,
                              payment_reference=payment.reference, amount_paid=payment.amount,
                              actor=None, now=now)
     except IntegrityError as error:
-        rejection = PaymentVerificationError("The activation conflicted with an existing record.",
+        rejection = PaymentVerificationError(_("The activation conflicted with an existing record."),
                                              code="conflict")
         _record_activation_rejection(subscription_id, rejection)
         raise rejection from error
@@ -591,14 +604,14 @@ def activate_with_manual_payment(subscription, *, reference_key, amount, actor, 
     Requires the manual_membership_payments feature. The activation's payment reference
     is unique in the database, so one provider receipt can activate one membership."""
     if not _feature_enabled("manual_membership_payments"):
-        raise PaymentVerificationError("Manual membership payments are not enabled.", code="payments_disabled")
+        raise PaymentVerificationError(_("Manual membership payments are not enabled."), code="payments_disabled")
     if amount != subscription.price_amount or subscription.currency != "TZS":
-        raise PaymentVerificationError("The payment amount does not match the quoted price.", code="amount_mismatch")
+        raise PaymentVerificationError(_("The payment amount does not match the quoted price."), code="amount_mismatch")
     from apps.payments.manual import activation_reference
 
     payment_reference = activation_reference(method, reference_key)
     if Subscription.objects.filter(payment_reference=payment_reference).exists():
-        raise PaymentVerificationError("This payment reference was already used.", code="duplicate_reference")
+        raise PaymentVerificationError(_("This payment reference was already used."), code="duplicate_reference")
     return _activate(subscription, source=Subscription.Source.PAYMENT, payment_reference=payment_reference,
                      amount_paid=amount, actor=actor, now=now,
                      honour_quote=submitted_at < subscription.pending_until)
@@ -650,29 +663,29 @@ def can_grant_complimentary(user):
 def _grant_reason(reason):
     reason = " ".join(str(reason or "").split())
     if len(reason) < GRANT_REASON_MIN:
-        raise ValidationError({"reason": f"Give a reason of at least {GRANT_REASON_MIN} characters."})
+        raise ValidationError({"reason": _("Give a reason of at least %(n)s characters.") % {"n": GRANT_REASON_MIN}})
     if len(reason) > GRANT_REASON_MAX:
-        raise ValidationError({"reason": f"Keep the reason to {GRANT_REASON_MAX} characters or fewer."})
+        raise ValidationError({"reason": _("Keep the reason to %(n)s characters or fewer.") % {"n": GRANT_REASON_MAX}})
     return reason
 
 
 def _aware_expiry(expires_at):
     if not isinstance(expires_at, datetime) or timezone.is_naive(expires_at):
-        raise ValidationError({"expires_at": "Enter a complete date and time."})
+        raise ValidationError({"expires_at": _("Enter a complete date and time.")})
     return expires_at
 
 
 def _grant_expiry(expires_at, plan, now, mode=GRANT_MODE_DEMO):
     if expires_at <= now:
-        raise ValidationError({"expires_at": "The expiry must be in the future."})
+        raise ValidationError({"expires_at": _("The expiry must be in the future.")})
     if mode == GRANT_MODE_PRODUCTION:
         if expires_at > now + timedelta(days=PRODUCTION_GRANT_MAX_DAYS):
-            raise ValidationError({"expires_at": f"A complimentary membership can last at most "
-                                                 f"{PRODUCTION_GRANT_MAX_DAYS} days from now."})
+            raise ValidationError({"expires_at": _("A complimentary membership can last at most %(days)s days from "
+                                                   "now.") % {"days": PRODUCTION_GRANT_MAX_DAYS}})
         return expires_at
     if expires_at > now + timedelta(days=plan.duration_days):
-        raise ValidationError({"expires_at": f"The expiry cannot be later than the plan's own length "
-                                             f"({plan.duration_days} days from now)."})
+        raise ValidationError({"expires_at": _("The expiry cannot be later than the plan's own length (%(days)s "
+                                               "days from now).") % {"days": plan.duration_days}})
     return expires_at
 
 
@@ -741,20 +754,20 @@ def grant_complimentary(actor, member, plan, *, expires_at, reason, operation_id
     try:
         mode = complimentary_grant_mode()
         if mode is None:
-            raise NotAuthorized("Complimentary grants are disabled.", code="grants_disabled")
+            raise NotAuthorized(_("Complimentary grants are disabled."), code="grants_disabled")
         if not is_super_admin(actor):
-            raise NotAuthorized("Only Super Administrators can grant complimentary memberships.")
+            raise NotAuthorized(_("Only Super Administrators can grant complimentary memberships."))
         if member is not None and member.pk == getattr(actor, "pk", None):
-            raise NotAuthorized("You cannot grant a membership to yourself.", code="own_membership")
+            raise NotAuthorized(_("You cannot grant a membership to yourself."), code="own_membership")
         if not _feature_enabled("memberships"):
             raise PlanUnavailable("Memberships are not available.", code="feature_disabled")
         if member is None or plan is None:
-            raise ValidationError("Choose a member and a plan.")
+            raise ValidationError(_("Choose a member and a plan."))
         reason = _grant_reason(reason)
         expires_at = _aware_expiry(expires_at)
         operation_id = str(operation_id or "")
         if operation_id and not GRANT_OPERATION_RE.match(operation_id):
-            raise ValidationError("Invalid operation id. Reload the page and try again.")
+            raise ValidationError(_("Invalid operation id. Reload the page and try again."))
         key = GRANT_IDEMPOTENCY_PREFIX + operation_id if operation_id else None
         User = get_user_model()
         with transaction.atomic():
@@ -769,17 +782,17 @@ def grant_complimentary(actor, member, plan, *, expires_at, reason, operation_id
                 if replayed is not None:
                     return replayed
             if member.role != User.Role.MEMBER:
-                raise NotEligible("Complimentary memberships are for member accounts only.", code="not_a_member")
+                raise NotEligible(_("Complimentary memberships are for member accounts only."), code="not_a_member")
             eligible, why = member_eligibility(member)  # No demo waiver: activation needs a verified email.
             if not eligible:
-                raise NotEligible("The member's account is not eligible.", code=why)
+                raise NotEligible(_("The member's account is not eligible."), code=why)
             if plan.status != MembershipPlan.Status.ACTIVE:
                 raise PlanUnavailable("The plan is not active.")
             expires_at = _grant_expiry(expires_at, plan, now, mode)
             current, queued = _current_and_queued(member, now)
             if current is not None or queued is not None:
-                raise NotEligible("This member already has a current or scheduled membership. It is left "
-                                  "unchanged.", code="membership_exists")
+                raise NotEligible(_("This member already has a current or scheduled membership. It is left "
+                                  "unchanged."), code="membership_exists")
             pending = Subscription.objects.select_for_update().filter(member=member, status=S.PENDING).first()
             if pending is not None and pending.pending_until <= now:
                 # Already due for cancellation by process_expiry; apply the same outcome now.
@@ -838,7 +851,7 @@ def cancel_pending(member, subscription):
     """A member withdraws their own unpaid choice."""
     try:
         if subscription.member_id != getattr(member, "pk", None):
-            raise NotAuthorized("You can only cancel your own membership choice.")
+            raise NotAuthorized(_("You can only cancel your own membership choice."))
         with transaction.atomic():
             subscription = _locked(subscription)
             if subscription.status != S.PENDING:
@@ -866,11 +879,11 @@ def _admin_note(note):
 def _admin_change(actor, subscription, new_status, reason, action, note=""):
     try:
         if not can_manage_subscriptions(actor):
-            raise NotAuthorized("You are not allowed to manage subscriptions.")
+            raise NotAuthorized(_("You are not allowed to manage subscriptions."))
         if subscription.member_id == getattr(actor, "pk", None):
-            raise NotAuthorized("You cannot change your own membership.", code="own_membership")
+            raise NotAuthorized(_("You cannot change your own membership."), code="own_membership")
         if new_status != S.ACTIVE and reason not in ADMIN_REASONS:
-            raise ValidationError("A valid reason is required.")
+            raise ValidationError(_("A valid reason is required."))
         note = _admin_note(note)
         metadata = {"note": note} if note else None
         now = timezone.now()
@@ -886,7 +899,7 @@ def _admin_change(actor, subscription, new_status, reason, action, note=""):
                     return _transition(subscription, S.EXPIRED, actor=actor, now=now, metadata=metadata)
                 eligible, why = member_eligibility(subscription.member)
                 if not eligible:  # PAY-LIVE-01D: never restore access to an ineligible account.
-                    raise NotEligible("The member's account is not eligible, so access cannot be restored.",
+                    raise NotEligible(_("The member's account is not eligible, so access cannot be restored."),
                                       code=why)
             was_live = subscription.status in (S.ACTIVE, S.SUSPENDED)
             result = _transition(subscription, new_status, actor=actor, now=now, reason=reason, metadata=metadata)
@@ -982,7 +995,8 @@ def _extension_days(days):
     except (TypeError, ValueError):
         days = 0
     if not EXTENSION_MIN_DAYS <= days <= EXTENSION_MAX_DAYS:
-        raise ValidationError({"days": f"Choose between {EXTENSION_MIN_DAYS} and {EXTENSION_MAX_DAYS} days."})
+        raise ValidationError({"days": _("Choose between %(min)s and %(max)s days.")
+                                       % {"min": EXTENSION_MIN_DAYS, "max": EXTENSION_MAX_DAYS}})
     return days
 
 
@@ -1018,16 +1032,16 @@ def extend(actor, subscription, *, days, reason, operation_id, expected_end):
     extension instead of adding another. Returns (extension subscription, created)."""
     try:
         if not can_extend_memberships(actor):
-            raise NotAuthorized("Only Super Administrators can extend memberships.")
+            raise NotAuthorized(_("Only Super Administrators can extend memberships."))
         if subscription.member_id == getattr(actor, "pk", None):
-            raise NotAuthorized("You cannot change your own membership.", code="own_membership")
+            raise NotAuthorized(_("You cannot change your own membership."), code="own_membership")
         if not _feature_enabled("memberships"):
             raise PlanUnavailable("Memberships are not available.", code="feature_disabled")
         days = _extension_days(days)
         reason = _grant_reason(reason)
         operation_id = str(operation_id or "")
         if not GRANT_OPERATION_RE.match(operation_id):
-            raise ValidationError({"operation": "The form expired. Reload the page and try again."})
+            raise ValidationError({"operation": _("The form expired. Reload the page and try again.")})
         key = EXTENSION_IDEMPOTENCY_PREFIX + operation_id
         with transaction.atomic():
             _lock_operation(key, EXTENSION_LOCK_NAMESPACE)  # Before the member lock: one order.
@@ -1042,7 +1056,7 @@ def extend(actor, subscription, *, days, reason, operation_id, expected_end):
                                         code="not_in_force")
             eligible, why = member_eligibility(member)
             if not eligible:
-                raise NotEligible("The member's account is not eligible.", code=why)
+                raise NotEligible(_("The member's account is not eligible."), code=why)
             periods = live_periods(member, now)
             if any(p.status == S.SUSPENDED for p in periods):
                 raise InvalidTransition("This member has a suspended period. Resolve it before extending.",

@@ -1,6 +1,7 @@
 {% load i18n %}{% if activity %}
-<ol class="activity">{% for item in activity %}<li class="activity__item">
-<span class="activity__kind" aria-hidden="true">{% if item.kind == 'viewing' %}{% include "components/nav_icon.html" with icon="videos" %}{% elif item.kind == 'reward' %}{% include "components/nav_icon.html" with icon="rewards" %}{% elif item.kind == 'membership' %}{% include "components/nav_icon.html" with icon="membership" %}{% else %}{% include "components/nav_icon.html" with icon="activity" %}{% endif %}</span>
-<span class="activity__text"><span class="visually-hidden">{{ item.kind|capfirst }}: </span>{% if item.url %}<a href="{{ item.url }}">{{ item.text }}</a>{% else %}{{ item.text }}{% endif %}{% if item.simulated %} <span class="badge badge--sandbox">{% translate "Simulated" %}</span>{% endif %}</span>
-<time class="activity__time" datetime="{{ item.when|date:'c' }}">{{ item.when|date:"SHORT_DATETIME_FORMAT" }}</time>
+<ol class="activity dashboard-feed">{% for item in activity %}<li class="activity__item dashboard-feed__item">
+<span class="activity__kind dashboard-feed__icon dashboard-feed__icon--{{ item.kind }}" aria-hidden="true">{% if item.kind == 'viewing' %}{% include "components/nav_icon.html" with icon="play-solid" %}{% elif item.kind == 'reward' %}{% include "components/nav_icon.html" with icon="coins" %}{% elif item.kind == 'membership' %}{% include "components/nav_icon.html" with icon="membership" %}{% elif item.kind == 'wallet' or item.kind == 'withdrawal' or item.kind == 'payment' %}{% include "components/nav_icon.html" with icon="wallet" %}{% else %}{% include "components/nav_icon.html" with icon="activity" %}{% endif %}</span>
+<span class="dashboard-feed__body"><span class="activity__text"><span class="visually-hidden">{% include "members/_activity_kind.html" with kind=item.kind %}: </span>{% if item.url %}<a href="{{ item.url }}">{{ item.text }}</a>{% else %}{{ item.text }}{% endif %}</span>
+<time class="activity__time" datetime="{{ item.when|date:'c' }}">{{ item.when|date:"SHORT_DATETIME_FORMAT" }}</time></span>
+{% if item.simulated %}<span class="badge badge--sandbox">{% translate "Simulated" %}</span>{% endif %}
 </li>{% endfor %}</ol>{% else %}<p class="empty-state">{% translate "No activity yet." %}</p>{% endif %}

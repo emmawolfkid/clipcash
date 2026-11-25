@@ -85,8 +85,10 @@ def console_links(user):
         "categories": videos.can_manage_categories(user),
         "settings": can_change_site_configuration(user),
         "audit": can_view_audit(user),
-        "advertisers": advertising.can_review_advertisers(user),
-        "campaigns": advertising.can_review_campaigns(user),
+        "advertisers": advertising.can_review_advertisers(user) or advertising.can_manage_campaigns(user),
+        "campaigns": advertising.can_review_campaigns(user) or advertising.can_manage_campaigns(user),
+        # UI-DASH-03: create and manage campaigns on behalf of advertisers (separate from reviewing).
+        "campaign_manage": advertising.can_manage_campaigns(user),
         "viewing": viewing.can_review_viewing(user),
         "rewards": rewards.can_use_rewards_console(user),
         "payments": payments.can_view_payments(user) and payments_sandbox_active(),
@@ -496,7 +498,7 @@ def _error_text(error):
 @console
 class AdvertiserQueueView(View):
     def get(self, request):
-        if not advertising.can_review_advertisers(request.user):
+        if not (advertising.can_review_advertisers(request.user) or advertising.can_manage_campaigns(request.user)):
             raise PermissionDenied
         status = request.GET.get("status", Organization.Verification.PENDING)
         qs = Organization.objects.annotate(campaign_count=Count("campaigns")).order_by("submitted_at", "display_name")
@@ -551,10 +553,17 @@ class AdvertiserReviewView(View):
             elif action == "revoke":
                 advertising.revoke_video_grant(request.user, organization, request.POST.get("grant"))
                 messages.success(request, _("Video authorization revoked."))
+            elif action == "invite":  # UI-DASH-03: invite the client's people (staff managing campaigns).
+                advertising.invite_member(request.user, organization, request.POST.get("email", ""),
+                                          request.POST.get("role", "OWNER"))
+                messages.success(request, _("Invitation created. The person sees it after signing in with that "
+                                            "email address."))
             else:
                 raise PermissionDenied
-        except advertising.NotAuthorized:
-            raise PermissionDenied from None
+        except advertising.NotAuthorized as error:
+            if error.code != "self_approval":
+                raise PermissionDenied from None
+            messages.error(request, _("A different reviewer must verify a client organization you registered."))
         except (ValidationError, advertising.AdvertisingError) as error:
             messages.error(request, _error_text(error))
         return redirect("administration:advertiser_review", pk=pk)
@@ -563,7 +572,7 @@ class AdvertiserReviewView(View):
 @console
 class CampaignQueueView(View):
     def get(self, request):
-        if not advertising.can_review_campaigns(request.user):
+        if not (advertising.can_review_campaigns(request.user) or advertising.can_manage_campaigns(request.user)):
             raise PermissionDenied
         status = request.GET.get("status", Campaign.Status.SUBMITTED)
         qs = Campaign.objects.select_related("organization", "video").order_by("submitted_at", "-created_at")
@@ -577,19 +586,29 @@ class CampaignQueueView(View):
         params.pop("page", None)
         return render(request, "administration/campaigns/list.html", {
             "page": page, "status": status, "query": query, "statuses": Campaign.Status.choices,
-            "page_query": params.urlencode(), "can": console_links(request.user), "nav": "campaigns"})
+            "page_query": params.urlencode(), "can": console_links(request.user), "nav": "campaigns",
+            "tabs": CAMPAIGN_TABS, "can_report": report_services.can_view(request.user, "advertising")})
 
 
+# UI-DASH-03: one-click lists in the campaign queue (the status filter keeps every other status).
+CAMPAIGN_TABS = [(Campaign.Status.SUBMITTED, _("Awaiting review")), (Campaign.Status.ACTIVE, _("Active")),
+                 (Campaign.Status.SCHEDULED, _("Scheduled")), (Campaign.Status.PAUSED, _("Paused")),
+                 (Campaign.Status.DRAFT, _("Drafts")), (Campaign.Status.COMPLETED, _("Completed")), ("all", _("All"))]
 STAFF_CAMPAIGN_ACTIONS = {"approve", "reject", "pause", "resume", "cancel", "archive"}
+# Staff acting for the organization (advertising.manage_campaigns); the services re-check.
+STAFF_EDITOR_ACTIONS = {"submit": advertising.submit_campaign, "withdraw": advertising.withdraw_campaign,
+                        "reopen": advertising.reopen_campaign}
 
 
 @console
 class CampaignReviewView(View):
     def get(self, request, pk):
-        if not advertising.can_review_campaigns(request.user):
+        can_review = advertising.can_review_campaigns(request.user)
+        can_manage = advertising.can_manage_campaigns(request.user)
+        if not (can_review or can_manage):
             raise PermissionDenied
-        campaign = get_object_or_404(Campaign.objects.select_related("organization", "video", "video__category"),
-                                     pk=pk)
+        campaign = get_object_or_404(Campaign.objects.select_related("organization", "video", "video__category",
+                                                                     "created_by"), pk=pk)
         preview_reason, preview = advertising.preview_playback(request.user, campaign)
         eligibility = advertising.campaign_eligibility(campaign)
         return render(request, "administration/campaigns/detail.html", {
@@ -599,11 +618,24 @@ class CampaignReviewView(View):
             "video_available": advertising.video_available(campaign.video),
             "preview": preview, "preview_reason": preview_reason,
             "performance": advertising.campaign_report(campaign, for_advertiser=False),
+            "can_review": can_review, "can_manage": can_manage,
+            "created_by_staff": bool(campaign.created_by and campaign.created_by.is_staff),
+            # Four eyes: the staff member who created a campaign cannot approve it.
+            "can_approve": can_review and campaign.created_by_id != request.user.pk,
             "can": console_links(request.user), "nav": "campaigns"})
 
     def post(self, request, pk):
         campaign = get_object_or_404(Campaign, pk=pk)
         action = request.POST.get("action", "")
+        if action in STAFF_EDITOR_ACTIONS:
+            try:
+                STAFF_EDITOR_ACTIONS[action](request.user, campaign)
+                messages.success(request, _("Campaign updated."))
+            except advertising.NotAuthorized:
+                raise PermissionDenied from None
+            except (ValidationError, advertising.AdvertisingError) as error:
+                messages.error(request, _error_text(error))
+            return redirect("administration:campaign_review", pk=pk)
         if action not in STAFF_CAMPAIGN_ACTIONS:
             raise PermissionDenied
         try:
@@ -628,11 +660,122 @@ class CampaignReviewView(View):
             else:
                 advertising.archive_campaign(request.user, campaign)
             messages.success(request, _("Campaign updated."))
-        except advertising.NotAuthorized:
-            raise PermissionDenied from None
+        except advertising.NotAuthorized as error:
+            if error.code != "self_approval":
+                raise PermissionDenied from None
+            messages.error(request, _("A different reviewer must approve a campaign you created."))
         except (ValidationError, advertising.AdvertisingError) as error:
             messages.error(request, _error_text(error))
         return redirect("administration:campaign_review", pk=pk)
+
+
+@console
+class StaffCampaignFormView(View):
+    """UI-DASH-03: create (or edit a draft of) a campaign on behalf of an advertiser organization.
+    The staff member is the recorded actor; organization ownership is unchanged."""
+
+    template_name = "administration/campaigns/form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not advertising.can_manage_campaigns(request.user):
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def campaign(self, pk):
+        return get_object_or_404(Campaign.objects.select_related("organization"), pk=pk) if pk else None
+
+    def render_form(self, request, form, campaign):
+        return render(request, self.template_name, {
+            "form": form, "campaign": campaign, "can": console_links(request.user),
+            "nav": "campaign_new" if campaign is None else "campaigns"})
+
+    def get(self, request, pk=None):
+        from apps.advertising.forms import StaffCampaignForm
+
+        campaign = self.campaign(pk)
+        if campaign is not None and not campaign.is_editable:
+            messages.error(request, _("Only draft campaigns can be edited. Reopen it as a draft first."))
+            return redirect("administration:campaign_review", pk=pk)
+        organization = None
+        if campaign is None and request.GET.get("organization"):
+            try:
+                organization = Organization.objects.filter(pk=uuid.UUID(request.GET["organization"])).first()
+            except ValueError:
+                organization = None
+        form = (StaffCampaignForm(organization=organization) if campaign is None else
+                StaffCampaignForm(instance=campaign, organization=campaign.organization,
+                                  initial={"target_plans": campaign.target_plans.all()}))
+        return self.render_form(request, form, campaign)
+
+    def post(self, request, pk=None):
+        from django.db import transaction
+
+        from apps.advertising.forms import StaffCampaignForm
+
+        campaign = self.campaign(pk)
+        form = StaffCampaignForm(request.POST, instance=campaign,
+                                 organization=campaign.organization if campaign else None)
+        if form.is_valid():
+            organization = campaign.organization if campaign else form.cleaned_data["organization"]
+            values, plans = form.values()
+            try:
+                with transaction.atomic():
+                    if not advertising.video_authorized(organization, values["video"]):
+                        advertising.grant_video(request.user, organization, values["video"])
+                    if campaign is None:
+                        campaign = advertising.create_campaign(request.user, organization, target_plans=plans,
+                                                               **values)
+                        messages.success(request, _("Campaign saved as a draft for %(name)s.")
+                                         % {"name": organization.display_name})
+                    else:
+                        try:
+                            expected = int(request.POST.get("revision", ""))
+                        except ValueError:
+                            expected = -1
+                        advertising.update_campaign(request.user, campaign, values, expected_revision=expected,
+                                                    target_plans=plans)
+                        messages.success(request, _("Campaign saved."))
+                return redirect("administration:campaign_review", pk=campaign.pk)
+            except advertising.NotAuthorized:
+                form.add_error("video", _("You are not allowed to authorize this video for the advertiser. "
+                                          "Ask a colleague who manages advertiser videos."))
+            except (ValidationError, advertising.AdvertisingError) as error:
+                _form_errors(form, error)
+        return self.render_form(request, form, campaign)
+
+
+@console
+class ClientOrganizationCreateView(View):
+    """UI-DASH-03: register a client organization that has no ClipCash account yet."""
+
+    template_name = "administration/advertisers/form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not advertising.can_manage_campaigns(request.user):
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def render_form(self, request, form):
+        return render(request, self.template_name, {"form": form, "can": console_links(request.user),
+                                                    "nav": "advertisers"})
+
+    def get(self, request):
+        from apps.advertising.forms import OrganizationForm
+
+        return self.render_form(request, OrganizationForm())
+
+    def post(self, request):
+        from apps.advertising.forms import OrganizationForm
+
+        form = OrganizationForm(request.POST)
+        if form.is_valid():
+            try:
+                organization = advertising.create_client_organization(request.user, **form.values())
+                messages.success(request, _("Client organization registered. Another reviewer verifies it."))
+                return redirect("administration:advertiser_review", pk=organization.pk)
+            except (ValidationError, advertising.AdvertisingError) as error:
+                _form_errors(form, error)
+        return self.render_form(request, form)
 
 
 # --- Viewing review (Phase 06) -------------------------------------------------------------
@@ -798,7 +941,7 @@ class CampaignCreditsView(View):
 def _whole_number(request, name):
     raw = request.POST.get(name, "").strip()
     if not raw.isdigit():
-        raise ValidationError({name: "Enter a whole number of credits."})
+        raise ValidationError({name: _("Enter a whole number of credits.")})
     return int(raw)
 
 
