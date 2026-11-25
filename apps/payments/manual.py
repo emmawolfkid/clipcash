@@ -646,32 +646,58 @@ def _notify(claim, event, title, message, *, email):
 # --- Super Administrators: payment instructions -----------------------------------------------
 
 
+ANY_ACTIVE = object()  # publish_instruction(expected_active=...): no stale-edit check (default).
+
+
+def clean_instruction_values(*, business_number, recipient_name, instructions="",
+                             method=MANUAL_METHOD_AIRTEL_LIPA, provider_label=None):
+    """Normalize and validate payment-method details without saving anything (UX-02: the console
+    reviews them before publishing). Returns the cleaned values or raises ValidationError."""
+    business_number = re.sub(r"\s", "", str(business_number or ""))
+    recipient_name = " ".join(str(recipient_name or "").split())
+    instructions = str(instructions or "").strip()
+    method = str(method or "").strip().upper()
+    provider_label = " ".join(str(provider_label or ("Airtel Money - Lipa" if method == MANUAL_METHOD_AIRTEL_LIPA else method)).split())
+    errors = {}
+    if not re.fullmatch(r"[A-Z][A-Z0-9_]{1,19}", method):
+        errors["method"] = _("Use 2 to 20 uppercase letters, digits or underscores, starting with a letter.")
+    if not 2 <= len(provider_label) <= 100:
+        errors["provider_label"] = _("Enter the provider name shown to customers (2 to 100 characters).")
+    if not BUSINESS_NUMBER_RE.match(business_number):
+        errors["business_number"] = _("Enter the receiving number: digits only, 4 to 15 of them.")
+    if not 2 <= len(recipient_name) <= 100:
+        errors["recipient_name"] = _("Enter the recipient name shown by the provider when paying.")
+    if len(instructions) > 1000:
+        errors["instructions"] = _("Keep the instructions to 1000 characters or fewer.")
+    if errors:
+        raise ValidationError(errors)
+    return {"business_number": business_number, "recipient_name": recipient_name, "instructions": instructions,
+            "method": method, "provider_label": provider_label}
+
+
 def publish_instruction(actor, *, business_number, recipient_name, instructions="",
-                        method=MANUAL_METHOD_AIRTEL_LIPA, provider_label=None):
-    """Publish a provider revision, retaining its stable receipt namespace and all prior details."""
+                        method=MANUAL_METHOD_AIRTEL_LIPA, provider_label=None, expected_active=ANY_ACTIVE):
+    """Publish a provider revision, retaining its stable receipt namespace and all prior details.
+
+    UX-02: ``expected_active`` is the active version the administrator reviewed (an instruction,
+    its pk, or None for "no active version: this adds the provider"). Checked under the
+    instructions lock, so a concurrent change is refused instead of silently replaced."""
     try:
         if not can_manage_instructions(actor):
             raise NotAuthorized("Only Super Administrators manage payment details.")
-        business_number = re.sub(r"\s", "", str(business_number or ""))
-        recipient_name = " ".join(str(recipient_name or "").split())
-        instructions = str(instructions or "").strip()
-        method = str(method).strip().upper()
-        provider_label = " ".join(str(provider_label or ("Airtel Money - Lipa" if method == MANUAL_METHOD_AIRTEL_LIPA else method)).split())
-        errors = {}
-        if not re.fullmatch(r"[A-Z][A-Z0-9_]{1,19}", method):
-            errors["method"] = _("Use 2 to 20 uppercase letters, digits or underscores, starting with a letter.")
-        if not 2 <= len(provider_label) <= 100:
-            errors["provider_label"] = _("Enter the provider name shown to customers (2 to 100 characters).")
-        if not BUSINESS_NUMBER_RE.match(business_number):
-            errors["business_number"] = _("Enter the receiving number: digits only, 4 to 15 of them.")
-        if not 2 <= len(recipient_name) <= 100:
-            errors["recipient_name"] = _("Enter the recipient name shown by the provider when paying.")
-        if len(instructions) > 1000:
-            errors["instructions"] = _("Keep the instructions to 1000 characters or fewer.")
-        if errors:
-            raise ValidationError(errors)
+        values = clean_instruction_values(business_number=business_number, recipient_name=recipient_name,
+                                          instructions=instructions, method=method, provider_label=provider_label)
+        method, provider_label = values["method"], values["provider_label"]
+        business_number, recipient_name, instructions = (values["business_number"], values["recipient_name"],
+                                                         values["instructions"])
         with transaction.atomic():
             _lock_instructions()
+            if expected_active is not ANY_ACTIVE:
+                current = Instruction.objects.filter(method=method, is_active=True).values_list("pk", flat=True).first()
+                expected = getattr(expected_active, "pk", expected_active)
+                if (str(current) if current else None) != (str(expected) if expected else None):
+                    raise InvalidState("This payment method changed after you reviewed it. Check it and try again.",
+                                       code="stale_method")
             replaced = _retire_active(actor, method)
             instruction = Instruction.objects.create(
                 method=method, provider_label=provider_label, business_number=business_number, recipient_name=recipient_name,
@@ -712,6 +738,9 @@ def _lock_instructions():
 
 
 def enable_instruction(actor, instruction):
+    """Republish a retired provider's latest details as a new active version (history is kept).
+    Idempotent while the provider is active. UX-02: an older version that a newer one replaced
+    is refused, so reactivation can never bring back superseded receiving details."""
     if not can_manage_instructions(actor):
         raise NotAuthorized("Only Super Administrators manage payment details.")
     with transaction.atomic():
@@ -719,6 +748,10 @@ def enable_instruction(actor, instruction):
         current = active_instruction(instruction.method)
         if current:
             return current
+        latest = Instruction.objects.filter(method=instruction.method).order_by("-created_at").first()
+        if latest is not None and latest.pk != instruction.pk:
+            raise InvalidState("A newer version of this payment method exists. Reactivate that one instead.",
+                               code="replaced_version")
         enabled = publish_instruction(actor, method=instruction.method, provider_label=instruction.provider_label,
                                    business_number=instruction.business_number, recipient_name=instruction.recipient_name,
                                    instructions=instruction.instructions)
@@ -738,6 +771,25 @@ def _retire_active(actor, method):
 
 
 # --- Read helpers --------------------------------------------------------------------------
+
+
+def instruction_versions():
+    """UX-02: every published version, newest first, each with ``state``: "active", "replaced"
+    (a newer version of the same provider followed it) or "retired" (the provider's latest
+    version, switched off). Only a retired version can be reactivated (``can_reactivate``)."""
+    rows = list(Instruction.objects.select_related("created_by", "retired_by").order_by("-created_at"))
+    seen = set()
+    for row in rows:
+        latest = row.method not in seen
+        seen.add(row.method)
+        row.state = "active" if row.is_active else ("retired" if latest else "replaced")
+        row.can_reactivate = row.state == "retired"
+    return rows
+
+
+def retired_methods():
+    """Providers with no active version, as their latest (retired) version."""
+    return [row for row in instruction_versions() if row.state == "retired"]
 
 
 def member_claims(member):

@@ -1,0 +1,94 @@
+{% extends "administration/layout.html" %}{% load i18n static payment_format %}
+{% block title %}{% if current %}{% translate "Edit payment method" %}{% else %}{% translate "Add Payment Method" %}{% endif %}{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/administration/payment-methods.css' %}">{% endblock %}
+{% block console_content %}
+<p class="methods-back"><a href="{% url 'administration:payment_instructions' %}">{% translate "Back to payment methods" %}</a></p>
+<div class="page-heading">
+  <div class="page-heading__text">
+    <h1 class="page-title">{% if review %}{% translate "Check and publish" %}{% elif current %}{% blocktranslate with provider=current.provider_label %}Edit {{ provider }}{% endblocktranslate %}{% else %}{% translate "Add Payment Method" %}{% endif %}</h1>
+    <p class="page-intro">{% if review %}{% translate "Members will be told to pay to these details. Check them against the provider's own account before publishing." %}{% elif current %}{% translate "Publishing saves a new version. Payment requests already made keep the details they were shown." %}{% else %}{% translate "Add where members can send their membership payment." %}{% endif %}</p>
+  </div>
+</div>
+
+{% if review %}
+<section class="method-review" aria-labelledby="review-title">
+  <h2 class="visually-hidden" id="review-title">{% translate "Details to publish" %}</h2>
+  {% if current and changes %}
+  <div class="method-review__changes">
+    <h3 class="method-review__subtitle">{% translate "What changes" %}</h3>
+    <ul class="method-review__diff">{% for label, before, after in changes %}
+      <li><span class="method-review__label">{{ label }}</span>
+        <span class="method-review__before"><span class="visually-hidden">{% translate "Before:" %} </span>{{ before|default:"—"|truncatechars:80 }}</span>
+        <span class="method-review__arrow" aria-hidden="true">→</span>
+        <span class="method-review__after"><span class="visually-hidden">{% translate "After:" %} </span>{{ after|default:"—"|truncatechars:80 }}</span></li>{% endfor %}
+    </ul>
+  </div>
+  {% elif not current %}
+  <p class="notice" role="note">{% blocktranslate with provider=values.provider_label %}This adds {{ provider }} as a new way to pay. Members can choose it as soon as you publish.{% endblocktranslate %}</p>
+  {% endif %}
+
+  <div class="method-card method-card--preview">
+    <div class="method-card__header">
+      <div class="method-card__title">
+        <p class="method-card__eyebrow">{% translate "Members will see" %}</p>
+        <h3 class="method-card__name">{{ values.provider_label }}</h3>
+      </div>
+      <code class="method-card__code">{{ values.method }}</code>
+    </div>
+    <div class="payment-number">
+      <span class="payment-number__label">{% translate "Receiving number" %}</span>
+      <span class="payment-number__value">{{ values.business_number }}</span>
+    </div>
+    <dl class="method-card__facts"><div><dt>{% translate "Registered recipient" %}</dt><dd>{{ values.recipient_name }}</dd></div></dl>
+    {% if values.instructions %}<div class="method-card__steps-preview formatted-text">{{ values.instructions|payment_steps }}</div>{% endif %}
+  </div>
+
+  <form method="post" class="method-review__form" novalidate>{% csrf_token %}
+    {% for field in form %}{{ field.as_hidden }}{% endfor %}
+    {{ confirm_form.expected_active }}
+    {% if confirm_form.errors %}<div class="error-summary" role="alert" tabindex="-1"><ul>{% for error in confirm_form.details_checked.errors %}<li><a href="#{{ confirm_form.details_checked.id_for_label }}">{{ error }}</a></li>{% endfor %}</ul></div>{% endif %}
+    <div class="method-review__check">
+      {{ confirm_form.details_checked }}<label for="{{ confirm_form.details_checked.id_for_label }}">{{ confirm_form.details_checked.label }}</label>
+    </div>
+    <div class="method-review__buttons">
+      <button class="button" type="submit" name="step" value="confirm">{% translate "Confirm and publish" %}</button>
+      <button class="button button--secondary" type="submit" name="step" value="edit">{% translate "Change details" %}</button>
+    </div>
+  </form>
+</section>
+
+{% else %}
+<section class="method-form" aria-labelledby="form-title">
+  <h2 class="visually-hidden" id="form-title">{% translate "Payment method details" %}</h2>
+  <form method="post" class="form method-form__form" novalidate data-method-form>{% csrf_token %}
+    {% if form.errors %}<div class="error-summary" role="alert" tabindex="-1"><ul>{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}{% for field in form %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}</ul></div>{% endif %}
+    {% if current %}
+    <div class="method-form__fixed">
+      <span class="method-form__fixed-label">{% translate "Provider" %}</span>
+      <span class="method-form__fixed-value">{{ current.provider_label }} <code>{{ current.method }}</code></span>
+    </div>
+    {% else %}
+    <div class="form-field">{{ form.preset.as_field_group }}</div>
+    {% endif %}
+    <div class="form-field">{{ form.provider_label.as_field_group }}</div>
+    <div class="method-form__pair">
+      <div class="form-field">{{ form.business_number.as_field_group }}</div>
+      <div class="form-field">{{ form.recipient_name.as_field_group }}</div>
+    </div>
+    <div class="form-field">{{ form.instructions.as_field_group }}</div>
+    {% if not current %}
+    <details class="method-form__advanced"{% if form.method.value or form.method.errors or form.preset.value == "OTHER" %} open{% endif %} data-advanced>
+      <summary>{% translate "Advanced: provider code" %}</summary>
+      <div class="form-field">{{ form.method.as_field_group }}</div>
+    </details>
+    {% endif %}
+    <div class="method-form__buttons">
+      <button class="button" type="submit" name="step" value="review">{% translate "Review details" %}</button>
+      <a class="button button--secondary" href="{% url 'administration:payment_instructions' %}">{% translate "Cancel" %}</a>
+    </div>
+    <p class="form-help">{% translate "Nothing is published until you confirm on the next screen." %}</p>
+  </form>
+</section>
+<script src="{% static 'js/payment-method-form.js' %}" defer></script>
+{% endif %}
+{% endblock %}

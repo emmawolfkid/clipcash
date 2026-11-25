@@ -21,7 +21,9 @@ NAV_MAP = {
     "members": "members", "member": "members", "member_complimentary": "members",
     "member_membership_action": "members",
     "plans": "plans", "plan_create": "plans", "plan": "plans",
-    "payment_instructions": "payment_instructions",
+    "payment_instructions": "payment_instructions", "payment_method_new": "payment_instructions",
+    "payment_method_edit": "payment_instructions", "payment_method_retire": "payment_instructions",
+    "payment_method_reactivate": "payment_instructions",
     "membership_payments": "membership_payments", "membership_payment": "membership_payments",
     "videos": "videos", "video_create": "videos", "video_detail": "videos", "video_upload": None, "video_action": None,
     "categories": "categories", "category_edit": "categories",
@@ -58,7 +60,8 @@ class AdministrationNavigationTests(AdvertisingTestCase):
         super().setUp()
         from apps.memberships import services as memberships
 
-        manual.publish_instruction(self.root, business_number="13579246", recipient_name="CLIPCASH TEST LTD")
+        self.instruction = manual.publish_instruction(self.root, business_number="13579246",
+                                                      recipient_name="CLIPCASH TEST LTD")
         self.campaign = self.running_campaign()
         self.subscription = memberships.choose_plan(self.member, self.plan)
         self.claim, _ = manual.submit_claim(self.member, self.subscription, amount=self.subscription.price_amount,
@@ -75,7 +78,8 @@ class AdministrationNavigationTests(AdvertisingTestCase):
         args = {"member": [self.member.pk], "plan": [self.plan.pk], "video_detail": [self.ad_video.pk],
                 "category_edit": [self.category.pk], "advertiser_review": [self.org.pk],
                 "campaign_review": [self.campaign.pk], "campaign_credits": [self.campaign.pk],
-                "membership_payment": [self.claim.pk]}
+                "membership_payment": [self.claim.pk], "payment_method_edit": [self.instruction.pk],
+                "payment_method_retire": [self.instruction.pk]}
         skip = {"payments", "payment_exceptions", "payment_funding"}  # Sandbox off: refused, tested below.
         names = [n for n, entry in NAV_MAP.items() if entry and n not in skip
                  and (n in args or not any(p.pattern.converters for p in urlpatterns if p.name == n))]

@@ -1301,73 +1301,173 @@ class MembershipPaymentDetailView(View):
         return redirect("administration:membership_payment", pk=pk)
 
 
+def _require_instruction_admin(user):
+    """Receiving numbers decide where members' money goes: Super Administrators only."""
+    if not manual_payments.can_manage_instructions(user):
+        raise PermissionDenied
+
+
+def _instruction_or_404(pk):
+    from apps.payments.models import ManualPaymentInstruction
+
+    return get_object_or_404(ManualPaymentInstruction.objects.select_related("created_by", "retired_by"), pk=pk)
+
+
 @console
 class PaymentInstructionsView(View):
-    """Super Administrators manage versioned manual payment methods."""
+    """UX-02: the payment methods workspace. Read-only: adding, editing, retiring and
+    reactivating each have their own page with an explicit confirmation."""
 
-    def _render(self, request, form, status=200):
-        from apps.payments.models import ManualPaymentInstruction
+    http_method_names = ["get", "head", "options"]
 
-        return render(request, "administration/membership_payments/instructions.html", {
-            "form": form, "instruction": manual_payments.active_instruction(),
-            "methods": manual_payments.active_instructions(),
-            "history": ManualPaymentInstruction.objects.select_related("created_by", "retired_by")
-                                                   .order_by("-created_at")[:20],
-            "enabled": manual_payments.manual_payments_enabled(),
-            "can": console_links(request.user), "nav": "membership_payments"}, status=status)
+    def dispatch(self, request, *args, **kwargs):
+        _require_instruction_admin(request.user)  # Before the method check: others always get 403.
+        return super().dispatch(request, *args, **kwargs)
 
     def get(self, request):
+        versions = manual_payments.instruction_versions()
+        return render(request, "administration/membership_payments/instructions.html", {
+            "methods": [row for row in versions if row.state == "active"],
+            "retired": [row for row in versions if row.state == "retired"],
+            "versions": versions,
+            "enabled": manual_payments.manual_payments_enabled(),
+            "can": console_links(request.user), "nav": "payment_instructions"})
+
+
+@console
+class PaymentMethodFormView(View):
+    """UX-02: add a provider, or publish new details for an active one. Two steps: the form is
+    reviewed first, then published only after the administrator confirms the details. Publishing
+    always creates a new version; issued instructions and claims keep the version they used."""
+
+    template_name = "administration/membership_payments/method_form.html"
+
+    def _current(self, pk):
+        if pk is None:
+            return None
+        row = _instruction_or_404(pk)
+        if not row.is_active:  # Only the live version is edited; retired ones are reactivated.
+            raise Http404
+        return row
+
+    def _form(self, current, data=None):
         from apps.payments.forms import PaymentInstructionForm
 
-        if not manual_payments.can_manage_instructions(request.user):
-            raise PermissionDenied
-        from apps.payments.models import ManualPaymentInstruction
-        current = None
-        if request.GET.get("edit"):
-            try:
-                current = get_object_or_404(ManualPaymentInstruction, pk=request.GET["edit"])
-            except (ValueError, ValidationError):
-                raise Http404 from None
-        initial = ({"instruction_id": current.pk, "method": current.method, "provider_label": current.provider_label,
-                    "business_number": current.business_number, "recipient_name": current.recipient_name,
-                    "instructions": current.instructions} if current else None)
-        form = PaymentInstructionForm(initial=initial)
-        if current:
-            form.fields["method"].disabled = True
-        return self._render(request, form)
+        if current is None:
+            return PaymentInstructionForm(data)
+        initial = {name: getattr(current, name) for name in
+                   ("provider_label", "business_number", "recipient_name", "instructions")}
+        return PaymentInstructionForm(data, initial=initial, fixed_method=current.method)
 
-    def post(self, request):
-        from apps.payments.forms import PaymentInstructionForm
+    def _render(self, request, current, form, *, confirm_form=None, review=False, status=200):
+        changes = []
+        if review and current is not None:
+            for name, label in (("provider_label", _("Name shown to members")),
+                                ("business_number", _("Receiving number")),
+                                ("recipient_name", _("Registered recipient name")),
+                                ("instructions", _("Payment steps for members"))):
+                before, after = getattr(current, name), form.cleaned_data[name]
+                if before != after:
+                    changes.append((label, before, after))
+        return render(request, self.template_name, {
+            "form": form, "current": current, "review": review, "changes": changes,
+            "values": form.cleaned_data if review else None,
+            "confirm_form": confirm_form, "can": console_links(request.user), "nav": "payment_instructions",
+        }, status=status)
+
+    def get(self, request, pk=None):
+        _require_instruction_admin(request.user)
+        current = self._current(pk)
+        return self._render(request, current, self._form(current))
+
+    def post(self, request, pk=None):
+        from apps.payments.forms import PublishConfirmForm
         from apps.payments.models import ManualPaymentInstruction
-        if not manual_payments.can_manage_instructions(request.user):
-            raise PermissionDenied
-        action = request.POST.get("action")
-        row = None
-        if request.POST.get("instruction_id"):
-            try:
-                row = get_object_or_404(ManualPaymentInstruction, pk=request.POST["instruction_id"])
-            except (ValueError, ValidationError):
-                raise Http404 from None
-        if action in ("retire", "enable"):
-            if action == "retire":
-                manual_payments.retire_instruction(request.user, row.method if row else "AIRTEL_LIPA")
-            elif row:
-                manual_payments.enable_instruction(request.user, row)
-            return redirect("administration:payment_instructions")
-        form = PaymentInstructionForm(request.POST)
-        if not form.is_valid():
-            return self._render(request, form, status=400)
-        values = dict(form.cleaned_data)
-        values.pop("instruction_id")
-        values["method"] = row.method if row else values["method"] or "AIRTEL_LIPA"
+
+        _require_instruction_admin(request.user)
+        current = self._current(pk)
+        form = self._form(current, request.POST)
+        step = request.POST.get("step", "review")
+        if not form.is_valid() or step == "edit":  # "Change details" returns to the form.
+            return self._render(request, current, form, status=200 if step == "edit" else 400)
+        values = form.publish_values()
+        if current is None and ManualPaymentInstruction.objects.filter(method=values["method"], is_active=True).exists():
+            # Adding never silently replaces a live provider's receiving details.
+            form.add_error("preset" if "preset" in form.fields and not request.POST.get("method") else "method", _(
+                "This provider already has an active payment method. Edit it from the payment methods page "
+                "instead."))
+            return self._render(request, current, form, status=400)
+        if current is not None and all(getattr(current, key) == value for key, value in values.items()):
+            form.add_error(None, _("Nothing changed. Edit a detail, or cancel."))
+            return self._render(request, current, form, status=400)
+        expected = current.pk if current else None
+        if step != "confirm":
+            confirm_form = PublishConfirmForm(initial={"expected_active": expected})
+            return self._render(request, current, form, confirm_form=confirm_form, review=True)
+        confirm_form = PublishConfirmForm(request.POST)
+        if not confirm_form.is_valid():
+            return self._render(request, current, form, confirm_form=confirm_form, review=True, status=400)
+        reviewed = confirm_form.cleaned_data["expected_active"]
+        if (str(reviewed) if reviewed else None) != (str(expected) if expected else None):
+            raise PermissionDenied  # The review step was not for this method.
         try:
-            manual_payments.publish_instruction(request.user, **values)
+            manual_payments.publish_instruction(request.user, expected_active=reviewed, **values)
         except manual_payments.NotAuthorized:
             raise PermissionDenied from None
         except ValidationError as error:
             _form_errors(form, error)
-            return self._render(request, form, status=400)
-        messages.success(request, _("Payment details published. New instructions use these details."))
+            return self._render(request, current, form, status=400)
+        except manual_payments.InvalidState:
+            messages.error(request, _("This payment method was changed by someone else while you were reviewing it. "
+                                      "Nothing was published. Check the current details and try again."))
+            return redirect("administration:payment_instructions")
+        messages.success(request, _("%(provider)s payment details published. Members see them from now on; "
+                                    "earlier instructions and pending payments keep their original details.")
+                         % {"provider": values["provider_label"]})
+        return redirect("administration:payment_instructions")
+
+
+@console
+class PaymentMethodStatusView(View):
+    """UX-02: retire an active method, or reactivate a retired one, after a confirmation page."""
+
+    template_name = "administration/membership_payments/method_status.html"
+    action = None  # "retire" or "reactivate"
+
+    def _row(self, pk):
+        row = _instruction_or_404(pk)
+        if self.action == "retire" and not row.is_active:
+            raise Http404
+        if self.action == "reactivate":
+            state = next((v.state for v in manual_payments.instruction_versions() if v.pk == row.pk), None)
+            if state != "retired":  # Active, or replaced by a newer version: nothing to reactivate.
+                raise Http404
+        return row
+
+    def get(self, request, pk):
+        _require_instruction_admin(request.user)
+        row = self._row(pk)
+        return render(request, self.template_name, {
+            "row": row, "action": self.action, "can": console_links(request.user), "nav": "payment_instructions",
+            "pending_claims": ManualMembershipPayment.objects.filter(
+                instruction__method=row.method, status=ManualMembershipPayment.Status.PENDING_VERIFICATION).count()})
+
+    def post(self, request, pk):
+        _require_instruction_admin(request.user)
+        row = self._row(pk)
+        try:
+            if self.action == "retire":
+                manual_payments.retire_instruction(request.user, row.method)
+                messages.success(request, _("%(provider)s retired. Members can no longer choose it; payments already "
+                                            "submitted can still be reviewed.") % {"provider": row.provider_label})
+            else:
+                manual_payments.enable_instruction(request.user, row)
+                messages.success(request, _("%(provider)s reactivated with the same details. Members can choose it "
+                                            "again.") % {"provider": row.provider_label})
+        except manual_payments.NotAuthorized:
+            raise PermissionDenied from None
+        except manual_payments.InvalidState as error:
+            messages.error(request, str(error))
         return redirect("administration:payment_instructions")
 
 

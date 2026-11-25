@@ -22,6 +22,20 @@ def airtel_reference():
     return "MP" + uuid.uuid4().hex[:10].upper()
 
 
+def console_publish(client, data, instruction=None, *, review=True):
+    """UX-02: publish payment-method details through the console: the review step, then the
+    explicit confirmation. ``instruction`` edits that active version; None adds a provider.
+    Returns the confirmation response."""
+    from django.urls import reverse
+
+    url = (reverse("administration:payment_method_edit", args=[instruction.pk]) if instruction
+           else reverse("administration:payment_method_new"))
+    if review:
+        client.post(url, {"step": "review", **data})
+    return client.post(url, {"step": "confirm", "details_checked": "on",
+                             "expected_active": str(instruction.pk) if instruction else "", **data})
+
+
 def staff_with(email, *codenames):
     user = make_user(email, role=User.Role.CONTENT_MANAGER)
     for codename in codenames:

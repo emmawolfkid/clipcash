@@ -1,0 +1,41 @@
+{% extends "administration/layout.html" %}{% load i18n static %}
+{% block title %}{% if action == "retire" %}{% translate "Retire payment method" %}{% else %}{% translate "Reactivate payment method" %}{% endif %}{% endblock %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/administration/payment-methods.css' %}">{% endblock %}
+{% block console_content %}
+<p class="methods-back"><a href="{% url 'administration:payment_instructions' %}">{% translate "Back to payment methods" %}</a></p>
+<div class="page-heading">
+  <div class="page-heading__text">
+    <h1 class="page-title">{% if action == "retire" %}{% blocktranslate with provider=row.provider_label %}Retire {{ provider }}?{% endblocktranslate %}{% else %}{% blocktranslate with provider=row.provider_label %}Reactivate {{ provider }}?{% endblocktranslate %}{% endif %}</h1>
+  </div>
+</div>
+
+<section class="method-review" aria-labelledby="status-summary">
+  <div class="method-card method-card--preview">
+    <div class="method-card__header">
+      <div class="method-card__title"><h2 class="method-card__name" id="status-summary">{{ row.provider_label }}</h2></div>
+      <span class="badge badge--{% if row.is_active %}active{% else %}retired{% endif %}">{% if row.is_active %}{% translate "Active" %}{% else %}{% translate "Retired" %}{% endif %}</span>
+    </div>
+    <div class="payment-number">
+      <span class="payment-number__label">{% translate "Receiving number" %}</span>
+      <span class="payment-number__value">{{ row.business_number }}</span>
+    </div>
+    <dl class="method-card__facts"><div><dt>{% translate "Registered recipient" %}</dt><dd>{{ row.recipient_name }}</dd></div></dl>
+  </div>
+
+  <ul class="method-review__effects">
+    {% if action == "retire" %}
+    <li>{% translate "Members can no longer choose this method for new payments." %}</li>
+    <li>{% blocktranslate count n=pending_claims %}{{ n }} payment waiting for verification keeps these details and can still be confirmed or rejected.{% plural %}{{ n }} payments waiting for verification keep these details and can still be confirmed or rejected.{% endblocktranslate %}</li>
+    <li>{% translate "Nothing is deleted. You can reactivate it later." %}</li>
+    {% else %}
+    <li>{% translate "Members can choose this method again, with exactly the details above." %}</li>
+    <li>{% translate "If the number or recipient has changed, reactivate and then edit it, or add it as new details." %}</li>
+    {% endif %}
+  </ul>
+
+  <form method="post" class="method-review__buttons">{% csrf_token %}
+    <button class="button{% if action == 'retire' %} button--danger{% endif %}" type="submit">{% if action == "retire" %}{% translate "Retire method" %}{% else %}{% translate "Reactivate method" %}{% endif %}</button>
+    <a class="button button--secondary" href="{% url 'administration:payment_instructions' %}">{% translate "Cancel" %}</a>
+  </form>
+</section>
+{% endblock %}

@@ -17,7 +17,7 @@ from apps.payments.models import ManualMembershipPayment as Claim, ManualPayment
 from apps.payments.tests import test_manual_concurrency as concurrent
 from apps.wallets.models import JournalEntry, JournalLine
 from apps.wallets import services as ledger
-from .manual_helpers import ManualPaymentTestCase, MANUAL_ON, BUSINESS_NUMBER, RECIPIENT
+from .manual_helpers import ManualPaymentTestCase, MANUAL_ON, BUSINESS_NUMBER, RECIPIENT, console_publish
 
 
 class ConfigurableMethodTests(ManualPaymentTestCase):
@@ -174,32 +174,35 @@ class ConfigurableMethodTests(ManualPaymentTestCase):
         self.assertEqual(claim.status, "APPROVED")
 
     def test_admin_add_edit_retire_enable_and_permissions(self):
-        url = reverse("administration:payment_instructions")
+        retire = reverse("administration:payment_method_retire", args=[self.tigo.pk])
         self.client.force_login(self.member)
-        self.assertEqual(self.client.post(url, {"action": "retire", "instruction_id": self.tigo.pk}).status_code, 302)
+        self.assertEqual(self.client.post(retire).status_code, 302)  # To the staff sign-in.
+        self.assertIsNotNone(manual.active_instruction("TIGO"))
         self.client.force_login(self.root)
-        response = self.client.post(url, {"method": "HALO", "provider_label": "Halo Test",
-                                         "business_number": "444444", "recipient_name": "TEST HALO"})
+        response = console_publish(self.client, {"preset": "OTHER", "method": "HALO", "provider_label": "Halo Test",
+                                                 "business_number": "444444", "recipient_name": "TEST HALO"})
         self.assertEqual(response.status_code, 302)
         row = manual.active_instruction("HALO")
-        response = self.client.post(url, {"instruction_id": row.pk, "method": "CHANGED",
-                                         "provider_label": "Halo Edited", "business_number": "555555",
-                                         "recipient_name": "EDITED TEST HALO"})
+        # Editing keeps the provider code: a posted code is ignored.
+        response = console_publish(self.client, {"method": "CHANGED", "provider_label": "Halo Edited",
+                                                 "business_number": "555555", "recipient_name": "EDITED TEST HALO"},
+                                   row)
         self.assertEqual(response.status_code, 302)
         edited = manual.active_instruction("HALO")
         self.assertEqual(edited.business_number, "555555")
         self.assertIsNone(manual.active_instruction("CHANGED"))
-        self.client.post(url, {"action": "retire", "instruction_id": edited.pk})
+        self.client.post(reverse("administration:payment_method_retire", args=[edited.pk]))
         self.assertIsNone(manual.active_instruction("HALO"))
-        self.client.post(url, {"action": "enable", "instruction_id": edited.pk})
+        self.client.post(reverse("administration:payment_method_reactivate", args=[edited.pk]))
         self.assertIsNotNone(manual.active_instruction("HALO"))
         self.assertEqual(manual.active_instructions().count(), 3)
 
     def test_malformed_or_foreign_instruction_ids_are_refused(self):
         self.client.force_login(self.root)
-        url = reverse("administration:payment_instructions")
-        self.assertEqual(self.client.get(url + "?edit=invalid").status_code, 404)
-        self.assertEqual(self.client.post(url, {"action": "retire", "instruction_id": "invalid"}).status_code, 404)
+        for path in ("/manage/membership-payments/instructions/invalid/edit/",
+                     "/manage/membership-payments/instructions/invalid/retire/"):
+            self.assertEqual(self.client.get(path).status_code, 404)
+            self.assertEqual(self.client.post(path).status_code, 404)
         self.client.force_login(self.member)
         pending = self.choose()
         url = reverse("payments:manual_pay", args=[pending.pk])

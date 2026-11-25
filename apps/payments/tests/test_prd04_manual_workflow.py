@@ -27,7 +27,7 @@ from apps.payments import manual
 from apps.payments.models import ManualMembershipPayment, ManualPaymentEvidence, ManualPaymentInstruction
 from apps.wallets.models import JournalEntry
 
-from .manual_helpers import ManualPaymentTestCase, User, airtel_reference, staff_with
+from .manual_helpers import ManualPaymentTestCase, User, airtel_reference, console_publish, staff_with
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
 JPEG = b"\xff\xd8\xff\xe0" + b"\x00" * 64
@@ -242,13 +242,13 @@ class PurchaseGateTests(ManualPaymentTestCase):
 class PresetTests(ManualPaymentTestCase):
     def publish(self, **data):
         self.client.force_login(self.root)
-        return self.client.post(reverse("administration:payment_instructions"), {
+        return console_publish(self.client, {
             "business_number": "0123456789", "recipient_name": "CLIPCASH TEST LTD", "instructions": "", **data})
 
     def test_presets_fill_code_and_name_but_never_the_account(self):
         page = self.client_class()
         page.force_login(self.root)
-        form_page = page.get(reverse("administration:payment_instructions"))
+        form_page = page.get(reverse("administration:payment_method_new"))
         for name in ("Vodacom M-Pesa", "Airtel Money - Lipa", "Mixx by Yas", "Bank transfer"):
             self.assertContains(form_page, name)
         self.publish(preset="MPESA")
@@ -263,8 +263,8 @@ class PresetTests(ManualPaymentTestCase):
 
     def test_only_super_administrators_manage_payment_details(self):
         self.client.force_login(self.verifier)
-        response = self.client.post(reverse("administration:payment_instructions"), {
-            "preset": "MPESA", "business_number": "0123456789", "recipient_name": "X LTD"})
+        response = console_publish(self.client, {"preset": "MPESA", "business_number": "0123456789",
+                                                 "recipient_name": "X LTD"})
         self.assertEqual(response.status_code, 403)
         self.assertFalse(ManualPaymentInstruction.objects.filter(method="MPESA").exists())
 

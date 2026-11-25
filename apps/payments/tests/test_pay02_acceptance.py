@@ -26,7 +26,7 @@ from apps.wallets.exceptions import PostingDisabledError
 from apps.wallets.models import JournalEntry, JournalLine
 from apps.wallets.posting_types import POSTING_TYPES
 
-from .manual_helpers import ManualPaymentTestCase, staff_with
+from .manual_helpers import ManualPaymentTestCase, console_publish, staff_with
 
 FICTIONAL_NUMBER = "000111"  # Fictional Lipa number for tests; never a real recipient.
 FICTIONAL_RECIPIENT = "TEST ONLY - NOT A REAL RECIPIENT"
@@ -58,8 +58,9 @@ class EndToEndAcceptanceTests(ManualPaymentTestCase):
     def test_full_journey(self):
         # --- Super Administrator: fictional Lipa details and a plan, through the console ---------
         self.client.force_login(self.root)
-        self.client.post(reverse("administration:payment_instructions"),
-                         {"business_number": FICTIONAL_NUMBER, "recipient_name": FICTIONAL_RECIPIENT})
+        console_publish(self.client, {"provider_label": manual.active_instruction().provider_label,
+                                      "business_number": FICTIONAL_NUMBER, "recipient_name": FICTIONAL_RECIPIENT},
+                        manual.active_instruction())
         self.assertEqual(manual.active_instruction().business_number, FICTIONAL_NUMBER)
         self.client.post(reverse("administration:plan_create"), {
             "code": "acceptance", "name": "Acceptance plan", "price_amount": "25000", "duration_days": "45",

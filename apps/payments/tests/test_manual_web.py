@@ -12,7 +12,7 @@ from apps.payments import manual
 from apps.payments.models import ManualMembershipPayment, ManualPaymentInstruction
 from apps.wallets.models import JournalEntry
 
-from .manual_helpers import BUSINESS_NUMBER, RECIPIENT, ManualPaymentTestCase, staff_with
+from .manual_helpers import BUSINESS_NUMBER, RECIPIENT, ManualPaymentTestCase, console_publish, staff_with
 
 C = ManualMembershipPayment.Status
 OBSOLETE_NOTICE = "Online payment is not available yet"
@@ -287,14 +287,17 @@ class ConsoleTests(ManualPaymentTestCase):
         url = reverse("administration:payment_instructions")
         page = self.client.get(url)
         self.assertContains(page, BUSINESS_NUMBER)
-        response = self.client.post(url, {"business_number": "12AB", "recipient_name": "X"})
+        edit = reverse("administration:payment_method_edit", args=[self.instruction.pk])
+        response = self.client.post(edit, {"step": "review", "provider_label": "Airtel Money - Lipa",
+                                           "business_number": "12AB", "recipient_name": "X"})
         self.assertEqual(response.status_code, 400)
-        response = self.client.post(url, {"business_number": "765432", "recipient_name": "ClipCash Ltd",
-                                          "instructions": "Use Lipa kwa Simu."})
+        response = console_publish(self.client, {"provider_label": "Airtel Money - Lipa", "business_number": "765432",
+                                                 "recipient_name": "ClipCash Ltd",
+                                                 "instructions": "Use Lipa kwa Simu."}, self.instruction)
         self.assertRedirects(response, url)
         self.assertEqual(manual.active_instruction().business_number, "765432")
         self.assertEqual(ManualPaymentInstruction.objects.count(), 2)
-        self.client.post(url, {"action": "retire"})
+        self.client.post(reverse("administration:payment_method_retire", args=[manual.active_instruction().pk]))
         self.assertIsNone(manual.active_instruction())
         self.assertTrue(AuditEvent.objects.filter(action="membership.payment_instructions.retired").exists())
 

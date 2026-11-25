@@ -89,32 +89,90 @@ PROVIDER_PRESETS = {
     "MIXX_BY_YAS": _("Mixx by Yas"),
     "BANK_TRANSFER": _("Bank transfer"),
 }
+OTHER_PROVIDER = "OTHER"  # Form choice only; never stored (a real code is typed under Advanced).
 
 
 class PaymentInstructionForm(forms.Form):
-    instruction_id = forms.UUIDField(required=False, widget=forms.HiddenInput)
-    preset = forms.ChoiceField(
-        label=_("Payment channel"), required=False,
-        choices=[("", _("Other (enter a provider code and name below)"))] + list(PROVIDER_PRESETS.items()),
-        help_text=_("Fills in the provider code and the name members see. For a bank transfer, put the bank's name "
-                    "in the provider name (for example “CRDB Bank transfer”), the account number as the receiving "
-                    "number and the account name as the recipient."))
-    method = forms.CharField(label=_("Provider code"), max_length=20, required=False,
-                             help_text=_("A stable provider code, for example TIGO. Editing details keeps this code."))
-    provider_label = forms.CharField(label=_("Provider name shown to members"), max_length=100, required=False)
+    """UX-02: add or edit one payment method. Provider first, then where members pay, then the
+    optional steps; the provider code is an advanced field (presets fill it). When editing,
+    ``fixed_method`` keeps the provider's code (its receipt namespace) and hides both choices.
+    Every rule is checked again by apps.payments.manual when publishing."""
 
+    preset = forms.ChoiceField(
+        label=_("Provider"), required=False,
+        choices=[("", _("Choose a provider"))] + list(PROVIDER_PRESETS.items()) + [(OTHER_PROVIDER, _("Other provider"))],
+        help_text=_("For a bank transfer, use the bank's name below (for example “CRDB Bank transfer”) and the "
+                    "account number as the receiving number."))
+    provider_label = forms.CharField(
+        label=_("Name shown to members"), max_length=100, required=False,
+        help_text=_("Leave empty to use the provider's usual name."))
     business_number = forms.CharField(
-        label=_("Receiving number or account number"), max_length=20,
-        widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off"}))
-    recipient_name = forms.CharField(label=_("Recipient name (as the provider shows it when paying)"), max_length=100)
+        label=_("Receiving number"), max_length=20,
+        help_text=_("Digits only: the Lipa number, till number or bank account number."),
+        widget=forms.TextInput(attrs={"inputmode": "numeric", "autocomplete": "off", "spellcheck": "false"}))
+    recipient_name = forms.CharField(
+        label=_("Registered recipient name"), max_length=100,
+        help_text=_("Exactly as the provider shows it to the person paying."),
+        widget=forms.TextInput(attrs={"autocomplete": "off"}))
     instructions = forms.CharField(
-        label=_("Payment steps shown to members (optional)"), max_length=1000, required=False,
+        label=_("Payment steps for members (optional)"), max_length=1000, required=False,
+        help_text=_("One step per line. Lines may start with “1.” or “-”, and **text** shows in bold."),
         widget=forms.Textarea(attrs={"rows": 5}))
+    method = forms.CharField(
+        label=_("Provider code"), max_length=20, required=False,
+        help_text=_("Only for an “Other provider”: a short, permanent code such as TIGO. It cannot be changed later."),
+        widget=forms.TextInput(attrs={"autocapitalize": "characters", "spellcheck": "false", "autocomplete": "off"}))
+
+    def __init__(self, *args, fixed_method=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fixed_method = fixed_method
+        if fixed_method:  # Editing: the provider stays the same provider.
+            del self.fields["preset"]
+            del self.fields["method"]
+            self.fields["provider_label"].help_text = ""
 
     def clean(self):
+        from . import manual
+
+        # Every problem is reported at once, not one per submission.
         cleaned = super().clean()
-        preset = cleaned.pop("preset", "") or ""
-        if preset:  # A typed code or name always wins over the preset.
-            cleaned["method"] = (cleaned.get("method") or "").strip() or preset
-            cleaned["provider_label"] = (cleaned.get("provider_label") or "").strip() or str(PROVIDER_PRESETS[preset])
+        if self.fixed_method:
+            method, label = self.fixed_method, (cleaned.get("provider_label") or "").strip()
+        else:
+            preset = cleaned.pop("preset", "") or ""
+            known = preset in PROVIDER_PRESETS
+            method = (cleaned.get("method") or "").strip() or (preset if known else "")  # A typed code wins.
+            label = (cleaned.get("provider_label") or "").strip() or (str(PROVIDER_PRESETS[preset]) if known else "")
+            if not method:
+                if preset == OTHER_PROVIDER:
+                    self.add_error("method", _("Enter a provider code for this provider, for example TIGO."))
+                else:
+                    self.add_error("preset", _("Choose a provider."))
+        if method and not label and not self.has_error("provider_label"):
+            self.add_error("provider_label", _("Enter the name members see for this provider."))
+        try:
+            cleaned.update(manual.clean_instruction_values(
+                method=method, provider_label=label or method, business_number=cleaned.get("business_number", ""),
+                recipient_name=cleaned.get("recipient_name", ""), instructions=cleaned.get("instructions", "")))
+        except forms.ValidationError as error:
+            for field, messages in error.message_dict.items():
+                target = field if field in self.fields else None
+                if (target and self.has_error(target)) or (field == "method" and not method) \
+                        or (field == "provider_label" and not label):
+                    continue  # Already explained above, or by the field itself.
+                self.add_error(target, messages)
         return cleaned
+
+    def publish_values(self):
+        keys = ("method", "provider_label", "business_number", "recipient_name", "instructions")
+        return {key: self.cleaned_data[key] for key in keys}
+
+
+class PublishConfirmForm(forms.Form):
+    """UX-02: the explicit confirmation on the review step. ``expected_active`` is the active
+    version the administrator reviewed (empty when adding a provider)."""
+
+    expected_active = forms.UUIDField(required=False, widget=forms.HiddenInput)
+    details_checked = forms.BooleanField(
+        label=_("I checked the receiving number and recipient name against the provider's own account."),
+        error_messages={"required": _("Confirm that you checked the details against the provider's account.")})
