@@ -1,2 +1,3 @@
-{% load i18n %}<p class="notice notice--demo"><strong>{% translate "Verified views are not rewards." %}</strong>
-{% translate "Watching sponsored videos does not earn money yet. No balance, payment or reward is created." %}</p>
+{% load i18n %}{% if features.real_money_rewards %}<p class="notice" role="note"><strong>{% translate "Only campaigns that show a TZS amount pay real rewards." %}</strong>
+{% translate "A reward is paid only after ClipCash verifies the view, while the campaign's funding and your daily limit allow it. It stays pending during a clearance period before it becomes available. Earnings are not guaranteed, and withdrawals are not available yet." %}</p>{% else %}<p class="notice notice--demo"><strong>{% translate "Verified views are not rewards." %}</strong>
+{% translate "Watching sponsored videos does not earn money yet. No balance, payment or reward is created." %}</p>{% endif %}

@@ -150,8 +150,9 @@ class SchemaTests(TestCase):
                         created.update(re.findall(r"CREATE TRIGGER (\w+)", statement))
         self.assertEqual(installed, created)
         # 102 existing guards + 3 permission mutexes + 3 immutable-quote guards + 3 PRD-04 evidence guards
-        # + 3 CR-01 credit-terms guards.
-        self.assertEqual(len(installed), 114)
+        # + 3 CR-01 credit-terms guards + 13 FIN-01 guards (campaign funding evidence, policy reward type,
+        # 11 real-reward / deposit / funding-movement guards; the two wallet locks are replaced, not added).
+        self.assertEqual(len(installed), 127)
 
     def test_database_and_connection_settings(self):
         with connection.cursor() as cursor:

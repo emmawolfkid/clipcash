@@ -110,9 +110,12 @@ def _reason(text):
 # --- Policies ---------------------------------------------------------------------------
 
 
-def create_policy(actor, campaign, *, reward_amount, notes=""):
-    """Draft a new policy version for the campaign's current approved revision."""
+def create_policy(actor, campaign, *, reward_amount, notes="", kind=RewardPolicy.Kind.CREDITS):
+    """Draft a new policy version for the campaign's current approved revision. FIN-01: ``kind`` is
+    the explicit reward type: CREDITS (non-cash) or TZS (real shillings, paid by apps.earnings)."""
     _require(can_manage_policies, actor, "policy.create", campaign)
+    if kind not in RewardPolicy.Kind.values:
+        raise ValidationError({"kind": _("Choose the reward type.")})
     try:
         amount = to_amount(reward_amount)
     except (ValueError, TypeError):
@@ -123,10 +126,11 @@ def create_policy(actor, campaign, *, reward_amount, notes=""):
         version = (RewardPolicy.objects.filter(campaign=campaign).order_by("-version")
                    .values_list("version", flat=True).first() or 0) + 1
         policy = RewardPolicy.objects.create(campaign=campaign, campaign_revision=campaign.approved_revision,
-                                             version=version, reward_amount=amount, notes=(notes or "")[:300],
-                                             created_by=actor)
+                                             version=version, kind=kind, reward_amount=amount,
+                                             notes=(notes or "")[:300], created_by=actor)
         record_business_event("rewards.policy.created", actor=actor, target=policy,
-                              metadata={"campaign": str(campaign.pk), "version": version, "amount": amount})
+                              metadata={"campaign": str(campaign.pk), "version": version, "amount": amount,
+                                        "kind": kind})
         _notify_approvers(policy, actor)
     return policy
 
@@ -149,8 +153,10 @@ def _notify_approvers(policy, drafter):
 
     approvers = [user for user in inbox.staff_with_permission("rewards.approve_reward_policies")
                  if user.pk != drafter.pk]
+    tzs = policy.kind == RewardPolicy.Kind.TZS
     inbox.notify(approvers, "rewards.policy_review_needed", category=inbox.Category.REWARD,
-                 title=gettext_noop("Demo reward policy awaiting a second approver"),
+                 title=gettext_noop("TZS reward policy awaiting a second approver") if tzs
+                 else gettext_noop("Demo reward policy awaiting a second approver"),
                  message=gettext_noop("Version {version} for “{name}” needs approval by someone other than its "
                                       "author."),
                  params={"version": policy.version, "name": policy.campaign.name},
@@ -160,12 +166,12 @@ def _notify_approvers(policy, drafter):
 
 def _check_policy_campaign(campaign, amount):
     if campaign.status not in POLICY_CAMPAIGN_STATES or campaign.approved_revision != campaign.revision:
-        raise ValidationError({"campaign": _("Demo reward policies need an approved campaign.")})
+        raise ValidationError({"campaign": _("Reward policies need an approved campaign.")})
     if amount <= 0:
         raise ValidationError({"reward_amount": _("Enter an amount greater than zero.")})
     if amount > campaign.demo_reward_per_view:
-        raise ValidationError({"reward_amount": _("Cannot exceed the campaign's approved maximum per view (%(n)s "
-                                                  "credits).") % {"n": campaign.demo_reward_per_view}})
+        raise ValidationError({"reward_amount": _("Cannot exceed the campaign's approved maximum per view "
+                                                  "(%(n)s).") % {"n": f"{campaign.demo_reward_per_view:,}"}})
 
 
 def approve_policy(actor, policy, *, expected_status=P.DRAFT):
@@ -201,7 +207,7 @@ def approve_policy(actor, policy, *, expected_status=P.DRAFT):
         policy.save()
         record_business_event("rewards.policy.approved", actor=actor, target=policy, metadata={
             "campaign": str(campaign.pk), "version": policy.version, "amount": policy.reward_amount,
-            "replaces": previous.version if previous else 0})
+            "replaces": previous.version if previous else 0, "kind": policy.kind})
     return policy
 
 
@@ -341,14 +347,23 @@ def quoted_amount(session, policy):
     return session.quoted_credits if session.quoted_credits is not None else policy.reward_amount
 
 
-def current_offer(campaign, now=None):
-    """(policy, credits per verified view) a session starting now would be offered:
-    the approved policy for the campaign's current approved revision, or (None, 0)."""
+def current_policy(campaign, now=None):
+    """The approved policy (any reward type) for the campaign's current approved revision, or None."""
     now = now or timezone.now()
     if campaign.approved_revision is None or campaign.revision != campaign.approved_revision:
-        return None, 0
+        return None
     policy = policy_at(campaign.pk, campaign.revision, now)
     if policy is None or policy.status != P.APPROVED:
+        return None
+    return policy
+
+
+def current_offer(campaign, now=None):
+    """(policy, credits per verified view) a session starting now would be offered: the approved
+    CREDITS policy for the campaign's current approved revision, or (None, 0). FIN-01: a TZS policy
+    offers no credits (apps.earnings pays it), so one viewing event never earns both."""
+    policy = current_policy(campaign, now)
+    if policy is None or policy.kind != RewardPolicy.Kind.CREDITS:
         return None, 0
     return policy, policy.reward_amount
 
@@ -445,6 +460,8 @@ def evaluate_session(session_id, *, actor=None):
     with transaction.atomic():
         session = lock_own_rows(WatchSession.objects.select_related("campaign", "campaign__organization")).get(
             pk=session_id)
+        if hasattr(session, "earning"):
+            return None  # FIN-01: a real TZS reward session; it never gets a credit decision.
         existing = DemoReward.objects.filter(session=session).first()
         if existing is not None:
             if actor is not None:
@@ -491,7 +508,7 @@ def evaluate_session(session_id, *, actor=None):
 def pending_sessions(limit=EVALUATION_BATCH):
     """Verified sessions with no demo reward decision yet (bounded, oldest first)."""
     return (WatchSession.objects.filter(outcome=Out.VERIFIED_EVIDENCE, state=WatchSession.State.FINALIZED,
-                                        demo_reward__isnull=True)
+                                        demo_reward__isnull=True, earning__isnull=True)
             .order_by("finalized_at").values_list("pk", flat=True)[:limit])
 
 

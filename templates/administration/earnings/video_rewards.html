@@ -1,0 +1,33 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Video rewards" %}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><h1 class="page-title">{% translate "Video rewards" %}</h1>
+<span><a href="{% url 'administration:campaign_funding' %}">{% translate "Campaign funding" %}</a> · <a href="{% url 'administration:earning_rules' %}">{% translate "Earning limits" %}</a></span></div>
+{% include "administration/earnings/_activation.html" %}
+
+<dl class="metric-row">
+  <div class="metric"><dt>{% translate "Pending obligations" %}</dt><dd class="financial-amount">{{ totals.pending|tzs }}</dd></div>
+  <div class="metric"><dt>{% translate "Released obligations (available to members)" %}</dt><dd class="financial-amount">{{ totals.available|tzs }}</dd></div>
+  <div class="metric"><dt>{% translate "Reserved for open sessions" %}</dt><dd class="financial-amount">{{ totals.reserved|tzs }}</dd></div>
+  <div class="metric"><dt>{% translate "Clearance period" %}</dt><dd>{% blocktranslate count n=settings_row.clearance_hours %}{{ n }} hour{% plural %}{{ n }} hours{% endblocktranslate %}</dd></div>
+  {% if held %}<div class="metric"><dt>{% translate "Rewards on hold" %}</dt><dd>{{ held }}</dd></div>{% endif %}
+  {% if recovery %}<div class="metric"><dt>{% translate "Need manual recovery" %}</dt><dd>{{ recovery }}</dd></div>{% endif %}
+</dl>
+
+<form class="toolbar" method="get"><label class="visually-hidden" for="q">{% translate "Search campaigns, videos or advertisers" %}</label><input id="q" type="search" name="q" value="{{ query }}" maxlength="100" placeholder="{% translate 'Search' %}"><button class="button button--secondary" type="submit">{% translate "Search" %}</button></form>
+
+<table class="table workspace-table hide-narrow-2 hide-narrow-4">
+<caption class="visually-hidden">{% translate "Rewards by campaign" %}</caption>
+<thead><tr><th scope="col">{% translate "Video / campaign" %}</th><th scope="col">{% translate "Advertiser" %}</th><th scope="col">{% translate "Reward" %}</th><th scope="col">{% translate "Eligible plans" %}</th><th scope="col">{% translate "Funding" %}</th><th scope="col">{% translate "Obligations" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
+<tbody>{% for row in rows %}{% with c=row.campaign f=row.funding %}
+<tr>
+  <td><a href="{% url 'administration:video_reward' c.pk %}">{{ c.name }}</a><br><small>{{ c.video.title }}</small></td>
+  <td>{{ c.organization.display_name }}</td>
+  <td>{% if row.policy %}{{ row.policy|policy_amount }}<br><small>{% if row.policy.kind == "TZS" %}{% translate "Real TZS" %}{% else %}{% translate "Non-cash credits" %}{% endif %} · v{{ row.policy.version }}</small>{% else %}{% translate "No reward" %}{% endif %}{% if row.draft %}<br><span class="badge badge--draft">{% translate "Draft awaiting approval" %}</span>{% endif %}</td>
+  <td>{% if row.plans %}{{ row.plans|join:", " }}{% else %}{% translate "All plans" %}{% endif %}</td>
+  <td>{% if f.committed %}{% translate "Verified" %} {{ f.committed|tzs }}<br><small>{% translate "Consumed" %} {{ f.consumed|tzs }} · {% translate "Remaining" %} {{ f.remaining|tzs }}{% if f.affordable_views is not None %} · {% blocktranslate count n=f.affordable_views %}{{ n }} view{% plural %}{{ n }} views{% endblocktranslate %}{% endif %}</small>{% else %}{% translate "Not funded" %}{% endif %}</td>
+  <td>{% if f.pending or f.available %}{% translate "Pending" %} {{ f.pending|tzs }}<br><small>{% translate "Available" %} {{ f.available|tzs }}</small>{% else %}—{% endif %}</td>
+  <td>{% include "administration/earnings/_state.html" with state=row.state %}</td>
+</tr>{% endwith %}{% empty %}<tr><td colspan="7">{% translate "No approved campaigns yet." %}</td></tr>{% endfor %}</tbody></table>
+{% include "components/pagination.html" %}
+{% endblock %}

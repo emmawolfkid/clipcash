@@ -40,6 +40,8 @@ SEPARATION_OF_DUTIES = (
     "withdrawals.review_withdrawals", "withdrawals.operate_payout_sandbox",
     "advertising.review_advertisers", "advertising.review_campaigns", "advertising.manage_campaigns",
     "viewing.review_viewing",
+    # FIN-01: a deposit's recorder can never verify it; reward policies need a second approver.
+    "earnings.record_deposits", "earnings.verify_deposits", "earnings.allocate_funding",
 )
 UNDEFINED_ROLES = ("Finance Officer", "Support Officer", "Auditor")
 

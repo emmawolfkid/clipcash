@@ -1,0 +1,34 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Campaign funding" %}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><h1 class="page-title">{% translate "Campaign funding" %}</h1><a href="{% url 'administration:video_rewards' %}">{% translate "Video rewards" %}</a></div>
+{% include "administration/earnings/_activation.html" %}
+<p class="lead">{% translate "Record each deposit an advertiser (or ClipCash itself) paid by Airtel Lipa or bank transfer. A different person verifies the money in the provider or bank records; only verified deposits can fund campaigns. Membership fees can never fund rewards." %}</p>
+
+<section class="workspace-section" aria-labelledby="balances-title"><h2 class="workspace-section__title" id="balances-title">{% translate "Verified funds not yet committed" %}</h2>
+<ul class="list">{% for b in balances %}<li class="list__item"><span>{{ b.organization.display_name }}{% if b.pending %} · <span class="badge badge--pending">{% blocktranslate count n=b.pending %}{{ n }} deposit awaiting verification{% plural %}{{ n }} deposits awaiting verification{% endblocktranslate %}</span>{% endif %}</span><span class="financial-amount">{{ b.balance|tzs }}</span></li>{% empty %}<li>{% translate "No approved organizations." %}</li>{% endfor %}</ul></section>
+
+{% if can_record %}
+<section class="workspace-section" aria-labelledby="record-title"><h2 class="workspace-section__title" id="record-title">{% translate "Record a deposit" %}</h2>
+<form method="post" class="form">{% csrf_token %}
+  <label for="d-org">{% translate "Organization" %}</label>
+  <select id="d-org" name="organization" required><option value="">{% translate "Choose…" %}</option>{% for org in organizations %}<option value="{{ org.pk }}">{{ org.display_name }}</option>{% endfor %}</select>
+  <label for="d-method">{% translate "Payment method" %}</label>
+  <select id="d-method" name="method" required>{% for value, label in methods %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+  <label for="d-amount">{% translate "Amount (TZS)" %}</label><input id="d-amount" name="amount" type="number" min="1" step="1" required>
+  <label for="d-ref">{% translate "Transaction reference" %}</label><input id="d-ref" name="external_reference" maxlength="40" autocomplete="off" required>
+  <label for="d-date">{% translate "Date paid" %}</label><input id="d-date" name="paid_on" type="date" max="{{ today }}" required>
+  <label for="d-payer">{% translate "Paid by (name on the payment)" %}</label><input id="d-payer" name="payer_name" maxlength="120">
+  <label for="d-note">{% translate "Supporting information" %}</label><textarea id="d-note" name="note" rows="2" maxlength="300"></textarea>
+  <p class="lead">{% translate "Recording a deposit moves no money. The reference alone is never proof of payment." %}</p>
+  <button class="button" type="submit">{% translate "Record and send for verification" %}</button>
+</form></section>{% endif %}
+
+<section class="workspace-section" aria-labelledby="deposits-title"><h2 class="workspace-section__title" id="deposits-title">{% translate "Deposits" %}</h2>
+<form class="toolbar" method="get"><label class="visually-hidden" for="f-status">{% translate "Status" %}</label><select id="f-status" name="status"><option value="">{% translate "All" %}</option>{% for value, label in statuses %}<option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select><button class="button button--secondary" type="submit">{% translate "Filter" %}</button></form>
+<table class="table workspace-table hide-narrow-2 hide-narrow-4"><caption class="visually-hidden">{% translate "Deposits" %}</caption>
+<thead><tr><th scope="col">{% translate "Deposit" %}</th><th scope="col">{% translate "Organization" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Method" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
+<tbody>{% for d in page.object_list %}<tr><td><a href="{% url 'administration:campaign_deposit' d.pk %}">{{ d.reference }}</a><br><small>{{ d.external_reference }}</small></td><td>{{ d.organization.display_name }}</td><td class="financial-amount">{{ d.amount|tzs }}</td><td>{{ d.get_method_display }}</td><td><span class="badge badge--{{ d.status|lower }}">{{ d.get_status_display }}</span></td></tr>{% empty %}<tr><td colspan="5">{% translate "No deposits recorded." %}</td></tr>{% endfor %}</tbody></table>
+{% include "components/pagination.html" %}
+</section>
+{% endblock %}

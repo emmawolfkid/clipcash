@@ -36,7 +36,8 @@ LOCK_TRIGGERS = (
     "wallets_transactions_locked", "withdrawals_request_locked", "advertising_campaign_guard",
     "payments_intent_guard", "membership_subscription_guard", "audit_auditevent_append_only",
 )
-LOCK_CONSTRAINTS = ("adv_campaign_funding_locked", "sub_activation_source_consistent")
+# FIN-01: adv_campaign_funding_evidence replaced adv_campaign_funding_locked (funding only with ledger evidence).
+LOCK_CONSTRAINTS = ("adv_campaign_funding_evidence", "sub_activation_source_consistent")
 
 
 def readiness():

@@ -76,6 +76,24 @@ def _form_errors(form, error):
         form.add_error(None, getattr(error, "messages", [str(error)]))
 
 
+def _earnings_console():
+    from apps.earnings import console as module
+
+    return module
+
+
+def _earnings_funding():
+    from apps.earnings import funding as module
+
+    return module
+
+
+def _earnings_services():
+    from apps.earnings import services as module
+
+    return module
+
+
 def console_links(user):
     """Navigation entries; each target enforces its own permission too."""
     can = {
@@ -91,6 +109,10 @@ def console_links(user):
         "campaign_manage": advertising.can_manage_campaigns(user),
         "viewing": viewing.can_review_viewing(user),
         "rewards": rewards.can_use_rewards_console(user),
+        # FIN-01: real TZS rewards, campaign funding and earning limits.
+        "video_rewards": _earnings_console().can_open_video_rewards(user),
+        "campaign_funding": _earnings_funding().can_view_funding(user),
+        "earning_rules": _earnings_services().can_view(user) or _earnings_services().can_manage_rules(user),
         "payments": payments.can_view_payments(user) and payments_sandbox_active(),
         # PAY-01: real membership payments (Airtel Lipa), verified by staff.
         "membership_payments": manual_payments.manual_payments_enabled() and manual_payments.can_view(user),
@@ -871,7 +893,8 @@ class RewardPolicyListView(View):
         campaign = get_object_or_404(Campaign, pk=request.POST.get("campaign"))
         try:
             policy = rewards.create_policy(request.user, campaign, reward_amount=_whole_number(request, "reward_amount"),
-                                           notes=request.POST.get("notes", ""))
+                                           notes=request.POST.get("notes", ""),
+                                           kind=request.POST.get("kind") or RewardPolicy.Kind.CREDITS)
             messages.success(request, _("Policy draft saved. Another administrator must approve it."))
             return redirect("administration:reward_policy", pk=policy.pk)
         except rewards.NotAuthorized:

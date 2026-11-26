@@ -27,6 +27,13 @@ from apps.core.money import DEFAULT_CURRENCY
 
 
 class RewardPolicy(BaseModel):
+    class Kind(models.TextChoices):
+        # FIN-01: the explicit reward type. CREDITS are non-cash (CR-01) and never money; TZS
+        # policies pay real shillings through apps.earnings from verified campaign funding. One
+        # approved policy per campaign, so a viewing session earns one kind or nothing.
+        CREDITS = "CREDITS", _("Non-cash credits")
+        TZS = "TZS", _("Real TZS")
+
     class Status(models.TextChoices):
         DRAFT = "DRAFT", _("Draft")
         APPROVED = "APPROVED", _("Approved")
@@ -36,7 +43,8 @@ class RewardPolicy(BaseModel):
     campaign = models.ForeignKey("advertising.Campaign", on_delete=models.PROTECT, related_name="reward_policies")
     campaign_revision = models.PositiveIntegerField(_("approved campaign revision"))
     version = models.PositiveIntegerField(_("version"))
-    reward_amount = AmountField(_("demo reward per verified view (TZS)"), non_negative=True)
+    kind = models.CharField(_("reward type"), max_length=8, choices=Kind.choices, default=Kind.CREDITS)
+    reward_amount = AmountField(_("reward per verified view"), non_negative=True)
     currency = models.CharField(_("currency"), max_length=3, default=DEFAULT_CURRENCY)
     status = models.CharField(_("status"), max_length=10, choices=Status.choices, default=Status.DRAFT)
     notes = models.CharField(_("notes"), max_length=300, blank=True)
@@ -63,6 +71,7 @@ class RewardPolicy(BaseModel):
                                     name="reward_policy_one_approved"),
             models.CheckConstraint(condition=Q(reward_amount__gt=0), name="reward_policy_amount_positive"),
             models.CheckConstraint(condition=Q(currency="TZS"), name="reward_policy_currency_supported"),
+            models.CheckConstraint(condition=Q(kind__in=["CREDITS", "TZS"]), name="reward_policy_kind_valid"),
             models.CheckConstraint(condition=Q(status__in=["DRAFT", "APPROVED", "REJECTED", "RETIRED"]),
                                    name="reward_policy_status_valid"),
             models.CheckConstraint(

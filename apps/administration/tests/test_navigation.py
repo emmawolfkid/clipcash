@@ -33,6 +33,9 @@ NAV_MAP = {
     # UI-DASH-03: staff-managed advertising.
     "advertiser_create": "advertisers", "campaign_create": "campaign_create", "campaign_edit": "campaigns",
     "demo_rewards": "demo_rewards", "reward_policies": "demo_rewards", "reward_policy": "demo_rewards",
+    # FIN-01: real TZS rewards and campaign funding.
+    "video_rewards": "video_rewards", "video_reward": "video_rewards", "campaign_funding": "campaign_funding",
+    "campaign_deposit": "campaign_funding", "earning_rules": "earning_rules",
     "payments": "payments", "payment_exceptions": "payments", "payment_funding": "payments", "payment": "payments",
     "wallets": "wallets", "wallet_reconciliation": "wallets", "wallet": "wallets",
     "withdrawals": "withdrawals", "withdrawal_exceptions": "withdrawals", "beneficiaries": "withdrawals",
@@ -42,8 +45,8 @@ NAV_MAP = {
     "security": "security",
 }
 SECTIONS = ["Overview", "Members and memberships", "Membership payments", "Videos and viewing", "Advertising",
-            "Financial simulation", "Customer support", "Reports", "Operations", "Security and audit",
-            "Your account"]
+            "Rewards and funding", "Financial simulation", "Customer support", "Reports", "Operations",
+            "Security and audit", "Your account"]
 LINK = re.compile(r'<a class="app-nav__link( is-current)?"( aria-current="page")? href="([^"]+)">([^<]+)')
 GROUP = re.compile(r'<p class="app-nav__group" id="[^"]+">([^<]+)</p>')
 
@@ -80,6 +83,7 @@ class AdministrationNavigationTests(AdvertisingTestCase):
         args = {"member": [self.member.pk], "plan": [self.plan.pk], "video_detail": [self.ad_video.pk],
                 "category_edit": [self.category.pk], "advertiser_review": [self.org.pk],
                 "campaign_review": [self.campaign.pk], "campaign_credits": [self.campaign.pk],
+                "video_reward": [self.campaign.pk],
                 "membership_payment": [self.claim.pk], "payment_method_edit": [self.instruction.pk],
                 "payment_method_retire": [self.instruction.pk]}
         skip = {"payments", "payment_exceptions", "payment_funding"}  # Sandbox off: refused, tested below.
@@ -190,8 +194,8 @@ class AdministrationNavigationTests(AdvertisingTestCase):
         html = self.client.get(reverse("administration:overview")).content.decode()
         groups, links = menu(html)
         self.assertEqual(groups, ["Muhtasari", "Wanachama na uanachama", "Malipo ya uanachama", "Video na utazamaji",
-                                  "Matangazo", "Fedha za kuigiza", "Usaidizi kwa wateja", "Ripoti", "Uendeshaji",
-                                  "Usalama na ukaguzi", "Akaunti yako"])
+                                  "Matangazo", "Zawadi na ufadhili", "Fedha za kuigiza", "Usaidizi kwa wateja",
+                                  "Ripoti", "Uendeshaji", "Usalama na ukaguzi", "Akaunti yako"])
         self.assertIn((reverse("administration:wallets"), "Pochi (leja halisi)", False), links)
         self.assertIn('aria-label="Menyu ya usimamizi"', html)
         self.assertIn(">Usimamizi</p>", html)

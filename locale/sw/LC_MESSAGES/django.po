@@ -11450,3 +11450,695 @@ msgstr "Hatukuweza kuthibitisha malipo yako ya {plan} (kumbukumbu {ref}): {reaso
 #: apps/payments/manual.py
 msgid "We could not confirm your payment for {plan} (no transaction reference given): {reason__tl}. {note}You can submit corrected details or contact support."
 msgstr "Hatukuweza kuthibitisha malipo yako ya {plan} (hakuna kumbukumbu ya muamala iliyotolewa): {reason__tl}. {note}Unaweza kuwasilisha taarifa zilizorekebishwa au kuwasiliana na usaidizi."
+
+#: FIN-01 real TZS rewards, campaign funding and earning limits
+msgid "Not funded"
+msgstr "Haijafadhiliwa"
+
+msgid "first funding entry"
+msgstr "malipo ya kwanza ya ufadhili"
+
+msgid "Deposit recorded. A different person must verify the receipt before it can fund campaigns."
+msgstr "Amana imerekodiwa. Mtu mwingine lazima ahakiki kupokelewa kwake kabla haijafadhili kampeni."
+
+msgid "Earning rules saved. They apply to offers made from now on."
+msgstr "Kanuni za mapato zimehifadhiwa. Zinatumika kwa ofa zinazotolewa kuanzia sasa."
+
+msgid "Reward draft saved. A different administrator must approve it."
+msgstr "Rasimu ya zawadi imehifadhiwa. Msimamizi mwingine lazima aiidhinishe."
+
+msgid "Verified funds committed to this campaign."
+msgstr "Fedha zilizohakikiwa zimetengwa kwa kampeni hii."
+
+msgid "Receipt verified. The funds are available to commit to campaigns."
+msgstr "Kupokelewa kumehakikiwa. Fedha zinapatikana kutengwa kwa kampeni."
+
+msgid "Unused funding released to the organization."
+msgstr "Ufadhili usiotumika umerudishwa kwa shirika."
+
+msgid "Deposit rejected. Nothing was posted."
+msgstr "Amana imekataliwa. Hakuna kilichorekodiwa kwenye leja."
+
+msgid "Enter a whole number."
+msgstr "Weka namba kamili."
+
+msgid "Reward reversed."
+msgstr "Zawadi imebatilishwa."
+
+msgid "Reward updated."
+msgstr "Zawadi imesasishwa."
+
+msgid "Real TZS rewards are switched off for this deployment, so no money can be posted. Deposits can be recorded and verified once they are activated."
+msgstr "Zawadi halisi za TZS zimezimwa kwenye mfumo huu, kwa hiyo hakuna fedha inayoweza kurekodiwa. Amana zinaweza kurekodiwa na kuhakikiwa zitakapowashwa."
+
+msgid "A campaign deposit awaits verification"
+msgstr "Amana ya kampeni inasubiri uhakiki"
+
+msgid "Deposit {reference} ({method__t}) needs a second person to confirm the receipt."
+msgstr "Amana {reference} ({method__t}) inahitaji mtu wa pili kuthibitisha kupokelewa kwake."
+
+msgid "Enter the transaction reference exactly as it appears in the provider or bank record (letters and digits, up to 40 characters)."
+msgstr "Weka kumbukumbu ya muamala kama inavyoonekana kwenye rekodi ya mtoa huduma au benki (herufi na tarakimu, hadi herufi 40)."
+
+msgid "This transaction reference is too short."
+msgstr "Kumbukumbu hii ya muamala ni fupi mno."
+
+msgid "Choose the payment method."
+msgstr "Chagua njia ya malipo."
+
+msgid "Choose an approved organization."
+msgstr "Chagua shirika lililoidhinishwa."
+
+msgid "Enter the payment date (today or within the last 90 days)."
+msgstr "Weka tarehe ya malipo (leo au ndani ya siku 90 zilizopita)."
+
+msgid "This transaction reference has already been used."
+msgstr "Kumbukumbu hii ya muamala imeshatumika."
+
+msgid "Confirm that you found this payment in the Airtel Lipa business records or the bank statement."
+msgstr "Thibitisha kwamba umeyaona malipo haya kwenye rekodi za biashara za Airtel Lipa au taarifa ya benki."
+
+msgid "This deposit was decided or changed since you opened it."
+msgstr "Amana hii imeamuliwa au imebadilika tangu ulipoifungua."
+
+msgid "A different person must verify the deposit you recorded."
+msgstr "Mtu mwingine lazima ahakiki amana uliyoirekodi."
+
+msgid "A different person must decide the deposit you recorded."
+msgstr "Mtu mwingine lazima aamue amana uliyoirekodi."
+
+msgid "Only approved, running or scheduled campaigns can be funded."
+msgstr "Kampeni zilizoidhinishwa, zinazoendelea au zilizopangwa pekee ndizo zinaweza kufadhiliwa."
+
+msgid "The organization does not have enough verified, unallocated funds."
+msgstr "Shirika halina fedha za kutosha zilizohakikiwa na ambazo hazijatengwa."
+
+msgid "This campaign has no committed funding."
+msgstr "Kampeni hii haina ufadhili uliotengwa."
+
+msgid "Only %(free)s of this campaign's funding is unused and free to release."
+msgstr "Ni %(free)s tu ya ufadhili wa kampeni hii ambayo haijatumika na inaweza kurudishwa."
+
+msgid "daily earning limit per member (TZS)"
+msgstr "kikomo cha mapato kwa siku kwa kila mwanachama (TZS)"
+
+msgid "daily rewarded views per member"
+msgstr "idadi ya utazamaji wenye zawadi kwa siku kwa kila mwanachama"
+
+msgid "clearance period (hours)"
+msgstr "kipindi cha kusubiri (saa)"
+
+msgid "earning settings"
+msgstr "mipangilio ya mapato"
+
+msgid "daily earning limit (TZS)"
+msgstr "kikomo cha mapato kwa siku (TZS)"
+
+msgid "daily rewarded views"
+msgstr "utazamaji wenye zawadi kwa siku"
+
+msgid "plan earning limit"
+msgstr "kikomo cha mapato cha mpango"
+
+msgid "deposit reference"
+msgstr "kumbukumbu ya amana"
+
+msgid "payment method"
+msgstr "njia ya malipo"
+
+msgid "date paid"
+msgstr "tarehe ya malipo"
+
+msgid "paid by"
+msgstr "imelipwa na"
+
+msgid "supporting information"
+msgstr "taarifa za ziada"
+
+msgid "decision note"
+msgstr "maelezo ya uamuzi"
+
+msgid "campaign deposit"
+msgstr "amana ya kampeni"
+
+msgid "campaign funding movement"
+msgstr "mwenendo wa ufadhili wa kampeni"
+
+msgid "reward (TZS)"
+msgstr "zawadi (TZS)"
+
+msgid "earning day"
+msgstr "siku ya mapato"
+
+msgid "reserved"
+msgstr "imehifadhiwa"
+
+msgid "available from"
+msgstr "inapatikana kuanzia"
+
+msgid "cleared"
+msgstr "imekamilika"
+
+msgid "on hold"
+msgstr "imesimamishwa"
+
+msgid "hold reason"
+msgstr "sababu ya kusimamisha"
+
+msgid "real reward"
+msgstr "zawadi halisi"
+
+msgid "Airtel Lipa"
+msgstr "Airtel Lipa"
+
+msgid "Awaiting verification"
+msgstr "Inasubiri uhakiki"
+
+msgid "Committed to the campaign"
+msgstr "Imetengwa kwa kampeni"
+
+msgid "Released from the campaign"
+msgstr "Imerudishwa kutoka kwenye kampeni"
+
+msgid "Offer reserved"
+msgstr "Ofa imehifadhiwa"
+
+msgid "Not rewarded"
+msgstr "Haikupata zawadi"
+
+msgid "Reversed: recovery required"
+msgstr "Imebatilishwa: inahitaji kurejeshwa"
+
+msgid "Enter a whole number greater than zero, or leave it empty for no limit."
+msgstr "Weka namba kamili iliyo juu ya sifuri, au acha wazi kusiwe na kikomo."
+
+msgid "Enter a clearance period from 0 to 720 hours."
+msgstr "Weka kipindi cha kusubiri kati ya saa 0 na 720."
+
+msgid "These settings were changed by someone else. Reload and try again."
+msgstr "Mipangilio hii imebadilishwa na mtu mwingine. Pakia upya kisha ujaribu tena."
+
+msgid "You have reached today's earning limit. Come back tomorrow."
+msgstr "Umefikia kikomo cha mapato cha leo. Rudi kesho."
+
+msgid "You have reached today's limit of rewarded views. Come back tomorrow."
+msgstr "Umefikia kikomo cha leo cha utazamaji wenye zawadi. Rudi kesho."
+
+msgid "This campaign's reward funding is used up for now."
+msgstr "Ufadhili wa zawadi za kampeni hii umekwisha kwa sasa."
+
+msgid "Real TZS rewards are not active at the moment."
+msgstr "Zawadi halisi za TZS hazipatikani kwa sasa."
+
+msgid "Not enough of the video was watched."
+msgstr "Sehemu ya kutosha ya video haikutazamwa."
+
+msgid "Parts of the video were skipped."
+msgstr "Baadhi ya sehemu za video zilirukwa."
+
+msgid "The video's length could not be confirmed."
+msgstr "Urefu wa video haukuweza kuthibitishwa."
+
+msgid "Playback never started."
+msgstr "Uchezaji haukuanza kamwe."
+
+msgid "This campaign was already rewarded the maximum number of times."
+msgstr "Kampeni hii tayari imelipa zawadi idadi ya juu ya mara zinazoruhusiwa."
+
+msgid "After review, the view was not accepted."
+msgstr "Baada ya ukaguzi, utazamaji haukukubaliwa."
+
+msgid "The verified view was withdrawn."
+msgstr "Utazamaji uliohakikiwa uliondolewa."
+
+msgid "The session ended before it could be verified."
+msgstr "Kipindi kiliisha kabla hakijahakikiwa."
+
+msgid "Your account cannot receive rewards at the moment."
+msgstr "Akaunti yako haiwezi kupokea zawadi kwa sasa."
+
+msgid "Another video was started before this one was finished."
+msgstr "Video nyingine ilianzishwa kabla hii haijamalizika."
+
+msgid "This view did not qualify for a reward."
+msgstr "Utazamaji huu haukustahili zawadi."
+
+msgid "No reward for this view"
+msgstr "Hakuna zawadi kwa utazamaji huu"
+
+msgid "Your view of “{name}” did not earn the TZS {amount} offered: {reason__t}"
+msgstr "Utazamaji wako wa “{name}” haukupata TZS {amount} zilizoahidiwa: {reason__t}"
+
+msgid "Reward pending: TZS {amount}"
+msgstr "Zawadi inasubiri: TZS {amount}"
+
+msgid "Your verified view of “{name}” earned TZS {amount}. It becomes available on {clears}."
+msgstr "Utazamaji wako uliohakikiwa wa “{name}” umepata TZS {amount}. Itapatikana tarehe {clears}."
+
+msgid "TZS {amount} is now available"
+msgstr "TZS {amount} sasa inapatikana"
+
+msgid "Your reward for “{name}” has cleared and is in your available balance."
+msgstr "Zawadi yako ya “{name}” imekamilisha kipindi cha kusubiri na iko kwenye salio lako linalopatikana."
+
+msgid "Reward reversed: TZS {amount}"
+msgstr "Zawadi imebatilishwa: TZS {amount}"
+
+msgid "The TZS {amount} reward for your view of “{name}” was reversed after a review."
+msgstr "Zawadi ya TZS {amount} ya utazamaji wako wa “{name}” ilibatilishwa baada ya ukaguzi."
+
+msgid "You cannot decide your own reward."
+msgstr "Huwezi kuamua zawadi yako mwenyewe."
+
+msgid "Real TZS rewards are switched off, so no money can be posted."
+msgstr "Zawadi halisi za TZS zimezimwa, kwa hiyo hakuna fedha inayoweza kurekodiwa."
+
+msgid "Only pending rewards can be held or released."
+msgstr "Zawadi zinazosubiri pekee ndizo zinaweza kusimamishwa au kuachiliwa."
+
+msgid "Rewards and credits"
+msgstr "Zawadi na krediti"
+
+msgid "reward type"
+msgstr "aina ya zawadi"
+
+msgid "reward per verified view"
+msgstr "zawadi kwa kila utazamaji uliohakikiwa"
+
+msgid "Non-cash credits"
+msgstr "Krediti zisizo fedha"
+
+msgid "Real TZS"
+msgstr "TZS halisi"
+
+msgid "Choose the reward type."
+msgstr "Chagua aina ya zawadi."
+
+msgid "TZS reward policy awaiting a second approver"
+msgstr "Sera ya zawadi ya TZS inasubiri mwidhinishaji wa pili"
+
+msgid "Reward policies need an approved campaign."
+msgstr "Sera za zawadi zinahitaji kampeni iliyoidhinishwa."
+
+msgid "Cannot exceed the campaign's approved maximum per view (%(n)s)."
+msgstr "Haiwezi kuzidi kiwango cha juu kwa kila utazamaji kilichoidhinishwa kwa kampeni (%(n)s)."
+
+msgid "Reward"
+msgstr "Zawadi"
+
+msgid "Reward cleared"
+msgstr "Zawadi imekamilika"
+
+msgid "Your wallet is open."
+msgstr "Pochi yako imefunguliwa."
+
+msgid "Rewards and funding"
+msgstr "Zawadi na ufadhili"
+
+msgid "Real TZS rewards are active."
+msgstr "Zawadi halisi za TZS zimewashwa."
+
+msgid "Verified views of funded campaigns create real obligations to members."
+msgstr "Utazamaji uliohakikiwa wa kampeni zilizofadhiliwa huleta deni halisi kwa wanachama."
+
+msgid "Real TZS rewards are switched off."
+msgstr "Zawadi halisi za TZS zimezimwa."
+
+msgid "You can prepare rates, funding and limits. Members are offered no TZS and nothing is posted until real rewards are activated for this deployment after funding, accounting, legal and regulatory approval. Withdrawals stay unavailable."
+msgstr "Unaweza kuandaa viwango, ufadhili na vikomo. Wanachama hawapewi TZS yoyote na hakuna kinachorekodiwa hadi zawadi halisi ziwashwe kwenye mfumo huu baada ya idhini ya ufadhili, uhasibu, sheria na mamlaka za udhibiti. Utoaji wa pesa unabaki haupatikani."
+
+msgid "Paying TZS"
+msgstr "Inalipa TZS"
+
+msgid "Needs funding"
+msgstr "Inahitaji ufadhili"
+
+msgid "Ready: rewards switched off"
+msgstr "Iko tayari: zawadi zimezimwa"
+
+msgid "Credits only"
+msgstr "Krediti pekee"
+
+msgid "No reward"
+msgstr "Hakuna zawadi"
+
+msgid "Deposit"
+msgstr "Amana"
+
+msgid "Campaign funding"
+msgstr "Ufadhili wa kampeni"
+
+msgid "Payment method"
+msgstr "Njia ya malipo"
+
+msgid "Date paid"
+msgstr "Tarehe ya malipo"
+
+msgid "Paid by"
+msgstr "Imelipwa na"
+
+msgid "Supporting information"
+msgstr "Taarifa za ziada"
+
+msgid "Recorded by"
+msgstr "Imerekodiwa na"
+
+msgid "You recorded this deposit, so a different person must verify or reject it."
+msgstr "Wewe ndiye uliyerekodi amana hii, kwa hiyo mtu mwingine lazima aihakiki au aikatae."
+
+msgid "Verify the receipt"
+msgstr "Hakiki kupokelewa"
+
+msgid "I found %(amount)s with reference %(ref)s in the Airtel Lipa business records or the bank statement."
+msgstr "Nimeona %(amount)s yenye kumbukumbu %(ref)s kwenye rekodi za biashara za Airtel Lipa au taarifa ya benki."
+
+msgid "Verify and make the funds available"
+msgstr "Hakiki na fanya fedha zipatikane"
+
+msgid "Reason (to reject)"
+msgstr "Sababu (ya kukataa)"
+
+msgid "Reject: funds not found"
+msgstr "Kataa: fedha hazijaonekana"
+
+msgid "Video rewards"
+msgstr "Zawadi za video"
+
+msgid "Record each deposit an advertiser (or ClipCash itself) paid by Airtel Lipa or bank transfer. A different person verifies the money in the provider or bank records; only verified deposits can fund campaigns. Membership fees can never fund rewards."
+msgstr "Rekodi kila amana ambayo mtangazaji (au ClipCash yenyewe) amelipa kwa Airtel Lipa au uhamisho wa benki. Mtu mwingine huhakiki fedha kwenye rekodi za mtoa huduma au benki; amana zilizohakikiwa pekee ndizo zinaweza kufadhili kampeni. Ada za uanachama haziwezi kamwe kufadhili zawadi."
+
+msgid "Verified funds not yet committed"
+msgstr "Fedha zilizohakikiwa ambazo bado hazijatengwa"
+
+msgid "%(n)s deposit awaiting verification"
+msgid_plural "%(n)s deposits awaiting verification"
+msgstr[0] "amana %(n)s inasubiri uhakiki"
+msgstr[1] "amana %(n)s zinasubiri uhakiki"
+
+msgid "No approved organizations."
+msgstr "Hakuna mashirika yaliyoidhinishwa."
+
+msgid "Record a deposit"
+msgstr "Rekodi amana"
+
+msgid "Choose…"
+msgstr "Chagua…"
+
+msgid "Paid by (name on the payment)"
+msgstr "Imelipwa na (jina lililo kwenye malipo)"
+
+msgid "Recording a deposit moves no money. The reference alone is never proof of payment."
+msgstr "Kurekodi amana hakuhamishi fedha yoyote. Kumbukumbu pekee si uthibitisho wa malipo."
+
+msgid "Record and send for verification"
+msgstr "Rekodi na tuma kwa uhakiki"
+
+msgid "Method"
+msgstr "Njia"
+
+msgid "No deposits recorded."
+msgstr "Hakuna amana zilizorekodiwa."
+
+msgid "Earning limits"
+msgstr "Vikomo vya mapato"
+
+msgid "Limits count each member's rewarded views per day in East Africa Time. Platform limits apply to everyone; a plan limit applies to that plan's members as well, so the lower limit always wins and no plan can go above a platform limit. Leave a field empty for no limit."
+msgstr "Vikomo huhesabu utazamaji wenye zawadi wa kila mwanachama kwa siku kwa saa za Afrika Mashariki. Vikomo vya mfumo vinamhusu kila mtu; kikomo cha mpango kinawahusu pia wanachama wa mpango huo, kwa hiyo kikomo kilicho chini ndicho hutumika na hakuna mpango unaoweza kuzidi kikomo cha mfumo. Acha sehemu wazi kusiwe na kikomo."
+
+msgid "Platform limits and clearance"
+msgstr "Vikomo vya mfumo na kipindi cha kusubiri"
+
+msgid "Daily earning limit per member (TZS)"
+msgstr "Kikomo cha mapato kwa siku kwa kila mwanachama (TZS)"
+
+msgid "Daily rewarded views per member"
+msgstr "Utazamaji wenye zawadi kwa siku kwa kila mwanachama"
+
+msgid "Clearance period (hours before a reward becomes available)"
+msgstr "Kipindi cha kusubiri (saa kabla zawadi haijapatikana)"
+
+msgid "Save platform rules"
+msgstr "Hifadhi kanuni za mfumo"
+
+msgid "Limits by membership plan"
+msgstr "Vikomo kwa mpango wa uanachama"
+
+msgid "Plan limits"
+msgstr "Vikomo vya mpango"
+
+msgid "Effective for its members"
+msgstr "Vinavyotumika kwa wanachama wake"
+
+msgid "TZS per day"
+msgstr "TZS kwa siku"
+
+msgid "Views per day"
+msgstr "Utazamaji kwa siku"
+
+msgid "No TZS limit"
+msgstr "Hakuna kikomo cha TZS"
+
+msgid "%(n)s view"
+msgid_plural "%(n)s views"
+msgstr[0] "utazamaji %(n)s"
+msgstr[1] "utazamaji %(n)s"
+
+msgid "No view limit"
+msgstr "Hakuna kikomo cha utazamaji"
+
+msgid "No active plans."
+msgstr "Hakuna mipango inayotumika."
+
+msgid "Video reward"
+msgstr "Zawadi ya video"
+
+msgid "All video rewards"
+msgstr "Zawadi zote za video"
+
+msgid "Reward per verified view"
+msgstr "Zawadi kwa kila utazamaji uliohakikiwa"
+
+msgid "since"
+msgstr "tangu"
+
+msgid "No reward: views of this video earn nothing"
+msgstr "Hakuna zawadi: utazamaji wa video hii haupati chochote"
+
+msgid "All plans that include the video"
+msgstr "Mipango yote inayojumuisha video"
+
+msgid "Change eligible plans"
+msgstr "Badilisha mipango inayostahili"
+
+msgid "Daily limits"
+msgstr "Vikomo vya kila siku"
+
+msgid "Platform and plan earning limits"
+msgstr "Vikomo vya mapato vya mfumo na vya mpango"
+
+msgid "Verified funding committed"
+msgstr "Ufadhili uliohakikiwa na kutengwa"
+
+msgid "Consumed by rewards"
+msgstr "Uliotumiwa na zawadi"
+
+msgid "Affordable rewarded views"
+msgstr "Utazamaji wenye zawadi unaoweza kulipwa"
+
+msgid "Pending obligations"
+msgstr "Madeni yanayosubiri"
+
+msgid "Released obligations"
+msgstr "Madeni yaliyoachiliwa"
+
+msgid "Reserved for open sessions: %(reserved)s. Released back to the advertiser: %(released)s. The advertiser's verified, unallocated funds: %(org)s."
+msgstr "Kilichohifadhiwa kwa vipindi vilivyo wazi: %(reserved)s. Kilichorudishwa kwa mtangazaji: %(released)s. Fedha za mtangazaji zilizohakikiwa ambazo hazijatengwa: %(org)s."
+
+msgid "Commit verified funds (TZS)"
+msgstr "Tenga fedha zilizohakikiwa (TZS)"
+
+msgid "Commit to this campaign"
+msgstr "Tenga kwa kampeni hii"
+
+msgid "Release unused funds (TZS)"
+msgstr "Rudisha fedha zisizotumika (TZS)"
+
+msgid "Release to the advertiser"
+msgstr "Rudisha kwa mtangazaji"
+
+msgid "Change the reward"
+msgstr "Badilisha zawadi"
+
+msgid "A change is a draft. A different administrator must approve it. Sessions already started keep the reward they were shown; to stop rewards, retire the approved policy."
+msgstr "Badiliko ni rasimu. Msimamizi mwingine lazima aliidhinishe. Vipindi vilivyokwisha anza huendelea na zawadi waliyoonyeshwa; ili kusitisha zawadi, staafisha sera iliyoidhinishwa."
+
+msgid "Reward type"
+msgstr "Aina ya zawadi"
+
+msgid "Real TZS (paid from this campaign's verified funding)"
+msgstr "TZS halisi (hulipwa kutoka kwenye ufadhili uliohakikiwa wa kampeni hii)"
+
+msgid "Non-cash credits (never money)"
+msgstr "Krediti zisizo fedha (si pesa kamwe)"
+
+msgid "Amount per verified view (1 to %(max)s)"
+msgstr "Kiasi kwa kila utazamaji uliohakikiwa (1 hadi %(max)s)"
+
+msgid "Save draft for approval"
+msgstr "Hifadhi rasimu kwa idhini"
+
+msgid "Open the draft awaiting approval"
+msgstr "Fungua rasimu inayosubiri idhini"
+
+msgid "Reward history"
+msgstr "Historia ya zawadi"
+
+msgid "No reward has been configured."
+msgstr "Hakuna zawadi iliyowekwa."
+
+msgid "Rewards for this video"
+msgstr "Zawadi za video hii"
+
+msgid "On hold"
+msgstr "Imesimamishwa"
+
+msgid "Available from"
+msgstr "Inapatikana kuanzia"
+
+msgid "Lift hold"
+msgstr "Ondoa usimamishaji"
+
+msgid "Hold"
+msgstr "Simamisha"
+
+msgid "No rewards yet."
+msgstr "Bado hakuna zawadi."
+
+msgid "Released obligations (available to members)"
+msgstr "Madeni yaliyoachiliwa (yanapatikana kwa wanachama)"
+
+msgid "Reserved for open sessions"
+msgstr "Kilichohifadhiwa kwa vipindi vilivyo wazi"
+
+msgid "Clearance period"
+msgstr "Kipindi cha kusubiri"
+
+msgid "%(n)s hour"
+msgid_plural "%(n)s hours"
+msgstr[0] "saa %(n)s"
+msgstr[1] "saa %(n)s"
+
+msgid "Rewards on hold"
+msgstr "Zawadi zilizosimamishwa"
+
+msgid "Need manual recovery"
+msgstr "Zinahitaji kurejeshwa kwa mkono"
+
+msgid "Search campaigns, videos or advertisers"
+msgstr "Tafuta kampeni, video au watangazaji"
+
+msgid "Rewards by campaign"
+msgstr "Zawadi kwa kampeni"
+
+msgid "Video / campaign"
+msgstr "Video / kampeni"
+
+msgid "Obligations"
+msgstr "Madeni"
+
+msgid "Draft awaiting approval"
+msgstr "Rasimu inasubiri idhini"
+
+msgid "Consumed"
+msgstr "Iliyotumika"
+
+msgid "No approved campaigns yet."
+msgstr "Bado hakuna kampeni zilizoidhinishwa."
+
+msgid "Reward policy"
+msgstr "Sera ya zawadi"
+
+msgid "Approved policies cannot be edited. Sessions already started keep the TZS amount they were offered."
+msgstr "Sera zilizoidhinishwa haziwezi kuhaririwa. Vipindi vilivyokwisha anza huendelea na kiasi cha TZS walichoahidiwa."
+
+msgid "Only campaigns that show a TZS amount pay real rewards."
+msgstr "Kampeni zinazoonyesha kiasi cha TZS pekee ndizo hulipa zawadi halisi."
+
+msgid "A reward is paid only after ClipCash verifies the view, while the campaign's funding and your daily limit allow it. It stays pending during a clearance period before it becomes available. Earnings are not guaranteed, and withdrawals are not available yet."
+msgstr "Zawadi hulipwa tu baada ya ClipCash kuhakiki utazamaji, wakati ufadhili wa kampeni na kikomo chako cha kila siku vinaruhusu. Hubaki ikisubiri kwa kipindi cha kusubiri kabla haijapatikana. Mapato hayana uhakika, na utoaji wa pesa bado haupatikani."
+
+msgid "%(amount)s per verified view"
+msgstr "%(amount)s kwa kila utazamaji uliohakikiwa"
+
+msgid "Your wallet shows real TZS rewards from verified views."
+msgstr "Pochi yako inaonyesha zawadi halisi za TZS kutokana na utazamaji uliohakikiwa."
+
+msgid "New rewards are pending for a clearance period, then become available. Non-cash credits never appear here. Withdrawals are not available yet."
+msgstr "Zawadi mpya husubiri kwa kipindi cha kusubiri, kisha hupatikana. Krediti zisizo fedha haziwahi kuonekana hapa. Utoaji wa pesa bado haupatikani."
+
+msgid "This session earns %(amount)s if ClipCash verifies the view. The amount is fixed for this session."
+msgstr "Kipindi hiki kinapata %(amount)s ikiwa ClipCash itahakiki utazamaji. Kiasi hiki ni cha kudumu kwa kipindi hiki."
+
+msgid "%(amount)s reward pending"
+msgstr "Zawadi ya %(amount)s inasubiri"
+
+msgid "It becomes available in your wallet on %(date)s, unless the view is reviewed."
+msgstr "Itapatikana kwenye pochi yako tarehe %(date)s, isipokuwa utazamaji ukaguliwe."
+
+msgid "It is on hold while ClipCash reviews it."
+msgstr "Imesimamishwa wakati ClipCash inaikagua."
+
+msgid "%(amount)s added to your available balance."
+msgstr "%(amount)s imeongezwa kwenye salio lako linalopatikana."
+
+msgid "No reward for this view."
+msgstr "Hakuna zawadi kwa utazamaji huu."
+
+msgid "The %(amount)s reward was reversed after a review."
+msgstr "Zawadi ya %(amount)s ilibatilishwa baada ya ukaguzi."
+
+msgid "Open your wallet"
+msgstr "Fungua pochi yako"
+
+msgid "Earn %(amount)s per verified view"
+msgstr "Pata %(amount)s kwa kila utazamaji uliohakikiwa"
+
+msgid "ClipCash checks the session on its server when the video ends; only a verified view earns the reward."
+msgstr "ClipCash hukagua kipindi kwenye seva yake video inapoisha; utazamaji uliohakikiwa pekee ndio hupata zawadi."
+
+msgid "The TZS amount shown when you press Start is fixed for that session. It is pending for a clearance period, then becomes available in your wallet. Withdrawals are not available yet."
+msgstr "Kiasi cha TZS kinachoonyeshwa unapobonyeza Anza ni cha kudumu kwa kipindi hicho. Husubiri kwa kipindi cha kusubiri, kisha hupatikana kwenye pochi yako. Utoaji wa pesa bado haupatikani."
+
+msgid "Watch a sponsored video in full and, once ClipCash verifies the view, you earn the reward shown: a TZS amount, or non-cash credits that are not money. Library videos earn nothing."
+msgstr "Tazama video iliyodhaminiwa yote na, ClipCash ikishahakiki utazamaji, unapata zawadi iliyoonyeshwa: kiasi cha TZS, au krediti zisizo fedha. Video za maktaba hazipati chochote."
+
+msgid "Pending rewards"
+msgstr "Zawadi zinazosubiri"
+
+msgid "On hold for review"
+msgstr "Imesimamishwa kwa ukaguzi"
+
+msgid "Available from %(date)s"
+msgstr "Inapatikana kuanzia %(date)s"
+
+msgid "No rewards are pending."
+msgstr "Hakuna zawadi zinazosubiri."
+
+msgid "Today: %(n)s rewarded view, %(total)s."
+msgid_plural "Today: %(n)s rewarded views, %(total)s."
+msgstr[0] "Leo: utazamaji %(n)s wenye zawadi, %(total)s."
+msgstr[1] "Leo: utazamaji %(n)s wenye zawadi, %(total)s."
+
+msgid "Daily earning limit: %(limit)s."
+msgstr "Kikomo cha mapato kwa siku: %(limit)s."
+
+msgid "Daily limit: %(n)s rewarded view."
+msgid_plural "Daily limit: %(n)s rewarded views."
+msgstr[0] "Kikomo cha kila siku: utazamaji %(n)s wenye zawadi."
+msgstr[1] "Kikomo cha kila siku: utazamaji %(n)s wenye zawadi."
+
+msgid "Open your wallet to see where real rewards appear. Opening a wallet does not create any money."
+msgstr "Fungua pochi yako uone mahali zawadi halisi zinapoonekana. Kufungua pochi hakuleti fedha yoyote."
+
+msgid "No wallet transactions yet. Rewards appear here after a verified view of a campaign that shows a TZS amount."
+msgstr "Bado hakuna miamala ya pochi. Zawadi huonekana hapa baada ya utazamaji uliohakikiwa wa kampeni inayoonyesha kiasi cha TZS."

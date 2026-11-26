@@ -322,11 +322,12 @@ class WalletRestriction(BaseModel):
 
 
 class WalletTransaction(UUIDModel):
-    """Immutable projection of one journal entry onto one wallet bucket. FUTURE ONLY:
-    the database refuses inserts in Phase 09 (migration 0005)."""
+    """Immutable projection of one journal entry onto one wallet bucket. FIN-01: inserted only
+    for the reward posting types (wallets 0006); updates and deletes are always refused."""
 
     class Category(models.TextChoices):
-        REWARD_CREDIT = "REWARD_CREDIT", _("Advertiser-funded reward")
+        REWARD_CREDIT = "REWARD_CREDIT", _("Reward")
+        REWARD_CLEARANCE = "REWARD_CLEARANCE", _("Reward cleared")
         WITHDRAWAL_RESERVATION = "WITHDRAWAL_RESERVATION", _("Withdrawal reserved")
         WITHDRAWAL_SETTLEMENT = "WITHDRAWAL_SETTLEMENT", _("Withdrawal paid")
         WITHDRAWAL_RELEASE = "WITHDRAWAL_RELEASE", _("Withdrawal released")

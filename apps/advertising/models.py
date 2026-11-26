@@ -7,9 +7,11 @@ Advertisers and campaigns (Phase 05). Use apps.advertising.services.
   belong to an organization (no self-approval).
 * An organization uses a Phase 04 video only through an explicit staff grant
   (AdvertiserVideo); media is never duplicated.
-* Campaign budgets are DEMONSTRATION figures only. They are not money: nothing
-  here is written to the ledger, and funding_status is locked to UNFUNDED by
-  the database until Phase 08 adds reconciled advertiser funding.
+* Campaign budgets (demo_budget_amount, demo_reward_per_view) are the figures
+  approved with the campaign; they are not money. FIN-01: real funding is only
+  verified deposits committed through apps.earnings.funding to the campaign's
+  restricted ledger account. funding_status becomes VERIFIED only together with
+  that ledger entry (funding_entry), which the database checks.
 * Approval covers one exact revision: any change returns the campaign to
   DRAFT with a new revision, so it must be reviewed again.
 
@@ -181,9 +183,9 @@ class Campaign(BaseModel):
         VIDEO_VIEW = "VIDEO_VIEW", _("Sponsored video view")
 
     class Funding(models.TextChoices):
-        # Only UNFUNDED is accepted by the database until Phase 08 adds
-        # reconciled advertiser funding (see migration 0002).
-        UNFUNDED = "UNFUNDED", _("Not funded (demonstration only)")
+        # FIN-01: UNFUNDED, or VERIFIED with the campaign.funding_committed entry that funded it
+        # (migration 0004). The other values are reserved and refused by the database.
+        UNFUNDED = "UNFUNDED", _("Not funded")
         PENDING_RECONCILIATION = "PENDING_RECONCILIATION", _("Awaiting reconciliation")
         VERIFIED = "VERIFIED", _("Funding verified")
         REJECTED = "REJECTED", _("Funding rejected")
@@ -205,6 +207,8 @@ class Campaign(BaseModel):
     demo_currency = models.CharField(_("currency"), max_length=3, default=DEFAULT_CURRENCY)
     funding_status = models.CharField(_("funding"), max_length=24, choices=Funding.choices,
                                       default=Funding.UNFUNDED)
+    funding_entry = models.ForeignKey("wallets.JournalEntry", null=True, blank=True, on_delete=models.PROTECT,
+                                      related_name="+", verbose_name=_("first funding entry"))
 
     status = models.CharField(_("status"), max_length=10, choices=Status.choices, default=Status.DRAFT)
     revision = models.PositiveIntegerField(_("revision"), default=1)
@@ -239,8 +243,11 @@ class Campaign(BaseModel):
                                    & Q(demo_reward_per_view__lte=F("demo_budget_amount")),
                                    name="adv_campaign_demo_budget_valid"),
             models.CheckConstraint(condition=Q(demo_currency="TZS"), name="adv_campaign_currency_supported"),
-            # Financial firewall: no campaign can be funded until Phase 08.
-            models.CheckConstraint(condition=Q(funding_status="UNFUNDED"), name="adv_campaign_funding_locked"),
+            # FIN-01 financial firewall: VERIFIED only with the ledger entry that committed verified funds
+            # (the database also checks that entry's type and campaign, migration 0004).
+            models.CheckConstraint(condition=(Q(funding_status="UNFUNDED") & Q(funding_entry__isnull=True))
+                                   | (Q(funding_status="VERIFIED") & Q(funding_entry__isnull=False)),
+                                   name="adv_campaign_funding_evidence"),
             models.CheckConstraint(condition=Q(status__in=["DRAFT", "SUBMITTED", "REJECTED", "SCHEDULED", "ACTIVE",
                                                            "PAUSED", "COMPLETED", "CANCELLED", "ARCHIVED"]),
                                    name="adv_campaign_status_valid"),
@@ -264,7 +271,7 @@ class Campaign(BaseModel):
 
     @property
     def financially_eligible(self):
-        """Real-money eligibility. Always False until Phase 08 (locked in code and database)."""
+        """Real-money eligibility: verified committed funding and real-money rewards switched on."""
         from apps.core import features
 
         return self.funding_status == self.Funding.VERIFIED and features.is_enabled("real_money_rewards")

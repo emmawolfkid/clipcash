@@ -72,8 +72,12 @@ class SessionView(VerifiedAccountRequiredMixin, View):
             session, reason, playback = services.playback_for(request.user, session_id)
         except services.NotFound:
             raise Http404 from None
+        from apps.earnings import services as earnings
+
+        reward = earnings.reward_for_session(session)
         return render(request, "viewing/session.html", {
             "nav": "watch", "session": session, "playback": playback, "reason": reason,
+            "reward_reason": earnings.reason_message(reward.reasons[0]) if reward and reward.reasons else "",
             "message": services.denial_message(reason) if reason not in ("ok", "session_closed") else "",
             "heartbeat_seconds": settings.VIEWING_HEARTBEAT_SECONDS})
 

@@ -16,6 +16,14 @@ def tzs(amount):
 
 
 @register.filter
+def policy_amount(policy):
+    """FIN-01: a reward policy's amount in its own unit: ``TZS 100`` (real) or ``100 credits`` (non-cash)."""
+    if getattr(policy, "kind", "CREDITS") == "TZS":
+        return tzs(policy.reward_amount)
+    return credits(policy.reward_amount)
+
+
+@register.filter
 def credits(amount):
     """CR-01: ``{{ 1500|credits }}`` -> ``1,500 credits`` (non-cash campaign credits, never money)."""
     try:

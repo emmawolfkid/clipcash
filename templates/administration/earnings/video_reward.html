@@ -1,0 +1,73 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Video reward" %} · {{ campaign.name }}{% endblock %}
+{% block console_content %}{% with f=row.funding policy=row.policy %}
+<div class="page-heading"><h1 class="page-title">{{ campaign.name }}</h1>
+<span><a href="{% url 'administration:video_rewards' %}">{% translate "All video rewards" %}</a> · <a href="{% url 'administration:campaign_review' campaign.pk %}">{% translate "Campaign" %}</a></span></div>
+{% include "administration/earnings/_activation.html" %}
+
+<section class="workspace-section" aria-labelledby="summary-title"><h2 class="workspace-section__title" id="summary-title">{% translate "Reward" %} {% include "administration/earnings/_state.html" with state=row.state %}</h2>
+<dl class="details">
+  <dt>{% translate "Video" %}</dt><dd>{{ campaign.video.title }}</dd>
+  <dt>{% translate "Advertiser" %}</dt><dd>{{ campaign.organization.display_name }}</dd>
+  <dt>{% translate "Reward per verified view" %}</dt><dd>{% if policy %}<strong>{{ policy|policy_amount }}</strong> · {% if policy.kind == "TZS" %}{% translate "Real TZS" %}{% else %}{% translate "Non-cash credits" %}{% endif %} · <a href="{% url 'administration:reward_policy' policy.pk %}">v{{ policy.version }}</a> · {% translate "since" %} {{ policy.effective_from|date:"SHORT_DATETIME_FORMAT" }}{% else %}{% translate "No reward: views of this video earn nothing" %}{% endif %}</dd>
+  <dt>{% translate "Eligible plans" %}</dt><dd>{% if row.plans %}{{ row.plans|join:", " }}{% else %}{% translate "All plans that include the video" %}{% endif %} · <a href="{% url 'administration:campaign_credits' campaign.pk %}">{% translate "Change eligible plans" %}</a></dd>
+  <dt>{% translate "Daily limits" %}</dt><dd><a href="{% url 'administration:earning_rules' %}">{% translate "Platform and plan earning limits" %}</a></dd>
+  <dt>{% translate "Maximum per view (approved with the campaign)" %}</dt><dd>{{ campaign.demo_reward_per_view|tzs }}</dd>
+</dl></section>
+
+<section class="workspace-section" aria-labelledby="funding-title"><h2 class="workspace-section__title" id="funding-title">{% translate "Funding" %}</h2>
+<dl class="metric-row">
+  <div class="metric"><dt>{% translate "Verified funding committed" %}</dt><dd class="financial-amount">{{ f.committed|tzs }}</dd></div>
+  <div class="metric"><dt>{% translate "Consumed by rewards" %}</dt><dd class="financial-amount">{{ f.consumed|tzs }}</dd></div>
+  <div class="metric"><dt>{% translate "Remaining" %}</dt><dd class="financial-amount">{{ f.remaining|tzs }}</dd></div>
+  <div class="metric"><dt>{% translate "Affordable rewarded views" %}</dt><dd>{% if f.affordable_views is not None %}{{ f.affordable_views }}{% else %}—{% endif %}</dd></div>
+  <div class="metric"><dt>{% translate "Pending obligations" %}</dt><dd class="financial-amount">{{ f.pending|tzs }}</dd></div>
+  <div class="metric"><dt>{% translate "Released obligations" %}</dt><dd class="financial-amount">{{ f.available|tzs }}</dd></div>
+</dl>
+<p class="lead">{% blocktranslate with reserved=f.reserved|tzs released=f.released|tzs org=org_balance|tzs %}Reserved for open sessions: {{ reserved }}. Released back to the advertiser: {{ released }}. The advertiser's verified, unallocated funds: {{ org }}.{% endblocktranslate %}</p>
+{% if can_allocate %}<div class="form-row">
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="commit">
+  <label for="commit-amount">{% translate "Commit verified funds (TZS)" %}</label><input id="commit-amount" name="amount" type="number" min="1" step="1" required>
+  <label for="commit-note">{% translate "Note" %}</label><input id="commit-note" name="note" maxlength="300">
+  <button class="button" type="submit">{% translate "Commit to this campaign" %}</button></form>
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="release">
+  <label for="release-amount">{% translate "Release unused funds (TZS)" %}</label><input id="release-amount" name="amount" type="number" min="1" max="{{ f.remaining }}" step="1" required>
+  <label for="release-reason">{% translate "Reason" %}</label><input id="release-reason" name="reason" minlength="5" maxlength="300" required>
+  <button class="button button--secondary" type="submit">{% translate "Release to the advertiser" %}</button></form>
+</div>{% endif %}
+{% if movements %}<ul class="list">{% for m in movements %}<li class="list__item"><span>{{ m.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ m.get_kind_display }} · {{ m.amount|tzs }}{% if m.reason %} · {{ m.reason }}{% endif %}</span><span>{{ m.actor.email }}</span></li>{% endfor %}</ul>{% endif %}
+</section>
+
+{% if can_configure %}
+<section class="workspace-section" aria-labelledby="rate-title"><h2 class="workspace-section__title" id="rate-title">{% translate "Change the reward" %}</h2>
+<p class="lead">{% translate "A change is a draft. A different administrator must approve it. Sessions already started keep the reward they were shown; to stop rewards, retire the approved policy." %}</p>
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="draft">
+  <fieldset><legend>{% translate "Reward type" %}</legend>
+    <label><input type="radio" name="kind" value="TZS" checked> {% translate "Real TZS (paid from this campaign's verified funding)" %}</label>
+    <label><input type="radio" name="kind" value="CREDITS"> {% translate "Non-cash credits (never money)" %}</label></fieldset>
+  <label for="r-amount">{% blocktranslate with max=campaign.demo_reward_per_view %}Amount per verified view (1 to {{ max }}){% endblocktranslate %}</label>
+  <input id="r-amount" name="reward_amount" type="number" min="1" max="{{ campaign.demo_reward_per_view }}" step="1" required>
+  <label for="r-notes">{% translate "Notes" %}</label><input id="r-notes" name="notes" maxlength="300">
+  <button class="button" type="submit">{% translate "Save draft for approval" %}</button>
+</form>
+{% if row.draft %}<p><a href="{% url 'administration:reward_policy' row.draft.pk %}">{% translate "Open the draft awaiting approval" %} (v{{ row.draft.version }}, {{ row.draft|policy_amount }})</a></p>{% endif %}
+</section>{% endif %}
+
+<section class="workspace-section" aria-labelledby="history-title"><h2 class="workspace-section__title" id="history-title">{% translate "Reward history" %}</h2>
+<ul class="list">{% for p in policies %}<li class="list__item"><a href="{% url 'administration:reward_policy' p.pk %}">v{{ p.version }} · {{ p|policy_amount }}</a><span class="badge badge--{{ p.status|lower }}">{{ p.get_status_display }}</span></li>{% empty %}<li>{% translate "No reward has been configured." %}</li>{% endfor %}</ul></section>
+
+<section class="workspace-section" aria-labelledby="rewards-title"><h2 class="workspace-section__title" id="rewards-title">{% translate "Rewards for this video" %}</h2>
+<form class="toolbar" method="get"><label class="visually-hidden" for="r-status">{% translate "Status" %}</label><select id="r-status" name="status"><option value="">{% translate "All" %}</option>{% for value, label in statuses %}<option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select><button class="button button--secondary" type="submit">{% translate "Filter" %}</button></form>
+<table class="table workspace-table hide-narrow-2"><caption class="visually-hidden">{% translate "Rewards for this video" %}</caption>
+<thead><tr><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Reserved" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Actions" %}</th></tr></thead>
+<tbody>{% for r in rewards_page.object_list %}<tr>
+  <td>{{ r.member.email|default:r.member.phone_number }}</td><td>{{ r.reserved_at|date:"SHORT_DATETIME_FORMAT" }}</td><td class="financial-amount">{{ r.amount|tzs }}</td>
+  <td><span class="badge badge--{{ r.status|lower }}">{{ r.get_status_display }}</span>{% if r.on_hold %} <span class="badge badge--paused">{% translate "On hold" %}</span>{% endif %}{% if r.status == "PENDING" %}<br><small>{% translate "Available from" %} {{ r.clears_at|date:"SHORT_DATETIME_FORMAT" }}</small>{% endif %}{% if r.status == "RELEASED" and r.reasons %}<br><small>{{ r.reasons.0 }}</small>{% endif %}</td>
+  <td>{% if can_manage_rewards and r.status in "PENDING AVAILABLE RECOVERY_REQUIRED" %}<form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="reward" value="{{ r.pk }}">
+    <label class="visually-hidden" for="reason-{{ r.pk }}">{% translate "Reason" %}</label><input id="reason-{{ r.pk }}" name="reason" minlength="5" maxlength="300" placeholder="{% translate 'Reason' %}" required>
+    {% if r.status == "PENDING" %}{% if r.on_hold %}<button class="button button--secondary" name="action" value="unhold">{% translate "Lift hold" %}</button>{% else %}<button class="button button--secondary" name="action" value="hold">{% translate "Hold" %}</button>{% endif %}{% endif %}
+    <button class="button button--danger" name="action" value="reverse">{% translate "Reverse" %}</button></form>{% else %}—{% endif %}</td>
+</tr>{% empty %}<tr><td colspan="5">{% translate "No rewards yet." %}</td></tr>{% endfor %}</tbody></table>
+{% include "components/pagination.html" with page=rewards_page %}
+</section>
+{% endwith %}{% endblock %}

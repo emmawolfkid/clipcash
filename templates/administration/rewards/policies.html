@@ -8,7 +8,7 @@
   <thead><tr><th scope="col">{% translate "Campaign" %}</th><th scope="col">{% translate "Version" %}</th><th scope="col">{% translate "Credits per view" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Effective" %}</th></tr></thead>
   <tbody>{% for policy in policies %}
     <tr><td><a href="{% url 'administration:reward_policy' policy.pk %}">{{ policy.campaign.name }}</a> · <a href="{% url 'administration:campaign_credits' policy.campaign_id %}">{% translate "credits and eligibility" %}</a></td><td>v{{ policy.version }} ({% translate "rev." %} {{ policy.campaign_revision }})</td>
-      <td>{{ policy.reward_amount|credits }}</td><td><span class="badge badge--{{ policy.status|lower }}">{{ policy.get_status_display }}</span></td>
+      <td>{{ policy|policy_amount }}</td><td><span class="badge badge--{{ policy.status|lower }}">{{ policy.get_status_display }}</span></td>
       <td>{{ policy.effective_from|date:"SHORT_DATETIME_FORMAT"|default:"—" }}{% if policy.effective_until %} – {{ policy.effective_until|date:"SHORT_DATETIME_FORMAT" }}{% endif %}</td></tr>
   {% endfor %}</tbody>
 </table>

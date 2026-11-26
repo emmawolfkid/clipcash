@@ -1,12 +1,13 @@
 """
-Member wallet services (Phase 09). Wallets are identities over ledger accounts;
-they hold NO money in this phase.
+Member wallet services (Phase 09). Wallets are identities over ledger accounts.
 
 * Balances come only from JournalLine rows (``balances``); no balance column is
   ever trusted or edited.
-* There is no credit, debit or transfer path. ``request_wallet_posting`` always
-  refuses (and audits); the database independently refuses journal lines on
-  wallet-linked accounts and any WalletTransaction (migration 0005).
+* FIN-01: the only money movements are real reward postings made by
+  apps.earnings (pending, cleared, reversed); the database refuses every other
+  posting on wallet accounts, any posting on the withdrawal-reservation account
+  and any change to a WalletTransaction (migration 0006). There is still no
+  withdrawal or transfer path: ``request_wallet_posting`` always refuses.
 * Demo rewards (apps.rewards) and sandbox payments (apps.payments) are never read
   as wallet money.
 """
@@ -303,7 +304,20 @@ def reconcile(limit=1000):
     created_events = set(AuditEvent.objects.filter(action="wallets.wallet.created", target_model="wallet")
                          .values_list("target_id", flat=True))
     restricted_ids = set(WalletRestriction.objects.exclude(status=R.LIFTED).values_list("wallet_id", flat=True))
-    transaction_counts = dict(WalletTransaction.objects.values_list("wallet_id").annotate(n=Count("id")))
+    # FIN-01: pending and available accounts move only through reward postings, each line mirrored by
+    # exactly one wallet transaction (so per bucket: transactions in - out == the ledger balance).
+    from .posting_types import WALLET_POSTING_TYPES
+
+    foreign_lines = dict(JournalLine.objects.filter(account_id__in=account_ids)
+                         .exclude(entry__posting_type__in=WALLET_POSTING_TYPES)
+                         .values_list("account_id").annotate(n=Count("id")))
+    txn_totals = {}
+    for wallet_id, bucket, direction, total, count in (
+            WalletTransaction.objects.values_list("wallet_id", "bucket", "direction")
+            .annotate(total=Sum("amount"), n=Count("id"))):
+        net, lines = txn_totals.get((wallet_id, bucket), (0, 0))
+        txn_totals[(wallet_id, bucket)] = (net + (total if direction == WalletTransaction.Direction.IN else -total),
+                                           lines + count)
     for wallet in wallets:
         if wallet_eligibility(wallet.member) == "staff_account":
             _flag(findings, "member_not_eligible", wallet=wallet, detail="Wallet owner is a staff account.")
@@ -317,11 +331,18 @@ def reconcile(limit=1000):
             if projected != account.balance:
                 _flag(findings, "balance_projection_mismatch", wallet=wallet, account=account,
                       detail=f"Journal lines give {projected}; account balance is {account.balance}.")
-            if projected != 0 or account.balance != 0 or line_counts.get(account.pk):
+            if bucket == "reserved":
+                if projected != 0 or account.balance != 0 or line_counts.get(account.pk):
+                    _flag(findings, "unexpected_balance", wallet=wallet, account=account,
+                          detail="Withdrawal reservations must stay empty while withdrawals are locked.")
+                continue
+            if foreign_lines.get(account.pk):
                 _flag(findings, "unexpected_balance", wallet=wallet, account=account,
-                      detail="Wallets must hold no money in this phase.")
-        if transaction_counts.get(wallet.pk):
-            _flag(findings, "unexpected_transactions", wallet=wallet, detail="Wallet transactions exist.")
+                      detail="Only reward postings may move wallet money.")
+            net, count = txn_totals.get((wallet.pk, bucket.upper()), (0, 0))
+            if net != projected or count != line_counts.get(account.pk, 0):
+                _flag(findings, "transaction_projection_mismatch", wallet=wallet, account=account,
+                      detail=f"Wallet transactions give {net} over {count} rows; the ledger gives {projected}.")
         if str(wallet.pk) not in created_events:
             _flag(findings, "missing_audit", wallet=wallet, detail="No wallet-created audit event.")
         expected = Wallet.Status.RESTRICTED if wallet.pk in restricted_ids else Wallet.Status.ACTIVE

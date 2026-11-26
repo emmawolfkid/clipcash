@@ -1,0 +1,30 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Earning limits" %}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><h1 class="page-title">{% translate "Earning limits" %}</h1><a href="{% url 'administration:video_rewards' %}">{% translate "Video rewards" %}</a></div>
+<p class="lead">{% translate "Limits count each member's rewarded views per day in East Africa Time. Platform limits apply to everyone; a plan limit applies to that plan's members as well, so the lower limit always wins and no plan can go above a platform limit. Leave a field empty for no limit." %}</p>
+
+<section class="workspace-section" aria-labelledby="platform-title"><h2 class="workspace-section__title" id="platform-title">{% translate "Platform limits and clearance" %}</h2>
+{% if can_manage %}<form method="post" class="form">{% csrf_token %}<input type="hidden" name="expected_version" value="{{ settings_row.version }}">
+  <label for="g-amount">{% translate "Daily earning limit per member (TZS)" %}</label><input id="g-amount" name="daily_amount_limit" type="number" min="1" step="1" value="{{ settings_row.daily_amount_limit|default_if_none:'' }}">
+  <label for="g-views">{% translate "Daily rewarded views per member" %}</label><input id="g-views" name="daily_view_limit" type="number" min="1" step="1" value="{{ settings_row.daily_view_limit|default_if_none:'' }}">
+  <label for="g-hours">{% translate "Clearance period (hours before a reward becomes available)" %}</label><input id="g-hours" name="clearance_hours" type="number" min="0" max="720" step="1" value="{{ settings_row.clearance_hours }}" required>
+  <button class="button" type="submit">{% translate "Save platform rules" %}</button>
+</form>{% else %}<dl class="details">
+  <dt>{% translate "Daily earning limit per member (TZS)" %}</dt><dd>{{ settings_row.daily_amount_limit|tzs|default:_("No limit") }}</dd>
+  <dt>{% translate "Daily rewarded views per member" %}</dt><dd>{{ settings_row.daily_view_limit|default:_("No limit") }}</dd>
+  <dt>{% translate "Clearance period (hours before a reward becomes available)" %}</dt><dd>{{ settings_row.clearance_hours }}</dd></dl>{% endif %}
+</section>
+
+<section class="workspace-section" aria-labelledby="plans-title"><h2 class="workspace-section__title" id="plans-title">{% translate "Limits by membership plan" %}</h2>
+<table class="table workspace-table"><caption class="visually-hidden">{% translate "Limits by membership plan" %}</caption>
+<thead><tr><th scope="col">{% translate "Plan" %}</th><th scope="col">{% translate "Plan limits" %}</th><th scope="col">{% translate "Effective for its members" %}</th></tr></thead>
+<tbody>{% for row in plan_rows %}<tr><td>{{ row.plan.name }}</td>
+  <td>{% if can_manage %}<form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="plan"><input type="hidden" name="plan" value="{{ row.plan.pk }}">
+    <label for="p-amount-{{ row.plan.pk }}">{% translate "TZS per day" %}</label><input id="p-amount-{{ row.plan.pk }}" name="daily_amount_limit" type="number" min="1" step="1" value="{{ row.limit.daily_amount_limit|default_if_none:'' }}">
+    <label for="p-views-{{ row.plan.pk }}">{% translate "Views per day" %}</label><input id="p-views-{{ row.plan.pk }}" name="daily_view_limit" type="number" min="1" step="1" value="{{ row.limit.daily_view_limit|default_if_none:'' }}">
+    <button class="button button--secondary" type="submit">{% translate "Save" %}</button></form>
+  {% else %}{{ row.limit.daily_amount_limit|tzs|default:"—" }} · {{ row.limit.daily_view_limit|default:"—" }}{% endif %}</td>
+  <td>{% if row.effective.amount is not None %}{{ row.effective.amount|tzs }}{% else %}{% translate "No TZS limit" %}{% endif %} · {% if row.effective.views is not None %}{% blocktranslate count n=row.effective.views %}{{ n }} view{% plural %}{{ n }} views{% endblocktranslate %}{% else %}{% translate "No view limit" %}{% endif %}</td>
+</tr>{% empty %}<tr><td colspan="3">{% translate "No active plans." %}</td></tr>{% endfor %}</tbody></table></section>
+{% endblock %}

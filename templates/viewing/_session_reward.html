@@ -1,0 +1,7 @@
+{% load i18n money %}{# FIN-01: a session's real TZS reward. Context: reward (apps.earnings SessionReward). #}<div class="notice credit-quote reward-status reward-status--{{ reward.status|lower }}" role="status">
+{% if reward.status == "RESERVED" %}{% blocktranslate with amount=reward.amount|tzs %}This session earns {{ amount }} if ClipCash verifies the view. The amount is fixed for this session.{% endblocktranslate %}
+{% elif reward.status == "PENDING" %}<strong>{% blocktranslate with amount=reward.amount|tzs %}{{ amount }} reward pending{% endblocktranslate %}</strong> {% blocktranslate with date=reward.clears_at|date:"DATETIME_FORMAT" %}It becomes available in your wallet on {{ date }}, unless the view is reviewed.{% endblocktranslate %}{% if reward.on_hold %} {% translate "It is on hold while ClipCash reviews it." %}{% endif %}
+{% elif reward.status == "AVAILABLE" %}<strong>{% blocktranslate with amount=reward.amount|tzs %}{{ amount }} added to your available balance.{% endblocktranslate %}</strong>
+{% elif reward.status == "RELEASED" %}<strong>{% translate "No reward for this view." %}</strong> {{ reward_reason }}
+{% else %}<strong>{% blocktranslate with amount=reward.amount|tzs %}The {{ amount }} reward was reversed after a review.{% endblocktranslate %}</strong>{% endif %}
+{% if reward.status != "RESERVED" %} <a href="{% url 'wallets:wallet' %}">{% translate "Open your wallet" %}</a>{% endif %}</div>

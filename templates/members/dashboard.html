@@ -191,7 +191,7 @@
         <span class="ad-card__label">{% translate "Sponsored" %}</span>
         <strong class="ad-card__title">{{ campaign.name }}</strong>
         <span class="ad-card__meta">{{ campaign.organization.display_name }}{% if campaign.video.duration_display %} · {{ campaign.video.duration_display }}{% endif %}</span>
-        <span class="ad-card__offer">{% if o.credits %}{% blocktranslate with credits=o.credits|credits %}{{ credits }} per verified view{% endblocktranslate %} <span class="ad-card__note">({% translate "not money" %})</span>{% endif %}{% if o.open_session %} {% translate "In progress" %}{% elif o.today_done %} {% translate "Verified today: come back tomorrow" %}{% else %}{% if o.credits %} · {% endif %}{% blocktranslate count n=o.left %}{{ n }} view left{% plural %}{{ n }} views left{% endblocktranslate %}{% endif %}</span>
+        <span class="ad-card__offer">{% include "components/reward_offer.html" with tzs=o.tzs credits=o.credits note=True %}{% if o.open_session %} {% translate "In progress" %}{% elif o.today_done %} {% translate "Verified today: come back tomorrow" %}{% else %}{% if o.credits or o.tzs.is_tzs %} · {% endif %}{% blocktranslate count n=o.left %}{{ n }} view left{% plural %}{{ n }} views left{% endblocktranslate %}{% endif %}</span>
       </span>
       <a class="button button--action button--compact ad-card__action" href="{% if o.open_session %}{% url 'viewing:session' o.open_session.pk %}{% else %}{% url 'viewing:campaign' campaign.pk %}{% endif %}">{% if o.open_session %}{% translate "Continue" %}{% else %}{% translate "Watch" %}{% endif %}<span class="visually-hidden">: {{ campaign.name }}</span></a>
     </li>{% endwith %}{% endfor %}

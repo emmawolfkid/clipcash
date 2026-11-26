@@ -3,9 +3,11 @@ Central feature flags.
 
 Every flag has an explicit default. Business flags are stored on
 SiteConfiguration and can be changed only by Super Administrators (see
-apps.core.services). Financial flags have no storage and no override: they are
-locked off in code until a later phase adds a reviewed enablement process with
-legal, provider and operational sign-off.
+apps.core.services). Financial flags have no storage and no admin override.
+live_payments and withdrawals are locked off in code. FIN-01: real_money_rewards
+is off unless the deployment sets BOTH DJANGO_REAL_MONEY_REWARDS (the switch)
+and DJANGO_REAL_MONEY_REWARDS_APPROVED (the recorded operational, legal and
+accounting approval), and never in a restricted demonstration.
 
 Flags marked ``demo_restricted`` are also off while the environment-owned
 RESTRICTED_DEMO_MODE setting is on, whatever the stored value.
@@ -51,8 +53,10 @@ FEATURES = {
         Feature("memberships", _("Membership features"), False, "memberships_enabled"),
         Feature("videos", _("Video features"), False, "videos_enabled"),
         Feature("advertisers", _("Advertiser features"), False, "advertisers_enabled"),
+        # FIN-01: environment-owned and approval-gated; no field and no admin control.
+        Feature("real_money_rewards", _("Real-money rewards"), False, financial=True, demo_restricted=True,
+                setting="REAL_MONEY_REWARDS_ENABLED", requires_setting="REAL_MONEY_REWARDS_APPROVED"),
         # Locked: no field, no setting, no admin control.
-        Feature("real_money_rewards", _("Real-money rewards"), False, financial=True),
         Feature("live_payments", _("Live payments"), False, financial=True),
         Feature("withdrawals", _("Withdrawals and payouts"), False, financial=True),
         # PAY-01: real membership fees paid manually (Airtel Lipa) and verified by staff.
@@ -76,7 +80,7 @@ def get_feature(key):
 
 def is_enabled(key, config=None):
     feature = get_feature(key)
-    if feature.financial or feature.locked:
+    if feature.locked or (feature.financial and feature.setting is None):
         return False
     if feature.demo_restricted and settings.RESTRICTED_DEMO_MODE:
         return False  # Before the configuration lookup: no stored value can override it.

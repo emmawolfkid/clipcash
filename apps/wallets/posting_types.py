@@ -3,7 +3,8 @@ Controlled posting types: the only kinds of journal entry the service accepts.
 
 Each type fixes which account types may be debited and credited, which
 financial feature must be enabled, and extra rules. Every type here requires a
-financial feature that is locked off in code (apps.core.features), except
+financial feature that is off unless explicitly activated (apps.core.features;
+real_money_rewards needs two environment settings, the others are locked), except
 membership.manual_payment_received (PAY-01), which needs the environment-owned
 manual_membership_payments feature and is posted only after staff verification. The database independently enforces
 balance, overdraft and funding-separation rules (migration 0002).
@@ -69,6 +70,27 @@ POSTING_TYPES = {
               ["CAMPAIGN_RESTRICTED_FUNDING"], ["ADVERTISER_FUNDING_VERIFIED"], "real_money_rewards"),
         _type("reward.allocated", "Reward allocated from campaign funding",
               ["CAMPAIGN_RESTRICTED_FUNDING"], ["REWARD_LIABILITY"], "real_money_rewards"),
+        # FIN-01: manual campaign deposits (Airtel Lipa or bank transfer) by an advertiser
+        # organization, ClipCash's own included. Posted only by apps.earnings.funding when a staff
+        # member other than the recorder has verified the receipt in the provider or bank records:
+        # first as received (the money is already in CASH), then as verified, in one transaction.
+        _type("advertiser.manual_deposit_received", "Advertiser deposit received (manual, staff-verified)",
+              ["CASH"], ["ADVERTISER_FUNDING_PENDING"], "real_money_rewards", requires_external_reference=True),
+        _type("advertiser.manual_deposit_verified", "Advertiser deposit verified (manual)",
+              ["ADVERTISER_FUNDING_PENDING"], ["ADVERTISER_FUNDING_VERIFIED"], "real_money_rewards",
+              related_type="advertiser.manual_deposit_received", related_amount_must_match=True, same_scope=True),
+        # FIN-01: real rewards (apps.earnings.services). A verified view moves its quoted amount from
+        # the campaign's restricted funding to the member's PENDING balance; after the clearance
+        # period it moves to AVAILABLE. Reversals return it to the campaign, never below zero.
+        # These four are the only postings the database lets touch wallet accounts (wallets 0006).
+        _type("reward.pending", "Reward pending clearance",
+              ["CAMPAIGN_RESTRICTED_FUNDING"], ["MEMBER_REWARD_PENDING"], "real_money_rewards"),
+        _type("reward.cleared", "Reward cleared to the available balance",
+              ["MEMBER_REWARD_PENDING"], ["REWARD_LIABILITY"], "real_money_rewards"),
+        _type("reward.pending_reversed", "Pending reward reversed",
+              ["MEMBER_REWARD_PENDING"], ["CAMPAIGN_RESTRICTED_FUNDING"], "real_money_rewards"),
+        _type("reward.cleared_reversed", "Cleared reward reversed",
+              ["REWARD_LIABILITY"], ["CAMPAIGN_RESTRICTED_FUNDING"], "real_money_rewards"),
         # Withdrawals
         _type("withdrawal.approved", "Withdrawal approved",
               ["REWARD_LIABILITY"], ["WITHDRAWAL_CLEARING"], "withdrawals"),
@@ -88,4 +110,7 @@ POSTING_TYPES = {
 
 # Posting types whose related entry may be used only once (no double
 # verification, no double payout). Also enforced by a partial unique index.
-SINGLE_USE_RELATED_TYPES = ("advertiser.funding_verified", "withdrawal.paid")
+SINGLE_USE_RELATED_TYPES = ("advertiser.funding_verified", "withdrawal.paid",
+                            "advertiser.manual_deposit_verified")
+# FIN-01: the only posting types the database accepts on wallet-linked accounts (wallets 0006).
+WALLET_POSTING_TYPES = ("reward.pending", "reward.cleared", "reward.pending_reversed", "reward.cleared_reversed")

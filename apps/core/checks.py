@@ -143,11 +143,26 @@ def check_public_base_url(app_configs, **kwargs):
 @register(Tags.security, deploy=True)
 def check_financial_locks(app_configs, **kwargs):
     """Real money stays locked in code (apps.core.features); this trips if that ever changes."""
-    from apps.core.features import FINANCIAL_FEATURES, is_enabled
+    from django.core.checks import Warning as CheckWarning
 
-    enabled = [key for key in FINANCIAL_FEATURES if is_enabled(key)]
+    from apps.core.features import FINANCIAL_FEATURES, get_feature, is_enabled
+
+    # FIN-01: real_money_rewards has a reviewed activation (two environment settings); the others
+    # (live payments, withdrawals) still have none and must never be on.
+    enabled = [key for key in FINANCIAL_FEATURES if is_enabled(key) and get_feature(key).setting is None]
+    errors = []
     if enabled:
-        return [Error("Real-money features are enabled: " + ", ".join(sorted(enabled)),
-                      hint="Real payments, rewards and withdrawals need a separately reviewed phase.",
-                      id="core.E008")]
-    return []
+        errors.append(Error("Real-money features are enabled: " + ", ".join(sorted(enabled)),
+                            hint="Live payments and withdrawals need a separately reviewed phase.", id="core.E008"))
+    if getattr(settings, "REAL_MONEY_REWARDS_ENABLED", False) and settings.RESTRICTED_DEMO_MODE:
+        errors.append(Error("Real-money rewards are switched on in a restricted demonstration.",
+                            hint="Demo mode never creates real liabilities: unset DJANGO_REAL_MONEY_REWARDS.",
+                            id="core.E009"))
+    if getattr(settings, "REAL_MONEY_REWARDS_ENABLED", False) and settings.PAYMENTS_MODE == "sandbox":
+        errors.append(Error("Real-money rewards are switched on together with sandbox payments.",
+                            hint="Set DJANGO_PAYMENTS_MODE=disabled.", id="core.E010"))
+    if is_enabled("real_money_rewards"):
+        errors.append(CheckWarning("Real-money rewards are ACTIVE: verified views create real TZS obligations.",
+                                   hint="Confirm funding, accounting, legal and regulatory approval are current.",
+                                   id="core.W011"))
+    return errors

@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.earnings import console as earnings_console
 from apps.reports import views as reports
 from apps.support import console as support
 
@@ -42,6 +43,12 @@ urlpatterns = [
     path("viewing/", views.ViewingListView.as_view(), name="viewing"),
     path("viewing/<uuid:pk>/", views.ViewingReviewView.as_view(), name="viewing_review"),
     path("rewards/", views.DemoRewardListView.as_view(), name="demo_rewards"),
+    # FIN-01: real TZS rewards and campaign funding.
+    path("video-rewards/", earnings_console.VideoRewardsView.as_view(), name="video_rewards"),
+    path("video-rewards/<uuid:pk>/", earnings_console.VideoRewardView.as_view(), name="video_reward"),
+    path("funding/", earnings_console.FundingView.as_view(), name="campaign_funding"),
+    path("funding/deposits/<uuid:pk>/", earnings_console.DepositView.as_view(), name="campaign_deposit"),
+    path("earning-limits/", earnings_console.EarningRulesView.as_view(), name="earning_rules"),
     path("rewards/policies/", views.RewardPolicyListView.as_view(), name="reward_policies"),
     path("rewards/policies/<uuid:pk>/", views.RewardPolicyView.as_view(), name="reward_policy"),
     path("payments/", views.PaymentListView.as_view(), name="payments"),

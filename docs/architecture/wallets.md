@@ -147,6 +147,10 @@ payloads.
 
 ## Future reward credit contract (not implemented)
 
+> **FIN-01 update:** implemented in `apps.earnings` (switched off by default). Rewards post to the
+> PENDING account first and clear to AVAILABLE; the zero-money trigger was narrowed (wallets 0006), not
+> removed, and withdrawals stay locked. See `earnings.md`. The contract below is kept as the design record.
+
 A future `credit_reward(session, ...)` may only be added in a reviewed phase,
 together with a migration that narrowly lifts the database lock. It must:
 

@@ -144,6 +144,10 @@ contains emails, tokens or playback links.
 
 ## Phase 08 boundary
 
+> **FIN-01 update:** real TZS rewards now exist as a separate path (`apps.earnings`, see `earnings.md`),
+> selected by an explicit policy type (`RewardPolicy.kind = TZS`). Credits are unchanged and are never
+> converted.
+
 - Phase 07 creates no financial obligations.
 - A future real-money step must, in its own reviewed implementation:
   1. require `Campaign.financially_eligible`, meaning funding VERIFIED from reconciled advertiser money, with the database constraint `adv_campaign_funding_locked` relaxed only together with evidence of that funding;

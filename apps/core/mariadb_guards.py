@@ -19,7 +19,8 @@ from .migration_ops import MariaDBRunSQL
 
 INVENTORY_VIEW = "clipcash_guard_triggers"
 # Constraints that lock real money regardless of the triggers (also checked by demo_readiness).
-LOCK_CONSTRAINTS = ("adv_campaign_funding_locked", "sub_activation_source_consistent")
+# FIN-01: adv_campaign_funding_evidence replaced adv_campaign_funding_locked (funding only with ledger evidence).
+LOCK_CONSTRAINTS = ("adv_campaign_funding_evidence", "sub_activation_source_consistent")
 _SHOWN = 6
 
 

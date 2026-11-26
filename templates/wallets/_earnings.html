@@ -1,0 +1,12 @@
+{% load i18n money %}{# FIN-01: pending rewards and today's limits (apps.earnings.services.member_summary). #}{% if earnings and earnings.active or earnings.pending %}
+<section class="wallet-card" aria-labelledby="wallet-pending"><h2 id="wallet-pending">{% translate "Pending rewards" %}</h2>
+{% if earnings.pending %}<ul class="list">{% for r in earnings.pending %}<li class="list__item"><span>{{ r.campaign.name }} · <span class="financial-amount">{{ r.amount|tzs }}</span></span><span>{% if r.on_hold %}{% translate "On hold for review" %}{% else %}{% blocktranslate with date=r.clears_at|date:"DATETIME_FORMAT" %}Available from {{ date }}{% endblocktranslate %}{% endif %}</span></li>{% endfor %}</ul>
+{% else %}<p class="lead">{% translate "No rewards are pending." %}</p>{% endif %}
+<p class="lead">{% blocktranslate with total=earnings.today_total|tzs count n=earnings.today_count %}Today: {{ n }} rewarded view, {{ total }}.{% plural %}Today: {{ n }} rewarded views, {{ total }}.{% endblocktranslate %}
+{% if earnings.limits.amount is not None %}{% blocktranslate with limit=earnings.limits.amount|tzs %}Daily earning limit: {{ limit }}.{% endblocktranslate %}{% endif %}
+{% if earnings.limits.views is not None %}{% blocktranslate count n=earnings.limits.views %}Daily limit: {{ n }} rewarded view.{% plural %}Daily limit: {{ n }} rewarded views.{% endblocktranslate %}{% endif %}</p>
+</section>
+{% if earnings.recent %}<section class="wallet-card" aria-labelledby="wallet-rewards"><h2 id="wallet-rewards">{% translate "Reward history" %}</h2>
+<table class="table financial-table"><caption class="visually-hidden">{% translate "Reward history" %}</caption><thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Video" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
+<tbody>{% for r in earnings.recent %}<tr><td>{{ r.reserved_at|date:"SHORT_DATETIME_FORMAT" }}</td><td><a href="{% url 'viewing:session' r.session_id %}">{{ r.campaign.name }}</a></td><td><span class="financial-amount">{{ r.amount|tzs }}</span></td><td>{{ r.get_status_display }}</td></tr>{% endfor %}</tbody></table></section>{% endif %}
+{% endif %}

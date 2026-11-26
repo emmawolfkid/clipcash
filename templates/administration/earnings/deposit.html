@@ -1,0 +1,30 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Deposit" %} {{ deposit.reference }}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><h1 class="page-title">{% translate "Deposit" %} {{ deposit.reference }}</h1><a href="{% url 'administration:campaign_funding' %}">{% translate "Campaign funding" %}</a></div>
+<section class="workspace-section"><dl class="details">
+  <dt>{% translate "Status" %}</dt><dd><span class="badge badge--{{ deposit.status|lower }}">{{ deposit.get_status_display }}</span></dd>
+  <dt>{% translate "Organization" %}</dt><dd>{{ deposit.organization.display_name }}</dd>
+  <dt>{% translate "Amount" %}</dt><dd class="financial-amount">{{ deposit.amount|tzs }}</dd>
+  <dt>{% translate "Payment method" %}</dt><dd>{{ deposit.get_method_display }}</dd>
+  <dt>{% translate "Transaction reference" %}</dt><dd>{{ deposit.external_reference }}</dd>
+  <dt>{% translate "Date paid" %}</dt><dd>{{ deposit.paid_on|date:"DATE_FORMAT" }}</dd>
+  {% if deposit.payer_name %}<dt>{% translate "Paid by" %}</dt><dd>{{ deposit.payer_name }}</dd>{% endif %}
+  {% if deposit.note %}<dt>{% translate "Supporting information" %}</dt><dd>{{ deposit.note }}</dd>{% endif %}
+  <dt>{% translate "Recorded by" %}</dt><dd>{{ deposit.recorded_by.email }} · {{ deposit.created_at|date:"SHORT_DATETIME_FORMAT" }}</dd>
+  {% if deposit.decided_by %}<dt>{% translate "Decided by" %}</dt><dd>{{ deposit.decided_by.email }} · {{ deposit.decided_at|date:"SHORT_DATETIME_FORMAT" }}</dd>{% endif %}
+  {% if deposit.decision_note %}<dt>{% translate "Reason" %}</dt><dd>{{ deposit.decision_note }}</dd>{% endif %}
+</dl></section>
+{% if deposit.status == "RECORDED" %}
+  {% if own %}<p class="notice" role="note">{% translate "You recorded this deposit, so a different person must verify or reject it." %}</p>
+  {% elif can_decide %}
+<section class="workspace-section" aria-labelledby="decide-title"><h2 class="workspace-section__title" id="decide-title">{% translate "Verify the receipt" %}</h2>
+{% include "administration/earnings/_activation.html" %}
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="expected_status" value="{{ deposit.status }}">
+  <label><input type="checkbox" name="receipt_confirmed"> {% blocktranslate with amount=deposit.amount|tzs ref=deposit.external_reference %}I found {{ amount }} with reference {{ ref }} in the Airtel Lipa business records or the bank statement.{% endblocktranslate %}</label>
+  <button class="button" name="action" value="verify" type="submit">{% translate "Verify and make the funds available" %}</button>
+  <label for="reject-reason">{% translate "Reason (to reject)" %}</label><textarea id="reject-reason" name="reason" rows="2" maxlength="300"></textarea>
+  <button class="button button--secondary" name="action" value="reject" type="submit">{% translate "Reject: funds not found" %}</button>
+</form></section>{% endif %}
+{% endif %}
+{% endblock %}

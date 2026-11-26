@@ -1,2 +1,3 @@
-{% load i18n %}<p class="notice"><strong>{% translate "Wallet money is not active yet." %}</strong>
-{% translate "Your wallet shows real balances only, and they are TZS 0. Demo rewards are simulated records and never appear here. Sandbox payments are tests and never appear here. Withdrawals are not available." %}</p>
+{% load i18n %}{% if features.real_money_rewards %}<p class="notice"><strong>{% translate "Your wallet shows real TZS rewards from verified views." %}</strong>
+{% translate "New rewards are pending for a clearance period, then become available. Non-cash credits never appear here. Withdrawals are not available yet." %}</p>{% else %}<p class="notice"><strong>{% translate "Wallet money is not active yet." %}</strong>
+{% translate "Your wallet shows real balances only, and they are TZS 0. Demo rewards are simulated records and never appear here. Sandbox payments are tests and never appear here. Withdrawals are not available." %}</p>{% endif %}

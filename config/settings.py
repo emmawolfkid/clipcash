@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     "apps.advertising.apps.AdvertisingConfig",
     "apps.payments.apps.PaymentsConfig",
     "apps.rewards.apps.RewardsConfig",
+    "apps.earnings.apps.EarningsConfig",
     "apps.wallets.apps.WalletsConfig",
     "apps.withdrawals.apps.WithdrawalsConfig",
     "apps.notifications.apps.NotificationsConfig",
@@ -453,6 +454,13 @@ PAYMENTS_CALLBACKS_PER_MINUTE = 120
 MANUAL_MEMBERSHIP_PAYMENTS_ENABLED = env.bool("DJANGO_MANUAL_MEMBERSHIP_PAYMENTS", default=False)
 # Members: payment claims per account per hour (repeated or abusive submissions).
 MANUAL_PAYMENTS_CLAIMS_PER_HOUR = 5
+
+# FIN-01: REAL TZS rewards (apps.earnings). Off by default. Issuing real rewards needs BOTH the
+# switch and the separate approval setting (operational, accounting, legal and regulatory
+# sign-off), and is refused in a restricted demonstration or with sandbox payments
+# (check --deploy core.E009/E010). Never set these in ordinary local development.
+REAL_MONEY_REWARDS_ENABLED = env.bool("DJANGO_REAL_MONEY_REWARDS", default=False)
+REAL_MONEY_REWARDS_APPROVED = env.bool("DJANGO_REAL_MONEY_REWARDS_APPROVED", default=False)
 # PRD-04: optional receipt evidence for a payment claim (JPEG, PNG or PDF, recognised by content).
 # Stored PRIVATELY: never under STATIC_ROOT or MEDIA_ROOT, served only through an authorized view.
 # In production (manual payments on) it must be outside the application directory, which every

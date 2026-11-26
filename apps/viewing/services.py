@@ -59,6 +59,10 @@ MIN_REVIEW_REASON = 5
 # Sent INSIDE the transaction that rejects or revokes a session, so dependent
 # records (Phase 07 demo rewards) are reversed atomically with it.
 session_reversed = django.dispatch.Signal()
+# FIN-01: sent (inside the closing transaction) whenever a session's outcome is decided or changed by
+# a review: closing, expiry, invalidation, review confirmation or rejection. Receivers settle what the
+# session holds (apps.earnings releases or issues its reserved real reward).
+session_closed = django.dispatch.Signal()
 
 
 class ViewingError(Exception):
@@ -114,6 +118,10 @@ DENIAL_MESSAGES = {
     "too_many_attempts": gettext_lazy("Too many attempts. Please try again later."),
     "own_campaign": gettext_lazy("You cannot watch campaigns of an advertiser you work for."),
     "feature_disabled": gettext_lazy("Sponsored videos are not available at the moment."),
+    # FIN-01: real TZS offers are reserved at start; these explain why one could not be.
+    "earning_amount_limit": gettext_lazy("You have reached today's earning limit. Come back tomorrow."),
+    "earning_view_limit": gettext_lazy("You have reached today's limit of rewarded views. Come back tomorrow."),
+    "reward_funding_unavailable": gettext_lazy("This campaign's reward funding is used up for now."),
 }
 
 
@@ -217,9 +225,14 @@ def _start_locked(member, campaign):
         if verified_today(member, campaign, now, sessions=mine):
             return None, "daily_limit", None  # CR-01: one credited view per campaign per day.
 
+        from apps.earnings import services as earnings
         from apps.rewards.services import current_offer
 
         quoted_policy, quoted_credits = current_offer(campaign, now)  # CR-01: fixed for this session.
+        # FIN-01: a real TZS offer is reserved now (funding and daily limits, under locks) or refused.
+        tzs_offer = earnings.quote_for_start(member, campaign, now)
+        if tzs_offer.reason:
+            return None, tzs_offer.reason, None
 
         flags = ["rapid_attempts"] if recent >= max(3, settings.VIEWING_MAX_STARTS_PER_HOUR // 2) else []
         duration = campaign.video.duration_seconds
@@ -229,9 +242,11 @@ def _start_locked(member, campaign):
             expires_at=_expiry_for(now, duration),
             video_duration_ms=duration * 1000 if duration else None, required_ms=required_ms_for(duration),
             flags=flags, quoted_policy=quoted_policy, quoted_credits=quoted_credits)
+        if tzs_offer.is_tzs:
+            earnings.reserve(session, tzs_offer, now)
         record_business_event("viewing.session.started", actor=member, target=session,
                               metadata={"campaign": str(campaign.pk), "revision": campaign.revision,
-                                        "quoted_credits": quoted_credits})
+                                        "quoted_credits": quoted_credits, "quoted_tzs": tzs_offer.amount})
     return session, None, flags
 
 
@@ -494,7 +509,14 @@ def _invalidate(session, now, reason):
 
 
 def _close(session, now, *, trigger):
-    """Close a locked open session and decide its outcome (server rules only)."""
+    """Close a locked open session and decide its outcome (server rules only). FIN-01: receivers of
+    session_closed settle what the session holds (after this transaction commits)."""
+    _decide_close(session, now, trigger=trigger)
+    session_closed.send(sender=WatchSession, session=session)
+    return session
+
+
+def _decide_close(session, now, *, trigger):
     if session.state == St.CREATED:
         session.state = St.EXPIRED
         session.outcome = Out.EXPIRED
@@ -646,6 +668,7 @@ def review_session(actor, session, decision, *, expected_status, reason):
         _notify_member(session, "review_confirmed" if session.outcome == Out.VERIFIED_EVIDENCE else "review_rejected")
         if decision == "reject":
             session_reversed.send(sender=WatchSession, session=session, actor=actor, reason=reason[:300])
+        session_closed.send(sender=WatchSession, session=session)
     return session
 
 
@@ -741,6 +764,7 @@ def campaign_offers(member, now=None, limit=50):
     ``locked`` rows are campaigns the member could see but not watch for credits because of
     their plan (or no membership): ``plans`` lists the configured plans that qualify. Server
     checks still run on start (start_session)."""
+    from apps.earnings import services as earnings
     from apps.memberships.models import MembershipPlan
     from apps.rewards.services import current_offer
     from apps.rewards.terms import eligible_plan_ids
@@ -784,7 +808,8 @@ def campaign_offers(member, now=None, limit=50):
         if not locked and left == 0 and campaign.pk not in open_sessions:
             continue  # Fully used: nothing left to offer.
         _policy, credits = current_offer(campaign, now)
-        rows.append({"campaign": campaign, "credits": credits, "left": left,
+        tzs = earnings.preview_offer(member, campaign, now) if not locked else earnings.Offer()
+        rows.append({"campaign": campaign, "credits": credits, "tzs": tzs, "left": left,
                      "open_session": open_sessions.get(campaign.pk), "locked": locked, "reason": reason,
                      "plans": sorted(plan_names[pk] for pk in plan_ids if pk in plan_names),
                      "today_done": campaign.pk in today})
@@ -797,15 +822,18 @@ def campaign_offer_detail(member, campaign, now=None):
     from apps.rewards import services as rewards
     from apps.rewards.terms import eligible_plan_ids
 
+    from apps.earnings import services as earnings
+
     now = now or timezone.now()
     decision = advertising.campaign_eligibility(campaign, member, now)
     _policy, credits = rewards.current_offer(campaign, now)
+    tzs = earnings.preview_offer(member if decision else None, campaign, now)
     budget = rewards.budget_summary(campaign)
     used = WatchSession.objects.filter(member=member, campaign=campaign, qualifying_slot__isnull=False).count()
     plan_ids = eligible_plan_ids(campaign)
     required = required_ms_for(campaign.video.duration_seconds)
     return {
-        "credits": credits, "eligible": bool(decision), "reason": decision.reason,
+        "credits": credits, "tzs": tzs, "eligible": bool(decision), "reason": decision.reason,
         "reason_message": denial_message(decision.reason) if not decision else "",
         "plans": sorted(MembershipPlan.objects.filter(pk__in=plan_ids).values_list("name", flat=True)),
         "views_left": max(0, campaign.max_views_per_member - used),
