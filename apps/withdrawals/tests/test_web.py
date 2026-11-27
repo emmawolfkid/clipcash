@@ -30,8 +30,11 @@ class MemberPageTests(WithdrawalsTestCase):
     def test_destinations_are_masked_and_private(self):
         self.client.force_login(self.member)
         url = reverse("withdrawals:destinations")
+        from apps.accounts.tests.helpers import PASSWORD
+
         self.client.post(url, {"action": "add", "kind": "MOBILE_MONEY", "network": "AIRTEL",
-                               "identifier": "0687 123 456", "holder_name": "Asha Juma"})
+                               "identifier": "0687 123 456", "holder_name": "Asha Juma",
+                               "current_password": PASSWORD})  # FIN-02: password confirmed again.
         page = self.client.get(url)
         self.assertContains(page, "•••• 3456")
         self.assertNotContains(page, "687123456")

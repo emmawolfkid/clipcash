@@ -8,7 +8,12 @@ psycopg[binary]==3.3.6
 gunicorn==26.2.0
 whitenoise==6.12.0
 
+# FIN-02: encryption of payout destination and identity numbers (Fernet).
+cryptography==46.0.7
+
 # Pinned transitive dependencies
+cffi==2.1.1
+pycparser==3.12
 asgiref==3.13.0
 sqlparse==0.6.0
 tzdata==2026.6

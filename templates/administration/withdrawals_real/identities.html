@@ -1,0 +1,14 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Identity checks" %}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><h1 class="page-title">{% translate "Identity checks" %}</h1><a href="{% url 'administration:withdrawal_requests' %}">{% translate "Withdrawals" %}</a></div>
+<p class="lead">{% translate "Needed only for withdrawals. Compare the name with the member's payout destinations and the document with the member's records. Only the last four digits are shown." %}</p>
+<form class="toolbar" method="get"><label class="visually-hidden" for="f-status">{% translate "Status" %}</label><select id="f-status" name="status">{% for v, l in statuses %}<option value="{{ v }}"{% if status == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select><button class="button button--secondary" type="submit">{% translate "Filter" %}</button></form>
+<table class="table workspace-table"><caption class="visually-hidden">{% translate "Identity checks" %}</caption>
+<thead><tr><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Name and document" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Decision" %}</th></tr></thead>
+<tbody>{% for i in page.object_list %}<tr><td>{{ i.member.email|default:i.member.phone_number }}</td><td>{{ i.legal_name }}<br><small>{{ i.get_id_type_display }} ••••{{ i.id_last4 }}</small></td><td>{{ i.get_status_display }}{% if i.reviewed_by %}<br><small>{{ i.reviewed_by.email }}</small>{% endif %}</td>
+<td>{% if i.status == "SUBMITTED" and i.member_id != request.user.pk %}<form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="identity" value="{{ i.pk }}">
+  <label class="visually-hidden" for="n-{{ i.pk }}">{% translate "Note" %}</label><input id="n-{{ i.pk }}" name="note" maxlength="300" placeholder="{% translate 'Note (required to reject)' %}">
+  <button class="button" name="action" value="verify">{% translate "Verify" %}</button><button class="button button--secondary" name="action" value="reject">{% translate "Reject" %}</button></form>{% else %}—{% endif %}</td></tr>{% empty %}<tr><td colspan="4">{% translate "Nothing to check." %}</td></tr>{% endfor %}</tbody></table>
+{% include "components/pagination.html" %}
+{% endblock %}

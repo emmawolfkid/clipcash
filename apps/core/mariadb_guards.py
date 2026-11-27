@@ -26,14 +26,25 @@ _SHOWN = 6
 
 @lru_cache(maxsize=1)
 def expected_guard_triggers():
+    """Triggers the MariaDB migrations leave installed, replayed in migration order: a trigger a later
+    migration drops for good (FIN-02: the Phase 10 real-withdrawal lock) is no longer expected."""
     from django.db.migrations.loader import MigrationLoader
 
+    loader = MigrationLoader(None, ignore_no_migrations=True)
+    ordered, seen = [], set()
+    for leaf in sorted(loader.graph.leaf_nodes()):
+        for key in loader.graph.forwards_plan(leaf):
+            if key not in seen:
+                seen.add(key)
+                ordered.append(key)
     names = set()
-    for migration in MigrationLoader(None, ignore_no_migrations=True).disk_migrations.values():
-        for operation in migration.operations:
+    for key in ordered:
+        migration = loader.disk_migrations.get(key)
+        for operation in getattr(migration, "operations", []):
             if isinstance(operation, MariaDBRunSQL):
                 for statement in operation.sql:
-                    names.update(re.findall(r"CREATE TRIGGER (\w+)", statement))
+                    for verb, name in re.findall(r"(CREATE|DROP) TRIGGER (?:IF EXISTS )?(\w+)", statement):
+                        (names.add if verb == "CREATE" else names.discard)(name)
     return frozenset(names)
 
 

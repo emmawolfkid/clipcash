@@ -5,30 +5,70 @@
 <header class="page-banner">
   <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="withdrawals" %}</span>
   <div class="page-banner__text"><h1 class="page-title">{% translate "Withdrawals" %}</h1>
-    <p class="page-banner__subtitle">{% translate "See what a withdrawal needs, manage payout destinations and review demo scenarios." %}</p></div>
+    <p class="page-banner__subtitle">{% if active %}{% translate "Withdraw your available TZS balance to mobile money or a bank account." %}{% else %}{% translate "See what a withdrawal needs, manage payout destinations and review demo scenarios." %}{% endif %}</p></div>
 </header>
 <div class="withdrawal-page">
 <section class="withdrawal-hero" aria-label="{% translate 'Withdrawals' %}">
-  <p class="withdrawal-hero__status"><strong>{% translate "Withdrawals are not available yet." %}</strong> {% translate "Real rewards and payouts are not active, and your wallet balance is TZS 0. Demo rewards can never be withdrawn." %}</p>
+  {% if active %}<p class="withdrawal-hero__status">{% blocktranslate count n=settings_row.processing_hours %}Requests are usually paid within {{ n }} hour after approval.{% plural %}Requests are usually paid within {{ n }} hours after approval.{% endblocktranslate %} {% translate "Only your available balance can be withdrawn; pending rewards and non-cash credits cannot." %}</p>
+  {% else %}<p class="withdrawal-hero__status"><strong>{% translate "Withdrawals are not available yet." %}</strong> {% translate "Real rewards and payouts are not active, and your wallet balance is TZS 0. Demo rewards can never be withdrawn." %}</p>{% endif %}
   <p class="withdrawal-hero__balance"><span>{% translate "Available wallet balance" %}</span><strong class="financial-amount">{{ eligibility.available|tzs }}</strong></p>
 </section>
+{% if balances %}<dl class="wallet-balances">
+  <div class="wallet-balance"><dt>{% translate "Pending (not spendable)" %}</dt><dd class="financial-amount">{{ balances.pending|tzs }}</dd></div>
+  <div class="wallet-balance"><dt>{% translate "Reserved for withdrawals" %}</dt><dd class="financial-amount">{{ balances.reserved|tzs }}</dd></div>
+</dl>{% endif %}
 {% if demo_unconfirmed_account %}{% include "components/demo_unconfirmed_notice.html" %}{% endif %}
-{% if balances and balances.restricted %}<p class="notice notice--warning" role="status">{% translate "Your wallet is under review, so withdrawals would be paused." %}</p>{% endif %}
+{% if balances and balances.restricted %}<p class="notice notice--warning" role="status">{% translate "Your wallet is under review, so withdrawals are paused." %}</p>{% endif %}
+
+{% if active %}
+<section class="panel" aria-labelledby="request-title"><h2 class="panel__title" id="request-title">{% translate "Request a withdrawal" %}</h2>
+{% if review %}{% with d=review.decision q=review.decision.quote %}
+  <dl class="details">
+    <dt>{% translate "Destination" %}</dt><dd>{% if review.beneficiary %}{{ review.beneficiary.destination_label }} · {{ review.beneficiary.holder_name }}{% else %}—{% endif %}</dd>
+    <dt>{% translate "Amount requested" %}</dt><dd class="financial-amount">{{ q.amount|tzs }}</dd>
+    <dt>{% translate "Fee" %}</dt><dd class="financial-amount">{{ q.fee|tzs }}{% if q.fee %} · {% if q.fee_bearer == "ADDED" %}{% translate "added to the amount" %}{% else %}{% translate "deducted from the amount" %}{% endif %}{% endif %}</dd>
+    <dt>{% translate "Taken from your wallet" %}</dt><dd class="financial-amount"><strong>{{ q.wallet_deduction|tzs }}</strong></dd>
+    <dt>{% translate "You will receive" %}</dt><dd class="financial-amount"><strong>{{ q.net_payout|tzs }}</strong></dd>
+  </dl>
+  {% if d.eligible %}<form method="post" action="{% url 'withdrawals:request_new' %}" class="form">{% csrf_token %}
+    <input type="hidden" name="token" value="{{ review.token }}"><input type="hidden" name="amount" value="{{ q.amount }}"><input type="hidden" name="destination" value="{{ review.beneficiary.pk }}">
+    <p class="lead">{% translate "When you confirm, the amount is reserved from your available balance. It is only shown as paid after ClipCash confirms the transfer." %}</p>
+    <button class="button button--action" type="submit">{% translate "Confirm withdrawal" %}</button> <a href="{% url 'withdrawals:overview' %}">{% translate "Change" %}</a></form>
+  {% else %}<ul class="checklist">{% for message in review.messages %}<li class="checklist__item checklist__item--no">{{ message }}</li>{% endfor %}</ul><p><a href="{% url 'withdrawals:overview' %}">{% translate "Change" %}</a></p>{% endif %}
+{% endwith %}{% elif payable %}
+  <form method="get" class="form">
+    <label for="w-dest">{% translate "Payout destination" %}</label>
+    <select id="w-dest" name="destination" required>{% for b in payable %}<option value="{{ b.pk }}">{{ b.destination_label }} · {{ b.holder_name }}</option>{% endfor %}</select>
+    <label for="w-amount">{% blocktranslate with min=settings_row.min_amount|tzs max=settings_row.max_amount|tzs %}Amount (TZS, {{ min }} to {{ max }}){% endblocktranslate %}</label>
+    <input id="w-amount" name="amount" type="number" min="{{ settings_row.min_amount }}" max="{{ settings_row.max_amount }}" step="1" required>
+    <button class="button button--action" type="submit">{% translate "Review" %}</button>
+  </form>
+{% else %}<p class="lead">{% translate "Add a payout destination first." %} <a href="{% url 'withdrawals:destinations' %}">{% translate "Manage destinations" %}</a></p>{% endif %}
+</section>
+{% endif %}
+
 <div class="card-grid">
-  <section class="panel"><h2 class="panel__title">{% translate "What a withdrawal will need" %}</h2>
-    <ul class="checklist">{% for message in messages_for %}<li class="checklist__item checklist__item--no">{{ message }}</li>{% endfor %}</ul></section>
+  <section class="panel"><h2 class="panel__title">{% translate "What a withdrawal needs" %}</h2>
+    {% if messages_for %}<ul class="checklist">{% for message in messages_for %}<li class="checklist__item checklist__item--no">{{ message }}</li>{% endfor %}</ul>{% else %}<p class="lead">{% translate "You can request a withdrawal." %}</p>{% endif %}
+    <p>{% translate "Identity check:" %} {% if identity %}<strong>{{ identity.get_status_display }}</strong>{% if identity.status == "REJECTED" and identity.review_note %} · {{ identity.review_note }}{% endif %}{% else %}{% translate "not started" %}{% endif %}
+    {% if not identity or identity.status == "REJECTED" %} · <a href="{% url 'withdrawals:identity' %}">{% translate "Complete the identity check" %}</a>{% endif %}</p></section>
   <section class="panel withdrawal-destinations"><h2 class="panel__title">{% translate "Payout destinations" %}</h2>
-    {% if beneficiaries %}<ul class="list-plain">{% for b in beneficiaries %}<li>{{ b.destination_label }} · {{ b.get_verification_display }}</li>{% endfor %}</ul>{% else %}<p class="lead">{% translate "None saved yet." %}</p>{% endif %}
+    {% if beneficiaries %}<ul class="list-plain">{% for b in beneficiaries %}<li>{{ b.destination_label }}{% if not b.payable %} · <span class="badge badge--pending">{% translate "Add again to use for withdrawals" %}</span>{% endif %}</li>{% endfor %}</ul>{% else %}<p class="lead">{% translate "None saved yet." %}</p>{% endif %}
     <a class="button button--action" href="{% url 'withdrawals:destinations' %}">{% translate "Manage destinations" %}</a></section>
 </div>
-<section class="panel"><h2 class="panel__title">{% translate "Preview (nothing is saved)" %}</h2>
+
+{% if requests %}<section class="panel" aria-labelledby="history-title"><h2 class="panel__title" id="history-title">{% translate "Your withdrawals" %}</h2>
+<table class="table financial-table"><caption>{% translate "Your withdrawals" %}</caption><thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "You receive" %}</th><th scope="col">{% translate "Destination" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
+<tbody>{% for w in requests %}<tr><td><a class="financial-reference" href="{% url 'withdrawals:request' w.pk %}">{{ w.reference }}</a></td><td>{{ w.created_at|date:"SHORT_DATETIME_FORMAT" }}</td><td><span class="financial-amount">{{ w.net_payout|tzs }}</span></td><td>{{ w.destination_label }}</td><td><span class="badge badge--{{ w.status|lower }}">{{ w.get_status_display }}</span></td></tr>{% endfor %}</tbody></table></section>{% endif %}
+
+{% if not active %}<section class="panel"><h2 class="panel__title">{% translate "Preview (nothing is saved)" %}</h2>
   <form method="get" class="toolbar"><label for="pv">{% translate "Amount (TZS)" %}</label>
     <input id="pv" name="preview_amount" type="number" min="1" step="1" value="{{ preview.amount|default:'' }}">
     <button class="button button--secondary" type="submit">{% translate "Check" %}</button></form>
   {% if preview %}<p>{% blocktranslate with amount=preview.amount|tzs %}For {{ amount }}, these rules would block a withdrawal today:{% endblocktranslate %}</p>
     <ul class="checklist">{% for message in preview.messages %}<li class="checklist__item checklist__item--no">{{ message }}</li>{% endfor %}</ul>
     {% if preview.high_risk %}<p class="lead">{% translate "Amounts this large would need two ClipCash reviewers." %}</p>{% endif %}{% endif %}
-</section>
+</section>{% endif %}
 {% if demos %}<section class="panel"><h2 class="panel__title">{% translate "Demo scenarios (simulated)" %}</h2>{% include "components/demo_withdrawal_notice.html" %}
 <table class="table financial-table withdrawal-demo-table"><caption>{% translate "Simulated withdrawal scenarios" %}</caption><thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Simulated amount" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
 <tbody>{% for d in demos %}<tr><td><a class="financial-reference" href="{% url 'withdrawals:demo' d.pk %}">{{ d.reference }}</a></td><td><span class="financial-amount">{{ d.simulated_amount|tzs }}</span> <span class="badge badge--sandbox">{% translate "Demo" %}</span></td><td><span class="badge badge--{{ d.status|lower }}">{{ d.get_status_display }}</span></td></tr>{% endfor %}</tbody></table></section>{% endif %}

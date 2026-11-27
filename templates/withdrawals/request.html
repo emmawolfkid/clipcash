@@ -1,0 +1,32 @@
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/withdrawals/overview.css' %}">{% endblock %}
+{% block title %}{% translate "Withdrawal" %} {{ withdrawal.reference }}{% endblock %}
+{% block member_content %}
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="withdrawals" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{% translate "Withdrawal" %} {{ withdrawal.reference }}</h1>
+    <p class="page-banner__subtitle"><span class="badge badge--{{ withdrawal.status|lower }}">{{ withdrawal.get_status_display }}</span></p></div>
+  <a class="page-banner__aside" href="{% url 'withdrawals:overview' %}">{% translate "Withdrawals" %}</a>
+</header>
+<div class="withdrawal-page">
+{% if withdrawal.status == "PAID" %}<p class="notice" role="status"><strong>{% blocktranslate with amount=withdrawal.net_payout|tzs %}{{ amount }} was sent.{% endblocktranslate %}</strong> {% blocktranslate with ref=withdrawal.payout_reference %}Transaction reference: {{ ref }}.{% endblocktranslate %}</p>
+{% elif withdrawal.status == "REJECTED" or withdrawal.status == "CANCELLED" or withdrawal.status == "FAILED" %}<p class="notice notice--warning" role="status">{% blocktranslate with amount=withdrawal.wallet_deduction|tzs %}{{ amount }} is back in your available balance.{% endblocktranslate %}{% if reason %} {{ reason }}{% endif %}</p>
+{% elif withdrawal.status == "RECONCILIATION" or withdrawal.status == "VERIFYING" or withdrawal.status == "PAYOUT_PENDING" %}<p class="notice" role="status">{% translate "The payout is being sent or checked. It is shown as paid only after ClipCash confirms the transfer." %}</p>
+{% else %}<p class="notice" role="status">{% translate "The amount is reserved from your balance while ClipCash reviews the request." %}</p>{% endif %}
+{% if withdrawal.info_request and withdrawal.is_open %}<p class="notice notice--warning" role="status"><strong>{% translate "ClipCash needs more information:" %}</strong> {{ withdrawal.info_request }} <a href="{% url 'support:create' %}">{% translate "Reply through support" %}</a></p>{% endif %}
+<section class="panel"><dl class="details">
+  <dt>{% translate "Amount requested" %}</dt><dd class="financial-amount">{{ withdrawal.amount|tzs }}</dd>
+  <dt>{% translate "Fee" %}</dt><dd class="financial-amount">{{ withdrawal.fee|tzs }}</dd>
+  <dt>{% translate "Taken from your wallet" %}</dt><dd class="financial-amount">{{ withdrawal.wallet_deduction|tzs }}</dd>
+  <dt>{% translate "You receive" %}</dt><dd class="financial-amount"><strong>{{ withdrawal.net_payout|tzs }}</strong></dd>
+  <dt>{% translate "Destination" %}</dt><dd>{{ withdrawal.destination_label }} · {{ withdrawal.destination_holder }}</dd>
+  <dt>{% translate "Requested" %}</dt><dd>{{ withdrawal.created_at|date:"DATETIME_FORMAT" }}</dd>
+</dl>
+{% if withdrawal.status == "REQUESTED" or withdrawal.status == "UNDER_REVIEW" or withdrawal.status == "APPROVED" %}
+<details class="confirm-disclosure"><summary>{% translate "Cancel this withdrawal" %}</summary><div class="confirm-disclosure__body">
+  <form method="post">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Confirm cancellation" %}</button></form></div></details>{% endif %}
+</section>
+<section class="panel"><h2 class="panel__title">{% translate "Progress" %}</h2>
+<ol class="list">{% for e in events %}<li class="list__item"><span>{{ e.created_at|date:"SHORT_DATETIME_FORMAT" }}</span><span>{{ e.status_label }}</span></li>{% endfor %}</ol></section>
+</div>
+{% endblock %}

@@ -31,6 +31,7 @@ class FeatureFlagTests(TestCase):
                 "real_money_rewards": False,
                 "live_payments": False,
                 "withdrawals": False,
+                "withdrawal_settlement": False,  # FIN-02: settling existing withdrawals (approval only).
                 "manual_membership_payments": False,  # PAY-01: environment-owned, off by default.
             },
         )
@@ -43,7 +44,8 @@ class FeatureFlagTests(TestCase):
         self.assertFalse(features.is_enabled("registration"))
 
     def test_financial_flags_locked_off(self):
-        self.assertEqual(features.FINANCIAL_FEATURES, {"real_money_rewards", "live_payments", "withdrawals"})
+        self.assertEqual(features.FINANCIAL_FEATURES, {"real_money_rewards", "live_payments", "withdrawals",
+                                                       "withdrawal_settlement"})
         for key in features.FINANCIAL_FEATURES:
             feature = features.get_feature(key)
             self.assertIsNone(feature.config_field)

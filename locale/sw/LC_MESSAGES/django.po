@@ -12142,3 +12142,778 @@ msgstr "Fungua pochi yako uone mahali zawadi halisi zinapoonekana. Kufungua poch
 
 msgid "No wallet transactions yet. Rewards appear here after a verified view of a campaign that shows a TZS amount."
 msgstr "Bado hakuna miamala ya pochi. Zawadi huonekana hapa baada ya utazamaji uliohakikiwa wa kampeni inayoonyesha kiasi cha TZS."
+
+#: FIN-02 withdrawal requests and manual payouts
+msgid "Settlement of existing withdrawals"
+msgstr "Ukamilishaji wa utoaji uliopo"
+
+msgid "Withdrawal updated."
+msgstr "Utoaji umesasishwa."
+
+msgid "Withdrawal settings saved as a new version. Existing requests keep theirs."
+msgstr "Mipangilio ya utoaji imehifadhiwa kama toleo jipya. Maombi yaliyopo yanabaki na toleo lake."
+
+msgid "Identity check updated."
+msgstr "Uhakiki wa utambulisho umesasishwa."
+
+msgid "The payout number cannot be read: the payout data key is not configured."
+msgstr "Namba ya malipo haiwezi kusomeka: ufunguo wa data ya malipo haujawekwa."
+
+msgid "bank"
+msgstr "benki"
+
+msgid "number (encrypted)"
+msgstr "namba (imesimbwa)"
+
+msgid "minimum withdrawal (TZS)"
+msgstr "kiwango cha chini cha utoaji (TZS)"
+
+msgid "maximum withdrawal (TZS)"
+msgstr "kiwango cha juu cha utoaji (TZS)"
+
+msgid "daily amount limit (TZS)"
+msgstr "kikomo cha kiasi kwa siku (TZS)"
+
+msgid "daily requests"
+msgstr "maombi kwa siku"
+
+msgid "fee"
+msgstr "ada"
+
+msgid "fixed fee (TZS)"
+msgstr "ada isiyobadilika (TZS)"
+
+msgid "percentage fee (basis points)"
+msgstr "ada ya asilimia (pointi za msingi)"
+
+msgid "fee paid"
+msgstr "ada inalipwa"
+
+msgid "enabled methods"
+msgstr "njia zilizowezeshwa"
+
+msgid "usual processing time (hours)"
+msgstr "muda wa kawaida wa kushughulikia (saa)"
+
+msgid "identity check from (TZS)"
+msgstr "uhakiki wa utambulisho kuanzia (TZS)"
+
+msgid "accept new requests"
+msgstr "pokea maombi mapya"
+
+msgid "allow new payout processing"
+msgstr "ruhusu ushughulikiaji mpya wa malipo"
+
+msgid "reason for change"
+msgstr "sababu ya mabadiliko"
+
+msgid "withdrawal settings version"
+msgstr "toleo la mipangilio ya utoaji"
+
+msgid "full legal name"
+msgstr "jina kamili kisheria"
+
+msgid "document type"
+msgstr "aina ya hati"
+
+msgid "document number (last four)"
+msgstr "namba ya hati (tarakimu nne za mwisho)"
+
+msgid "document number (encrypted)"
+msgstr "namba ya hati (imesimbwa)"
+
+msgid "note"
+msgstr "maelezo"
+
+msgid "withdrawal identity check"
+msgstr "uhakiki wa utambulisho wa utoaji"
+
+msgid "withdrawal reference"
+msgstr "kumbukumbu ya utoaji"
+
+msgid "amount requested (TZS)"
+msgstr "kiasi kilichoombwa (TZS)"
+
+msgid "fee (TZS)"
+msgstr "ada (TZS)"
+
+msgid "wallet deduction (TZS)"
+msgstr "kinachokatwa pochini (TZS)"
+
+msgid "net payout (TZS)"
+msgstr "malipo halisi (TZS)"
+
+msgid "identity verified when requested"
+msgstr "utambulisho ulihakikiwa wakati wa ombi"
+
+msgid "information requested"
+msgstr "taarifa zilizoombwa"
+
+msgid "external transaction reference"
+msgstr "kumbukumbu ya muamala wa nje"
+
+msgid "payment evidence"
+msgstr "ushahidi wa malipo"
+
+msgid "withdrawal request"
+msgstr "ombi la utoaji"
+
+msgid "withdrawal event"
+msgstr "tukio la utoaji"
+
+msgid "No fee"
+msgstr "Hakuna ada"
+
+msgid "Fixed fee"
+msgstr "Ada isiyobadilika"
+
+msgid "Percentage fee"
+msgstr "Ada ya asilimia"
+
+msgid "Deducted from the amount requested"
+msgstr "Inakatwa kutoka kiasi kilichoombwa"
+
+msgid "Added to the amount requested"
+msgstr "Inaongezwa juu ya kiasi kilichoombwa"
+
+msgid "National ID (NIDA)"
+msgstr "Kitambulisho cha Taifa (NIDA)"
+
+msgid "Voter's ID"
+msgstr "Kitambulisho cha Mpiga Kura"
+
+msgid "Passport"
+msgstr "Pasipoti"
+
+msgid "Driving licence"
+msgstr "Leseni ya udereva"
+
+msgid "Awaiting check"
+msgstr "Inasubiri uhakiki"
+
+msgid "Payment processing"
+msgstr "Malipo yanashughulikiwa"
+
+msgid "Payment verification"
+msgstr "Uhakiki wa malipo"
+
+msgid "Reconciliation required"
+msgstr "Inahitaji ulinganisho"
+
+msgid "M-Pesa"
+msgstr "M-Pesa"
+
+msgid "HaloPesa"
+msgstr "HaloPesa"
+
+msgid "Enter your full name as it appears on the document."
+msgstr "Weka jina lako kamili kama lilivyo kwenye hati."
+
+msgid "Choose the document type."
+msgstr "Chagua aina ya hati."
+
+msgid "Enter the document number (6 to 25 letters or digits)."
+msgstr "Weka namba ya hati (herufi au tarakimu 6 hadi 25)."
+
+msgid "You cannot check your own identity."
+msgstr "Huwezi kuhakiki utambulisho wako mwenyewe."
+
+msgid "This withdrawal changed since you opened it. Reload the page."
+msgstr "Utoaji huu umebadilika tangu ulipoufungua. Pakia ukurasa upya."
+
+msgid "This action is not possible in the current state."
+msgstr "Kitendo hiki hakiwezekani katika hali ya sasa."
+
+msgid "New payout processing is switched off for this deployment."
+msgstr "Ushughulikiaji mpya wa malipo umezimwa kwenye mfumo huu."
+
+msgid "Only the operator processing this payout can see the full number."
+msgstr "Ni mhudumu anayeshughulikia malipo haya pekee anayeweza kuona namba kamili."
+
+msgid "Withdrawal settlement is not approved for this deployment."
+msgstr "Ukamilishaji wa utoaji haujaidhinishwa kwenye mfumo huu."
+
+msgid "Choose how the fee works."
+msgstr "Chagua jinsi ada inavyofanya kazi."
+
+msgid "The maximum must be at least the minimum."
+msgstr "Kiwango cha juu lazima kiwe angalau sawa na kiwango cha chini."
+
+msgid "Your identity is already verified. Contact support to change it."
+msgstr "Utambulisho wako tayari umehakikiwa. Wasiliana na usaidizi ili kuubadilisha."
+
+msgid "This identity check was already decided."
+msgstr "Uhakiki huu wa utambulisho tayari umeamuliwa."
+
+msgid "You cannot review your own withdrawal."
+msgstr "Huwezi kukagua utoaji wako mwenyewe."
+
+msgid "You cannot approve your own withdrawal."
+msgstr "Huwezi kuidhinisha utoaji wako mwenyewe."
+
+msgid "The member's wallet is restricted. Reject the request or wait for the review to finish."
+msgstr "Pochi ya mwanachama imezuiliwa. Kataa ombi au subiri ukaguzi ukamilike."
+
+msgid "The member's identity check is not verified yet."
+msgstr "Uhakiki wa utambulisho wa mwanachama bado haujakamilika."
+
+msgid "You cannot decide your own withdrawal."
+msgstr "Huwezi kuamua utoaji wako mwenyewe."
+
+msgid "Withdrawal not found."
+msgstr "Utoaji haukupatikana."
+
+msgid "New payout processing is paused."
+msgstr "Ushughulikiaji mpya wa malipo umesitishwa kwa muda."
+
+msgid "The approver cannot also send the payout."
+msgstr "Aliyeidhinisha hawezi pia kutuma malipo."
+
+msgid "The member's wallet is restricted. Do not send money."
+msgstr "Pochi ya mwanachama imezuiliwa. Usitume pesa."
+
+msgid "Recorded cash is not enough for this payout. Check payout liquidity first."
+msgstr "Fedha taslimu zilizorekodiwa hazitoshi kwa malipo haya. Hakikisha kwanza uwezo wa kulipa."
+
+msgid "Enter the transaction reference exactly as the provider or bank shows it (letters and digits, up to 40 characters)."
+msgstr "Weka kumbukumbu ya muamala kama inavyoonyeshwa na mtoa huduma au benki (herufi na tarakimu, hadi herufi 40)."
+
+msgid "Only the operator processing this payout can record it."
+msgstr "Ni mhudumu anayeshughulikia malipo haya pekee anayeweza kuyarekodi."
+
+msgid "Only the operator processing this payout can report it."
+msgstr "Ni mhudumu anayeshughulikia malipo haya pekee anayeweza kuripoti tatizo."
+
+msgid "Confirm that you found this payment in the provider or bank records."
+msgstr "Thibitisha kwamba umeyaona malipo haya kwenye rekodi za mtoa huduma au benki."
+
+msgid "No payment has been recorded for this withdrawal."
+msgstr "Hakuna malipo yaliyorekodiwa kwa utoaji huu."
+
+msgid "A different person must verify the payment."
+msgstr "Mtu mwingine lazima ahakiki malipo."
+
+msgid "The member's wallet is restricted. Keep this payout in reconciliation until the review ends."
+msgstr "Pochi ya mwanachama imezuiliwa. Acha malipo haya kwenye ulinganisho hadi ukaguzi ukamilike."
+
+msgid "A different person must confirm a failed payout."
+msgstr "Mtu mwingine lazima athibitishe kwamba malipo yameshindikana."
+
+msgid "Enter a whole number between %(min)s and %(max)s."
+msgstr "Weka namba kamili kati ya %(min)s na %(max)s."
+
+msgid "This transaction reference is already recorded for another payout."
+msgstr "Kumbukumbu hii ya muamala tayari imerekodiwa kwa malipo mengine."
+
+msgid "New withdrawal requests are paused for now. Please try again later."
+msgstr "Maombi mapya ya utoaji yamesitishwa kwa sasa. Tafadhali jaribu tena baadaye."
+
+msgid "Add a payout destination (saved destinations from before must be added again)."
+msgstr "Ongeza mahali pa kupokea malipo (maeneo yaliyohifadhiwa awali lazima yaongezwe upya)."
+
+msgid "This payment method is not available for withdrawals right now."
+msgstr "Njia hii ya malipo haipatikani kwa utoaji kwa sasa."
+
+msgid "Complete the identity check before withdrawing this amount."
+msgstr "Kamilisha uhakiki wa utambulisho kabla ya kutoa kiasi hiki."
+
+msgid "The amount is too small to cover the withdrawal fee."
+msgstr "Kiasi ni kidogo mno kulipia ada ya utoaji."
+
+msgid "Choose the bank."
+msgstr "Chagua benki."
+
+msgid "Withdrawal requested. The amount is reserved until it is paid or released."
+msgstr "Utoaji umeombwa. Kiasi kimehifadhiwa hadi kilipwe au kiachiliwe."
+
+msgid "Withdrawal cancelled. The amount is back in your available balance."
+msgstr "Utoaji umeghairiwa. Kiasi kimerudi kwenye salio lako linalopatikana."
+
+msgid "Identity details sent. ClipCash staff will check them."
+msgstr "Taarifa za utambulisho zimetumwa. Wafanyakazi wa ClipCash watazihakiki."
+
+msgid "Identity checks are not available on this site yet."
+msgstr "Uhakiki wa utambulisho bado haupatikani kwenye tovuti hii."
+
+msgid "Payout destination saved. Only the last four digits are shown."
+msgstr "Mahali pa kupokea malipo pamehifadhiwa. Tarakimu nne za mwisho pekee ndizo zinaonyeshwa."
+
+msgid "Enter your current password to add a payout destination."
+msgstr "Weka nenosiri lako la sasa ili kuongeza mahali pa kupokea malipo."
+
+msgid "Rewards and payouts"
+msgstr "Zawadi na malipo"
+
+msgid "Real withdrawals are active."
+msgstr "Utoaji halisi umewashwa."
+
+msgid "Approved payouts are sent by staff outside ClipCash; a second person confirms every payment."
+msgstr "Malipo yaliyoidhinishwa hutumwa na wafanyakazi nje ya ClipCash; mtu wa pili huthibitisha kila malipo."
+
+msgid "New withdrawals are switched off."
+msgstr "Utoaji mpya umezimwa."
+
+msgid "Payments already sent can still be verified, and reservations released or reconciled."
+msgstr "Malipo yaliyokwisha tumwa bado yanaweza kuhakikiwa, na fedha zilizohifadhiwa kuachiliwa au kulinganishwa."
+
+msgid "Real withdrawals are switched off."
+msgstr "Utoaji halisi umezimwa."
+
+msgid "You can prepare settings and check identities. No request can be made and no money is posted until withdrawals are activated for this deployment."
+msgstr "Unaweza kuandaa mipangilio na kuhakiki utambulisho. Hakuna ombi linaloweza kufanywa na hakuna fedha inayorekodiwa hadi utoaji uwashwe kwenye mfumo huu."
+
+msgid "All withdrawals"
+msgstr "Utoaji wote"
+
+msgid "Wallet restricted."
+msgstr "Pochi imezuiliwa."
+
+msgid "Do not approve or send money while a restriction is active."
+msgstr "Usiidhinishe wala usitume pesa wakati zuio linaendelea."
+
+msgid "Amount requested"
+msgstr "Kiasi kilichoombwa"
+
+msgid "Fee"
+msgstr "Ada"
+
+msgid "settings"
+msgstr "mipangilio"
+
+msgid "Net payout"
+msgstr "Malipo halisi"
+
+msgid "Reserved from the wallet"
+msgstr "Kilichohifadhiwa kutoka pochini"
+
+msgid "released"
+msgstr "kimeachiliwa"
+
+msgid "paid out"
+msgstr "kimelipwa"
+
+msgid "Destination (approved snapshot)"
+msgstr "Mahali pa malipo (nakala iliyoidhinishwa)"
+
+msgid "Identity check"
+msgstr "Uhakiki wa utambulisho"
+
+msgid "Not submitted"
+msgstr "Haujawasilishwa"
+
+msgid "required for this amount"
+msgstr "unahitajika kwa kiasi hiki"
+
+msgid "Wallet now"
+msgstr "Pochi kwa sasa"
+
+msgid "Approved by"
+msgstr "Kimeidhinishwa na"
+
+msgid "Payout operator"
+msgstr "Mhudumu wa malipo"
+
+msgid "External transaction reference"
+msgstr "Kumbukumbu ya muamala wa nje"
+
+msgid "Payment verified by"
+msgstr "Malipo yamehakikiwa na"
+
+msgid "Approve payout"
+msgstr "Idhinisha malipo"
+
+msgid "Ask the member for information"
+msgstr "Muombe mwanachama taarifa zaidi"
+
+msgid "Reject: reason"
+msgstr "Kataa: sababu"
+
+msgid "Reject and release the reservation"
+msgstr "Kataa na uachilie kilichohifadhiwa"
+
+msgid "Claiming makes you the only operator who can send this payout. Send it once; never retry without reconciliation."
+msgstr "Ukichukua, wewe pekee ndiye utakayeweza kutuma malipo haya. Tuma mara moja tu; usirudie bila ulinganisho."
+
+msgid "Claim payout for sending"
+msgstr "Chukua malipo ili kuyatuma"
+
+msgid "Send to:"
+msgstr "Tuma kwa:"
+
+msgid "Show the full number (recorded)"
+msgstr "Onyesha namba kamili (inarekodiwa)"
+
+msgid "Evidence (where you sent it from, time, receipt)"
+msgstr "Ushahidi (ulikotuma, muda, risiti)"
+
+msgid "Record payment for verification"
+msgstr "Rekodi malipo kwa uhakiki"
+
+msgid "Outcome uncertain: what happened?"
+msgstr "Matokeo hayajulikani: nini kilitokea?"
+
+msgid "Send to reconciliation (keep reserved)"
+msgstr "Peleka kwenye ulinganisho (fedha zibaki zimehifadhiwa)"
+
+msgid "I found %(amount)s with reference %(ref)s leaving ClipCash in the provider or bank records."
+msgstr "Nimeona %(amount)s yenye kumbukumbu %(ref)s ikitoka ClipCash kwenye rekodi za mtoa huduma au benki."
+
+msgid "Confirm payment and complete"
+msgstr "Thibitisha malipo na ukamilishe"
+
+msgid "Confirmed that no money left ClipCash"
+msgstr "Imethibitishwa kwamba hakuna pesa iliyotoka ClipCash"
+
+msgid "Mark failed and release the reservation"
+msgstr "Weka kuwa yameshindikana na uachilie kilichohifadhiwa"
+
+msgid "Wallet transactions"
+msgstr "Miamala ya pochi"
+
+msgid "Audit"
+msgstr "Ukaguzi"
+
+msgid "Identity checks"
+msgstr "Uhakiki wa utambulisho"
+
+msgid "Needed only for withdrawals. Compare the name with the member's payout destinations and the document with the member's records. Only the last four digits are shown."
+msgstr "Unahitajika kwa utoaji pekee. Linganisha jina na maeneo ya malipo ya mwanachama, na hati na kumbukumbu za mwanachama. Tarakimu nne za mwisho pekee ndizo zinaonyeshwa."
+
+msgid "Name and document"
+msgstr "Jina na hati"
+
+msgid "Note (required to reject)"
+msgstr "Maelezo (yanahitajika kukataa)"
+
+msgid "Verify"
+msgstr "Hakiki"
+
+msgid "Nothing to check."
+msgstr "Hakuna cha kuhakiki."
+
+msgid "Approved, to send"
+msgstr "Imeidhinishwa, ya kutuma"
+
+msgid "Being sent"
+msgstr "Inatumwa"
+
+msgid "Reconciliation"
+msgstr "Ulinganisho"
+
+msgid "Rejected, cancelled or failed"
+msgstr "Imekataliwa, imeghairiwa au imeshindikana"
+
+msgid "Reserved for withdrawals"
+msgstr "Kilichohifadhiwa kwa utoaji"
+
+msgid "Confirmed payouts"
+msgstr "Malipo yaliyothibitishwa"
+
+msgid "Member or reference"
+msgstr "Mwanachama au kumbukumbu"
+
+msgid "All statuses"
+msgstr "Hali zote"
+
+msgid "All methods"
+msgstr "Njia zote"
+
+msgid "No withdrawals match."
+msgstr "Hakuna utoaji unaolingana."
+
+msgid "Withdrawal settings"
+msgstr "Mipangilio ya utoaji"
+
+msgid "Each save creates a new version. Requests already made keep the version, fee and destination they were submitted with. Percentage fees are rounded up to the next whole shilling. These switches cannot turn withdrawals on: that needs the deployment's own activation."
+msgstr "Kila uhifadhi huunda toleo jipya. Maombi yaliyokwisha fanywa huendelea na toleo, ada na mahali pa malipo yaliyowasilishwa nayo. Ada za asilimia huzungushwa juu hadi shilingi kamili inayofuata. Vitufe hivi haviwezi kuwasha utoaji: hilo linahitaji uwashaji wa mfumo wenyewe."
+
+msgid "Amounts"
+msgstr "Viwango"
+
+msgid "Minimum withdrawal (TZS)"
+msgstr "Kiwango cha chini cha utoaji (TZS)"
+
+msgid "Maximum withdrawal (TZS)"
+msgstr "Kiwango cha juu cha utoaji (TZS)"
+
+msgid "Daily amount limit per member (TZS, empty for none)"
+msgstr "Kikomo cha kiasi kwa siku kwa kila mwanachama (TZS, acha wazi kusiwe na kikomo)"
+
+msgid "Requests per member per day (empty for none)"
+msgstr "Maombi kwa kila mwanachama kwa siku (acha wazi kusiwe na kikomo)"
+
+msgid "Fee type"
+msgstr "Aina ya ada"
+
+msgid "Fixed fee (TZS)"
+msgstr "Ada isiyobadilika (TZS)"
+
+msgid "Percentage fee (basis points: 150 = 1.5%%)"
+msgstr "Ada ya asilimia (pointi za msingi: 150 = 1.5%%)"
+
+msgid "The fee is"
+msgstr "Ada"
+
+msgid "Methods and processing"
+msgstr "Njia na ushughulikiaji"
+
+msgid "Usual processing time after approval (hours)"
+msgstr "Muda wa kawaida wa kushughulikia baada ya idhini (saa)"
+
+msgid "Identity check required from (TZS; 0 = always, empty = never)"
+msgstr "Uhakiki wa utambulisho unahitajika kuanzia (TZS; 0 = kila mara, wazi = kamwe)"
+
+msgid "Accept new withdrawal requests"
+msgstr "Pokea maombi mapya ya utoaji"
+
+msgid "Allow new payouts to be claimed for sending"
+msgstr "Ruhusu malipo mapya kuchukuliwa ili kutumwa"
+
+msgid "Pausing never strands money: payments already sent can still be verified, and reservations released or reconciled."
+msgstr "Kusitisha hakukwamishi fedha kamwe: malipo yaliyokwisha tumwa bado yanaweza kuhakikiwa, na fedha zilizohifadhiwa kuachiliwa au kulinganishwa."
+
+msgid "Reason for this change"
+msgstr "Sababu ya mabadiliko haya"
+
+msgid "Save new version"
+msgstr "Hifadhi toleo jipya"
+
+msgid "Versions"
+msgstr "Matoleo"
+
+msgid "Your number is stored encrypted; only the last four digits are shown. Never enter a mobile-money PIN here."
+msgstr "Namba yako huhifadhiwa ikiwa imesimbwa; tarakimu nne za mwisho pekee ndizo zinaonyeshwa. Usiweke kamwe PIN ya pesa za simu hapa."
+
+msgid "Add again to use for withdrawals"
+msgstr "Ongeza upya ili kutumia kwa utoaji"
+
+msgid "For your security, adding a payout destination asks for your current password."
+msgstr "Kwa usalama wako, kuongeza mahali pa kupokea malipo kunahitaji nenosiri lako la sasa."
+
+msgid "Bank"
+msgstr "Benki"
+
+msgid "Needed only for withdrawals. Your membership and sponsored videos do not depend on it."
+msgstr "Unahitajika kwa utoaji pekee. Uanachama wako na video zilizodhaminiwa havitegemei hili."
+
+msgid "Status:"
+msgstr "Hali:"
+
+msgid "Full legal name (as on the document)"
+msgstr "Jina kamili kisheria (kama lilivyo kwenye hati)"
+
+msgid "Document"
+msgstr "Hati"
+
+msgid "Document number"
+msgstr "Namba ya hati"
+
+msgid "The number is stored encrypted. Staff see only its last four digits and compare your name with your payout destination."
+msgstr "Namba huhifadhiwa ikiwa imesimbwa. Wafanyakazi huona tarakimu zake nne za mwisho pekee na hulinganisha jina lako na mahali pako pa kupokea malipo."
+
+msgid "Send for checking"
+msgstr "Tuma kwa uhakiki"
+
+msgid "Withdraw your available TZS balance to mobile money or a bank account."
+msgstr "Toa salio lako la TZS linalopatikana kwenda pesa za simu au akaunti ya benki."
+
+msgid "Requests are usually paid within %(n)s hour after approval."
+msgid_plural "Requests are usually paid within %(n)s hours after approval."
+msgstr[0] "Maombi kwa kawaida hulipwa ndani ya saa %(n)s baada ya idhini."
+msgstr[1] "Maombi kwa kawaida hulipwa ndani ya saa %(n)s baada ya idhini."
+
+msgid "Only your available balance can be withdrawn; pending rewards and non-cash credits cannot."
+msgstr "Salio linalopatikana pekee ndilo linaweza kutolewa; zawadi zinazosubiri na krediti zisizo fedha haziwezi."
+
+msgid "Your wallet is under review, so withdrawals are paused."
+msgstr "Pochi yako inakaguliwa, kwa hiyo utoaji umesitishwa."
+
+msgid "Request a withdrawal"
+msgstr "Omba utoaji"
+
+msgid "added to the amount"
+msgstr "inaongezwa juu ya kiasi"
+
+msgid "deducted from the amount"
+msgstr "inakatwa kutoka kiasi"
+
+msgid "Taken from your wallet"
+msgstr "Kinachokatwa pochini"
+
+msgid "You will receive"
+msgstr "Utapokea"
+
+msgid "When you confirm, the amount is reserved from your available balance. It is only shown as paid after ClipCash confirms the transfer."
+msgstr "Ukithibitisha, kiasi kinahifadhiwa kutoka salio lako linalopatikana. Kinaonyeshwa kuwa kimelipwa tu baada ya ClipCash kuthibitisha uhamisho."
+
+msgid "Confirm withdrawal"
+msgstr "Thibitisha utoaji"
+
+msgid "Payout destination"
+msgstr "Mahali pa kupokea malipo"
+
+msgid "Amount (TZS, %(min)s to %(max)s)"
+msgstr "Kiasi (TZS, %(min)s hadi %(max)s)"
+
+msgid "Add a payout destination first."
+msgstr "Ongeza kwanza mahali pa kupokea malipo."
+
+msgid "What a withdrawal needs"
+msgstr "Kinachohitajika ili kutoa"
+
+msgid "You can request a withdrawal."
+msgstr "Unaweza kuomba utoaji."
+
+msgid "Identity check:"
+msgstr "Uhakiki wa utambulisho:"
+
+msgid "not started"
+msgstr "haujaanza"
+
+msgid "Complete the identity check"
+msgstr "Kamilisha uhakiki wa utambulisho"
+
+msgid "Your withdrawals"
+msgstr "Utoaji wako"
+
+msgid "You receive"
+msgstr "Utapokea"
+
+msgid "%(amount)s was sent."
+msgstr "%(amount)s imetumwa."
+
+msgid "Transaction reference: %(ref)s."
+msgstr "Kumbukumbu ya muamala: %(ref)s."
+
+msgid "%(amount)s is back in your available balance."
+msgstr "%(amount)s imerudi kwenye salio lako linalopatikana."
+
+msgid "The payout is being sent or checked. It is shown as paid only after ClipCash confirms the transfer."
+msgstr "Malipo yanatumwa au yanakaguliwa. Yanaonyeshwa kuwa yamelipwa tu baada ya ClipCash kuthibitisha uhamisho."
+
+msgid "The amount is reserved from your balance while ClipCash reviews the request."
+msgstr "Kiasi kimehifadhiwa kutoka salio lako wakati ClipCash inakagua ombi."
+
+msgid "ClipCash needs more information:"
+msgstr "ClipCash inahitaji taarifa zaidi:"
+
+msgid "Reply through support"
+msgstr "Jibu kupitia usaidizi"
+
+msgid "Cancel this withdrawal"
+msgstr "Ghairi utoaji huu"
+
+msgid "Confirm cancellation"
+msgstr "Thibitisha kughairi"
+
+msgid "Progress"
+msgstr "Maendeleo"
+
+msgid "The payout destination could not be confirmed."
+msgstr "Mahali pa kupokea malipo hapakuweza kuthibitishwa."
+
+msgid "Your identity check is not complete."
+msgstr "Uhakiki wako wa utambulisho haujakamilika."
+
+msgid "The request did not pass our security review."
+msgstr "Ombi halikupita ukaguzi wetu wa usalama."
+
+msgid "The request is above an allowed limit."
+msgstr "Ombi liko juu ya kikomo kinachoruhusiwa."
+
+msgid "Cancelled at your request."
+msgstr "Imeghairiwa kwa ombi lako."
+
+msgid "See the message from ClipCash support."
+msgstr "Tazama ujumbe kutoka kwa usaidizi wa ClipCash."
+
+msgid "The transfer did not reach your account."
+msgstr "Uhamisho haukufika kwenye akaunti yako."
+
+msgid "Withdrawal requested: TZS {amount}"
+msgstr "Utoaji umeombwa: TZS {amount}"
+
+msgid "We reserved TZS {deduction} from your available balance for withdrawal {reference}. You will receive TZS {net} at {destination} once it is paid."
+msgstr "Tumehifadhi TZS {deduction} kutoka salio lako linalopatikana kwa utoaji {reference}. Utapokea TZS {net} kwenye {destination} utakapolipwa."
+
+msgid "More information needed for withdrawal {reference}"
+msgstr "Taarifa zaidi zinahitajika kwa utoaji {reference}"
+
+msgid "ClipCash needs more information: {note}"
+msgstr "ClipCash inahitaji taarifa zaidi: {note}"
+
+msgid "Withdrawal {reference} approved"
+msgstr "Utoaji {reference} umeidhinishwa"
+
+msgid "Your withdrawal of TZS {net} to {destination} is approved and waiting to be sent."
+msgstr "Utoaji wako wa TZS {net} kwenda {destination} umeidhinishwa na unasubiri kutumwa."
+
+msgid "Withdrawal {reference} not approved"
+msgstr "Utoaji {reference} haukuidhinishwa"
+
+msgid "TZS {deduction} is back in your available balance. Reason: {reason__t}"
+msgstr "TZS {deduction} imerudi kwenye salio lako linalopatikana. Sababu: {reason__t}"
+
+msgid "Withdrawal {reference} cancelled"
+msgstr "Utoaji {reference} umeghairiwa"
+
+msgid "TZS {deduction} is back in your available balance."
+msgstr "TZS {deduction} imerudi kwenye salio lako linalopatikana."
+
+msgid "Withdrawal {reference} could not be paid"
+msgstr "Utoaji {reference} haukuweza kulipwa"
+
+msgid "The transfer did not go through. TZS {deduction} is back in your available balance."
+msgstr "Uhamisho haukufanikiwa. TZS {deduction} imerudi kwenye salio lako linalopatikana."
+
+msgid "Withdrawal {reference} paid: TZS {net}"
+msgstr "Utoaji {reference} umelipwa: TZS {net}"
+
+msgid "TZS {net} was sent to {destination} (transaction {transaction})."
+msgstr "TZS {net} imetumwa kwenda {destination} (muamala {transaction})."
+
+msgid "An identity check awaits review"
+msgstr "Uhakiki wa utambulisho unasubiri ukaguzi"
+
+msgid "A member submitted an identity check for withdrawals."
+msgstr "Mwanachama amewasilisha uhakiki wa utambulisho kwa ajili ya utoaji."
+
+msgid "A withdrawal awaits review"
+msgstr "Utoaji unasubiri ukaguzi"
+
+msgid "Withdrawal {reference} needs review."
+msgstr "Utoaji {reference} unahitaji ukaguzi."
+
+msgid "A payout is ready to send"
+msgstr "Malipo yako tayari kutumwa"
+
+msgid "Withdrawal {reference} is approved and waiting for a payout operator."
+msgstr "Utoaji {reference} umeidhinishwa na unasubiri mhudumu wa malipo."
+
+msgid "A payout awaits verification"
+msgstr "Malipo yanasubiri uhakiki"
+
+msgid "Withdrawal {reference} was sent; a second person must confirm the payment."
+msgstr "Utoaji {reference} umetumwa; mtu wa pili lazima athibitishe malipo."
+
+msgid "Withdrawal reconciliation needs attention"
+msgstr "Ulinganisho wa utoaji unahitaji kuangaliwa"
+
+msgid "Some withdrawals need a check: open payout claims or reservation differences."
+msgstr "Baadhi ya utoaji unahitaji kuangaliwa: malipo yaliyochukuliwa bado wazi au tofauti za fedha zilizohifadhiwa."
+
+msgid "Identity check complete"
+msgstr "Uhakiki wa utambulisho umekamilika"
+
+msgid "Identity check not accepted"
+msgstr "Uhakiki wa utambulisho haukukubaliwa"
+
+msgid "You can now request withdrawals that need an identity check."
+msgstr "Sasa unaweza kuomba utoaji unaohitaji uhakiki wa utambulisho."
+
+msgid "Please check your details and submit them again."
+msgstr "Tafadhali kagua taarifa zako na uziwasilishe tena."
+
+#: templates/administration/withdrawals_real/detail.html
+msgid "Do not approve or send money while a restriction is active. A payment that was already sent must still be verified or confirmed as failed."
+msgstr "Usiidhinishe wala usitume pesa wakati zuio linaendelea. Malipo yaliyokwisha tumwa bado lazima yahakikiwe au yathibitishwe kuwa yameshindikana."

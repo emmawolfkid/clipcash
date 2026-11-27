@@ -161,6 +161,19 @@ def check_financial_locks(app_configs, **kwargs):
     if getattr(settings, "REAL_MONEY_REWARDS_ENABLED", False) and settings.PAYMENTS_MODE == "sandbox":
         errors.append(Error("Real-money rewards are switched on together with sandbox payments.",
                             hint="Set DJANGO_PAYMENTS_MODE=disabled.", id="core.E010"))
+    if getattr(settings, "WITHDRAWALS_APPROVED", False) and settings.RESTRICTED_DEMO_MODE:
+        errors.append(Error("Withdrawals are approved in a restricted demonstration.",
+                            hint="Demo mode never pays money out: unset DJANGO_WITHDRAWALS(_APPROVED).",
+                            id="core.E012"))
+    if is_enabled("withdrawals") or is_enabled("withdrawal_settlement"):
+        errors.append(CheckWarning("Real withdrawals are ACTIVE: staff pay members money outside ClipCash.",
+                                   hint="Confirm payout liquidity and the accounting, legal and regulatory approval.",
+                                   id="core.W013"))
+        from apps.withdrawals import protect
+
+        if not protect.available():
+            errors.append(Error("Real withdrawals need DJANGO_PAYOUT_DATA_KEYS to encrypt payout destinations.",
+                                id="core.E014"))
     if is_enabled("real_money_rewards"):
         errors.append(CheckWarning("Real-money rewards are ACTIVE: verified views create real TZS obligations.",
                                    hint="Confirm funding, accounting, legal and regulatory approval are current.",

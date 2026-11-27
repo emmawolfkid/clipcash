@@ -1,0 +1,23 @@
+{% extends "members/layout.html" %}{% load static i18n %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/withdrawals/destinations.css' %}">{% endblock %}
+{% block title %}{% translate "Identity check" %}{% endblock %}
+{% block member_content %}
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="withdrawals" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{% translate "Identity check" %}</h1>
+    <p class="page-banner__subtitle">{% translate "Needed only for withdrawals. Your membership and sponsored videos do not depend on it." %}</p></div>
+  <a class="page-banner__aside" href="{% url 'withdrawals:overview' %}">{% translate "Withdrawals" %}</a>
+</header>
+<div class="destination-page">
+{% if identity %}<p class="notice" role="status">{% translate "Status:" %} <strong>{{ identity.get_status_display }}</strong>{% if identity.status == "REJECTED" and identity.review_note %} · {{ identity.review_note }}{% endif %}</p>{% endif %}
+{% if not protected %}<p class="notice notice--warning" role="status">{% translate "Identity checks are not available on this site yet." %}</p>
+{% elif not identity or identity.status == "REJECTED" %}
+<section class="panel destination-form"><form method="post" class="form financial-form">{% csrf_token %}
+  <label for="i-name">{% translate "Full legal name (as on the document)" %}</label><input id="i-name" name="legal_name" maxlength="120" required value="{{ identity.legal_name|default:'' }}">
+  <label for="i-type">{% translate "Document" %}</label><select id="i-type" name="id_type">{% for v, l in id_types %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+  <label for="i-number">{% translate "Document number" %}</label><input id="i-number" name="id_number" autocomplete="off" maxlength="30" required aria-describedby="i-help">
+  <p class="helptext" id="i-help">{% translate "The number is stored encrypted. Staff see only its last four digits and compare your name with your payout destination." %}</p>
+  <button class="button button--action" type="submit">{% translate "Send for checking" %}</button></form></section>
+{% endif %}
+</div>
+{% endblock %}

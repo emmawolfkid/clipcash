@@ -1,0 +1,75 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Withdrawal" %} {{ withdrawal.reference }}{% endblock %}
+{% block console_content %}{% with w=withdrawal %}
+<div class="page-heading"><h1 class="page-title">{{ w.reference }} <span class="badge badge--{{ w.status|lower }}">{{ w.get_status_display }}</span></h1>
+<a href="{% url 'administration:withdrawal_requests' %}">{% translate "All withdrawals" %}</a></div>
+{% include "administration/withdrawals_real/_activation.html" %}
+{% if restrictions %}<p class="notice notice--warning" role="status"><strong>{% translate "Wallet restricted." %}</strong> {% translate "Do not approve or send money while a restriction is active. A payment that was already sent must still be verified or confirmed as failed." %} {% for r in restrictions %}{{ r.get_kind_display }}: {{ r.reason }}{% if not forloop.last %}; {% endif %}{% endfor %}</p>{% endif %}
+
+<section class="workspace-section"><dl class="details">
+  <dt>{% translate "Member" %}</dt><dd>{{ w.member.email|default:w.member.phone_number }}</dd>
+  <dt>{% translate "Amount requested" %}</dt><dd class="financial-amount">{{ w.amount|tzs }}</dd>
+  <dt>{% translate "Fee" %}</dt><dd class="financial-amount">{{ w.fee|tzs }} · {{ w.get_fee_bearer_display }} · {% translate "settings" %} v{{ w.settings_version.version }}</dd>
+  <dt>{% translate "Net payout" %}</dt><dd class="financial-amount"><strong>{{ w.net_payout|tzs }}</strong></dd>
+  <dt>{% translate "Reserved from the wallet" %}</dt><dd class="financial-amount">{{ w.wallet_deduction|tzs }}{% if w.release_entry_id %} · {% translate "released" %}{% elif w.payout_entry_id %} · {% translate "paid out" %}{% endif %}</dd>
+  <dt>{% translate "Destination (approved snapshot)" %}</dt><dd>{{ w.get_method_display }} · {{ w.destination_label }} · {{ w.destination_holder }}</dd>
+  <dt>{% translate "Identity check" %}</dt><dd>{% if identity %}{{ identity.get_status_display }} · {{ identity.legal_name }} · {{ identity.get_id_type_display }} ••••{{ identity.id_last4 }}{% else %}{% translate "Not submitted" %}{% endif %}{% if identity_required %} · <strong>{% translate "required for this amount" %}</strong>{% endif %}</dd>
+  <dt>{% translate "Wallet now" %}</dt><dd>{% translate "Available" %} {{ balances.available|tzs }} · {% translate "Pending" %} {{ balances.pending|tzs }} · {% translate "Reserved" %} {{ balances.reserved|tzs }}</dd>
+  {% if w.approved_by %}<dt>{% translate "Approved by" %}</dt><dd>{{ w.approved_by.email }} · {{ w.approved_at|date:"SHORT_DATETIME_FORMAT" }}</dd>{% endif %}
+  {% if w.claimed_by %}<dt>{% translate "Payout operator" %}</dt><dd>{{ w.claimed_by.email }} · {{ w.claimed_at|date:"SHORT_DATETIME_FORMAT" }}</dd>{% endif %}
+  {% if w.payout_reference %}<dt>{% translate "External transaction reference" %}</dt><dd>{{ w.payout_reference }} · {{ w.payout_evidence }}</dd>{% endif %}
+  {% if w.verified_by %}<dt>{% translate "Payment verified by" %}</dt><dd>{{ w.verified_by.email }} · {{ w.verified_at|date:"SHORT_DATETIME_FORMAT" }}</dd>{% endif %}
+  {% if w.reason_code %}<dt>{% translate "Reason" %}</dt><dd>{{ w.reason_code }}</dd>{% endif %}
+</dl></section>
+
+<section class="workspace-section" aria-labelledby="actions-title"><h2 class="workspace-section__title" id="actions-title">{% translate "Actions" %}</h2>
+{% if can_approve and w.status == "REQUESTED" or can_approve and w.status == "UNDER_REVIEW" %}
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="expected_status" value="{{ w.status }}">
+  <label for="a-note">{% translate "Note" %}</label><input id="a-note" name="note" maxlength="300">
+  <div class="actions">{% if w.status == "REQUESTED" %}<button class="button button--secondary" name="action" value="review">{% translate "Start review" %}</button>{% endif %}
+  <button class="button" name="action" value="approve">{% translate "Approve payout" %}</button>
+  <button class="button button--secondary" name="action" value="info">{% translate "Ask the member for information" %}</button></div></form>
+{% endif %}
+{% if can_approve and w.status == "REQUESTED" or can_approve and w.status == "UNDER_REVIEW" or can_approve and w.status == "APPROVED" %}
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="expected_status" value="{{ w.status }}"><input type="hidden" name="action" value="reject">
+  <label for="r-code">{% translate "Reject: reason" %}</label><select id="r-code" name="reason_code">{% for code in reasons %}<option value="{{ code }}">{% for c, m in reason_messages.items %}{% if c == code %}{{ m }}{% endif %}{% endfor %}</option>{% endfor %}</select>
+  <label for="r-note">{% translate "Note" %}</label><input id="r-note" name="note" maxlength="300">
+  <button class="button button--danger" type="submit">{% translate "Reject and release the reservation" %}</button></form>
+{% endif %}
+{% if can_process and w.status == "APPROVED" %}
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="expected_status" value="APPROVED"><input type="hidden" name="action" value="claim">
+  <p class="lead">{% translate "Claiming makes you the only operator who can send this payout. Send it once; never retry without reconciliation." %}</p>
+  <button class="button" type="submit">{% translate "Claim payout for sending" %}</button></form>
+{% endif %}
+{% if is_operator and w.status == "PAYOUT_PENDING" %}
+  {% if revealed %}<p class="notice" role="status"><strong>{% translate "Send to:" %}</strong> {{ w.get_method_display }} · <span class="financial-reference">{{ revealed }}</span> · {{ w.destination_holder }} · <strong>{{ w.net_payout|tzs }}</strong></p>
+  {% else %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="reveal"><button class="button button--secondary" type="submit">{% translate "Show the full number (recorded)" %}</button></form>{% endif %}
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="record">
+  <label for="p-ref">{% translate "External transaction reference" %}</label><input id="p-ref" name="payout_reference" maxlength="40" required autocomplete="off">
+  <label for="p-ev">{% translate "Evidence (where you sent it from, time, receipt)" %}</label><input id="p-ev" name="evidence" minlength="5" maxlength="300" required>
+  <button class="button" type="submit">{% translate "Record payment for verification" %}</button></form>
+{% endif %}
+{% if is_operator and w.status == "PAYOUT_PENDING" or can_verify and w.status == "PAYOUT_PENDING" or can_verify and w.status == "VERIFYING" %}
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="problem">
+  <label for="x-note">{% translate "Outcome uncertain: what happened?" %}</label><input id="x-note" name="note" minlength="5" maxlength="300" required>
+  <button class="button button--secondary" type="submit">{% translate "Send to reconciliation (keep reserved)" %}</button></form>
+{% endif %}
+{% if can_verify and w.status == "VERIFYING" or can_verify and w.status == "RECONCILIATION" and w.payout_reference %}
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="verify">
+  <label><input type="checkbox" name="confirmed"> {% blocktranslate with amount=w.net_payout|tzs ref=w.payout_reference %}I found {{ amount }} with reference {{ ref }} leaving ClipCash in the provider or bank records.{% endblocktranslate %}</label>
+  <button class="button" type="submit">{% translate "Confirm payment and complete" %}</button></form>
+{% endif %}
+{% if can_verify and w.status == "PAYOUT_PENDING" or can_verify and w.status == "VERIFYING" or can_verify and w.status == "RECONCILIATION" %}
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="failed">
+  <label for="f-note">{% translate "Confirmed that no money left ClipCash" %}</label><input id="f-note" name="note" minlength="5" maxlength="300" required>
+  <button class="button button--danger" type="submit">{% translate "Mark failed and release the reservation" %}</button></form>
+{% endif %}
+</section>
+
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "History" %}</h2>
+<ul class="list">{% for e in events %}<li class="list__item"><span>{{ e.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ e.action }} · {{ e.from_status|default:"—" }} → {{ e.to_status }}{% if e.note %} · {{ e.note }}{% endif %}</span><span>{{ e.actor.email|default:"" }}</span></li>{% endfor %}</ul></section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Wallet transactions" %}</h2>
+<ul class="list">{% for t in ledger %}<li class="list__item"><span>{{ t.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ t.get_category_display }} · {{ t.get_bucket_display }} · {{ t.get_direction_display }}</span><span class="financial-amount">{{ t.amount|tzs }}</span></li>{% empty %}<li>—</li>{% endfor %}</ul></section>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Audit" %}</h2>
+<ul class="list">{% for a in audit %}<li class="list__item"><span>{{ a.occurred_at|date:"SHORT_DATETIME_FORMAT" }} · {{ a.action }}</span><span>{{ a.actor_email }}</span></li>{% endfor %}</ul></section>
+{% endwith %}{% endblock %}

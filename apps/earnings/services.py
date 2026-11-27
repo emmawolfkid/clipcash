@@ -597,6 +597,9 @@ def reconcile():
     stale = SessionReward.objects.filter(status__in=[RS.PENDING, RS.AVAILABLE]).exclude(
         session__outcome=WatchSession.Outcome.VERIFIED_EVIDENCE).exclude(
         session__review_status=WatchSession.Review.PENDING)
+    # FIN-02: a reversal that could not be recovered (e.g. the money was reserved for a withdrawal)
+    # is retried whatever the session state, once the money is available again.
+    stale = stale | SessionReward.objects.filter(status=RS.RECOVERY_REQUIRED)
     for reward in stale[:200]:
         try:
             if reverse_reward(reward, reason="view no longer verified", source="reconcile").status != reward.status:
@@ -628,10 +631,17 @@ def check_consistency():
     available_ledger = ledger_total(wallets.values("available_account_id"))
     pending_records = total(SessionReward.objects.filter(status=RS.PENDING))
     available_records = total(SessionReward.objects.filter(status__in=[RS.AVAILABLE, RS.RECOVERY_REQUIRED]))
+    # FIN-02: cleared rewards are now in the available balance, reserved for a withdrawal, or paid out.
+    from apps.withdrawals.models import WithdrawalRequest
+
+    reserved_ledger = ledger_total(wallets.values("reserved_account_id"))
+    paid_out = WithdrawalRequest.objects.filter(status=WithdrawalRequest.Status.PAID).aggregate(
+        t=Coalesce(Sum("wallet_deduction"), 0))["t"]
     if pending_ledger != pending_records:
         findings.append(("pending_mismatch", f"ledger {pending_ledger} vs rewards {pending_records}"))
-    if available_ledger != available_records:
-        findings.append(("available_mismatch", f"ledger {available_ledger} vs rewards {available_records}"))
+    if available_ledger + reserved_ledger + paid_out != available_records:
+        findings.append(("available_mismatch", f"available {available_ledger} + reserved {reserved_ledger} + paid "
+                                               f"{paid_out} vs cleared rewards {available_records}"))
     for code, entry_field in (("pending_entry_missing_txn", "pending_entry"),
                               ("cleared_entry_missing_txn", "cleared_entry")):
         missing = SessionReward.objects.filter(**{f"{entry_field}__isnull": False}).exclude(

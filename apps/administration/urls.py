@@ -1,6 +1,7 @@
 from django.urls import path
 
 from apps.earnings import console as earnings_console
+from apps.withdrawals import console as withdrawals_console
 from apps.reports import views as reports
 from apps.support import console as support
 
@@ -49,6 +50,11 @@ urlpatterns = [
     path("funding/", earnings_console.FundingView.as_view(), name="campaign_funding"),
     path("funding/deposits/<uuid:pk>/", earnings_console.DepositView.as_view(), name="campaign_deposit"),
     path("earning-limits/", earnings_console.EarningRulesView.as_view(), name="earning_rules"),
+    # FIN-02: real withdrawals and manual payouts.
+    path("payouts/", withdrawals_console.WithdrawalRequestsView.as_view(), name="withdrawal_requests"),
+    path("payouts/<uuid:pk>/", withdrawals_console.WithdrawalRequestView.as_view(), name="withdrawal_request"),
+    path("payouts/settings/", withdrawals_console.WithdrawalSettingsView.as_view(), name="withdrawal_settings"),
+    path("payouts/identity/", withdrawals_console.WithdrawalIdentitiesView.as_view(), name="withdrawal_identities"),
     path("rewards/policies/", views.RewardPolicyListView.as_view(), name="reward_policies"),
     path("rewards/policies/<uuid:pk>/", views.RewardPolicyView.as_view(), name="reward_policy"),
     path("payments/", views.PaymentListView.as_view(), name="payments"),

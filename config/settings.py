@@ -461,6 +461,16 @@ MANUAL_PAYMENTS_CLAIMS_PER_HOUR = 5
 # (check --deploy core.E009/E010). Never set these in ordinary local development.
 REAL_MONEY_REWARDS_ENABLED = env.bool("DJANGO_REAL_MONEY_REWARDS", default=False)
 REAL_MONEY_REWARDS_APPROVED = env.bool("DJANGO_REAL_MONEY_REWARDS_APPROVED", default=False)
+
+# FIN-02: REAL withdrawals paid manually by staff (apps.withdrawals.real). Off by default.
+# DJANGO_WITHDRAWALS opens new requests and payout processing; DJANGO_WITHDRAWALS_APPROVED records
+# the operational, accounting, legal and regulatory approval and, on its own, still allows existing
+# obligations to be settled (verification, release, reconciliation). Refused in a restricted
+# demonstration (check --deploy). Destination and identity numbers are encrypted with
+# DJANGO_PAYOUT_DATA_KEYS (comma-separated Fernet keys, newest first). Never set these locally.
+WITHDRAWALS_ENABLED = env.bool("DJANGO_WITHDRAWALS", default=False)
+WITHDRAWALS_APPROVED = env.bool("DJANGO_WITHDRAWALS_APPROVED", default=False)
+PAYOUT_DATA_KEYS = env.list("DJANGO_PAYOUT_DATA_KEYS", default=[])
 # PRD-04: optional receipt evidence for a payment claim (JPEG, PNG or PDF, recognised by content).
 # Stored PRIVATELY: never under STATIC_ROOT or MEDIA_ROOT, served only through an authorized view.
 # In production (manual payments on) it must be outside the application directory, which every
@@ -477,7 +487,7 @@ WITHDRAWALS_DAILY_LIMIT = 1_000_000
 WITHDRAWALS_WEEKLY_LIMIT = 3_000_000
 WITHDRAWALS_MAX_REQUESTS_PER_DAY = 3
 WITHDRAWALS_HIGH_RISK_AMOUNT = 500_000  # At or above: two distinct approvers.
-WITHDRAWALS_BENEFICIARY_COOLING_HOURS = 24
+WITHDRAWALS_BENEFICIARY_COOLING_HOURS = env.int("DJANGO_WITHDRAWALS_BENEFICIARY_COOLING_HOURS", default=24)
 WITHDRAWALS_MAX_BENEFICIARIES = 3
 WITHDRAWALS_BENEFICIARY_CHANGES_PER_DAY = 5
 WITHDRAWALS_DEMO_EXPIRY_DAYS = 7

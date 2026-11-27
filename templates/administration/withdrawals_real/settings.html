@@ -1,0 +1,31 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Withdrawal settings" %}{% endblock %}
+{% block console_content %}{% with s=current %}
+<div class="page-heading"><h1 class="page-title">{% translate "Withdrawal settings" %} <small>v{{ s.version }}</small></h1><a href="{% url 'administration:withdrawal_requests' %}">{% translate "Withdrawals" %}</a></div>
+{% include "administration/withdrawals_real/_activation.html" %}
+<p class="lead">{% translate "Each save creates a new version. Requests already made keep the version, fee and destination they were submitted with. Percentage fees are rounded up to the next whole shilling. These switches cannot turn withdrawals on: that needs the deployment's own activation." %}</p>
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="expected_version" value="{{ s.version }}">
+  <fieldset><legend>{% translate "Amounts" %}</legend>
+  <label for="s-min">{% translate "Minimum withdrawal (TZS)" %}</label><input id="s-min" name="min_amount" type="number" min="1" value="{{ s.min_amount }}" required>
+  <label for="s-max">{% translate "Maximum withdrawal (TZS)" %}</label><input id="s-max" name="max_amount" type="number" min="1" value="{{ s.max_amount }}" required>
+  <label for="s-day">{% translate "Daily amount limit per member (TZS, empty for none)" %}</label><input id="s-day" name="daily_amount_limit" type="number" min="1" value="{{ s.daily_amount_limit|default_if_none:'' }}">
+  <label for="s-count">{% translate "Requests per member per day (empty for none)" %}</label><input id="s-count" name="daily_request_limit" type="number" min="1" max="100" value="{{ s.daily_request_limit|default_if_none:'' }}"></fieldset>
+  <fieldset><legend>{% translate "Fee" %}</legend>
+  <label for="s-mode">{% translate "Fee type" %}</label><select id="s-mode" name="fee_mode">{% for v, l in fee_modes %}<option value="{{ v }}"{% if s.fee_mode == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <label for="s-fixed">{% translate "Fixed fee (TZS)" %}</label><input id="s-fixed" name="fee_fixed" type="number" min="0" value="{{ s.fee_fixed }}">
+  <label for="s-bps">{% translate "Percentage fee (basis points: 150 = 1.5%)" %}</label><input id="s-bps" name="fee_percent_bps" type="number" min="0" max="5000" value="{{ s.fee_percent_bps }}">
+  <label for="s-bearer">{% translate "The fee is" %}</label><select id="s-bearer" name="fee_bearer">{% for v, l in fee_bearers %}<option value="{{ v }}"{% if s.fee_bearer == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></fieldset>
+  <fieldset><legend>{% translate "Methods and processing" %}</legend>
+  <ul class="list-plain">{% for v, l in methods %}<li><label><input type="checkbox" name="methods" value="{{ v }}"{% if v in s.methods %} checked{% endif %}> {{ l }}</label></li>{% endfor %}</ul>
+  <label for="s-hours">{% translate "Usual processing time after approval (hours)" %}</label><input id="s-hours" name="processing_hours" type="number" min="1" max="720" value="{{ s.processing_hours }}" required>
+  <label for="s-id">{% translate "Identity check required from (TZS; 0 = always, empty = never)" %}</label><input id="s-id" name="identity_required_from" type="number" min="0" value="{{ s.identity_required_from|default_if_none:'' }}"></fieldset>
+  <fieldset><legend>{% translate "Availability" %}</legend>
+  <label><input type="checkbox" name="requests_open"{% if s.requests_open %} checked{% endif %}> {% translate "Accept new withdrawal requests" %}</label>
+  <label><input type="checkbox" name="payouts_open"{% if s.payouts_open %} checked{% endif %}> {% translate "Allow new payouts to be claimed for sending" %}</label>
+  <p class="lead">{% translate "Pausing never strands money: payments already sent can still be verified, and reservations released or reconciled." %}</p></fieldset>
+  {% if can_manage %}<label for="s-reason">{% translate "Reason for this change" %}</label><input id="s-reason" name="reason" minlength="5" maxlength="300" required>
+  <button class="button" type="submit">{% translate "Save new version" %}</button>{% endif %}
+</form>
+<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Versions" %}</h2>
+<ul class="list">{% for v in history %}<li class="list__item"><span>v{{ v.version }} · {{ v.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ v.min_amount|tzs }}–{{ v.max_amount|tzs }} · {{ v.get_fee_mode_display }}{% if v.reason %} · {{ v.reason }}{% endif %}</span><span>{{ v.created_by.email|default:"" }}</span></li>{% endfor %}</ul></section>
+{% endwith %}{% endblock %}

@@ -94,6 +94,12 @@ def _earnings_services():
     return module
 
 
+def _withdrawals_real():
+    from apps.withdrawals import real as module
+
+    return module
+
+
 def console_links(user):
     """Navigation entries; each target enforces its own permission too."""
     can = {
@@ -113,6 +119,10 @@ def console_links(user):
         "video_rewards": _earnings_console().can_open_video_rewards(user),
         "campaign_funding": _earnings_funding().can_view_funding(user),
         "earning_rules": _earnings_services().can_view(user) or _earnings_services().can_manage_rules(user),
+        # FIN-02: real withdrawals, payout processing, settings and identity checks.
+        "withdrawal_requests": _withdrawals_real().can_view(user),
+        "withdrawal_settings": _withdrawals_real().can_manage_settings(user),
+        "withdrawal_identities": _withdrawals_real().can_verify_identity(user),
         "payments": payments.can_view_payments(user) and payments_sandbox_active(),
         # PAY-01: real membership payments (Airtel Lipa), verified by staff.
         "membership_payments": manual_payments.manual_payments_enabled() and manual_payments.can_view(user),

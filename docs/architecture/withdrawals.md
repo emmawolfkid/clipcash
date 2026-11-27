@@ -1,4 +1,143 @@
-# Withdrawals and payouts (Phase 10), DEMONSTRATION ONLY
+# Withdrawals and payouts
+
+## FIN-02: real withdrawals paid manually (switched off by default)
+
+Members withdraw their **available** TZS balance (never pending rewards, credits, reserved or restricted
+money). Staff send the money outside ClipCash (Airtel Money, M-Pesa, Mixx by Yas, HaloPesa, bank
+transfer); ClipCash never initiates an external payment. Code: `apps.withdrawals.real` (workflow),
+`services.withdrawal_eligibility` (single eligibility check), `console.py` (staff pages).
+
+### Flow and states
+
+```
+REQUESTED ─▶ UNDER_REVIEW ─▶ APPROVED ─claim─▶ PAYOUT_PENDING ─record─▶ VERIFYING ─verify─▶ PAID
+   └──── reject / cancel (releases) ────┘          │                      │
+                                                    └─ problem ─▶ RECONCILIATION ─verify─▶ PAID
+             PAYOUT_PENDING / VERIFYING / RECONCILIATION ─confirm failed (verifier)─▶ FAILED (releases)
+```
+
+| Ledger posting | Lines | Feature |
+|---|---|---|
+| `withdrawal.reserved` | available → reserved (wallet deduction) | `withdrawals` |
+| `withdrawal.released` | reserved → available (reject, cancel, verified failure) | `withdrawal_settlement` |
+| `withdrawal.paid_manual` | reserved → CASH (net payout) + OTHER_OPERATING_REVENUE (fee) | `withdrawal_settlement` |
+
+Each posting has an idempotency key per request, so it happens once. An uncertain payout is never
+released automatically; it stays reserved in RECONCILIATION until a verifier finds the payment (PAID) or
+confirms none left ClipCash (FAILED).
+
+### Controls
+
+* **Separation of duties** (also database checks): the member never decides; the approver never claims;
+  the operator who recorded the payment never verifies it or confirms its failure.
+* **Exclusive claim**: one operator holds a payout (row lock + expected state). A claim never expires into
+  a second payment; open claims are reported by the hourly reconciliation job.
+* **External references** are unique per channel (`<method>:<key>`, a unique column and the ledger's
+  per-source uniqueness); a reference is never proof by itself.
+* **Liquidity**: claiming and verifying require recorded CASH ≥ the net payout.
+* **Wallet restrictions** block new money movements: a new request, approval and the payout claim. They
+  never block recording what already happened: an operator can record a payment already sent, and a
+  different verifier can confirm it (PAID, noted as "wallet restricted") or confirm that nothing was sent
+  (FAILED, reservation released). A FIN-01 reversal that meets reserved money becomes RECOVERY_REQUIRED
+  (nothing negative, no other money taken); if the request is rejected the reward reconciliation job
+  completes the reversal, and if the money was already paid out the reward stays RECOVERY_REQUIRED for
+  manual recovery with the wallet restricted.
+* **Destinations** keep the full number encrypted (Fernet, `DJANGO_PAYOUT_DATA_KEYS`, rotation by listing
+  keys newest first); only the operator holding the claim can reveal it, and every reveal is audited.
+  Adding one needs the password confirmed again; new destinations wait a cooling-off period
+  (`DJANGO_WITHDRAWALS_BENEFICIARY_COOLING_HOURS`, default 24). Each request keeps an immutable snapshot.
+* **Identity check** (`WithdrawalIdentity`) is separate from registration and membership: required from a
+  configurable amount (0 = always, empty = never), verified by a different staff member; the document
+  number is encrypted, staff see its last four digits.
+* **Settings** are versioned (`WithdrawalSettings`, append-only): limits, fees (none, fixed, percentage in
+  basis points rounded UP to the next shilling; deducted or added), methods, processing time, identity
+  threshold, and two pauses (new requests, new payout processing). Requests keep their version and fee.
+
+### Staff roles and permissions
+
+Permissions are granted to staff accounts (or to a group) by a Super Administrator in the console's
+"User accounts (admin)" page; no database change is needed. Super Administrators hold every permission,
+but the separation rules apply to them too.
+
+| Task | Permission |
+|---|---|
+| Review, ask for information, approve, reject | `withdrawals.approve_withdrawals` |
+| Claim a payout, reveal the destination (claimer only), record the payment, report a problem | `withdrawals.process_payouts` |
+| Verify a payment, confirm a failure, resolve reconciliation | `withdrawals.verify_payouts` |
+| Change withdrawal settings | `withdrawals.manage_withdrawal_settings` |
+| Verify identity checks | `withdrawals.verify_withdrawal_identity` |
+| Read-only access | `withdrawals.view_withdrawals` |
+
+**Minimum: two staff identities** besides the member. Person A approves and later verifies; person B
+claims, sends and records. The approver can never claim, and the operator can never verify or confirm a
+failure of its own payout (database checks). An identity check can be verified by A or by a third person,
+never by the member.
+
+### Payout data encryption (operations)
+
+* **Library**: `cryptography==46.0.7` (with `cffi==2.1.1`, `pycparser==3.12`), pinned in
+  `requirements/base.txt`. Verified locally on Python 3.13.14 (OpenSSL 3.5.6). Binary wheels exist on PyPI
+  for Linux x86_64 with glibc 2.17 or later (`manylinux2014`, abi3 for cryptography, cp313 for cffi), so
+  pip needs no compiler or OS packages there. NetPoa's actual architecture, glibc and Python version are
+  still to be confirmed during deployment preparation (not checked here).
+* **Key generation** (once, on a trusted machine, never in the repository):
+  `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`.
+* **Configuration**: `DJANGO_PAYOUT_DATA_KEYS` in the hosting environment's secret settings (not in
+  `.env` files that are copied around, not in logs or tickets). `check --deploy` errors (core.E014) when
+  withdrawals are on without a key.
+* **Backup and recovery**: store every key that was ever active in the organization's password manager
+  or vault, with at least two authorized custodians. Without the key, stored numbers cannot be read and
+  payouts to those destinations cannot be sent (members would have to add their destinations again).
+* **Rotation**: put the new key first and keep the old keys after it
+  (`DJANGO_PAYOUT_DATA_KEYS=new,old`). New values use the new key; existing values keep decrypting with
+  the old one. Stored ciphertext is immutable by design (database guards), so old keys must stay listed
+  for as long as records encrypted with them must remain readable.
+* **Missing or wrong key**: encryption refuses (no destination or identity check can be saved with a
+  number), and a reveal shows "the payout data key is not configured" instead of a number; nothing
+  falls back to plain text.
+* **Leak prevention**: full numbers are never written to logs, audit metadata (a reveal records only the
+  withdrawal reference), notifications, emails, ledger descriptions or exports; members and staff see the
+  last four digits. The destination and identity forms mark their number fields as sensitive (excluded
+  from error reports), and the payout page is not cached.
+
+### Activation and emergencies
+
+| Setting | Effect |
+|---|---|
+| `DJANGO_WITHDRAWALS` + `DJANGO_WITHDRAWALS_APPROVED` | New requests and payout processing (`withdrawals`). |
+| `DJANGO_WITHDRAWALS_APPROVED` alone | Settle existing obligations only: verify recorded payouts, release, reconcile (`withdrawal_settlement`). |
+| Settings pauses | Stop new requests and/or new claims without affecting settlement. |
+
+Never active in a restricted demonstration (core.E012). `check --deploy` warns while active (core.W013)
+and errors without a payout data key (core.E014). Withdrawals do not need `real_money_rewards`: switching
+new rewards off never blocks paying out existing balances.
+
+### Database guards
+
+`wallets.0007` narrowly extends the wallet lock: the reserved account accepts only the three withdrawal
+postings, the available account additionally only reserve/release, the pending account only rewards;
+wallet transactions stay insert-only mirrors. `withdrawals.0004` replaces the Phase 10 "refuse every
+write" lock with: creation as REQUESTED for the member's own wallet and destination, immutable terms,
+write-once decisions and references, the transition graph above, ledger links that must be the matching
+postings for the wallet deduction, and no deletes; destination secrets immutable; settings and events
+append-only; a verified identity is final. PostgreSQL versions of every guard are included but were not
+executed locally (MariaDB only).
+
+**Rollback** before any real withdrawal restores the Phase 10 lock. After real withdrawals exist the
+reverse migration fails by design: requests, events and ledger entries are financial records.
+
+### Jobs (NetPoa)
+
+`withdrawals.reconcile_real` (hourly, from the cron-driven `run_jobs`; no persistent worker) compares open
+reservations with the ledger, checks every paid request has its matching posting, and reports open payout
+claims. It never changes a withdrawal or retries a payout. Notifications are written in the request's
+transaction; emails go through the existing outbox, also delivered by `run_jobs`.
+
+---
+
+The sections below are the Phase 10 design record (demo workflow and the original contract).
+
+## Phase 10 (demonstration)
 
 This phase adds payout destinations (beneficiaries), real-withdrawal
 eligibility (always denied), a separate staff-run **demo** withdrawal workflow,

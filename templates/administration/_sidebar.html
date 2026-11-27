@@ -28,11 +28,14 @@
         {% if can.campaigns %}{% include "administration/_nav_link.html" with target="administration:campaigns" key="campaigns" label=_("Campaigns") %}{% endif %}
         {% if can.campaign_manage %}{% include "administration/_nav_link.html" with target="administration:campaign_create" key="campaign_new" label=_("New campaign") %}{% endif %}
       </ul>{% endif %}
-      {% if can.video_rewards or can.campaign_funding or can.earning_rules %}<p class="app-nav__group" id="console-rewards">{% translate "Rewards and funding" %}</p>
+      {% if can.video_rewards or can.campaign_funding or can.earning_rules or can.withdrawal_requests or can.withdrawal_settings or can.withdrawal_identities %}<p class="app-nav__group" id="console-rewards">{% translate "Rewards and payouts" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-rewards">
         {% if can.video_rewards %}{% include "administration/_nav_link.html" with target="administration:video_rewards" key="video_rewards" label=_("Video rewards") %}{% endif %}
         {% if can.campaign_funding %}{% include "administration/_nav_link.html" with target="administration:campaign_funding" key="campaign_funding" label=_("Campaign funding") %}{% endif %}
         {% if can.earning_rules %}{% include "administration/_nav_link.html" with target="administration:earning_rules" key="earning_rules" label=_("Earning limits") %}{% endif %}
+        {% if can.withdrawal_requests %}{% include "administration/_nav_link.html" with target="administration:withdrawal_requests" key="withdrawal_requests" label=_("Withdrawals") %}{% endif %}
+        {% if can.withdrawal_identities %}{% include "administration/_nav_link.html" with target="administration:withdrawal_identities" key="withdrawal_identities" label=_("Identity checks") %}{% endif %}
+        {% if can.withdrawal_settings %}{% include "administration/_nav_link.html" with target="administration:withdrawal_settings" key="withdrawal_settings" label=_("Withdrawal settings") %}{% endif %}
       </ul>{% endif %}
       {% if can.rewards or can.payments or can.wallets or can.withdrawals %}<p class="app-nav__group" id="console-finance">{% translate "Financial simulation" %}</p>
       <ul class="app-nav__list" aria-labelledby="console-finance">

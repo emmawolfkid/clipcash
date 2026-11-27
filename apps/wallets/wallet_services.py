@@ -331,14 +331,9 @@ def reconcile(limit=1000):
             if projected != account.balance:
                 _flag(findings, "balance_projection_mismatch", wallet=wallet, account=account,
                       detail=f"Journal lines give {projected}; account balance is {account.balance}.")
-            if bucket == "reserved":
-                if projected != 0 or account.balance != 0 or line_counts.get(account.pk):
-                    _flag(findings, "unexpected_balance", wallet=wallet, account=account,
-                          detail="Withdrawal reservations must stay empty while withdrawals are locked.")
-                continue
-            if foreign_lines.get(account.pk):
+            if foreign_lines.get(account.pk):  # FIN-02: reward and withdrawal postings only (database rule too).
                 _flag(findings, "unexpected_balance", wallet=wallet, account=account,
-                      detail="Only reward postings may move wallet money.")
+                      detail="Only reward and withdrawal postings may move wallet money.")
             net, count = txn_totals.get((wallet.pk, bucket.upper()), (0, 0))
             if net != projected or count != line_counts.get(account.pk, 0):
                 _flag(findings, "transaction_projection_mismatch", wallet=wallet, account=account,

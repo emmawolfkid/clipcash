@@ -328,6 +328,18 @@ EVENT_TYPES = {
         _event("withdrawals.exception.resolved", Category.WITHDRAWALS, BUSINESS, ['code']),
         _event("withdrawals.sandbox.simulated", Category.WITHDRAWALS, BUSINESS, ['reference', 'action']),
         _event("withdrawals.action.denied", Category.WITHDRAWALS, SECURITY, ['action', 'reason']),
+        # FIN-02: real withdrawals (references, states and whole-TZS amounts; never full numbers)
+        _event("withdrawals.settings.updated", Category.CONFIGURATION, BUSINESS, ["version", "changes", "reason"]),
+        _event("withdrawals.identity.submitted", Category.WITHDRAWALS, BUSINESS, ["id_type"]),
+        _event("withdrawals.identity.reviewed", Category.WITHDRAWALS, BUSINESS, ["decision"]),
+        _event("withdrawals.request.submitted", Category.WITHDRAWALS, BUSINESS,
+               ["reference", "amount", "fee", "method", "settings_version"]),
+        *[_event(f"withdrawals.request.{action}", Category.WITHDRAWALS, BUSINESS,
+                 ["reference", "from_status", "to_status"])
+          for action in ("review", "info_requested", "approved", "rejected", "cancelled", "claimed",
+                         "payment_recorded", "reconciliation", "paid", "failed")],
+        _event("withdrawals.destination.revealed", Category.WITHDRAWALS, SECURITY, ["reference"]),
+        _event("withdrawals.reconciliation.discrepancy", Category.WITHDRAWALS, BUSINESS, ["code", "detail"]),
         # Customer support (references and states only; never message text or notes)
         _event("support.ticket.created", Category.SUPPORT, BUSINESS, ["reference", "category", "organization"]),
         _event("support.ticket.customer_replied", Category.SUPPORT, BUSINESS, ["reference", "reopened"]),

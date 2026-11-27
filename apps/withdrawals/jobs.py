@@ -1,4 +1,5 @@
-"""Withdrawal background jobs (Phase 02D runner). DEMO only: no payout is ever dispatched."""
+"""Withdrawal background jobs (Phase 02D runner: cron runs ``manage.py run_jobs`` every minute; no
+persistent worker). No job ever sends money: real payouts are sent by staff outside ClipCash."""
 
 from apps.core.jobs.registry import register
 from apps.core.jobs.schedules import Schedule, register_schedule
@@ -19,6 +20,16 @@ def housekeeping(payload, job):
     services.detect_stuck()
 
 
+@register("withdrawals.reconcile_real", max_attempts=3, admin_retryable=True,
+          description="Check real withdrawal reservations against the ledger and flag open payout claims.")
+def reconcile_real(payload, job):
+    from . import real
+
+    real.reconcile()
+
+
+register_schedule(Schedule("withdrawals.reconcile_real", "withdrawals.reconcile_real", 3600,
+                           "Check real withdrawal reservations against the ledger and flag open payout claims."))
 register_schedule(Schedule("withdrawals.reconcile_payouts", "withdrawals.reconcile_payouts", 300,
                            "Check pending and uncertain demo payouts (same reference)."))
 register_schedule(Schedule("withdrawals.housekeeping", "withdrawals.housekeeping", 3600,

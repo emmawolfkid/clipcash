@@ -84,7 +84,7 @@ class Notification(BaseModel):
         VIDEO = "VIDEO", _("Videos")
         VIEWING = "VIEWING", _("Sponsored viewing")
         REWARD = "REWARD", _("Rewards and credits")
-        WITHDRAWAL = "WITHDRAWAL", _("Demo withdrawals")
+        WITHDRAWAL = "WITHDRAWAL", _("Withdrawals")
         OPERATIONS = "OPERATIONS", _("Operations")
         SUPPORT = "SUPPORT", _("Support")
 

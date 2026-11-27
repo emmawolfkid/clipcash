@@ -4,7 +4,8 @@ Central feature flags.
 Every flag has an explicit default. Business flags are stored on
 SiteConfiguration and can be changed only by Super Administrators (see
 apps.core.services). Financial flags have no storage and no admin override.
-live_payments and withdrawals are locked off in code. FIN-01: real_money_rewards
+live_payments is locked off in code. FIN-02: withdrawals needs DJANGO_WITHDRAWALS
+and DJANGO_WITHDRAWALS_APPROVED; withdrawal_settlement only the approval. FIN-01: real_money_rewards
 is off unless the deployment sets BOTH DJANGO_REAL_MONEY_REWARDS (the switch)
 and DJANGO_REAL_MONEY_REWARDS_APPROVED (the recorded operational, legal and
 accounting approval), and never in a restricted demonstration.
@@ -58,7 +59,14 @@ FEATURES = {
                 setting="REAL_MONEY_REWARDS_ENABLED", requires_setting="REAL_MONEY_REWARDS_APPROVED"),
         # Locked: no field, no setting, no admin control.
         Feature("live_payments", _("Live payments"), False, financial=True),
-        Feature("withdrawals", _("Withdrawals and payouts"), False, financial=True),
+        # FIN-02: new withdrawal requests and payout processing need BOTH environment settings.
+        Feature("withdrawals", _("Withdrawals and payouts"), False, financial=True, demo_restricted=True,
+                setting="WITHDRAWALS_ENABLED", requires_setting="WITHDRAWALS_APPROVED"),
+        # FIN-02: settling obligations that already exist (verifying recorded payouts, releasing
+        # reservations, reconciliation) needs only the approval, so switching new withdrawals off
+        # never strands money that is already reserved.
+        Feature("withdrawal_settlement", _("Settlement of existing withdrawals"), False, financial=True,
+                demo_restricted=True, setting="WITHDRAWALS_APPROVED"),
         # PAY-01: real membership fees paid manually (Airtel Lipa) and verified by staff.
         # Environment-owned, off by default and never on in a restricted demonstration.
         # Not one of the locked FINANCIAL_FEATURES: it moves no money out of ClipCash and

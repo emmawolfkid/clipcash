@@ -91,7 +91,19 @@ POSTING_TYPES = {
               ["MEMBER_REWARD_PENDING"], ["CAMPAIGN_RESTRICTED_FUNDING"], "real_money_rewards"),
         _type("reward.cleared_reversed", "Cleared reward reversed",
               ["REWARD_LIABILITY"], ["CAMPAIGN_RESTRICTED_FUNDING"], "real_money_rewards"),
-        # Withdrawals
+        # FIN-02: manual withdrawals (apps.withdrawals.real). The request reserves the wallet deduction
+        # (available -> reserved); rejection, cancellation or a verified failure releases it once;
+        # a payout verified by a second person settles it: cash leaves for the net amount and the fee,
+        # if any, is platform revenue. Reservation needs "withdrawals"; settling existing obligations
+        # needs only "withdrawal_settlement", so a pause never strands money already reserved.
+        _type("withdrawal.reserved", "Withdrawal requested: funds reserved",
+              ["REWARD_LIABILITY"], ["MEMBER_WITHDRAWAL_RESERVED"], "withdrawals"),
+        _type("withdrawal.released", "Withdrawal reservation released",
+              ["MEMBER_WITHDRAWAL_RESERVED"], ["REWARD_LIABILITY"], "withdrawal_settlement"),
+        _type("withdrawal.paid_manual", "Withdrawal paid manually and verified",
+              ["MEMBER_WITHDRAWAL_RESERVED"], ["CASH", "OTHER_OPERATING_REVENUE"], "withdrawal_settlement",
+              requires_external_reference=True),
+        # Withdrawals (automated provider path, not used)
         _type("withdrawal.approved", "Withdrawal approved",
               ["REWARD_LIABILITY"], ["WITHDRAWAL_CLEARING"], "withdrawals"),
         _type("withdrawal.paid", "Withdrawal paid out by provider",
@@ -113,4 +125,5 @@ POSTING_TYPES = {
 SINGLE_USE_RELATED_TYPES = ("advertiser.funding_verified", "withdrawal.paid",
                             "advertiser.manual_deposit_verified")
 # FIN-01: the only posting types the database accepts on wallet-linked accounts (wallets 0006).
-WALLET_POSTING_TYPES = ("reward.pending", "reward.cleared", "reward.pending_reversed", "reward.cleared_reversed")
+WALLET_POSTING_TYPES = ("reward.pending", "reward.cleared", "reward.pending_reversed", "reward.cleared_reversed",
+                        "withdrawal.reserved", "withdrawal.released", "withdrawal.paid_manual")

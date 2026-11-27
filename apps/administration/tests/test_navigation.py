@@ -36,6 +36,9 @@ NAV_MAP = {
     # FIN-01: real TZS rewards and campaign funding.
     "video_rewards": "video_rewards", "video_reward": "video_rewards", "campaign_funding": "campaign_funding",
     "campaign_deposit": "campaign_funding", "earning_rules": "earning_rules",
+    # FIN-02: real withdrawals.
+    "withdrawal_requests": "withdrawal_requests", "withdrawal_request": None,
+    "withdrawal_settings": "withdrawal_settings", "withdrawal_identities": "withdrawal_identities",
     "payments": "payments", "payment_exceptions": "payments", "payment_funding": "payments", "payment": "payments",
     "wallets": "wallets", "wallet_reconciliation": "wallets", "wallet": "wallets",
     "withdrawals": "withdrawals", "withdrawal_exceptions": "withdrawals", "beneficiaries": "withdrawals",
@@ -45,7 +48,7 @@ NAV_MAP = {
     "security": "security",
 }
 SECTIONS = ["Overview", "Members and memberships", "Membership payments", "Videos and viewing", "Advertising",
-            "Rewards and funding", "Financial simulation", "Customer support", "Reports", "Operations",
+            "Rewards and payouts", "Financial simulation", "Customer support", "Reports", "Operations",
             "Security and audit", "Your account"]
 LINK = re.compile(r'<a class="app-nav__link( is-current)?"( aria-current="page")? href="([^"]+)">([^<]+)')
 GROUP = re.compile(r'<p class="app-nav__group" id="[^"]+">([^<]+)</p>')
@@ -194,7 +197,7 @@ class AdministrationNavigationTests(AdvertisingTestCase):
         html = self.client.get(reverse("administration:overview")).content.decode()
         groups, links = menu(html)
         self.assertEqual(groups, ["Muhtasari", "Wanachama na uanachama", "Malipo ya uanachama", "Video na utazamaji",
-                                  "Matangazo", "Zawadi na ufadhili", "Fedha za kuigiza", "Usaidizi kwa wateja",
+                                  "Matangazo", "Zawadi na malipo", "Fedha za kuigiza", "Usaidizi kwa wateja",
                                   "Ripoti", "Uendeshaji", "Usalama na ukaguzi", "Akaunti yako"])
         self.assertIn((reverse("administration:wallets"), "Pochi (leja halisi)", False), links)
         self.assertIn('aria-label="Menyu ya usimamizi"', html)

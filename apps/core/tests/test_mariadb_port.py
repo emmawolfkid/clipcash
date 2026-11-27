@@ -141,18 +141,15 @@ class SchemaTests(TestCase):
             cursor.execute("SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE()")
             installed = {name for (name,) in cursor.fetchall()}
         self.assertTrue(GUARD_TRIGGERS <= installed, GUARD_TRIGGERS - installed)
-        # Every trigger a MariaDB migration operation creates, and nothing else.
-        created = set()
-        for migration in MigrationLoader(None, ignore_no_migrations=True).disk_migrations.values():
-            for operation in migration.operations:
-                if isinstance(operation, MariaDBRunSQL):
-                    for statement in operation.sql:
-                        created.update(re.findall(r"CREATE TRIGGER (\w+)", statement))
-        self.assertEqual(installed, created)
+        # Every trigger the MariaDB migrations leave installed (replayed in order), and nothing else.
+        from apps.core.mariadb_guards import expected_guard_triggers
+
+        self.assertEqual(installed, set(expected_guard_triggers()))
         # 102 existing guards + 3 permission mutexes + 3 immutable-quote guards + 3 PRD-04 evidence guards
         # + 3 CR-01 credit-terms guards + 13 FIN-01 guards (campaign funding evidence, policy reward type,
-        # 11 real-reward / deposit / funding-movement guards; the two wallet locks are replaced, not added).
-        self.assertEqual(len(installed), 127)
+        # 11 real-reward / deposit / funding-movement guards; the two wallet locks are replaced, not added)
+        # + 10 FIN-02 withdrawal guards - the 3 Phase 10 real-withdrawal locks they replace.
+        self.assertEqual(len(installed), 134)
 
     def test_database_and_connection_settings(self):
         with connection.cursor() as cursor:

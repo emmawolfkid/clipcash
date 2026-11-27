@@ -1,10 +1,10 @@
 """
-Withdrawal services (Phase 10), DEMONSTRATION ONLY.
+Withdrawal services: payout destinations, eligibility and DEMO withdrawals.
 
-* Real withdrawals: ``withdrawal_eligibility`` always denies (financial feature
-  "withdrawals" is locked, wallets hold TZS 0 and the Phase 09 posting lock
-  stands); ``request_withdrawal`` always refuses; the database refuses any
-  WithdrawalRequest row. Eligibility never reads demo rewards or sandbox deposits.
+* Real withdrawals (FIN-02): ``withdrawal_eligibility`` is the single eligibility check
+  (settings version, limits, fees, destination, identity, ledger balance); the workflow
+  lives in apps.withdrawals.real. It denies while the "withdrawals" feature is off (the
+  default). Eligibility never reads demo rewards, credits or sandbox deposits.
 * Demo withdrawals: staff-run simulations in their own table with DEMO_* states.
   Separation of duties (creator != approver(s) != payout initiator), stale-decision
   protection, immutable decision history. A simulated payout never touches the
@@ -39,6 +39,7 @@ from apps.payments.providers import sandbox_active
 from apps.wallets import wallet_services
 from apps.wallets.models import WalletRestriction
 
+from . import protect
 from .models import (
     DemoWithdrawal,
     DemoWithdrawalDecision,
@@ -148,9 +149,11 @@ def _clean_destination(kind, network, bank_code, identifier):
             errors["identifier"] = _("Enter a Tanzanian mobile number, for example 0712345678.")
         provider = network
     elif kind == B.Kind.BANK:
+        from .real import TANZANIA_BANKS
+
         bank_code = (bank_code or "").strip().upper()
-        if not (2 <= len(bank_code) <= 12 and bank_code.isalnum()):
-            errors["bank_code"] = _("Enter the bank code (2-12 letters or digits).")
+        if bank_code not in TANZANIA_BANKS:
+            errors["bank_code"] = _("Choose the bank.")
         identifier = (identifier or "").replace(" ", "").replace("-", "")
         if not (identifier.isdigit() and 6 <= len(identifier) <= 20):
             errors["identifier"] = _("Enter the account number (6-20 digits).")
@@ -189,10 +192,15 @@ def add_beneficiary(member, *, kind, holder_name, identifier, network="", bank_c
         fingerprint = _fingerprint(kind, provider, normalized)
         if active.filter(kind=kind, identifier_fingerprint=fingerprint).exists():
             raise ValidationError({"identifier": _("This destination is already saved.")})
+        from .real import TANZANIA_BANKS
+
         beneficiary = PayoutBeneficiary.objects.create(
             member=member, kind=kind, network=network if kind == B.Kind.MOBILE_MONEY else "",
             bank_code=provider if kind == B.Kind.BANK else "", holder_name=holder_name,
-            identifier_last4=digits[-4:], identifier_fingerprint=fingerprint)
+            bank_name=TANZANIA_BANKS.get(provider, "") if kind == B.Kind.BANK else "",
+            identifier_last4=digits[-4:], identifier_fingerprint=fingerprint,
+            # FIN-02: the full number, encrypted, so a payout can be sent (empty without a key).
+            identifier_encrypted=protect.encrypt(normalized) if protect.available() else "")
         record_business_event("withdrawals.beneficiary.created", actor=member, target=beneficiary,
                               metadata={"kind": kind, "provider": provider})
     return beneficiary
@@ -249,6 +257,8 @@ class Eligibility:
     eligible: bool
     reasons: list = field(default_factory=list)
     available: int = 0  # Ledger-backed available balance (never demo or sandbox amounts).
+    settings: object = None  # FIN-02: the withdrawal settings version applied.
+    quote: object = None  # FIN-02: fee, wallet deduction and net payout for the amount.
 
     def __bool__(self):
         return self.eligible
@@ -262,6 +272,13 @@ ELIGIBILITY_MESSAGES = {
     "insufficient_balance": gettext_lazy("Your available wallet balance is not enough."),
     "no_verified_beneficiary": gettext_lazy("Add a verified payout destination."),
     "beneficiary_cooling_off": gettext_lazy("New payout destinations can be used after 24 hours."),
+    # FIN-02
+    "requests_paused": gettext_lazy("New withdrawal requests are paused for now. Please try again later."),
+    "no_payable_destination": gettext_lazy("Add a payout destination (saved destinations from before must be added "
+                                           "again)."),
+    "method_disabled": gettext_lazy("This payment method is not available for withdrawals right now."),
+    "identity_required": gettext_lazy("Complete the identity check before withdrawing this amount."),
+    "fee_exceeds_amount": gettext_lazy("The amount is too small to cover the withdrawal fee."),
     "below_minimum": gettext_lazy("The amount is below the minimum withdrawal."),
     "above_maximum": gettext_lazy("The amount is above the maximum withdrawal."),
     "daily_limit": gettext_lazy("The amount would exceed your daily limit."),
@@ -273,6 +290,11 @@ ELIGIBILITY_MESSAGES = {
 def _amount_or_none(amount):
     if amount in (None, ""):
         return None
+    if isinstance(amount, str):
+        amount = amount.strip().replace(",", "")
+        if not amount.isdigit():
+            raise ValidationError({"amount": _("Enter a whole number of shillings.")})
+        amount = int(amount)
     try:
         value = to_amount(amount)
     except (ValueError, TypeError):
@@ -282,37 +304,69 @@ def _amount_or_none(amount):
     return value
 
 
-def withdrawal_eligibility(member, *, amount=None, beneficiary=None):
-    """Centralized REAL withdrawal eligibility with stable reason codes. Always
-    denied in this phase; every other rule is evaluated so members see the full picture."""
+def withdrawal_eligibility(member, *, amount=None, beneficiary=None, require_destination=False):
+    """Centralized REAL withdrawal eligibility with stable reason codes (FIN-02). Every rule is
+    evaluated so members see the full picture; the current settings version decides limits and fees."""
+    from . import real
+
     amount = _amount_or_none(amount)
     reasons = []
-    if not features.is_enabled("withdrawals"):  # Locked financial feature: always False.
+    cfg = real.current_settings()
+    if not features.is_enabled("withdrawals"):  # Off unless both environment settings are on.
         reasons.append("withdrawals_locked")
+    elif not cfg.requests_open:
+        reasons.append("requests_paused")
     if not _member_ready(member):
-        return Eligibility(False, reasons + ["not_eligible_account"])
+        return Eligibility(False, reasons + ["not_eligible_account"], settings=cfg)
+    figures = real.quote(amount, cfg) if amount else None
     wallet = wallet_services.wallet_for(member)
     available = 0
     if wallet is None:
         reasons.append("no_wallet")
     else:
-        balances = wallet_services.balances(wallet)  # Ledger projection only.
+        balances = wallet_services.balances(wallet)  # Ledger projection only: never pending or reserved.
         available = balances.spendable
         if balances.restricted:
             reasons.append("wallet_restricted")
-        if amount is None or available < amount or available == 0:
+        needed = figures.wallet_deduction if figures else 0
+        if available == 0 or (amount is not None and available < needed):
             reasons.append("insufficient_balance")
+    if figures and figures.net_payout <= 0:
+        reasons.append("fee_exceeds_amount")
     usable = PayoutBeneficiary.objects.filter(member=member, status=B.Status.ACTIVE)
-    if beneficiary is not None:
-        usable = usable.filter(pk=beneficiary.pk)
-    if not usable.exclude(verification=B.Verification.UNVERIFIED).exists():
-        reasons.append("no_verified_beneficiary")
-    elif not usable.filter(created_at__lte=timezone.now()
-                           - timedelta(hours=settings.WITHDRAWALS_BENEFICIARY_COOLING_HOURS)).exists():
+    if beneficiary is not None or require_destination:
+        usable = usable.filter(pk=getattr(beneficiary, "pk", None))
+    if not usable.exclude(identifier_encrypted="").exists():
+        reasons.append("no_payable_destination")
+    if usable.exists() and not usable.filter(
+            created_at__lte=timezone.now() - timedelta(hours=settings.WITHDRAWALS_BENEFICIARY_COOLING_HOURS)).exists():
         reasons.append("beneficiary_cooling_off")
+    if beneficiary is not None and real.method_for(beneficiary) not in cfg.methods:
+        reasons.append("method_disabled")
+    if amount is not None and real.identity_required(amount, cfg):
+        identity = real.identity_of(member)
+        if identity is None or identity.status != identity.Status.VERIFIED:
+            reasons.append("identity_required")
     if amount is not None:
-        reasons += _limit_reasons(member, amount, model="real")
-    return Eligibility(False, sorted(set(reasons), key=reasons.index), available=available)
+        reasons += _real_limit_reasons(member, amount, cfg)
+    reasons = sorted(set(reasons), key=reasons.index)
+    return Eligibility(not reasons, reasons, available=available, settings=cfg, quote=figures)
+
+
+def _real_limit_reasons(member, amount, cfg):
+    from . import real
+
+    reasons = []
+    if amount < cfg.min_amount:
+        reasons.append("below_minimum")
+    if amount > cfg.max_amount:
+        reasons.append("above_maximum")
+    count, total = real.used_today(member)
+    if cfg.daily_amount_limit is not None and total + amount > cfg.daily_amount_limit:
+        reasons.append("daily_limit")
+    if cfg.daily_request_limit is not None and count + 1 > cfg.daily_request_limit:
+        reasons.append("frequency_limit")
+    return reasons
 
 
 def _limit_reasons(member, amount, *, model):
@@ -337,13 +391,19 @@ def _limit_reasons(member, amount, *, model):
 
 
 def request_withdrawal(member, **kwargs):
-    """The REAL request entry point. Always refused in Phase 10 (and the database
-    refuses WithdrawalRequest rows)."""
-    decision = withdrawal_eligibility(member, amount=kwargs.get("amount"), beneficiary=kwargs.get("beneficiary"))
-    record_security_event("withdrawals.request.denied", outcome=DENIED,
-                          actor=member if getattr(member, "is_authenticated", False) else None,
-                          metadata={"reasons": decision.reasons})
-    raise WithdrawalsLocked("Withdrawals are not available yet.", code="withdrawals_locked")
+    """The REAL request entry point. While withdrawals are switched off it refuses (audited);
+    otherwise it submits through apps.withdrawals.real.submit."""
+    if not features.is_enabled("withdrawals"):
+        decision = withdrawal_eligibility(member, amount=kwargs.get("amount"), beneficiary=kwargs.get("beneficiary"))
+        record_security_event("withdrawals.request.denied", outcome=DENIED,
+                              actor=member if getattr(member, "is_authenticated", False) else None,
+                              metadata={"reasons": decision.reasons})
+        raise WithdrawalsLocked("Withdrawals are not available yet.", code="withdrawals_locked")
+    from . import real
+
+    beneficiary = kwargs.get("beneficiary")
+    return real.submit(member, beneficiary_id=getattr(beneficiary, "pk", kwargs.get("beneficiary_id")),
+                       amount=kwargs.get("amount"), token=kwargs.get("token"))
 
 
 def demo_preview(member, *, amount):

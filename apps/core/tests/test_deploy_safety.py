@@ -98,7 +98,9 @@ class DeployCheckUnitTests(SimpleTestCase):
         self.assertEqual(checks.check_financial_locks(None), [])
         from apps.core import features
 
-        locked = next(iter(features.FINANCIAL_FEATURES))
+        # The financial features without a reviewed activation (FIN-01/FIN-02 added activations for
+        # rewards and withdrawals; live payments has none).
+        locked = next(key for key in sorted(features.FINANCIAL_FEATURES) if features.get_feature(key).setting is None)
         with mock.patch.object(features, "is_enabled", lambda key, config=None: key == locked):
             self.assertEqual(ids(checks.check_financial_locks(None)), ["core.E008"])
 
