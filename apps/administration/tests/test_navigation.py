@@ -1,7 +1,8 @@
-"""ADMIN-01: the administration menu is complete, grouped, permission-aware and highlights one entry.
+"""ADMIN-01 / OPS-01: the Operations Console menu is complete, grouped, permission-aware, searchable and
+highlights one entry; the console opens in Swahili until a language is chosen.
 
-NAV_MAP is the reviewed mapping between console routes and menu entries. A new console route makes
-``test_every_console_route_is_mapped`` fail until someone decides which entry it belongs to.
+``navigation.ROUTE_TO_ITEM`` is the reviewed mapping between console routes and menu entries. A new
+console route makes ``test_every_console_route_is_mapped`` fail until someone decides where it belongs.
 """
 import re
 
@@ -10,55 +11,30 @@ from django.test import override_settings
 from django.urls import reverse
 from django.utils import translation
 
+from apps.administration import navigation
 from apps.administration.urls import urlpatterns
 from apps.advertising.tests.helpers import AdvertisingTestCase, User, make_user
 from apps.payments import manual
 from apps.payments.tests.manual_helpers import MANUAL_ON, staff_with
 
-# Route name -> menu entry (URL name) highlighted on that page; None: not a page (POST-only action, download).
-NAV_MAP = {
-    "overview": "overview", "health": "health",
-    "members": "members", "member": "members", "member_complimentary": "members",
-    "member_membership_action": "members",
-    "plans": "plans", "plan_create": "plans", "plan": "plans",
-    "payment_instructions": "payment_instructions", "payment_method_new": "payment_instructions",
-    "payment_method_edit": "payment_instructions", "payment_method_retire": "payment_instructions",
-    "payment_method_reactivate": "payment_instructions",
-    "membership_payments": "membership_payments", "membership_payment": "membership_payments",
-    "videos": "videos", "video_create": "videos", "video_detail": "videos", "video_upload": None, "video_action": None,
-    "categories": "categories", "category_edit": "categories",
-    "viewing": "viewing", "viewing_review": "viewing",
-    "advertisers": "advertisers", "advertiser_review": "advertisers",
-    "campaigns": "campaigns", "campaign_review": "campaigns", "campaign_credits": "demo_rewards",
-    # UI-DASH-03: staff-managed advertising.
-    "advertiser_create": "advertisers", "campaign_create": "campaign_create", "campaign_edit": "campaigns",
-    "demo_rewards": "demo_rewards", "reward_policies": "demo_rewards", "reward_policy": "demo_rewards",
-    # FIN-01: real TZS rewards and campaign funding.
-    "video_rewards": "video_rewards", "video_reward": "video_rewards", "campaign_funding": "campaign_funding",
-    "campaign_deposit": "campaign_funding", "earning_rules": "earning_rules",
-    # FIN-02: real withdrawals.
-    "withdrawal_requests": "withdrawal_requests", "withdrawal_request": None,
-    "withdrawal_settings": "withdrawal_settings", "withdrawal_identities": "withdrawal_identities",
-    "payments": "payments", "payment_exceptions": "payments", "payment_funding": "payments", "payment": "payments",
-    "wallets": "wallets", "wallet_reconciliation": "wallets", "wallet": "wallets",
-    "withdrawals": "withdrawals", "withdrawal_exceptions": "withdrawals", "beneficiaries": "withdrawals",
-    "withdrawal": "withdrawals",
-    "support": "support", "support_ticket": "support",
-    "analytics": "analytics", "reports": "reports", "report": "reports", "report_export": None,
-    "security": "security",
-}
-SECTIONS = ["Overview", "Members and memberships", "Membership payments", "Videos and viewing", "Advertising",
-            "Rewards and payouts", "Financial simulation", "Customer support", "Reports", "Operations",
-            "Security and audit", "Your account"]
-LINK = re.compile(r'<a class="app-nav__link( is-current)?"( aria-current="page")? href="([^"]+)">([^<]+)')
-GROUP = re.compile(r'<p class="app-nav__group" id="[^"]+">([^<]+)</p>')
+GROUPS = ["Overview", "Management", "Finance", "Services and reports", "System", "Testing tools", "Your account"]
+LINK = re.compile(r'<a class="([^"]*)"((?: [a-z-]+="[^"]*")*)>(.*?)</a>', re.S)
+GROUP = re.compile(r'<p class="app-nav__group console-nav__group" id="[^"]+">([^<]+)</p>')
+TAG = re.compile(r"<[^>]+>")
 
 
 def menu(html):
-    """(group headings, [(href, label, current)]) of the console menu only."""
+    """(group headings, [(href, label, current)]) of the console menu, excluding the collapsed-rail
+    duplicates (aria-hidden section links)."""
     nav = html[html.index('<nav id="console-menu"'):]
     nav = nav[:nav.index("</nav>")]
-    links = [(href, label.strip(), bool(cls) and bool(aria)) for cls, aria, href, label in LINK.findall(nav)]
+    links = []
+    for classes, attributes, inner in LINK.findall(nav):
+        if 'aria-hidden="true"' in attributes:
+            continue
+        href = re.search(r'href="([^"]+)"', attributes).group(1)
+        label = " ".join(TAG.sub(" ", inner).split())
+        links.append((href, label, 'aria-current="page"' in attributes))
     return GROUP.findall(nav), links
 
 
@@ -90,26 +66,38 @@ class AdministrationNavigationTests(AdvertisingTestCase):
                 "membership_payment": [self.claim.pk], "payment_method_edit": [self.instruction.pk],
                 "payment_method_retire": [self.instruction.pk]}
         skip = {"payments", "payment_exceptions", "payment_funding"}  # Sandbox off: refused, tested below.
-        names = [n for n, entry in NAV_MAP.items() if entry and n not in skip
+        names = [n for n, entry in navigation.ROUTE_TO_ITEM.items() if entry and n not in skip
                  and (n in args or not any(p.pattern.converters for p in urlpatterns if p.name == n))]
         return {name: reverse(f"administration:{name}", args=args.get(name, [])) for name in names}
 
     def test_every_console_route_is_mapped(self):
         routes = {p.name for p in urlpatterns}
-        self.assertEqual(routes, set(NAV_MAP), "Map each new console route to its menu entry in NAV_MAP.")
-        targets = {entry for entry in NAV_MAP.values() if entry}
-        self.assertTrue(targets <= routes)
+        self.assertEqual(routes, set(navigation.ROUTE_TO_ITEM), "Place each new console route in ROUTE_TO_ITEM.")
+        targets = {entry for entry in navigation.ROUTE_TO_ITEM.values() if entry}
+        self.assertTrue(targets <= set(navigation.ITEMS))
+        # Every console route is a page of a section, or an action/download of a mapped page.
+        rows = navigation.mapping_rows()
+        self.assertEqual(len(rows), len(urlpatterns))
 
     def test_each_page_highlights_exactly_its_entry(self):
         for name, url in self.sample_urls().items():
             with self.subTest(page=name):
                 _groups, links = self.page(url)
                 current = [href for href, _label, is_current in links if is_current]
-                self.assertEqual(current, [reverse(f"administration:{NAV_MAP[name]}")])
+                item = navigation.ITEMS[navigation.ROUTE_TO_ITEM[name]]
+                self.assertEqual(current, [reverse(item.target)])
+
+    def test_current_section_is_open_and_others_are_closed(self):
+        self.client.force_login(self.root)
+        html = self.client.get(reverse("administration:withdrawal_settings")).content.decode()
+        sections = re.findall(r'<details class="console-nav__details"( open)?>\s*<summary[^>]*>.*?'
+                              r'<span class="app-nav__label">([^<]+)</span>', html, re.S)
+        opened = [label for is_open, label in sections if is_open]
+        self.assertEqual(opened, ["Withdrawals"])
 
     def test_groups_order_and_no_duplicate_or_broken_links(self):
         groups, links = self.page(reverse("administration:overview"))
-        self.assertEqual(groups, SECTIONS)
+        self.assertEqual(groups, GROUPS)
         hrefs = [href for href, _label, _current in links]
         self.assertEqual(len(hrefs), len(set(hrefs)), hrefs)
         for href in hrefs:
@@ -119,13 +107,21 @@ class AdministrationNavigationTests(AdvertisingTestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertNotIn("login", response.request["PATH_INFO"])
 
-    def test_super_admin_sees_both_membership_payment_entries_in_order(self):
+    def test_every_menu_entry_has_both_language_names_for_search(self):
+        self.client.force_login(self.root)
+        html = self.client.get(reverse("administration:overview")).content.decode()
+        search = dict(re.findall(r'href="([^"]+)" data-search="([^"]+)"', html))
+        self.assertIn("verify payments hakiki malipo", search[reverse("administration:membership_payments")])
+        self.assertIn("withdrawal requests maombi ya kutoa pesa", search[reverse("administration:withdrawal_requests")])
+        self.assertIn('data-console-search', html)
+
+    def test_payment_entries_in_order(self):
         _groups, links = self.page(reverse("administration:overview"))
         labels = [label for _href, label, _current in links]
-        start = labels.index("Payment methods")
-        self.assertEqual(labels[start:start + 2], ["Payment methods", "Verification queue"])
+        start = labels.index("Verify payments")
+        self.assertEqual(labels[start:start + 2], ["Verify payments", "Payment methods"])
         self.assertIn((reverse("administration:payment_instructions"), "Payment methods", False), links)
-        self.assertIn((reverse("administration:membership_payments"), "Verification queue", False), links)
+        self.assertIn((reverse("administration:membership_payments"), "Verify payments", False), links)
 
     @override_settings(MANUAL_MEMBERSHIP_PAYMENTS_ENABLED=False)
     def test_switched_off_keeps_methods_reachable_and_hides_the_refused_queue(self):
@@ -134,7 +130,7 @@ class AdministrationNavigationTests(AdvertisingTestCase):
         self.assertEqual(self.client.get(queue).status_code, 403)
         groups, links = self.page(reverse("administration:overview"))
         hrefs = [href for href, _label, _current in links]
-        self.assertIn("Membership payments", groups)
+        self.assertIn("Finance", groups)
         self.assertIn(methods, hrefs)
         self.assertNotIn(queue, hrefs)
         response = self.client.get(methods)
@@ -155,7 +151,7 @@ class AdministrationNavigationTests(AdvertisingTestCase):
 
         manager = make_user("nav-manager@example.com", role=User.Role.CONTENT_MANAGER)
         groups, links = self.page(reverse("administration:overview"), manager)
-        self.assertNotIn("Membership payments", groups)
+        self.assertNotIn("Finance", groups)
         for href, _label, _current in links:
             if href.startswith("/manage/"):
                 with self.subTest(role="content manager", href=href):
@@ -172,33 +168,57 @@ class AdministrationNavigationTests(AdvertisingTestCase):
         _groups, links = self.page(reverse("administration:membership_payments"), viewer)
         self.assertIn(reverse("administration:membership_payments"), [href for href, _l, _c in links])
 
-    def test_financial_simulation_labels_stay_explicit(self):
+    def test_testing_tools_are_listed_only_when_switched_on(self):
         groups, links = self.page(reverse("administration:overview"))
         labels = {label for _href, label, _current in links}
-        self.assertIn("Financial simulation", groups)
-        self.assertTrue({"Demo rewards", "Wallets (real ledger)", "Withdrawals (demo)"} <= labels)
+        self.assertIn("Testing tools", groups)
+        self.assertTrue({"Demo rewards", "Withdrawals (demo)"} <= labels)
         self.assertNotIn(reverse("administration:payments"), [h for h, _l, _c in links])  # Sandbox off.
+        with override_settings(SIMULATION_TOOLS_VISIBLE=False):
+            groups, links = self.page(reverse("administration:overview"))
+            self.assertNotIn("Testing tools", groups)
+            hrefs = [h for h, _l, _c in links]
+            for name in ("demo_rewards", "withdrawals", "withdrawal_exceptions"):
+                self.assertNotIn(reverse(f"administration:{name}"), hrefs)
+            # The pages and their records stay reachable directly.
+            self.assertEqual(self.client.get(reverse("administration:demo_rewards")).status_code, 200)
         self.client.force_login(self.root)
         self.assertEqual(self.client.get(reverse("administration:payments")).status_code, 403)
 
-    def test_menu_has_one_mobile_toggle_and_labelled_groups(self):
+    def test_menu_has_one_toggle_one_menu_and_labelled_groups(self):
         self.client.force_login(self.root)
         html = self.client.get(reverse("administration:overview")).content.decode()
-        self.assertEqual(html.count('aria-controls="console-menu"'), 1)
+        self.assertEqual(html.count('aria-controls="console-menu"'), 2)  # Menu button and the search box.
         self.assertEqual(html.count('id="console-menu"'), 1)
-        for group_id in re.findall(r'<p class="app-nav__group" id="([^"]+)"', html):
+        self.assertIn("data-collapsible", html)
+        for group_id in re.findall(r'<p class="app-nav__group console-nav__group" id="([^"]+)"', html):
             self.assertIn(f'aria-labelledby="{group_id}"', html)
         self.assertNotIn(" style=", html)
 
-    def test_swahili_section_headings_and_wallet_label(self):
+    def test_swahili_section_headings_and_labels(self):
         self.addCleanup(translation.activate, translation.get_language())
         self.client.force_login(self.root)
         self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = "sw"
         html = self.client.get(reverse("administration:overview")).content.decode()
         groups, links = menu(html)
-        self.assertEqual(groups, ["Muhtasari", "Wanachama na uanachama", "Malipo ya uanachama", "Video na utazamaji",
-                                  "Matangazo", "Zawadi na malipo", "Fedha za kuigiza", "Usaidizi kwa wateja",
-                                  "Ripoti", "Uendeshaji", "Usalama na ukaguzi", "Akaunti yako"])
-        self.assertIn((reverse("administration:wallets"), "Pochi (leja halisi)", False), links)
-        self.assertIn('aria-label="Menyu ya usimamizi"', html)
-        self.assertIn(">Usimamizi</p>", html)
+        self.assertEqual(groups, ["Muhtasari", "Usimamizi", "Fedha", "Huduma na ripoti", "Mfumo",
+                                  "Zana za majaribio", "Akaunti yako"])
+        labels = {label for _href, label, _current in links}
+        for label in ("Wanachama", "Hakiki malipo", "Maombi ya kutoa pesa", "Pakia video", "Mialiko", "Mipangilio yote"):
+            self.assertIn(label, labels)
+
+    @override_settings(CONSOLE_DEFAULT_LANGUAGE="sw")
+    def test_console_defaults_to_swahili_until_a_language_is_chosen(self):
+        self.addCleanup(translation.activate, translation.get_language())
+        self.client.force_login(self.root)
+        html = self.client.get(reverse("administration:overview"), HTTP_ACCEPT_LANGUAGE="en").content.decode()
+        self.assertIn('<html lang="sw">', html)
+        self.assertIn(">Muhtasari</p>", html)
+        self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = "en"
+        html = self.client.get(reverse("administration:overview")).content.decode()
+        self.assertIn('<html lang="en">', html)
+        # Member pages keep the normal negotiation.
+        self.client.cookies.pop(settings.LANGUAGE_COOKIE_NAME)
+        self.client.force_login(self.member)
+        member = self.client.get(reverse("dashboard"), HTTP_ACCEPT_LANGUAGE="en").content.decode()
+        self.assertIn('<html lang="en">', member)

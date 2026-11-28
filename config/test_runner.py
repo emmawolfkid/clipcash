@@ -35,6 +35,10 @@ class PostgreSQLTestRunner(DiscoverRunner):
     def setup_test_environment(self, **kwargs):
         super().setup_test_environment(**kwargs)
         settings.PASSWORD_HASHERS = TEST_PASSWORD_HASHERS
+        # OPS-01: automated tests are an isolated environment: the testing tools stay listed, and pages
+        # follow normal language negotiation unless a test switches the Swahili console default on.
+        settings.SIMULATION_TOOLS_VISIBLE = True
+        settings.CONSOLE_DEFAULT_LANGUAGE = ""
 
     def setup_databases(self, **kwargs):
         expected = {}

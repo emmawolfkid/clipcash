@@ -88,6 +88,7 @@ INSTALLED_APPS = [
     "apps.earnings.apps.EarningsConfig",
     "apps.wallets.apps.WalletsConfig",
     "apps.withdrawals.apps.WithdrawalsConfig",
+    "apps.referrals.apps.ReferralsConfig",
     "apps.notifications.apps.NotificationsConfig",
     "apps.audit.apps.AuditConfig",
     "apps.reports.apps.ReportsConfig",
@@ -107,6 +108,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'apps.accounts.middleware.AccountStatusMiddleware',
     'apps.audit.middleware.AuditContextMiddleware',
+    # ACC-01: the one language resolver (account choice, device choice, console default, browser).
+    'apps.core.language.LanguagePreferenceMiddleware',
     'apps.core.middleware.SiteConfigurationMiddleware',
     'apps.core.csp.ContentSecurityPolicyMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -393,7 +396,23 @@ MEMBERSHIPS_EXPIRING_SOON_DAYS = 7
 MEMBERSHIPS_MAX_PLAN_PRICE = env.int("DJANGO_MEMBERSHIPS_MAX_PLAN_PRICE", default=100_000_000)
 # Videos (apps.videos). "demo" works without Bunny (local/demo only); "bunny"
 # needs the four BUNNY_STREAM_* values. See docs/architecture/videos.md.
-VIDEO_PROVIDER = env("VIDEO_PROVIDER", default="demo" if DEBUG else "bunny")
+# OPS-01: "local" (default) keeps videos on the hosting account itself (VIDEO_LOCAL_ROOT, outside the
+# public folder and the release folder; ClipCash streams them after checking access). "bunny" uses Bunny
+# Stream; "demo" is for isolated demonstrations only. Existing videos keep the provider they were made with.
+VIDEO_PROVIDER = env("VIDEO_PROVIDER", default="local")
+VIDEO_LOCAL_ROOT = env("DJANGO_VIDEO_LOCAL_ROOT", default=str(BASE_DIR / "private" / "videos"))
+VIDEO_LOCAL_MAX_FILE_MB = env.int("DJANGO_VIDEO_LOCAL_MAX_FILE_MB", default=500)
+# Space ClipCash may use for videos (not the whole hosting quota: the database, code, logs and backups
+# share it).
+VIDEO_LOCAL_TOTAL_MB = env.int("DJANGO_VIDEO_LOCAL_TOTAL_MB", default=3072)
+VIDEO_LOCAL_THUMBNAIL_MAX_BYTES = 2 * 1024 * 1024
+# Viewing links stay valid this long (each request is still re-checked for the signed-in member).
+VIDEO_LOCAL_TOKEN_SECONDS = env.int("DJANGO_VIDEO_LOCAL_TOKEN_SECONDS", default=6 * 3600)
+# Optional web-server file hand-off. Empty: Django streams the file in 256 KB chunks (works everywhere).
+# "X-Sendfile" (Apache mod_xsendfile) or "X-LiteSpeed-Location" / "X-Accel-Redirect" with
+# VIDEO_LOCAL_SENDFILE_PREFIX set to the protected internal location, only after the host confirms support.
+VIDEO_LOCAL_SENDFILE_HEADER = env("DJANGO_VIDEO_SENDFILE_HEADER", default="")
+VIDEO_LOCAL_SENDFILE_PREFIX = env("DJANGO_VIDEO_SENDFILE_PREFIX", default="")
 VIDEO_DEMO_ALLOWED = env.bool("VIDEO_DEMO_ALLOWED", default=False)  # Isolated demo deployments only.
 VIDEO_DEMO_SAMPLE_URL = env("VIDEO_DEMO_SAMPLE_URL", default="")  # A file you own or may use, e.g. /static/videos/sample.mp4
 BUNNY_STREAM_LIBRARY_ID = env("BUNNY_STREAM_LIBRARY_ID", default="")
@@ -471,6 +490,15 @@ REAL_MONEY_REWARDS_APPROVED = env.bool("DJANGO_REAL_MONEY_REWARDS_APPROVED", def
 WITHDRAWALS_ENABLED = env.bool("DJANGO_WITHDRAWALS", default=False)
 WITHDRAWALS_APPROVED = env.bool("DJANGO_WITHDRAWALS_APPROVED", default=False)
 PAYOUT_DATA_KEYS = env.list("DJANGO_PAYOUT_DATA_KEYS", default=[])
+
+# REF-01: REAL referral rewards (apps.referrals), funded only from a separately verified ClipCash
+# marketing budget. Off by default. DJANGO_REFERRAL_REWARDS issues new rewards (and accepts marketing
+# deposits and budget commitments); DJANGO_REFERRAL_REWARDS_APPROVED records the operational,
+# accounting, legal and regulatory approval and, on its own, still lets existing referral rewards
+# clear or be reversed and unused budget be released. Referral TRACKING (codes, links, attribution,
+# qualification) needs neither. Refused in a restricted demonstration (check --deploy core.E015).
+REFERRAL_REWARDS_ENABLED = env.bool("DJANGO_REFERRAL_REWARDS", default=False)
+REFERRAL_REWARDS_APPROVED = env.bool("DJANGO_REFERRAL_REWARDS_APPROVED", default=False)
 # PRD-04: optional receipt evidence for a payment claim (JPEG, PNG or PDF, recognised by content).
 # Stored PRIVATELY: never under STATIC_ROOT or MEDIA_ROOT, served only through an authorized view.
 # In production (manual payments on) it must be outside the application directory, which every
@@ -565,6 +593,14 @@ LOCALE_PATHS = [BASE_DIR / "locale"]
 # Remember the explicit EN / SW choice across browser sessions. LocaleMiddleware
 # and Django's CSRF-protected set_language view remain responsible for selection.
 LANGUAGE_COOKIE_AGE = 60 * 60 * 24 * 365
+# OPS-01 / ACC-01: staff (and the console sign-in page) see this language until they choose one with the
+# EN/SW switch (the owner works in Swahili), on every page. Empty: the normal language negotiation applies.
+# apps/core/language.py is the only place that chooses the language.
+CONSOLE_DEFAULT_LANGUAGE = env("DJANGO_CONSOLE_DEFAULT_LANGUAGE", default="sw")
+# OPS-01: sandbox payments, demo rewards and demo withdrawal tools are hidden from normal menus and
+# dashboards. Switch on only in an isolated development or test environment (their records and direct
+# pages are kept; real-money switches are unaffected).
+SIMULATION_TOOLS_VISIBLE = env.bool("DJANGO_SIMULATION_TOOLS", default=False)
 LANGUAGE_COOKIE_SAMESITE = "Lax"
 LANGUAGE_COOKIE_SECURE = SESSION_COOKIE_SECURE
 

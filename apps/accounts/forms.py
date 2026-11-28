@@ -86,6 +86,23 @@ class RegistrationForm(forms.Form):
         label=_("Confirm password"), strip=False,
         widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
     )
+    # REF-01: optional; filled in automatically when the visitor arrived through a referral link.
+    referral_code = forms.CharField(
+        label=_("Referral code (optional)"), max_length=20, required=False,
+        help_text=_("If a ClipCash member invited you, enter their code. You can leave this empty."),
+        widget=forms.TextInput(attrs={"autocomplete": "off", "autocapitalize": "characters", "spellcheck": "false"}),
+    )
+
+    def clean_referral_code(self):
+        from apps.referrals.services import normalize_code, referrer_for_code
+
+        raw = (self.cleaned_data.get("referral_code") or "").strip()
+        if not raw:
+            return ""
+        if referrer_for_code(raw) is None:
+            raise ValidationError(_("This referral code is not valid. Check it, or leave the box empty to sign up "
+                                    "without one."), code="invalid_referral")
+        return normalize_code(raw)
 
     def _clean_contact(self, method, raw):
         if method == "phone":

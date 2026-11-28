@@ -164,7 +164,24 @@ class RegisterView(AnonymousOnlyMixin, FormView):
         # Checked on GET and POST; existing PENDING accounts can still activate.
         if not request.user.is_authenticated and not features.is_enabled("registration"):
             return render(request, "accounts/registration_closed.html", status=403)
+        if request.method == "GET" and request.GET.get("ref"):
+            from apps.referrals.services import remember_code
+
+            remember_code(request, request.GET["ref"])  # REF-01: a shared ?ref= link.
         return super().dispatch(request, *args, **kwargs)
+
+    def get_form(self, form_class=None):
+        from apps.referrals.services import tracking_open
+
+        form = super().get_form(form_class)
+        if not tracking_open():  # REF-01: programme paused: no referral box, nothing recorded.
+            form.fields.pop("referral_code", None)
+        return form
+
+    def get_initial(self):
+        from apps.referrals.services import remembered_code
+
+        return {**super().get_initial(), "referral_code": remembered_code(self.request)}
 
     def form_valid(self, form):
         ip = client_ip_for_limits(self.request)  # None: unknown client; the per-identifier limit still applies.
@@ -178,11 +195,15 @@ class RegisterView(AnonymousOnlyMixin, FormView):
         if ip:
             REGISTRATIONS_PER_IP.hit(ip)
         limit.hit(contact)
+        from apps.referrals.services import SESSION_KEY, remembered_code
+
+        code = form.cleaned_data.get("referral_code", "")
+        source = "LINK" if code and code == remembered_code(self.request) else "CODE"
         try:
             user = services.register_member(
                 contact_method=method, contact=contact, password=form.cleaned_data["password1"],
                 first_name=form.cleaned_data["first_name"], last_name=form.cleaned_data["last_name"],
-                request=self.request)
+                request=self.request, referral_code=code, referral_source=source)
         except services.DuplicatePhoneNumber:
             form.add_error("phone_number", ValidationError(DUPLICATE_PHONE_REGISTRATION, code="duplicate"))
             return self.form_invalid(form)
@@ -191,6 +212,10 @@ class RegisterView(AnonymousOnlyMixin, FormView):
                            ValidationError(DUPLICATE_REGISTRATION[duplicate.method], code="duplicate"))
             return self.form_invalid(form)
         # PRD-03A: every sign-up is signed in at once; nothing is emailed and nothing must be confirmed.
+        self.request.session.pop(SESSION_KEY, None)
+        from apps.core.language import remember_new_account_language
+
+        remember_new_account_language(self.request, user)  # ACC-01: the language chosen on this page.
         login(self.request, user, backend="apps.accounts.backends.AccountStatusBackend")
         record_security_event("auth.login.succeeded", outcome=SUCCESS, actor=user, target=user,
                               metadata={"interface": "registration"})

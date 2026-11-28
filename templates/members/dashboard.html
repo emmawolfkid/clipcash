@@ -21,10 +21,10 @@
       <p class="summary-card__value dashboard-stat__balance"><span data-balance-value>{{ w.balances.available|tzs }} <span class="summary-card__unit">{% translate "available (real ledger)" %}</span></span><span class="dashboard-stat__mask" data-balance-mask hidden aria-hidden="true">TZS ••••••</span>
         <button type="button" class="dashboard-stat__eye" data-balance-toggle aria-pressed="false" hidden
                 data-label-hide="{% translate 'Hide balance' %}" data-label-show="{% translate 'Show balance' %}" aria-label="{% translate 'Hide balance' %}">{% include "components/nav_icon.html" with icon="eye" %}</button></p>
-      <p class="summary-card__status">{% if w.balances.restricted %}<span class="badge badge--restricted">{% translate "Under review" %}</span> {% endif %}{% translate "Wallet money is not active yet. Demo rewards are never wallet money." %}</p>
+      <p class="summary-card__status">{% if w.balances.restricted %}<span class="badge badge--restricted">{% translate "Under review" %}</span> {% endif %}{% if features.real_money_rewards %}{% translate "Your real ledger balance." %}{% else %}{% translate "Cash rewards are not active yet." %}{% endif %}</p>
     {% elif w.eligible %}
       <p class="summary-card__value dashboard-stat__value--muted">{% translate "Not active yet" %}</p>
-      <p class="summary-card__status">{% translate "Wallet money is not active yet. Demo rewards are never wallet money." %}</p>
+      <p class="summary-card__status">{% if features.real_money_rewards %}{% translate "Your real ledger balance." %}{% else %}{% translate "Cash rewards are not active yet." %}{% endif %}</p>
     {% else %}
       <p class="summary-card__value dashboard-stat__value--muted">{% translate "Not available" %}</p>
       <p class="summary-card__status">{% translate "Wallets are for verified member accounts." %}</p>
@@ -46,7 +46,7 @@
     {% endif %}
   </section>
 {% endwith %}
-{% with r=summary.rewards %}
+{% if simulation_tools %}{% with r=summary.rewards %}
   <section class="summary-card summary-card--demo dashboard-stat dashboard-stat--rewards" aria-labelledby="card-rewards">
     <div class="dashboard-stat__head"><span class="dashboard-stat__icon">{% include "components/nav_icon.html" with icon="coins" %}</span><h2 class="summary-card__title" id="card-rewards">{% translate "Rewards" %} <span class="badge badge--sandbox">{% translate "Simulated" %}</span></h2></div>
     {% if not r.enabled %}
@@ -62,7 +62,19 @@
       <a class="summary-card__action" href="{% url 'rewards:history' %}">{% translate "See demo rewards" %}</a>
     {% endif %}
   </section>
-{% endwith %}
+{% endwith %}{% else %}{% with w=summary.wallet %}
+  <section class="summary-card dashboard-stat dashboard-stat--rewards" aria-labelledby="card-rewards">
+    <div class="dashboard-stat__head"><span class="dashboard-stat__icon">{% include "components/nav_icon.html" with icon="coins" %}</span><h2 class="summary-card__title" id="card-rewards">{% translate "Rewards" %}</h2></div>
+    {% if w.wallet and w.balances.pending %}
+      <p class="summary-card__value">{{ w.balances.pending|tzs }}</p>
+      <p class="summary-card__status">{% translate "Pending: available after the waiting period." %}</p>
+    {% else %}
+      <p class="summary-card__value dashboard-stat__value--muted">{% translate "None pending" %}</p>
+      <p class="summary-card__status">{% if features.real_money_rewards %}{% translate "Watch sponsored videos that show a TZS reward to earn." %}{% else %}{% translate "Cash rewards are not active yet." %}{% endif %}</p>
+    {% endif %}
+    <a class="summary-card__action" href="{% url 'wallets:wallet' %}">{% translate "Open wallet" %}</a>
+  </section>
+{% endwith %}{% endif %}
 {% with m=summary.membership %}
   <section class="summary-card dashboard-stat dashboard-stat--membership" aria-labelledby="card-membership">
     <div class="dashboard-stat__head"><span class="dashboard-stat__icon">{% include "components/nav_icon.html" with icon="calendar" %}</span><h2 class="summary-card__title" id="card-membership">{% translate "Membership" %}</h2></div>
@@ -100,12 +112,14 @@
   {% else %}<span class="dashboard-quick__item dashboard-quick__unavailable"><span class="dashboard-action-icon dashboard-action-icon--purple">{% include "components/nav_icon.html" with icon="play" %}</span><strong>{% translate "Watch videos" %}</strong><span>{% translate "Not available" %}</span></span>{% endif %}
   {% if features.memberships %}<a class="dashboard-quick__item" href="{% url 'memberships:mine' %}"><span class="dashboard-action-icon dashboard-action-icon--orange">{% include "components/nav_icon.html" with icon="membership" %}</span><strong>{% translate "Membership" %}</strong><span>{% translate "Manage membership" %}</span></a>
   {% else %}<span class="dashboard-quick__item dashboard-quick__unavailable"><span class="dashboard-action-icon dashboard-action-icon--orange">{% include "components/nav_icon.html" with icon="membership" %}</span><strong>{% translate "Membership" %}</strong><span>{% translate "Not available" %}</span></span>{% endif %}
-  <span class="dashboard-quick__item dashboard-quick__unavailable"><span class="dashboard-action-icon dashboard-action-icon--blue">{% include "components/nav_icon.html" with icon="users" %}</span><strong>{% translate "Referral" %}</strong><span>{% translate "Not available" %}</span></span>
+  {% if summary.referrals.eligible and features.advertisers %}<a class="dashboard-quick__item" href="{% url 'referrals:overview' %}"><span class="dashboard-action-icon dashboard-action-icon--blue">{% include "components/nav_icon.html" with icon="users" %}</span><strong>{% translate "Referral" %}</strong><span>{% translate "Share my link" %}</span></a>
+  {% else %}<span class="dashboard-quick__item dashboard-quick__unavailable"><span class="dashboard-action-icon dashboard-action-icon--blue">{% include "components/nav_icon.html" with icon="users" %}</span><strong>{% translate "Referral" %}</strong><span>{% translate "Not available" %}</span></span>{% endif %}
   <a class="dashboard-quick__item" href="{% url 'withdrawals:overview' %}"><span class="dashboard-action-icon dashboard-action-icon--sky">{% include "components/nav_icon.html" with icon="wallet" %}</span><strong>{% translate "Withdrawals" %}</strong><span>{% if summary.withdrawals.available %}{% translate "Withdraw" %}{% else %}{% translate "Check availability" %}{% endif %}</span></a>
 </nav>
 
 <div class="dashboard-notices">
-  <p class="dashboard-notice-strip">{% include "components/nav_icon.html" with icon="info" %}<span>{% if restricted_demo %}{% translate "Real rewards are not available yet. Demo rewards and sandbox payments are simulations; your real wallet holds only ledger-backed money." %}{% else %}{% translate "Real rewards are not available yet. Cash rewards and withdrawals are not available; any reward record shown here has no cash value." %}{% endif %}</span></p>
+  {% if restricted_demo or simulation_tools %}<p class="dashboard-notice-strip">{% include "components/nav_icon.html" with icon="info" %}<span>{% if restricted_demo %}{% translate "Real rewards are not available yet. Demo rewards and sandbox payments are simulations; your real wallet holds only ledger-backed money." %}{% else %}{% translate "Real rewards are not available yet. Cash rewards and withdrawals are not available; any reward record shown here has no cash value." %}{% endif %}</span></p>
+  {% elif not features.real_money_rewards %}<p class="dashboard-notice-strip">{% include "components/nav_icon.html" with icon="info" %}<span>{% translate "Cash rewards and withdrawals are not active yet." %}</span></p>{% endif %}
 {% with d=summary.membership.payment_decision %}{% if d %}
 <section class="notice dashboard-payment-update{% if d.status == "APPROVED" %} notice--success{% else %} notice--warning{% endif %}" role="status" aria-labelledby="payment-update-title">
   {% if d.status == "APPROVED" %}<h2 id="payment-update-title">{% translate "Payment update: confirmed" %}</h2>
@@ -226,12 +240,17 @@
 </div>
 
 <div class="dashboard-lower">
-<section class="panel dashboard-referral" aria-labelledby="dashboard-referral-title">
-  <div class="dashboard-panel__head"><h2 id="dashboard-referral-title"><span class="dashboard-panel__icon">{% include "components/nav_icon.html" with icon="users" %}</span>{% translate "Referral" %}</h2><span class="badge badge--pending">{% translate "Not available" %}</span></div>
-  <p class="dashboard-panel__intro">{% translate "Referral sharing is not available yet." %}</p>
-  <p class="dashboard-referral__link">{% translate "No referral link or referral rewards are available on your account." %}</p>
+{% with r=summary.referrals %}<section class="panel dashboard-referral" aria-labelledby="dashboard-referral-title">
+  <div class="dashboard-panel__head"><h2 id="dashboard-referral-title"><span class="dashboard-panel__icon">{% include "components/nav_icon.html" with icon="users" %}</span>{% translate "Referral" %}</h2>{% if r.eligible and r.tracking and features.advertisers %}<span class="badge badge--active">{% translate "Available" %}</span>{% else %}<span class="badge badge--pending">{% translate "Not available" %}</span>{% endif %}</div>
+  {% if r.eligible and features.advertisers %}
+  <p class="dashboard-panel__intro">{% blocktranslate count n=r.total %}{{ n }} referral so far{% plural %}{{ n }} referrals so far{% endblocktranslate %} · {% blocktranslate count n=r.qualified %}{{ n }} qualified{% plural %}{{ n }} qualified{% endblocktranslate %}</p>
+  <p class="dashboard-referral__link">{% if r.code %}{% translate "Your referral code:" %} <strong>{{ r.code.code }}</strong>{% else %}{% translate "Open Referrals to get your personal code and link." %}{% endif %}</p>
+  <a class="button dashboard-referral__share" href="{% url 'referrals:overview' %}">{% include "components/nav_icon.html" with icon="share" %}{% translate "Share my link" %}</a>
+  {% else %}
+  <p class="dashboard-panel__intro">{% translate "Referral sharing is not available on your account." %}</p>
   <button type="button" class="button dashboard-referral__share" disabled>{% include "components/nav_icon.html" with icon="share" %}{% translate "Share my link" %}</button>
-</section>
+  {% endif %}
+</section>{% endwith %}
 <section class="panel dashboard-withdrawals" aria-labelledby="dashboard-withdrawals-title">
   <div class="dashboard-panel__head"><h2 id="dashboard-withdrawals-title"><span class="dashboard-panel__icon">{% include "components/nav_icon.html" with icon="wallet" %}</span>{% translate "Withdrawals" %}</h2><span class="badge {% if summary.withdrawals.available %}badge--active{% else %}badge--pending{% endif %}">{% if summary.withdrawals.available %}{% translate "Available" %}{% else %}{% translate "Not available" %}{% endif %}</span></div>
   <p class="dashboard-panel__intro">{% if summary.withdrawals.messages %}{{ summary.withdrawals.messages.0 }} · {% endif %}{% blocktranslate count n=summary.withdrawals.destinations %}{{ n }} payout destination saved.{% plural %}{{ n }} payout destinations saved.{% endblocktranslate %}</p>
@@ -241,7 +260,7 @@
     <a class="button button--action" href="{% url 'withdrawals:overview' %}">{% include "components/nav_icon.html" with icon="wallet" %}{% if summary.withdrawals.available %}{% translate "Withdraw now" %}{% else %}{% translate "Why, and what is needed" %}{% endif %}</a>
     <a class="dashboard-destinations" href="{% url 'withdrawals:destinations' %}">{% translate "Manage destinations" %}</a>
   </div>
-  {% if summary.withdrawals.demos %}<p class="dashboard-withdrawals__note">{% blocktranslate count n=summary.withdrawals.demos %}{{ n }} demo withdrawal{% plural %}{{ n }} demo withdrawals{% endblocktranslate %}</p>{% endif %}
+  {% if summary.withdrawals.demos and simulation_tools %}<p class="dashboard-withdrawals__note">{% blocktranslate count n=summary.withdrawals.demos %}{{ n }} demo withdrawal{% plural %}{{ n }} demo withdrawals{% endblocktranslate %}</p>{% endif %}
 </section>
 </div>
 

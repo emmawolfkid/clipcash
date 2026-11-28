@@ -81,13 +81,7 @@
   border-left: 4px solid var(--warning);
 }
 
-/* The console menu is longer than most screens, so it scrolls on its own beside the page. */
-@media (min-width: 52.01rem) {
-  .app-shell--console .app-sidebar {
-    max-height: calc(100vh - 2rem);
-    overflow-y: auto;
-  }
-}
+/* OPS-01: the console sidebar is the portal's fixed, scrollable sidebar (member-portal.css). */
 
 /* Queues keep their essential columns on phones; the detail page holds the rest. */
 @media (max-width: 40rem) {

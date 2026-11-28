@@ -6,7 +6,7 @@ from django.db import DatabaseError, connection
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
-from django.utils import timezone, translation
+from django.utils import timezone
 
 from .services import get_site_configuration
 
@@ -70,13 +70,7 @@ class SiteConfigurationMiddleware:
         except (zoneinfo.ZoneInfoNotFoundError, ValueError):
             timezone.deactivate()
 
-        if (
-            settings.LANGUAGE_COOKIE_NAME not in request.COOKIES
-            and "HTTP_ACCEPT_LANGUAGE" not in request.META
-            and config.default_language in dict(settings.LANGUAGES)
-        ):
-            translation.activate(config.default_language)
-            request.LANGUAGE_CODE = config.default_language
+        # ACC-01: the site default language is applied by apps.core.language (the one resolver).
 
         if (
             config.maintenance_mode

@@ -1,0 +1,9 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "System settings" %}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><div><h1 class="page-title">{% translate "System settings" %}</h1>
+  <p class="page-intro">{% translate "Every setting you are allowed to change, in one place." %}</p></div></div>
+{% if pages %}<ul class="console-links">{% for page in pages %}<li><a href="{{ page.url }}"><strong>{{ page.label }}</strong><span>{{ page.text }}</span></a></li>{% endfor %}</ul>
+{% else %}<p class="empty-state">{% translate "Your role has no settings to change." %}</p>{% endif %}
+<p class="lead">{% translate "Real-money switches (rewards, withdrawals and referral rewards) are set by the hosting configuration after approval, not here." %}</p>
+{% endblock %}

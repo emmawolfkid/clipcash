@@ -5,8 +5,8 @@ from django.core.checks import Error, Warning, register
 @register()
 def check_video_provider(app_configs, **kwargs):
     errors = []
-    if settings.VIDEO_PROVIDER not in ("bunny", "demo"):
-        errors.append(Error("VIDEO_PROVIDER must be 'bunny' or 'demo'.", id="videos.E001"))
+    if settings.VIDEO_PROVIDER not in ("bunny", "demo", "local"):
+        errors.append(Error("VIDEO_PROVIDER must be 'local', 'bunny' or 'demo'.", id="videos.E001"))
     return errors
 
 

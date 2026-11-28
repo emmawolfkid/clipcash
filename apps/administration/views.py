@@ -16,6 +16,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 from django.utils.decorators import method_decorator
@@ -100,6 +101,12 @@ def _withdrawals_real():
     return module
 
 
+def _referrals():
+    from apps.referrals import services as module
+
+    return module
+
+
 def console_links(user):
     """Navigation entries; each target enforces its own permission too."""
     can = {
@@ -123,6 +130,8 @@ def console_links(user):
         "withdrawal_requests": _withdrawals_real().can_view(user),
         "withdrawal_settings": _withdrawals_real().can_manage_settings(user),
         "withdrawal_identities": _withdrawals_real().can_verify_identity(user),
+        # REF-01: referral programme (overview, rules and marketing budget).
+        "referrals": _referrals().can_view(user),
         "payments": payments.can_view_payments(user) and payments_sandbox_active(),
         # PAY-01: real membership payments (Airtel Lipa), verified by staff.
         "membership_payments": manual_payments.manual_payments_enabled() and manual_payments.can_view(user),
@@ -135,6 +144,10 @@ def console_links(user):
         "support": support.can_view_queue(user),
         "reports": bool(report_services.visible_reports(user)),
         "analytics": report_analytics.can_view(user),
+        # OPS-01: navigation helpers.
+        "staff": bool(getattr(user, "is_staff", False)),
+        "video_manage": videos.can_manage_videos(user),
+        "admin_site": is_super_admin(user),
     }
     return can
 
@@ -144,10 +157,41 @@ class OverviewView(View):
     """Executive overview: only sections the staff member may see (read-only)."""
 
     def get(self, request):
-        can, sections = admin_summary.overview(request.user)
-        return render(request, "administration/overview.html", {
-            "nav": "overview", "sections": sections, "can": can, "provider": settings.VIDEO_PROVIDER,
-            "attention": admin_summary.attention_items(sections)})
+        from apps.administration.dashboard import dashboard
+
+        return render(request, "administration/overview.html", {"nav": "overview", **dashboard(request.user)})
+
+
+# OPS-01: every configuration page this staff member may open, in one place (each keeps its own checks).
+SETTINGS_PAGES = (
+    ("site_settings", "admin:core_siteconfiguration_changelist", _("Platform settings"),
+     _("Company details, contact, registration and feature switches.")),
+    ("plans", "administration:plans", _("Membership plans"), _("Prices, lengths and what each plan includes.")),
+    ("payment_instructions", "administration:payment_instructions", _("Payment methods"),
+     _("The numbers members pay to and how payments are confirmed.")),
+    ("earning_rules", "administration:earning_rules", _("Earning limits"), _("Daily limits and the waiting period.")),
+    ("reward_policies", "administration:reward_policies", _("Reward rates"), _("Reward amounts for each campaign.")),
+    ("withdrawal_settings", "administration:withdrawal_settings", _("Withdrawal settings"),
+     _("Minimum and maximum amounts, fees and limits.")),
+    ("referral_programme", "administration:referral_programme", _("Referral rules"),
+     _("Qualification, reward and limits for referrals.")),
+    ("video_storage", "administration:video_storage", _("Video storage"), _("Where videos are kept and how much space is used.")),
+    ("categories", "administration:categories", _("Video categories"), _("Groups members browse videos by.")),
+    ("staff_accounts", "admin:accounts_user_changelist", _("Staff and permissions"),
+     _("Staff accounts, roles and what each person may do.")),
+    ("health", "administration:health", _("System health"), _("Background jobs, email, storage and data checks.")),
+)
+
+
+@console
+class SettingsHubView(View):
+    def get(self, request):
+        from apps.administration.navigation import ITEMS
+
+        can = console_links(request.user)
+        pages = [{"label": label, "text": text, "url": reverse(target)} for key, target, label, text in SETTINGS_PAGES
+                 if key in ITEMS and can.get(ITEMS[key].can)]
+        return render(request, "administration/settings.html", {"nav": "settings_hub", "pages": pages})
 
 
 @console
@@ -157,6 +201,8 @@ class HealthView(View):
         return render(request, "administration/health.html", {
             "nav": "health", "checks": checks, "can": console_links(request.user),
             "client_ip": admin_summary.client_ip_diagnostics(request) if is_super_admin(request.user) else None,
+            # OPS-01: background job detail for Super Administrators (moved here from the dashboard).
+            "jobs": admin_summary.job_details() if is_super_admin(request.user) else None,
             "breadcrumbs": [("Overview", "administration:overview")]})
 
 
@@ -316,6 +362,15 @@ class VideoListView(View):
         })
 
 
+def _upload_redirect(request, name, **kwargs):
+    """OPS-01: script uploads (progress bar) get the destination as JSON, so the flash message is shown
+    on the page they open next rather than consumed by the upload request."""
+    url = reverse(name, kwargs=kwargs)
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse({"redirect": url})
+    return redirect(url)
+
+
 @console
 class VideoCreateView(View):
     template_name = "administration/videos/form.html"
@@ -323,25 +378,46 @@ class VideoCreateView(View):
     def _demo(self):
         return settings.VIDEO_PROVIDER == "demo"
 
+    def _local(self):
+        return settings.VIDEO_PROVIDER == "local"
+
+    def _form(self, *args):
+        return VideoForm(*args, demo=self._demo(), local=self._local(), upload=self._local())
+
+    def _render(self, request, form):
+        return render(request, self.template_name, {"form": form, "demo": self._demo(), "local": self._local(),
+                                                    "max_mb": settings.VIDEO_LOCAL_MAX_FILE_MB, "nav": "video_new"})
+
     def get(self, request):
         if not videos.can_manage_videos(request.user):
             raise PermissionDenied
-        return render(request, self.template_name, {"form": VideoForm(demo=self._demo()), "demo": self._demo(),
-                                                    "can": console_links(request.user), "nav": "videos"})
+        return self._render(request, self._form())
 
     def post(self, request):
         if not videos.can_manage_videos(request.user):
             raise PermissionDenied
-        form = VideoForm(request.POST, demo=self._demo())
+        form = self._form(request.POST, request.FILES)
         if form.is_valid():
             try:
                 video = videos.create_video(request.user, **form.video_values())
-                messages.success(request, _("Video created."))
-                return redirect("administration:video_detail", pk=video.pk)
             except (ValidationError, videos.VideoError) as error:
                 _form_errors(form, error)
-        return render(request, self.template_name, {"form": form, "demo": self._demo(),
-                                                    "can": console_links(request.user), "nav": "videos"})
+                return self._render(request, form)
+            if self._local():
+                from apps.videos import local_storage
+
+                try:
+                    local_storage.store_upload(request.user, video, form.cleaned_data["media"],
+                                               thumbnail=form.cleaned_data.get("thumbnail"),
+                                               reported_duration=form.cleaned_data.get("reported_duration"))
+                    messages.success(request, _("Video uploaded. Check the details, then publish it."))
+                except local_storage.LocalStorageError as error:
+                    messages.error(request, _("The video was saved as a draft, but the file was not accepted: "
+                                              "%(reason)s") % {"reason": error})
+            else:
+                messages.success(request, _("Video created."))
+            return _upload_redirect(request, "administration:video_detail", pk=video.pk)
+        return self._render(request, form)
 
 
 @console
@@ -350,7 +426,8 @@ class VideoDetailView(View):
 
     def _context(self, request, video, form=None):
         return {
-            "video": video, "form": form or VideoForm(instance=video, demo=video.is_demo),
+            "video": video, "form": form or VideoForm(instance=video, demo=video.is_demo,
+                                                      local=video.provider == Video.Provider.LOCAL),
             "thumbnail": videos.thumbnail_url(video), "can": console_links(request.user), "nav": "videos",
             "can_manage": videos.can_manage_videos(request.user),
             "can_publish": videos.can_publish_videos(request.user),
@@ -360,6 +437,13 @@ class VideoDetailView(View):
                                and video.processing_status in (Video.Processing.PENDING, Video.Processing.UPLOADING,
                                                                Video.Processing.FAILED)),
             "upload_types": ",".join(settings.VIDEO_UPLOAD_CONTENT_TYPES), "upload_max_mb": settings.VIDEO_UPLOAD_MAX_MB,
+            # OPS-01: local storage.
+            "local_upload_allowed": (video.provider == Video.Provider.LOCAL and not video.provider_video_id
+                                     and video.publication_status != Video.Publication.ARCHIVED),
+            "local_form": VideoForm(demo=False, local=True, upload=True) if video.provider == Video.Provider.LOCAL
+            else None,
+            "local_max_mb": settings.VIDEO_LOCAL_MAX_FILE_MB,
+            "preview": videos.staff_preview(request.user, video),
         }
 
     def get(self, request, pk):
@@ -371,7 +455,8 @@ class VideoDetailView(View):
         if not videos.can_manage_videos(request.user):
             raise PermissionDenied
         video = get_object_or_404(Video, pk=pk)
-        form = VideoForm(request.POST, instance=Video.objects.get(pk=pk), demo=video.is_demo)
+        form = VideoForm(request.POST, instance=Video.objects.get(pk=pk), demo=video.is_demo,
+                         local=video.provider == Video.Provider.LOCAL)
         if form.is_valid():
             try:
                 values = form.video_values()
@@ -398,6 +483,18 @@ CONFIRM_ACTIONS = {"archive", "delete-media"}
 class VideoActionView(View):
     def post(self, request, pk, action):
         video = get_object_or_404(Video, pk=pk)
+        if action == "local-copy":  # OPS-01: a local draft with the same details, for a file upload.
+            from apps.videos import local_storage
+
+            try:
+                copy = local_storage.create_local_copy(request.user, video)
+            except videos.NotAuthorized:
+                raise PermissionDenied from None
+            except (ValidationError, local_storage.LocalStorageError) as error:
+                messages.error(request, _error_text(error))
+                return redirect("administration:video_detail", pk=pk)
+            messages.success(request, _("Local copy created. Upload its video file below."))
+            return redirect("administration:video_detail", pk=copy.pk)
         if action == "sync":
             if not videos.can_manage_videos(request.user):
                 raise PermissionDenied
@@ -419,6 +516,49 @@ class VideoActionView(View):
         except videos.VideoError as error:
             messages.error(request, str(error))
         return redirect("administration:video_detail", pk=pk)
+
+
+@console
+class VideoLocalUploadView(View):
+    """OPS-01: upload the file of a local video (from its detail page)."""
+
+    def post(self, request, pk):
+        from apps.videos import local_storage
+
+        video = get_object_or_404(Video, pk=pk)
+        if not videos.can_manage_videos(request.user):
+            raise PermissionDenied
+        media = request.FILES.get("media")
+        try:
+            if media is None:
+                raise local_storage.LocalStorageError(_("Choose a video file."))
+            local_storage.store_upload(request.user, video, media, thumbnail=request.FILES.get("thumbnail"),
+                                       reported_duration=request.POST.get("reported_duration"))
+            messages.success(request, _("Video uploaded. Check the details, then publish it."))
+        except videos.NotAuthorized:
+            raise PermissionDenied from None
+        except local_storage.LocalStorageError as error:
+            messages.error(request, str(error))
+        return _upload_redirect(request, "administration:video_detail", pk=pk)
+
+
+@console
+class VideoStorageView(View):
+    """OPS-01: how much local video storage is used, and by which videos."""
+
+    def get(self, request):
+        if not videos.can_use_video_console(request.user):
+            raise PermissionDenied
+        from apps.videos import local_storage
+
+        summary_data = local_storage.storage_summary()
+        used_percent = round(100 * summary_data["used"] / summary_data["total_bytes"]) if summary_data["total_bytes"] else 0
+        return render(request, "administration/videos/storage.html", {
+            "nav": "video_storage", "storage": summary_data, "used_percent": min(100, used_percent),
+            "provider": settings.VIDEO_PROVIDER, "show_location": is_super_admin(request.user),
+            "location": settings.VIDEO_LOCAL_ROOT,
+            "other_providers": Video.objects.exclude(provider=Video.Provider.LOCAL).values("provider")
+            .annotate(n=Count("id")).order_by("provider")})
 
 
 @console

@@ -1,64 +1,43 @@
-{% extends "administration/layout.html" %}{% load i18n money console_labels %}
+{% extends "administration/layout.html" %}{% load i18n money %}
 {% block title %}{% translate "Overview" %}{% endblock %}
 {% block console_content %}
-<div class="page-heading"><div class="page-heading__text"><h1 class="page-title">{% translate "Overview" %}</h1>
-  <p class="page-intro">{% translate "Live database figures you are permitted to see. Sandbox payments, simulated demo rewards and real wallet balances are separate and never added together." %}</p></div>
-  <a class="button button--secondary" href="{% url 'administration:health' %}">{% translate "Operational health" %}</a></div>
-{% if provider == "demo" and sections.videos %}<p class="notice">{% translate "Video provider: DEMO. No Bunny Stream connection; demo videos are labelled as samples." %}</p>{% endif %}
-{% if sections %}
-<dl class="metric-row">
-  <div class="metric"><dt>{% translate "Open items" %}</dt><dd>{{ attention|length }}</dd></div>
-  {% if sections.members %}<div class="metric"><dt>{% translate "Members" %}</dt><dd>{{ sections.members.total }}</dd></div>
-  <div class="metric"><dt>{% translate "Current memberships" %}</dt><dd>{{ sections.members.current_memberships }}</dd></div>{% endif %}
-  {% if sections.advertising.campaigns is not None %}<div class="metric"><dt>{% translate "Active campaigns" %}</dt><dd>{{ sections.advertising.campaigns.ACTIVE|default:0 }}</dd></div>{% endif %}
-  {% if sections.viewing %}<div class="metric"><dt>{% translate "Verified views" %}</dt><dd>{{ sections.viewing.outcomes.VERIFIED_EVIDENCE|default:0 }}</dd></div>{% endif %}
-</dl>
-
-<section class="workspace-section" aria-labelledby="ov-attention">
-  <h2 class="workspace-section__title" id="ov-attention">{% translate "Needs attention" %}</h2>
-  {% if attention %}
-  <table class="table workspace-table"><caption class="visually-hidden">{% translate "Open items you can act on" %}</caption>
-    <thead><tr><th scope="col">{% translate "Item" %}</th><th scope="col" class="table__numeric">{% translate "Open" %}</th></tr></thead>
-    <tbody>{% for item in attention %}<tr><td><a href="{% url item.url_name %}{{ item.query }}">{{ item.label }}</a></td><td class="table__numeric">{{ item.count }}</td></tr>{% endfor %}</tbody>
-  </table>
-  {% else %}<p class="empty-state">{% translate "Nothing is waiting in the areas you can see." %}</p>{% endif %}
+<section class="console-welcome" aria-labelledby="welcome-title">
+  <h1 class="console-welcome__title" id="welcome-title">{% blocktranslate with name=user.first_name|default:_("Administrator") %}Welcome, {{ name }}{% endblocktranslate %}</h1>
+  <p class="console-welcome__text">{% translate "Run ClipCash from here: members, payments, videos and payouts." %}</p>
 </section>
 
-<section class="workspace-section" aria-labelledby="ov-areas">
-  <h2 class="workspace-section__title" id="ov-areas">{% translate "By area" %}</h2>
-  <table class="table workspace-table overview-areas"><caption class="visually-hidden">{% translate "Current figures by area" %}</caption>
-    <thead><tr><th scope="col">{% translate "Area" %}</th><th scope="col">{% translate "Current figures" %}</th></tr></thead>
-    <tbody>
-    {% with m=sections.members %}{% if m %}<tr><td><a href="{% url 'administration:members' %}">{% translate "Members" %}</a></td>
-      <td><p>{% translate "Memberships" %}</p>{% include "administration/_counts.html" with counts=m.memberships %}
-        <p>{% blocktranslate with a=m.active v=m.verified r=m.restricted %}{{ a }} active, {{ v }} email-confirmed, {{ r }} suspended or disabled.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
-    {% with a=sections.advertising %}{% if a %}<tr><td>{% if can.campaigns %}<a href="{% url 'administration:campaigns' %}">{% translate "Advertising" %}</a>{% elif can.advertisers %}<a href="{% url 'administration:advertisers' %}">{% translate "Advertising" %}</a>{% else %}{% translate "Advertising" %}{% endif %}</td>
-      <td>{% if a.organizations is not None %}<p>{% translate "Advertisers" %}</p>{% include "administration/_counts.html" with counts=a.organizations %}{% endif %}
-        {% if a.campaigns is not None %}<p>{% translate "Campaigns" %}</p>{% include "administration/_counts.html" with counts=a.campaigns %}
-        <p>{% blocktranslate with t=a.demo_budget_running|tzs f=a.funded %}Demo budgets in approved campaigns: {{ t }} (configuration, not funding). Funded campaigns: {{ f }}.{% endblocktranslate %}</p>{% endif %}</td></tr>{% endif %}{% endwith %}
-    {% with v=sections.videos %}{% if v %}<tr><td><a href="{% url 'administration:videos' %}">{% translate "Videos" %}</a></td>
-      <td>{% include "administration/_counts.html" with counts=v.publication %}
-        <p>{% translate "Processing" %}</p>{% include "administration/_counts.html" with counts=v.processing %}</td></tr>{% endif %}{% endwith %}
-    {% with w=sections.viewing %}{% if w %}<tr><td><a href="{% url 'administration:viewing' %}">{% translate "Viewing" %}</a></td>
-      <td>{% include "administration/_counts.html" with counts=w.outcomes %}
-        <p>{% blocktranslate with p=w.pending_review r=w.revoked %}{{ p }} awaiting review, {{ r }} revoked.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
-    {% with r=sections.rewards %}{% if r %}<tr><td><a href="{% url 'administration:demo_rewards' %}">{% translate "Demo rewards" %}</a> <span class="badge badge--sandbox">{% translate "Demo / simulated" %}</span></td>
-      <td><p>{{ r.simulated_total|tzs }} {% translate "simulated, not money" %}</p>
-        <p>{% blocktranslate with q=r.qualified v=r.reversed x=r.rejected d=r.draft_policies %}{{ q }} recorded, {{ v }} reversed, {{ x }} not eligible. {{ d }} policy drafts awaiting approval.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
-    {% with p=sections.payments %}{% if p %}<tr><td><a href="{% url 'administration:payments' %}">{% translate "Payments" %}</a> <span class="badge badge--sandbox">{% translate "Sandbox" %}</span></td>
-      <td>{% include "administration/_counts.html" with counts=p.statuses %}
-        <p>{% blocktranslate with e=p.open_exceptions r=p.pending_refunds d=p.open_disputes v=p.previews %}{{ e }} exceptions, {{ r }} refunds awaiting approval, {{ d }} disputes, {{ v }} membership previews (never activated). Not real cash.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
-    {% with w=sections.wallets %}{% if w %}<tr><td><a href="{% url 'administration:wallets' %}">{% translate "Wallets (real ledger)" %}</a></td>
-      <td><p>{% blocktranslate count n=w.total %}{{ n }} wallet{% plural %}{{ n }} wallets{% endblocktranslate %}</p>
-        <p>{% blocktranslate with r=w.restricted f=w.open_findings u=w.unexpected_balance %}{{ r }} restricted, {{ f }} open findings, {{ u }} unexpected balances. Every balance must be TZS 0.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
-    {% with x=sections.withdrawals %}{% if x %}<tr><td><a href="{% url 'administration:withdrawals' %}">{% translate "Withdrawals" %}</a> <span class="badge badge--sandbox">{% translate "Demo" %}</span></td>
-      <td>{% include "administration/_counts.html" with counts=x.statuses %}
-        <p>{% blocktranslate with q=x.review_queue u=x.uncertain e=x.open_exceptions %}{{ q }} in review, {{ u }} with unknown payout status, {{ e }} exceptions. Real withdrawals are locked.{% endblocktranslate %}</p></td></tr>{% endif %}{% endwith %}
-    {% with j=sections.jobs %}{% if j %}<tr><td><a href="{% url 'administration:health' %}">{% translate "Background jobs" %}</a></td>
-      <td><span class="badge badge--health-{{ j.status }}">{% translate j.status_label %}</span>
-        <p>{% blocktranslate with f=j.failed_last_24h %}{{ f }} failed in 24 h.{% endblocktranslate %}{% if j.problems %} {{ j.problems|code_labels }}.{% endif %}</p></td></tr>{% endif %}{% endwith %}
-    </tbody>
-  </table>
-</section>
-{% else %}<p class="empty-state">{% translate "Your role has no dashboard sections. Use the menu for the areas you can access." %}</p>{% endif %}
+{% if alerts %}<div class="console-alerts" role="status">{% for alert in alerts %}<p class="console-alert">{% include "components/nav_icon.html" with icon="alert" %}<span>{{ alert.text }}</span><a href="{{ alert.url }}">{{ alert.action }}</a></p>{% endfor %}</div>{% endif %}
+
+{% if stats %}<dl class="console-stats">{% for stat in stats %}
+  <div class="console-stat"><dt>{% if stat.url %}<a href="{{ stat.url }}">{{ stat.label }}</a>{% else %}{{ stat.label }}{% endif %}</dt><dd>{{ stat.value }}<span class="console-stat__note">{{ stat.note }}</span></dd></div>{% endfor %}
+</dl>{% endif %}
+
+{% if can.video_manage or can.membership_payments or can.members or can.withdrawal_requests %}
+<h2 class="console-section-title">{% translate "Quick actions" %}</h2>
+<ul class="console-quick">
+  {% if can.video_manage %}<li><a class="console-quick__item" href="{% url 'administration:video_create' %}"><span class="console-quick__icon console-quick__icon--purple">{% include "components/nav_icon.html" with icon="upload" %}</span>{% translate "Upload video" %}</a></li>{% endif %}
+  {% if can.membership_payments %}<li><a class="console-quick__item" href="{% url 'administration:membership_payments' %}"><span class="console-quick__icon console-quick__icon--gold">{% include "components/nav_icon.html" with icon="check" %}</span>{% translate "Verify payments" %}</a></li>{% endif %}
+  {% if can.members %}<li><a class="console-quick__item" href="{% url 'administration:members' %}"><span class="console-quick__icon console-quick__icon--blue">{% include "components/nav_icon.html" with icon="users" %}</span>{% translate "Members" %}</a></li>{% endif %}
+  {% if can.withdrawal_requests %}<li><a class="console-quick__item" href="{% url 'administration:withdrawal_requests' %}"><span class="console-quick__icon console-quick__icon--green">{% include "components/nav_icon.html" with icon="send" %}</span>{% translate "Withdrawal requests" %}</a></li>{% endif %}
+</ul>{% endif %}
+
+<div class="console-columns">
+  <section class="console-panel" aria-labelledby="tasks-title">
+    <h2 class="console-panel__title" id="tasks-title">{% translate "Needs attention" %}</h2>
+    {% if tasks %}<ul class="console-tasks">{% for task in tasks %}<li><a href="{{ task.url }}"><span class="console-tasks__label">{{ task.label }}</span><span class="console-tasks__count">{{ task.count }}</span>{% include "components/nav_icon.html" with icon="chevron" %}</a></li>{% endfor %}</ul>
+    {% else %}<p class="empty-state">{% translate "Nothing is waiting for you." %}</p>{% endif %}
+  </section>
+  {% if money %}<section class="console-panel" aria-labelledby="money-title">
+    <h2 class="console-panel__title" id="money-title">{% translate "Money summary" %}</h2>
+    <dl class="console-money">{% for label, amount in money %}<div><dt>{{ label }}</dt><dd>{{ amount|tzs }}</dd></div>{% endfor %}</dl>
+    <p class="console-money__note">{% translate "Real money only. Test payments and demo credits are never included." %}</p>
+  </section>{% endif %}
+</div>
+
+{% if activity %}<section class="console-panel" aria-labelledby="activity-title">
+  <h2 class="console-panel__title" id="activity-title">{% translate "Recent activity" %}</h2>
+  <ul class="console-activity">{% for row in activity %}<li><a href="{{ row.url }}">{{ row.text }}</a><time datetime="{{ row.when|date:'c' }}">{{ row.when|date:"SHORT_DATETIME_FORMAT" }}</time></li>{% endfor %}</ul>
+</section>{% endif %}
+
+{% if not stats and not tasks and not money %}<p class="empty-state">{% translate "Use the menu to open the areas you work in." %}</p>{% endif %}
 {% endblock %}

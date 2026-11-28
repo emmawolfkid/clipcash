@@ -282,6 +282,16 @@ class ManualPayView(VerifiedAccountRequiredMixin, View):
         return redirect("payments:manual_claim", pk=claim.pk)
 
 
+class ManualHistoryView(VerifiedAccountRequiredMixin, View):
+    """OPS-01: the member's own membership payments (references, plans, amounts, decisions)."""
+
+    def get(self, request):
+        claims = (ManualMembershipPayment.objects.filter(member=request.user).select_related("subscription")
+                  .order_by("-created_at")[:50])
+        return render(request, "payments/manual_history.html", {"nav": "payments", "claims": claims,
+                                                                "manual_on": manual.manual_payments_enabled()})
+
+
 class ManualClaimView(VerifiedAccountRequiredMixin, ManualPaymentsRequiredMixin, View):
     """Status of one of the member's own payment submissions."""
 

@@ -1,0 +1,65 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Referral" %} {{ referral.reference }}{% endblock %}
+{% block console_content %}{% with r=referral %}
+{% translate "Referral" as label %}{% with title=label|add:" "|add:r.reference %}{% include "administration/referrals/_header.html" %}{% endwith %}
+
+<section class="workspace-section"><dl class="details">
+  <dt>{% translate "Status" %}</dt><dd>{% include "referrals/_status.html" with referral=r %}{% if explanation %} · {{ explanation }}{% endif %}</dd>
+  <dt>{% translate "Referrer" %}</dt><dd>{{ r.referrer.sign_in_identifier }}</dd>
+  <dt>{% translate "New member" %}</dt><dd>{{ r.referred.sign_in_identifier }} · {% translate "joined" %} {{ r.referred.date_joined|date:"SHORT_DATETIME_FORMAT" }}</dd>
+  <dt>{% translate "Code and source" %}</dt><dd>{{ r.code }} · {{ r.get_source_display }}</dd>
+  <dt>{% translate "Rules applied" %}</dt><dd>v{{ r.policy.version }} · {% if r.policy.rewards_open %}{% translate "up to" %} {{ r.policy.reward_amount|tzs }}{% else %}{% translate "no reward offered" %}{% endif %}</dd>
+  {% if r.qualified_at %}<dt>{% translate "Qualified" %}</dt><dd>{{ r.qualified_at|date:"SHORT_DATETIME_FORMAT" }}</dd>{% endif %}
+  {% if r.reviewed_by %}<dt>{% translate "Reviewed by" %}</dt><dd>{{ r.reviewed_by.sign_in_identifier }} · {{ r.review_note }}</dd>{% endif %}
+</dl></section>
+
+<section class="workspace-section" aria-labelledby="evidence-title"><h2 class="workspace-section__title" id="evidence-title">{% translate "Qualification evidence" %}</h2>
+<ul class="list">
+  <li class="list__item"><span>{% blocktranslate with views=progress.views required=progress.required_views %}Verified sponsored views: {{ views }} of {{ required }}{% endblocktranslate %}</span>{% if progress.views >= progress.required_views %}<span class="badge badge--approved">{% translate "Met" %}</span>{% else %}<span class="badge badge--pending">{% translate "Not met" %}</span>{% endif %}</li>
+  <li class="list__item"><span>{% blocktranslate with days=progress.days required=progress.required_days %}Different days with verified views: {{ days }} of {{ required }}{% endblocktranslate %}</span>{% if progress.days >= progress.required_days %}<span class="badge badge--approved">{% translate "Met" %}</span>{% else %}<span class="badge badge--pending">{% translate "Not met" %}</span>{% endif %}</li>
+  <li class="list__item"><span>{% translate "Minimum account age" %}</span>{% if progress.account_age_ok %}<span class="badge badge--approved">{% translate "Met" %}</span>{% else %}<span class="badge badge--pending">{% translate "Not met" %}</span>{% endif %}</li>
+  <li class="list__item"><span>{% translate "Membership condition" %}</span>{% if progress.membership_ok %}<span class="badge badge--approved">{% translate "Met" %}</span>{% else %}<span class="badge badge--pending">{% translate "Not met" %}</span>{% endif %}</li>
+  <li class="list__item"><span>{% translate "New member's account in good standing" %}</span>{% if progress.referred_active %}<span class="badge badge--approved">{% translate "Met" %}</span>{% else %}<span class="badge badge--pending">{% translate "Not met" %}</span>{% endif %}</li>
+</ul>
+<p>{% blocktranslate with date=progress.window_end|date:"SHORT_DATETIME_FORMAT" %}Verified activity counts until: {{ date }}{% endblocktranslate %}</p>
+<h3>{% translate "Risk signals" %}</h3>
+{% if flags %}<ul class="list-plain">{% for code, text in flags %}<li><span class="badge badge--suspicious_review">{% translate text %}</span></li>{% endfor %}</ul>
+<p class="lead">{% translate "Signals are not proof: members can legitimately share networks, devices or a family payout number. Decide on the evidence." %}</p>
+{% else %}<p>{% translate "None recorded." %}</p>{% endif %}
+</section>
+
+{% if reward %}<section class="workspace-section" aria-labelledby="reward-title"><h2 class="workspace-section__title" id="reward-title">{% translate "Reward" %}</h2>
+<dl class="details">
+  <dt>{% translate "Amount" %}</dt><dd class="financial-amount">{{ reward.amount|tzs }} · {% translate "rules" %} v{{ reward.policy_version }}</dd>
+  <dt>{% translate "Status" %}</dt><dd>{{ reward.get_status_display }}{% if reward.on_hold %} · <strong>{% translate "on hold" %}</strong>: {{ reward.hold_reason }}{% endif %}</dd>
+  <dt>{% translate "Available from" %}</dt><dd>{{ reward.clears_at|date:"SHORT_DATETIME_FORMAT" }}</dd>
+  {% if reward.reversed_at %}<dt>{% translate "Reversed" %}</dt><dd>{{ reward.reversed_at|date:"SHORT_DATETIME_FORMAT" }} · {{ reward.reversal_reason }}</dd>{% endif %}
+</dl>
+{% if ledger %}<table class="table financial-table"><caption>{% translate "Wallet postings" %}</caption><thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Type" %}</th><th scope="col">{% translate "Direction" %}</th><th scope="col">{% translate "Amount" %}</th></tr></thead>
+<tbody>{% for t in ledger %}<tr><td>{{ t.created_at|date:"SHORT_DATETIME_FORMAT" }}</td><td>{{ t.get_category_display }} ({{ t.get_bucket_display }})</td><td>{{ t.get_direction_display }}</td><td class="financial-amount">{{ t.amount|tzs }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+</section>{% endif %}
+
+{% if can_review %}<section class="workspace-section" aria-labelledby="actions-title"><h2 class="workspace-section__title" id="actions-title">{% translate "Actions" %}</h2>
+{% if r.status == "UNDER_REVIEW" or r.status == "AWAITING" or r.status == "QUALIFIED" %}
+<form method="post" class="form">{% csrf_token %}
+  <label for="a-note">{% translate "Review note (required)" %}</label><input id="a-note" name="note" maxlength="300" required>
+  <div class="actions">{% if r.status == "UNDER_REVIEW" %}<button class="button" name="action" value="approve">{% translate "Approve: apply the normal reward rules" %}</button>{% endif %}
+  <button class="button button--danger" name="action" value="reject">{% translate "Reject referral" %}</button></div>
+  <p class="lead">{% translate "Approving never sets an amount: the reward follows the rules in force, the daily and lifetime limits and the remaining budget." %}</p></form>
+{% endif %}
+{% if reward and reward.status == "PENDING" %}
+<form method="post" class="form">{% csrf_token %}
+  <label for="h-note">{% translate "Reason (required)" %}</label><input id="h-note" name="note" maxlength="300" required>
+  <div class="actions">{% if reward.on_hold %}<button class="button button--secondary" name="action" value="unhold">{% translate "Release hold" %}</button>{% else %}<button class="button button--secondary" name="action" value="hold">{% translate "Hold reward" %}</button>{% endif %}
+  <button class="button button--danger" name="action" value="reverse">{% translate "Reverse reward" %}</button></div></form>
+{% elif reward and reward.status == "AVAILABLE" %}
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="reverse">
+  <label for="v-note">{% translate "Reason (required)" %}</label><input id="v-note" name="note" maxlength="300" required>
+  <button class="button button--danger" type="submit">{% translate "Reverse reward" %}</button>
+  <p class="lead">{% translate "If the member no longer holds the money, the reward is marked for recovery and the wallet is restricted; nothing goes negative." %}</p></form>
+{% endif %}
+</section>{% endif %}
+
+<section class="workspace-section" aria-labelledby="audit-title"><h2 class="workspace-section__title" id="audit-title">{% translate "Audit history" %}</h2>
+<ul class="list">{% for event in audit %}<li class="list__item"><span>{{ event.action }}{% if event.actor_email %} · {{ event.actor_email }}{% endif %}</span><span>{{ event.occurred_at|date:"SHORT_DATETIME_FORMAT" }}</span></li>{% empty %}<li>{% translate "No events." %}</li>{% endfor %}</ul></section>
+{% endwith %}{% endblock %}

@@ -209,8 +209,10 @@ a.app-nav__link:hover,
 
 /* UI-04: compact overview shell; member workflows retain their existing navigation. */
 .app-sidebar__brand { display: block; margin: var(--space-3) var(--space-2) var(--space-4); text-decoration: none; }
-.profile-menu__account-id { display: block; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; font-size: 0.6875rem; font-weight: 400; color: var(--nav-muted); }
+.profile-menu__role { display: block; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; font-size: 0.6875rem; font-weight: 400; color: var(--nav-muted); }
 .app-shell--overview { gap: var(--space-4); margin-block: var(--space-4); }
 .app-shell--overview .app-main { min-width: 0; }
 @media (min-width: 64rem) { .app-shell--overview { grid-template-columns: 13rem minmax(0, 1fr); } }
-@media (max-width: 52rem) { .profile-menu__account-id { display: none; } }
+@media (max-width: 52rem) { .profile-menu__role { display: none; } }
+/* OPS-01: initials avatar (falls back to the person icon when no name is set). */
+.profile-menu__avatar--initials { font-size: 0.875rem; font-weight: 800; letter-spacing: 0.02em; }

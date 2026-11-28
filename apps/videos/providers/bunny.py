@@ -169,7 +169,7 @@ class BunnyStreamProvider:
             expires_at=datetime.fromtimestamp(expires, tz=timezone.utc),
         )
 
-    def playback(self, video_id, *, expires_in):
+    def playback(self, video_id, *, expires_in, viewer=None):
         self._check_id(video_id)
         expires = int(time.time()) + int(expires_in)
         token = _sha256_hex(f"{self._token_key}{video_id}{expires}")

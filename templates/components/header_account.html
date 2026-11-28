@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n account_tags %}
 <div class="header-tools">
   {% include "components/language_form.html" %}
   {% if user.is_authenticated %}
@@ -9,7 +9,8 @@
     {% if count %}<span class="notification-bell__badge" aria-hidden="true">{% if count > 99 %}99+{% else %}{{ count }}{% endif %}</span>{% endif %}
   </a>{% endwith %}
   <details class="profile-menu">
-    <summary class="profile-menu__trigger"><span class="profile-menu__avatar">{% include "components/nav_icon.html" with icon="profile" %}</span><span class="profile-menu__identity">{# UI-06A: never the sign-in email, phone or username, which would show on every page. #}{% firstof user.first_name _("My account") %}{% if user.pk %}<small class="profile-menu__account-id">{% translate "Account ID" %}: {{ user.pk }}</small>{% endif %}</span><span class="profile-menu__chevron" aria-hidden="true">⌄</span><span class="visually-hidden">{% translate "Account options" %}</span></summary>
+    {# UI-06A / OPS-01: the person's name, initials and role; never the internal ID, email, phone or username. #}
+    {% with initials=user|initials %}<summary class="profile-menu__trigger"><span class="profile-menu__avatar{% if initials %} profile-menu__avatar--initials{% endif %}" aria-hidden="true">{% if initials %}{{ initials }}{% else %}{% include "components/nav_icon.html" with icon="profile" %}{% endif %}</span><span class="profile-menu__identity">{{ user|display_name }}<small class="profile-menu__role">{{ user|role_label }}</small></span><span class="profile-menu__chevron" aria-hidden="true">⌄</span><span class="visually-hidden">{% translate "Account options" %}</span></summary>{% endwith %}
     <div class="profile-menu__panel">
       <a href="{% url 'accounts:profile' %}">{% translate "Profile and security" %}</a>
       <a href="{% url 'accounts:profile_edit' %}">{% translate "Edit profile" %}</a>

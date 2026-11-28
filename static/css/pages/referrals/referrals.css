@@ -1,0 +1,19 @@
+/* REF-01: member referral page. Reuses the panel, badge, table and financial components. */
+.referral-page { display: grid; gap: var(--space-4); }
+.referral-share { padding: var(--space-4); color: #fff; background: linear-gradient(135deg, var(--portal-navy), #13306e); border-radius: 0.875rem; }
+.referral-share__title { margin: 0 0 var(--space-3); font-size: 1.125rem; }
+.referral-share__values { display: grid; gap: var(--space-3); margin: 0 0 var(--space-3); }
+.referral-share__item dt { font-size: 0.8125rem; opacity: 0.85; }
+.referral-share__item dd { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0.25rem 0 0; }
+.referral-share__code { font-size: 1.5rem; font-weight: 800; letter-spacing: 0.12em; color: var(--portal-gold); }
+.referral-share__link { min-width: 0; overflow-wrap: anywhere; padding: 0.375rem 0.625rem; background: rgb(255 255 255 / 10%); border: 1px dashed rgb(255 255 255 / 35%); border-radius: 0.5rem; font-size: 0.875rem; }
+.referral-share__status { font-size: 0.8125rem; color: var(--portal-gold); }
+.referral-share__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-2); }
+.referral-share__actions .button { gap: var(--space-2); }
+.referral-share__note { margin: 0; font-size: 0.8125rem; opacity: 0.85; }
+.referral-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: var(--space-3); margin: 0; }
+.referral-stat { padding: var(--space-3); background: #fff; border: 1px solid #e3e8f2; border-radius: 0.75rem; }
+.referral-stat dt { color: var(--portal-muted); font-size: 0.8125rem; }
+.referral-stat dd { margin: 0.25rem 0 0; font-size: 1.25rem; font-weight: 800; color: var(--portal-navy); }
+.referral-rules { display: grid; gap: var(--space-2); margin: 0; padding-left: 1.25rem; }
+.referral-history__note { margin: var(--space-3) 0 0; color: var(--portal-muted); font-size: 0.8125rem; }

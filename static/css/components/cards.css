@@ -169,6 +169,7 @@
   color: var(--accent);
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 
@@ -179,4 +180,4 @@
 
 }
 
-.summary-card__value, .stat__value { overflow-wrap: anywhere; }
+/* OPS-01: the wrapping rules now live in .summary-card__value and .stat__value above (no duplicates). */

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.core.language import set_language
 from apps.core.views import HomeView, MemberActivityView, MemberDashboardView, favicon
 
 urlpatterns = [
@@ -16,10 +17,13 @@ urlpatterns = [
     path("payments/", include("apps.payments.urls")),
     path("wallet/", include("apps.wallets.urls")),
     path("withdrawals/", include("apps.withdrawals.urls")),
+    path("referrals/", include("apps.referrals.urls")),
     path("manage/", include("apps.administration.urls")),
     path("notifications/", include("apps.notifications.urls")),
     path("support/", include("apps.support.urls")),
     path("dashboard/", MemberDashboardView.as_view(), name="dashboard"),
     path("dashboard/activity/", MemberActivityView.as_view(), name="activity"),
+    # ACC-01: the same set_language URL and name; it also saves the choice on the signed-in account.
+    path("i18n/setlang/", set_language, name="set_language"),
     path("i18n/", include("django.conf.urls.i18n")),
 ]

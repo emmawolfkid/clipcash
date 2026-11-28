@@ -25,6 +25,8 @@ class DesignSystemTests(SimpleTestCase):
             "site_config": {"platform_name": "ClipCash"},
             "features": {"memberships": True, "videos": True, "advertisers": True},
             "unread_notifications": 3,
+            # OPS-01: automated tests are an isolated environment, where the testing tools stay visible.
+            "simulation_tools": True,
         }
 
     def test_all_project_html_templates_compile(self):

@@ -12,7 +12,10 @@ def site(request):
 
     user = getattr(request, "user", None)
     states = feature_states(config)
-    return {"site_config": config, "features": states, "sandbox_payments": sandbox_active(),
+    # OPS-01: sandbox and demo tools appear only in an isolated development or test environment.
+    simulation = bool(getattr(settings, "SIMULATION_TOOLS_VISIBLE", False))
+    return {"site_config": config, "features": states, "sandbox_payments": sandbox_active() and simulation,
+            "simulation_tools": simulation,
             "demo_verification_optional": demo_verification_optional(),
             "demo_unconfirmed_account": user is not None and demo_unconfirmed(user),
             # REG-01: public pages describe the environment they run in. Demo disclosures

@@ -18,6 +18,8 @@ Money semantics are kept apart on purpose:
 
 from dataclasses import dataclass, field
 
+from django.conf import settings
+
 from django.db.models import Count, Q, Sum
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -44,6 +46,7 @@ class DashboardSummary:
     wallet: dict = field(default_factory=dict)
     withdrawals: dict = field(default_factory=dict)
     payments: dict = field(default_factory=dict)
+    referrals: dict = field(default_factory=dict)
     activity: list = field(default_factory=list)
 
 
@@ -139,18 +142,24 @@ def _payments(user):
     from apps.payments.models import PaymentIntent
     from apps.payments.providers import sandbox_active
 
-    if not sandbox_active():
+    if not (sandbox_active() and getattr(settings, "SIMULATION_TOOLS_VISIBLE", False)):
         return {"sandbox": False}
     counts = PaymentIntent.objects.filter(payer=user).aggregate(
         total=Count("id"), settled=Count("id", filter=Q(status=PaymentIntent.Status.SETTLED)))
     return {"sandbox": True, **counts}
 
 
+def _referrals(user):
+    from apps.referrals.services import dashboard_summary
+
+    return dashboard_summary(user)  # REF-01: read-only (never creates the code or a policy).
+
+
 def member_summary(user):
     """Everything the dashboard home shows, read-only and bounded."""
     return DashboardSummary(membership=_membership(user), sponsored=_sponsored(user), rewards=_rewards(user),
                             wallet=_wallet(user), withdrawals=_withdrawals(user), payments=_payments(user),
-                            activity=member_activity(user, limit=6))
+                            referrals=_referrals(user), activity=member_activity(user, limit=6))
 
 
 # --- Activity ---------------------------------------------------------------------------------

@@ -1969,7 +1969,7 @@ msgstr "Malipo ya uanachama bado hayajafunguliwa: mpango unaochagua unabaki unas
 
 #: apps/advertising/forms.py templates/administration/layout.html templates/administration/plans/list.html templates/memberships/plan_list.html templates/public/_navigation.html
 msgid "Membership plans"
-msgstr "Mipango ya uanachama"
+msgstr "Vifurushi vya uanachama"
 
 #: templates/public/home.html
 msgid "Membership status, payments awaiting a check and expiry dates are shown plainly. Nothing is presented as earnings."
@@ -2398,7 +2398,7 @@ msgstr "Imefunguliwa"
 
 #: templates/public/_navigation.html
 msgid "Operations console"
-msgstr "Sehemu ya usimamizi"
+msgstr "Mfumo wa usimamizi"
 
 #: templates/public/home.html
 msgid "Optional email"
@@ -4195,7 +4195,7 @@ msgstr "Rudisha kuwa rasimu"
 
 #: templates/administration/overview.html templates/administration/withdrawals/beneficiaries.html templates/administration/withdrawals/exceptions.html templates/administration/withdrawals/list.html templates/components/member_sidebar.html templates/members/dashboard.html templates/withdrawals/destinations.html templates/withdrawals/overview.html
 msgid "Withdrawals"
-msgstr "Utoaji wa pesa"
+msgstr "Kutoa pesa"
 
 #: templates/withdrawals/overview.html
 msgid "Withdrawals are not available yet."
@@ -5214,7 +5214,7 @@ msgstr "Fedha za kuigiza"
 
 #: templates/administration/_sidebar.html
 msgid "Customer support"
-msgstr "Usaidizi kwa wateja"
+msgstr "Huduma kwa wateja"
 
 #: templates/administration/_sidebar.html
 msgid "Operations"
@@ -12917,3 +12917,1245 @@ msgstr "Tafadhali kagua taarifa zako na uziwasilishe tena."
 #: templates/administration/withdrawals_real/detail.html
 msgid "Do not approve or send money while a restriction is active. A payment that was already sent must still be verified or confirmed as failed."
 msgstr "Usiidhinishe wala usitume pesa wakati zuio linaendelea. Malipo yaliyokwisha tumwa bado lazima yahakikiwe au yathibitishwe kuwa yameshindikana."
+
+msgid "Referral code (optional)"
+msgstr "Msimbo wa mwaliko (si lazima)"
+
+msgid "If a ClipCash member invited you, enter their code. You can leave this empty."
+msgstr "Kama mwanachama wa ClipCash amekualika, weka msimbo wake. Unaweza kuacha nafasi hii wazi."
+
+msgid "This referral code is not valid. Check it, or leave the box empty to sign up without one."
+msgstr "Msimbo huu wa mwaliko si sahihi. Uhakiki, au acha nafasi wazi ili ujisajili bila msimbo."
+
+msgid "Referral rewards"
+msgstr "Zawadi za mialiko"
+
+msgid "Settlement of existing referral rewards"
+msgstr "Ukamilishaji wa zawadi za mialiko zilizopo"
+
+msgid "Referral updated."
+msgstr "Mwaliko umesasishwa."
+
+msgid "Referral budget updated."
+msgstr "Bajeti ya mialiko imesasishwa."
+
+msgid "Change proposed. It takes effect when a different person approves it."
+msgstr "Mabadiliko yamependekezwa. Yataanza kutumika mtu mwingine atakapoyaidhinisha."
+
+msgid "Programme rules updated."
+msgstr "Kanuni za mpango zimesasishwa."
+
+msgid "Proposal rejected."
+msgstr "Pendekezo limekataliwa."
+
+msgid "Referral rewards are switched off for this deployment, so no money can be posted. Deposits can be recorded now and verified once they are activated."
+msgstr "Zawadi za mialiko zimezimwa kwenye mfumo huu, kwa hiyo hakuna fedha inayoweza kurekodiwa kwenye leja. Amana zinaweza kurekodiwa sasa na kuhakikiwa baada ya kuwashwa."
+
+msgid "Referral reward settlement is switched off, so no money can be posted."
+msgstr "Ukamilishaji wa zawadi za mialiko umezimwa, kwa hiyo hakuna fedha inayoweza kurekodiwa kwenye leja."
+
+msgid "A marketing budget deposit awaits verification"
+msgstr "Amana ya bajeti ya masoko inasubiri uhakiki"
+
+msgid "Marketing deposit {reference} needs a second person to confirm the receipt."
+msgstr "Amana ya masoko {reference} inahitaji mtu wa pili kuthibitisha kuwa fedha zimepokelewa."
+
+msgid "There is not enough verified, unallocated marketing money."
+msgstr "Hakuna fedha za masoko za kutosha zilizohakikiwa na ambazo bado hazijatengwa."
+
+msgid "Only %(free)s of the referral budget is unused and free to release."
+msgstr "Ni %(free)s tu ya bajeti ya mialiko ambayo haijatumika na inaweza kurudishwa."
+
+msgid "referral code"
+msgstr "msimbo wa mwaliko"
+
+msgid "based on version"
+msgstr "kwa msingi wa toleo"
+
+msgid "record new referrals"
+msgstr "rekodi mialiko mipya"
+
+msgid "offer referral rewards"
+msgstr "toa zawadi za mialiko"
+
+msgid "reward per qualified referral (TZS)"
+msgstr "zawadi kwa kila mwaliko uliofuzu (TZS)"
+
+msgid "referrer needs an active membership"
+msgstr "mwalikaji anahitaji uanachama hai"
+
+msgid "new member needs an active membership"
+msgstr "mwanachama mpya anahitaji uanachama hai"
+
+msgid "minimum account age (days)"
+msgstr "umri wa chini wa akaunti (siku)"
+
+msgid "verified sponsored views required"
+msgstr "utazamaji uliothibitishwa wa video zinazodhaminiwa unaohitajika"
+
+msgid "different days with verified views"
+msgstr "siku tofauti zenye utazamaji uliothibitishwa"
+
+msgid "qualification period (days)"
+msgstr "kipindi cha kufuzu (siku)"
+
+msgid "rewards per referrer per day"
+msgstr "zawadi kwa kila mwalikaji kwa siku"
+
+msgid "rewards per referrer in total"
+msgstr "jumla ya zawadi kwa kila mwalikaji"
+
+msgid "proposed"
+msgstr "imependekezwa"
+
+msgid "referral policy version"
+msgstr "toleo la kanuni za mialiko"
+
+msgid "code used"
+msgstr "msimbo uliotumika"
+
+msgid "risk signals"
+msgstr "viashiria vya hatari"
+
+msgid "qualified"
+msgstr "amefuzu"
+
+msgid "referral"
+msgstr "mwaliko"
+
+msgid "reward day"
+msgstr "siku ya zawadi"
+
+msgid "referral reward"
+msgstr "zawadi ya mwaliko"
+
+msgid "marketing budget deposit"
+msgstr "amana ya bajeti ya masoko"
+
+msgid "referral budget movement"
+msgstr "mabadiliko ya bajeti ya mialiko"
+
+msgid "Not approved"
+msgstr "Haikuidhinishwa"
+
+msgid "Referral link"
+msgstr "Kiungo cha mwaliko"
+
+msgid "Code entered"
+msgstr "Msimbo uliowekwa"
+
+msgid "Registered: awaiting qualification"
+msgstr "Amesajiliwa: anasubiri kufuzu"
+
+msgid "Reward pending"
+msgstr "Zawadi inasubiri"
+
+msgid "Did not qualify in time"
+msgstr "Hakufuzu kwa wakati"
+
+msgid "Committed to referral rewards"
+msgstr "Imetengwa kwa zawadi za mialiko"
+
+msgid "Released to the marketing budget"
+msgstr "Imerudishwa kwenye bajeti ya masoko"
+
+msgid "Referral rewards were not active when this referral qualified."
+msgstr "Zawadi za mialiko hazikuwa zimewashwa mwaliko huu ulipofuzu."
+
+msgid "The programme was not offering rewards when this referral qualified."
+msgstr "Mpango haukuwa unatoa zawadi mwaliko huu ulipofuzu."
+
+msgid "No reward was offered for referrals when this member joined."
+msgstr "Hakukuwa na zawadi ya mialiko mwanachama huyu alipojiunga."
+
+msgid "Today's referral reward limit was reached. ClipCash tries again on the following days."
+msgstr "Kikomo cha zawadi za mialiko cha leo kimefikiwa. ClipCash itajaribu tena siku zinazofuata."
+
+msgid "You have reached the maximum number of referral rewards."
+msgstr "Umefikia idadi ya juu kabisa ya zawadi za mialiko."
+
+msgid "The referral reward budget is used up for now. ClipCash tries again later."
+msgstr "Bajeti ya zawadi za mialiko imekwisha kwa sasa. ClipCash itajaribu tena baadaye."
+
+msgid "An active membership is needed to earn referral rewards."
+msgstr "Unahitaji uanachama hai ili kupata zawadi za mialiko."
+
+msgid "The new member did not complete the required activity within the qualification period."
+msgstr "Mwanachama mpya hakukamilisha shughuli zinazohitajika ndani ya kipindi cha kufuzu."
+
+msgid "The new member's account is not active."
+msgstr "Akaunti ya mwanachama mpya haiko hai."
+
+msgid "After a review, this referral did not meet the programme rules."
+msgstr "Baada ya ukaguzi, mwaliko huu haukutimiza kanuni za mpango."
+
+msgid "The new member's qualifying activity was withdrawn after a review."
+msgstr "Shughuli za kufuzu za mwanachama mpya zilibatilishwa baada ya ukaguzi."
+
+msgid "The reward was reversed after a review."
+msgstr "Zawadi ilibatilishwa baada ya ukaguzi."
+
+msgid "Waiting for the new member to complete the required verified activity."
+msgstr "Inasubiri mwanachama mpya akamilishe shughuli zilizothibitishwa zinazohitajika."
+
+msgid "ClipCash is checking this referral before any reward."
+msgstr "ClipCash inakagua mwaliko huu kabla ya zawadi yoyote."
+
+msgid "The reward is pending and becomes available after the clearance period."
+msgstr "Zawadi inasubiri na itapatikana baada ya kipindi cha kusubiri."
+
+msgid "The reward is in your available balance."
+msgstr "Zawadi iko kwenye salio lako linalopatikana."
+
+msgid "Same network address as the referrer"
+msgstr "Anwani ya mtandao sawa na ya mwalikaji"
+
+msgid "Same network address and browser as the referrer"
+msgstr "Anwani ya mtandao na kivinjari sawa na vya mwalikaji"
+
+msgid "Same payout destination as the referrer"
+msgstr "Mahali pa kupokea malipo sawa na pa mwalikaji"
+
+msgid "Same identity document details as the referrer"
+msgstr "Taarifa za kitambulisho sawa na za mwalikaji"
+
+msgid "Many referrals by the same referrer within 24 hours"
+msgstr "Mialiko mingi ya mwalikaji mmoja ndani ya saa 24"
+
+msgid "Qualifying activity carried fraud flags or rejected reviews"
+msgstr "Shughuli za kufuzu zilikuwa na alama za udanganyifu au ukaguzi uliokataliwa"
+
+msgid "The referrer's wallet is restricted"
+msgstr "Pochi ya mwalikaji imezuiliwa"
+
+msgid "New member"
+msgstr "Mwanachama mpya"
+
+msgid "Referral reward pending: TZS {amount}"
+msgstr "Zawadi ya mwaliko inasubiri: TZS {amount}"
+
+msgid "A member you referred qualified. TZS {amount} becomes available on {clears}."
+msgstr "Mwanachama uliyemwalika amefuzu. TZS {amount} itapatikana tarehe {clears}."
+
+msgid "Referral programme rules await approval"
+msgstr "Kanuni za mpango wa mialiko zinasubiri idhini"
+
+msgid "Version {version} of the referral programme rules needs a second person to approve it."
+msgstr "Toleo {version} la kanuni za mpango wa mialiko linahitaji mtu wa pili kuliidhinisha."
+
+msgid "A referral awaits review"
+msgstr "Mwaliko unasubiri ukaguzi"
+
+msgid "Referral {reference} qualified with risk signals and needs a review before any reward."
+msgstr "Mwaliko {reference} umefuzu ukiwa na viashiria vya hatari na unahitaji ukaguzi kabla ya zawadi yoyote."
+
+msgid "A referral was not accepted"
+msgstr "Mwaliko haukukubaliwa"
+
+msgid "After a review, a referral did not meet the programme rules, so it earns no reward."
+msgstr "Baada ya ukaguzi, mwaliko haukutimiza kanuni za mpango, kwa hiyo hauna zawadi."
+
+msgid "Referral reward available: TZS {amount}"
+msgstr "Zawadi ya mwaliko inapatikana: TZS {amount}"
+
+msgid "Your referral reward has cleared and is in your available balance."
+msgstr "Zawadi yako ya mwaliko imekamilika na iko kwenye salio lako linalopatikana."
+
+msgid "Referral reward reversed: TZS {amount}"
+msgstr "Zawadi ya mwaliko imebatilishwa: TZS {amount}"
+
+msgid "The referral reward of TZS {amount} was reversed: {reason__t}"
+msgstr "Zawadi ya mwaliko ya TZS {amount} imebatilishwa: {reason__t}"
+
+msgid "You cannot decide a referral you are part of."
+msgstr "Huwezi kuamua mwaliko unaokuhusu."
+
+msgid "Enter the reward amount, or stop offering rewards."
+msgstr "Weka kiasi cha zawadi, au acha kutoa zawadi."
+
+msgid "The number of different days cannot exceed the views required or the qualification period."
+msgstr "Idadi ya siku tofauti haiwezi kuzidi utazamaji unaohitajika au kipindi cha kufuzu."
+
+msgid "The minimum account age cannot be longer than the qualification period."
+msgstr "Umri wa chini wa akaunti hauwezi kuwa mrefu kuliko kipindi cha kufuzu."
+
+msgid "The programme rules were changed by someone else. Reload and try again."
+msgstr "Kanuni za mpango zimebadilishwa na mtu mwingine. Pakia upya ukurasa kisha ujaribu tena."
+
+msgid "A proposed change is already awaiting approval. Decide it first."
+msgstr "Kuna mabadiliko yaliyopendekezwa yanayosubiri idhini. Yaamue kwanza."
+
+msgid "Nothing was changed."
+msgstr "Hakuna kilichobadilishwa."
+
+msgid "This proposal was already decided."
+msgstr "Pendekezo hili limeshaamuliwa."
+
+msgid "A different person must decide the change you proposed."
+msgstr "Mtu mwingine lazima aamue mabadiliko uliyopendekeza."
+
+msgid "The rules changed after this proposal was made. Reject it and propose again."
+msgstr "Kanuni zilibadilika baada ya pendekezo hili kutolewa. Likatae kisha upendekeze upya."
+
+msgid "Someone joined with your referral code"
+msgstr "Mtu amejiunga kwa msimbo wako wa mwaliko"
+
+msgid "A new member joined ClipCash with your referral code. You can follow the progress on your Referrals page."
+msgstr "Mwanachama mpya amejiunga na ClipCash kwa msimbo wako wa mwaliko. Unaweza kufuatilia maendeleo kwenye ukurasa wako wa Mialiko."
+
+msgid "A referral qualified"
+msgstr "Mwaliko umefuzu"
+
+msgid "A member you referred completed the required activity. No reward was issued: {reason__t}"
+msgstr "Mwanachama uliyemwalika amekamilisha shughuli zinazohitajika. Hakuna zawadi iliyotolewa: {reason__t}"
+
+msgid "This referral was decided or changed since you opened it."
+msgstr "Mwaliko huu umeamuliwa au umebadilika tangu ulipoufungua."
+
+msgid "Join me on ClipCash, where members watch short sponsored videos. Use my referral code %(code)s when you sign up: %(link)s"
+msgstr "Jiunge nami kwenye ClipCash, ambapo wanachama hutazama video fupi zinazodhaminiwa. Tumia msimbo wangu wa mwaliko %(code)s unapojisajili: %(link)s"
+
+msgid "You already have a ClipCash account, so referral links do not apply."
+msgstr "Tayari una akaunti ya ClipCash, kwa hiyo viungo vya mialiko havikuhusu."
+
+msgid "Referral reward"
+msgstr "Zawadi ya mwaliko"
+
+msgid "Referral reward cleared"
+msgstr "Zawadi ya mwaliko imekamilika"
+
+msgid "Referral reward reversed"
+msgstr "Zawadi ya mwaliko imebatilishwa"
+
+msgid "Referrals"
+msgstr "Mialiko"
+
+msgid "Programme rules"
+msgstr "Kanuni za mpango"
+
+msgid "Referral budget"
+msgstr "Bajeti ya mialiko"
+
+msgid "Referral rewards are active."
+msgstr "Zawadi za mialiko zimewashwa."
+
+msgid "Qualified referrals create real obligations, paid only from the verified marketing budget."
+msgstr "Mialiko iliyofuzu huleta madeni halisi, yanayolipwa tu kutoka kwenye bajeti ya masoko iliyohakikiwa."
+
+msgid "New referral rewards are switched off."
+msgstr "Zawadi mpya za mialiko zimezimwa."
+
+msgid "Existing referral rewards can still clear or be reversed, and unused budget released."
+msgstr "Zawadi za mialiko zilizopo bado zinaweza kukamilika au kubatilishwa, na bajeti isiyotumika kurudishwa."
+
+msgid "Referral rewards are switched off."
+msgstr "Zawadi za mialiko zimezimwa."
+
+msgid "Referrals are recorded and qualified without money. Nothing is posted until referral rewards are activated for this deployment after budget, accounting, legal and regulatory approval."
+msgstr "Mialiko inarekodiwa na kufuzu bila fedha. Hakuna kinachorekodiwa kwenye leja hadi zawadi za mialiko ziwashwe kwenye mfumo huu baada ya idhini ya bajeti, uhasibu, sheria na mamlaka husika."
+
+msgid "New referrals"
+msgstr "Mialiko mipya"
+
+msgid "No reward offered"
+msgstr "Hakuna zawadi inayotolewa"
+
+msgid "Referrer needs an active membership"
+msgstr "Mwalikaji anahitaji uanachama hai"
+
+msgid "Not required for the referrer"
+msgstr "Haihitajiki kwa mwalikaji"
+
+msgid "New member needs an active membership"
+msgstr "Mwanachama mpya anahitaji uanachama hai"
+
+msgid "Not required for the new member"
+msgstr "Haihitajiki kwa mwanachama mpya"
+
+msgid "Qualification"
+msgstr "Kufuzu"
+
+msgid "%(views)s verified views on %(days)s different days within %(window)s days; account at least %(age)s days old"
+msgstr "Utazamaji %(views)s uliothibitishwa katika siku %(days)s tofauti ndani ya siku %(window)s; akaunti yenye umri wa angalau siku %(age)s"
+
+msgid "Limits per referrer"
+msgstr "Vikomo kwa kila mwalikaji"
+
+msgid "%(n)s per day"
+msgstr "%(n)s kwa siku"
+
+msgid "no daily limit"
+msgstr "hakuna kikomo cha kila siku"
+
+msgid "%(n)s in total"
+msgstr "%(n)s kwa jumla"
+
+msgid "no lifetime limit"
+msgstr "hakuna kikomo cha jumla"
+
+msgid "%(n)s hours"
+msgstr "saa %(n)s"
+
+msgid "Referrer"
+msgstr "Mwalikaji"
+
+msgid "joined"
+msgstr "alijiunga"
+
+msgid "Code and source"
+msgstr "Msimbo na chanzo"
+
+msgid "Rules applied"
+msgstr "Kanuni zilizotumika"
+
+msgid "up to"
+msgstr "hadi"
+
+msgid "no reward offered"
+msgstr "hakuna zawadi inayotolewa"
+
+msgid "Reviewed by"
+msgstr "Imekaguliwa na"
+
+msgid "Qualification evidence"
+msgstr "Ushahidi wa kufuzu"
+
+msgid "Verified sponsored views: %(views)s of %(required)s"
+msgstr "Utazamaji uliothibitishwa wa video zinazodhaminiwa: %(views)s kati ya %(required)s"
+
+msgid "Met"
+msgstr "Imetimizwa"
+
+msgid "Not met"
+msgstr "Haijatimizwa"
+
+msgid "Different days with verified views: %(days)s of %(required)s"
+msgstr "Siku tofauti zenye utazamaji uliothibitishwa: %(days)s kati ya %(required)s"
+
+msgid "Minimum account age"
+msgstr "Umri wa chini wa akaunti"
+
+msgid "Membership condition"
+msgstr "Sharti la uanachama"
+
+msgid "New member's account in good standing"
+msgstr "Akaunti ya mwanachama mpya iko katika hali nzuri"
+
+msgid "Verified activity counts until: %(date)s"
+msgstr "Shughuli zilizothibitishwa zinahesabiwa hadi: %(date)s"
+
+msgid "Risk signals"
+msgstr "Viashiria vya hatari"
+
+msgid "Signals are not proof: members can legitimately share networks, devices or a family payout number. Decide on the evidence."
+msgstr "Viashiria si uthibitisho: wanachama wanaweza kwa halali kutumia mtandao, kifaa au namba ya malipo ya familia moja. Amua kwa kuzingatia ushahidi."
+
+msgid "None recorded."
+msgstr "Hakuna kilichorekodiwa."
+
+msgid "Wallet postings"
+msgstr "Miamala ya pochi"
+
+msgid "Review note (required)"
+msgstr "Maelezo ya ukaguzi (lazima)"
+
+msgid "Approve: apply the normal reward rules"
+msgstr "Idhinisha: tumia kanuni za kawaida za zawadi"
+
+msgid "Reject referral"
+msgstr "Kataa mwaliko"
+
+msgid "Approving never sets an amount: the reward follows the rules in force, the daily and lifetime limits and the remaining budget."
+msgstr "Kuidhinisha hakuweki kiasi: zawadi hufuata kanuni zinazotumika, vikomo vya kila siku na vya jumla, na bajeti iliyobaki."
+
+msgid "Release hold"
+msgstr "Ondoa usimamishaji"
+
+msgid "Hold reward"
+msgstr "Simamisha zawadi"
+
+msgid "Reverse reward"
+msgstr "Batilisha zawadi"
+
+msgid "If the member no longer holds the money, the reward is marked for recovery and the wallet is restricted; nothing goes negative."
+msgstr "Kama mwanachama hana tena fedha hizo, zawadi huwekwa alama ya kurejeshwa na pochi huzuiliwa; hakuna salio linaloshuka chini ya sifuri."
+
+msgid "No events."
+msgstr "Hakuna matukio."
+
+msgid "Referral rewards are paid only from ClipCash's own marketing money: record each transfer into the payout float, have a different person verify it in the Airtel Lipa or bank records, then commit verified money to the referral programme. Membership fees, advertiser money and simulated credits can never fund referral rewards."
+msgstr "Zawadi za mialiko hulipwa tu kutoka kwenye fedha za masoko za ClipCash yenyewe: rekodi kila uhamisho kwenda kwenye akiba ya malipo, mtu mwingine auhakiki kwenye kumbukumbu za Airtel Lipa au benki, kisha tenga fedha zilizohakikiwa kwa mpango wa mialiko. Ada za uanachama, fedha za watangazaji na alama za majaribio haziwezi kamwe kugharimia zawadi za mialiko."
+
+msgid "Budget"
+msgstr "Bajeti"
+
+msgid "Verified marketing deposits"
+msgstr "Amana za masoko zilizohakikiwa"
+
+msgid "awaiting verification"
+msgstr "zinasubiri uhakiki"
+
+msgid "Verified, not yet committed"
+msgstr "Zimehakikiwa, bado hazijatengwa"
+
+msgid "Pending reward obligations"
+msgstr "Madeni ya zawadi yanayosubiri"
+
+msgid "Cleared referral rewards"
+msgstr "Zawadi za mialiko zilizokamilika"
+
+msgid "Remaining referral budget"
+msgstr "Bajeti ya mialiko iliyobaki"
+
+msgid "Commit or release budget"
+msgstr "Tenga au rudisha bajeti"
+
+msgid "Commit verified marketing money (TZS)"
+msgstr "Tenga fedha za masoko zilizohakikiwa (TZS)"
+
+msgid "Commit to referral rewards"
+msgstr "Tenga kwa zawadi za mialiko"
+
+msgid "Release unused budget (TZS)"
+msgstr "Rudisha bajeti isiyotumika (TZS)"
+
+msgid "Release to the marketing budget"
+msgstr "Rudisha kwenye bajeti ya masoko"
+
+msgid "Record a marketing deposit"
+msgstr "Rekodi amana ya masoko"
+
+msgid "Marketing deposits"
+msgstr "Amana za masoko"
+
+msgid "I found this payment in the Airtel Lipa business records or the bank statement"
+msgstr "Nimeona malipo haya kwenye kumbukumbu za biashara za Airtel Lipa au taarifa ya benki"
+
+msgid "No marketing deposits recorded."
+msgstr "Hakuna amana za masoko zilizorekodiwa."
+
+msgid "Referral programme"
+msgstr "Mpango wa mialiko"
+
+msgid "Referred registrations"
+msgstr "Usajili uliotokana na mialiko"
+
+msgid "Awaiting qualification"
+msgstr "Wanasubiri kufuzu"
+
+msgid "%(rate)s%% of registrations"
+msgstr "%(rate)s%% ya usajili"
+
+msgid "Rejected or reversed"
+msgstr "Imekataliwa au kubatilishwa"
+
+msgid "Verified marketing funding"
+msgstr "Ufadhili wa masoko uliohakikiwa"
+
+msgid "Current rules"
+msgstr "Kanuni za sasa"
+
+msgid "new referrals paused"
+msgstr "mialiko mipya imesimamishwa"
+
+msgid "Reference, code, phone, email or username"
+msgstr "Kumbukumbu, msimbo, simu, barua pepe au jina la mtumiaji"
+
+msgid "No referrals match."
+msgstr "Hakuna mialiko inayolingana."
+
+msgid "Referral programme rules"
+msgstr "Kanuni za mpango wa mialiko"
+
+msgid "Every change is a new version. One person proposes it and a different person approves it. Each referral keeps the version in force when the new member joined; a later version can lower or stop an unpaid reward but never raise it."
+msgstr "Kila mabadiliko ni toleo jipya. Mtu mmoja analipendekeza na mtu mwingine analiidhinisha. Kila mwaliko hubaki na toleo lililokuwa likitumika mwanachama mpya alipojiunga; toleo la baadaye linaweza kupunguza au kusimamisha zawadi ambayo haijalipwa lakini haliwezi kamwe kuiongeza."
+
+msgid "Rules in force (version %(v)s)"
+msgstr "Kanuni zinazotumika (toleo %(v)s)"
+
+msgid "Proposed version %(v)s"
+msgstr "Toleo lililopendekezwa %(v)s"
+
+msgid "Proposed by"
+msgstr "Imependekezwa na"
+
+msgid "Decision note (required to reject)"
+msgstr "Maelezo ya uamuzi (lazima ili kukataa)"
+
+msgid "Approve this version"
+msgstr "Idhinisha toleo hili"
+
+msgid "A different person must approve the change you proposed."
+msgstr "Mtu mwingine lazima aidhinishe mabadiliko uliyopendekeza."
+
+msgid "Propose a change"
+msgstr "Pendekeza mabadiliko"
+
+msgid "Record new referrals (programme available)"
+msgstr "Rekodi mialiko mipya (mpango unapatikana)"
+
+msgid "Offer referral rewards (still needs the deployment's financial activation and budget)"
+msgstr "Toa zawadi za mialiko (bado inahitaji kuwashwa kifedha kwa mfumo na bajeti)"
+
+msgid "Reward per qualified referral (TZS)"
+msgstr "Zawadi kwa kila mwaliko uliofuzu (TZS)"
+
+msgid "Minimum account age (days)"
+msgstr "Umri wa chini wa akaunti (siku)"
+
+msgid "Verified sponsored views required"
+msgstr "Utazamaji uliothibitishwa wa video zinazodhaminiwa unaohitajika"
+
+msgid "Different days with verified views"
+msgstr "Siku tofauti zenye utazamaji uliothibitishwa"
+
+msgid "Qualification period (days)"
+msgstr "Kipindi cha kufuzu (siku)"
+
+msgid "Rewards per referrer per day (empty: no limit)"
+msgstr "Zawadi kwa kila mwalikaji kwa siku (wazi: hakuna kikomo)"
+
+msgid "Rewards per referrer in total (empty: no limit)"
+msgstr "Jumla ya zawadi kwa kila mwalikaji (wazi: hakuna kikomo)"
+
+msgid "Clearance period (hours)"
+msgstr "Kipindi cha kusubiri (saa)"
+
+msgid "Reason for the change"
+msgstr "Sababu ya mabadiliko"
+
+msgid "Propose for approval"
+msgstr "Pendekeza ili kuidhinishwa"
+
+msgid "Manage the referral budget"
+msgstr "Simamia bajeti ya mialiko"
+
+msgid "Your referral code:"
+msgstr "Msimbo wako wa mwaliko:"
+
+msgid "Open Referrals to get your personal code and link."
+msgstr "Fungua Mialiko upate msimbo na kiungo chako binafsi."
+
+msgid "Referral sharing is not available on your account."
+msgstr "Kushiriki mialiko hakupatikani kwenye akaunti yako."
+
+msgid "Invite people you know to ClipCash and follow their progress."
+msgstr "Alika watu unaowafahamu kwenye ClipCash na ufuatilie maendeleo yao."
+
+msgid "Staff accounts do not take part in the referral programme."
+msgstr "Akaunti za wafanyakazi hazishiriki mpango wa mialiko."
+
+msgid "Your account cannot refer new members at the moment."
+msgstr "Akaunti yako haiwezi kualika wanachama wapya kwa sasa."
+
+msgid "The referral programme is paused. New sign-ups with your code are not recorded until it reopens."
+msgstr "Mpango wa mialiko umesimamishwa. Usajili mpya kwa msimbo wako haurekodiwi hadi utakapofunguliwa tena."
+
+msgid "Your referral code and link"
+msgstr "Msimbo na kiungo chako cha mwaliko"
+
+msgid "Referral code"
+msgstr "Msimbo wa mwaliko"
+
+msgid "Code copied."
+msgstr "Msimbo umenakiliwa."
+
+msgid "Copy code"
+msgstr "Nakili msimbo"
+
+msgid "Link copied."
+msgstr "Kiungo kimenakiliwa."
+
+msgid "Copy link"
+msgstr "Nakili kiungo"
+
+msgid "Share on WhatsApp"
+msgstr "Shiriki kwenye WhatsApp"
+
+msgid "Share…"
+msgstr "Shiriki…"
+
+msgid "Only invite people who want to use ClipCash. Do not promise income: rewards depend on the programme rules and the available budget, and can stop at any time."
+msgstr "Alika tu watu wanaotaka kutumia ClipCash. Usiahidi kipato: zawadi zinategemea kanuni za mpango na bajeti iliyopo, na zinaweza kusimama wakati wowote."
+
+msgid "Total referrals"
+msgstr "Jumla ya mialiko"
+
+msgid "Pending referral rewards"
+msgstr "Zawadi za mialiko zinazosubiri"
+
+msgid "Total referral earnings"
+msgstr "Jumla ya mapato ya mialiko"
+
+msgid "How a referral qualifies"
+msgstr "Jinsi mwaliko unavyofuzu"
+
+msgid "The new member needs an active membership."
+msgstr "Mwanachama mpya anahitaji uanachama hai."
+
+msgid "You need an active membership to earn a referral reward."
+msgstr "Unahitaji uanachama hai ili kupata zawadi ya mwaliko."
+
+msgid "Signing up or buying a membership alone never earns a reward. Only one person can be credited for each new member, and only direct referrals count."
+msgstr "Kujisajili au kununua uanachama pekee hakuleti zawadi kamwe. Ni mtu mmoja tu anayeweza kuhesabiwa kwa kila mwanachama mpya, na mialiko ya moja kwa moja tu ndiyo inayohesabiwa."
+
+msgid "Referral rewards are not available at the moment."
+msgstr "Zawadi za mialiko hazipatikani kwa sasa."
+
+msgid "Referrals are still recorded, but they earn no money."
+msgstr "Mialiko bado inarekodiwa, lakini haileti fedha."
+
+msgid "ClipCash may review a referral before any reward and reverses rewards obtained against the rules."
+msgstr "ClipCash inaweza kukagua mwaliko kabla ya zawadi yoyote na hubatilisha zawadi zilizopatikana kinyume na kanuni."
+
+msgid "Referral history"
+msgstr "Historia ya mialiko"
+
+msgid "Your referrals"
+msgstr "Mialiko yako"
+
+msgid "Available from %(date)s."
+msgstr "Inapatikana kuanzia %(date)s."
+
+msgid "No referrals yet. When someone signs up with your code, they appear here."
+msgstr "Bado hakuna mialiko. Mtu akijisajili kwa msimbo wako, ataonekana hapa."
+
+msgid "For privacy, members you referred are shown by their initials only."
+msgstr "Kwa faragha, wanachama uliowaalika wanaonyeshwa kwa herufi za mwanzo za majina yao tu."
+
+msgid "See referral rewards in your wallet history"
+msgstr "Tazama zawadi za mialiko kwenye historia ya pochi yako"
+
+msgid "The new member completes %(n)s verified sponsored view on ClipCash"
+msgid_plural "The new member completes %(n)s verified sponsored views on ClipCash"
+msgstr[0] "Mwanachama mpya anakamilisha utazamaji %(n)s uliothibitishwa wa video inayodhaminiwa kwenye ClipCash"
+msgstr[1] "Mwanachama mpya anakamilisha utazamaji %(n)s uliothibitishwa wa video zinazodhaminiwa kwenye ClipCash"
+
+msgid "on at least %(n)s day"
+msgid_plural "on at least %(n)s different days"
+msgstr[0] "katika angalau siku %(n)s"
+msgstr[1] "katika angalau siku %(n)s tofauti"
+
+msgid "within %(n)s day of joining."
+msgid_plural "within %(n)s days of joining."
+msgstr[0] "ndani ya siku %(n)s tangu kujiunga."
+msgstr[1] "ndani ya siku %(n)s tangu kujiunga."
+
+msgid "Their account must be at least %(n)s day old."
+msgid_plural "Their account must be at least %(n)s days old."
+msgstr[0] "Akaunti yake lazima iwe na umri wa angalau siku %(n)s."
+msgstr[1] "Akaunti yake lazima iwe na umri wa angalau siku %(n)s."
+
+msgid "A qualified referral can earn %(amount)s, while the referral budget lasts. It is pending for %(hours)s hour, then available in your wallet."
+msgid_plural "A qualified referral can earn %(amount)s, while the referral budget lasts. It is pending for %(hours)s hours, then available in your wallet."
+msgstr[0] "Mwaliko uliofuzu unaweza kuleta %(amount)s, maadamu bajeti ya mialiko ipo. Inasubiri kwa saa %(hours)s, kisha inapatikana kwenye pochi yako."
+msgstr[1] "Mwaliko uliofuzu unaweza kuleta %(amount)s, maadamu bajeti ya mialiko ipo. Inasubiri kwa saa %(hours)s, kisha inapatikana kwenye pochi yako."
+
+msgid "At most %(n)s reward per day."
+msgid_plural "At most %(n)s rewards per day."
+msgstr[0] "Zawadi %(n)s kwa siku kwa kiwango cha juu."
+msgstr[1] "Zawadi %(n)s kwa siku kwa kiwango cha juu."
+
+msgid "At most %(n)s reward in total."
+msgid_plural "At most %(n)s rewards in total."
+msgstr[0] "Zawadi %(n)s kwa jumla kwa kiwango cha juu."
+msgstr[1] "Zawadi %(n)s kwa jumla kwa kiwango cha juu."
+
+msgid "%(n)s referral so far"
+msgid_plural "%(n)s referrals so far"
+msgstr[0] "Mwaliko %(n)s hadi sasa"
+msgstr[1] "Mialiko %(n)s hadi sasa"
+
+msgid "%(n)s qualified"
+msgid_plural "%(n)s qualified"
+msgstr[0] "%(n)s umefuzu"
+msgstr[1] "%(n)s imefuzu"
+
+msgid "enough for %(n)s reward"
+msgid_plural "enough for %(n)s rewards"
+msgstr[0] "inatosha zawadi %(n)s"
+msgstr[1] "inatosha zawadi %(n)s"
+
+msgid "%(n)s risk signal"
+msgid_plural "%(n)s risk signals"
+msgstr[0] "kiashiria %(n)s cha hatari"
+msgstr[1] "viashiria %(n)s vya hatari"
+
+msgid "Membership payments to verify"
+msgstr "Malipo ya uanachama ya kuhakiki"
+
+msgid "Withdrawal requests to review"
+msgstr "Maombi ya kutoa pesa ya kukagua"
+
+msgid "Approved withdrawals to send"
+msgstr "Maombi yaliyoidhinishwa: tuma pesa"
+
+msgid "Sent payouts to verify"
+msgstr "Pesa zilizotumwa za kuhakiki"
+
+msgid "Payouts needing reconciliation"
+msgstr "Malipo yanayohitaji kulinganishwa"
+
+msgid "Identity checks to review"
+msgstr "Uhakiki wa utambulisho wa kukagua"
+
+msgid "Campaigns awaiting approval"
+msgstr "Matangazo yanayosubiri idhini"
+
+msgid "Referrals awaiting review"
+msgstr "Mialiko inayosubiri ukaguzi"
+
+msgid "Referral rule changes to approve"
+msgstr "Mabadiliko ya kanuni za mialiko ya kuidhinisha"
+
+msgid "Marketing deposits to verify"
+msgstr "Amana za masoko za kuhakiki"
+
+msgid "Campaign deposits to verify"
+msgstr "Amana za matangazo za kuhakiki"
+
+msgid "Reward rates awaiting approval"
+msgstr "Viwango vya zawadi vinavyosubiri idhini"
+
+msgid "Views awaiting review"
+msgstr "Utazamaji unaosubiri ukaguzi"
+
+msgid "Open support requests"
+msgstr "Maombi ya msaada yaliyo wazi"
+
+msgid "Wallet check findings"
+msgstr "Matokeo ya ukaguzi wa pochi"
+
+msgid "Video uploads that did not finish"
+msgstr "Video ambazo upakiaji haukukamilika"
+
+msgid "Active memberships"
+msgstr "Uanachama hai"
+
+msgid "Current paid or granted plans"
+msgstr "Vifurushi vilivyolipwa au kutolewa sasa"
+
+msgid "Confirmed payments"
+msgstr "Malipo yaliyothibitishwa"
+
+msgid "Pending withdrawals"
+msgstr "Maombi ya kutoa pesa yanayosubiri"
+
+msgid "Confirmed membership income"
+msgstr "Mapato ya uanachama yaliyothibitishwa"
+
+msgid "Rewards owed to members (funded)"
+msgstr "Zawadi zinazodaiwa na wanachama (zenye ufadhili)"
+
+msgid "Paid out to members"
+msgstr "Pesa zilizotumwa kwa wanachama"
+
+msgid "%(n)s active accounts"
+msgstr "Akaunti hai %(n)s"
+
+msgid "Background jobs are not running, so notifications, reward clearance and checks are waiting."
+msgstr "Kazi za nyuma hazifanyi kazi, kwa hiyo arifa, ukamilishaji wa zawadi na ukaguzi vinasubiri."
+
+msgid "See system health"
+msgstr "Angalia hali ya mfumo"
+
+msgid "New member: %(name)s"
+msgstr "Mwanachama mpya: %(name)s"
+
+msgid "Membership payment %(ref)s: TZS %(amount)s"
+msgstr "Malipo ya uanachama %(ref)s: TZS %(amount)s"
+
+msgid "Withdrawal request %(ref)s: TZS %(amount)s"
+msgstr "Ombi la kutoa pesa %(ref)s: TZS %(amount)s"
+
+msgid "member"
+msgstr "mwanachama"
+
+msgid "Management"
+msgstr "Usimamizi"
+
+msgid "Finance"
+msgstr "Fedha"
+
+msgid "Services and reports"
+msgstr "Huduma na ripoti"
+
+msgid "Testing tools"
+msgstr "Zana za majaribio"
+
+msgid "Staff and permissions"
+msgstr "Wafanyakazi na ruhusa"
+
+msgid "System administration"
+msgstr "Usimamizi wa mfumo"
+
+msgid "Upload video"
+msgstr "Pakia video"
+
+msgid "Video storage"
+msgstr "Hifadhi ya video"
+
+msgid "Referral rules"
+msgstr "Kanuni za mialiko"
+
+msgid "Verify payments"
+msgstr "Hakiki malipo"
+
+msgid "Reward rates"
+msgstr "Viwango vya zawadi"
+
+msgid "Wallet checks"
+msgstr "Ukaguzi wa pochi"
+
+msgid "Withdrawal requests"
+msgstr "Maombi ya kutoa pesa"
+
+msgid "Support requests"
+msgstr "Maombi ya msaada"
+
+msgid "Staff and user accounts"
+msgstr "Akaunti za wafanyakazi na watumiaji"
+
+msgid "Roles and groups"
+msgstr "Majukumu na makundi"
+
+msgid "All settings"
+msgstr "Mipangilio yote"
+
+msgid "Platform settings"
+msgstr "Mipangilio ya jukwaa"
+
+msgid "System health"
+msgstr "Hali ya mfumo"
+
+msgid "Demo payout exceptions"
+msgstr "Hitilafu za malipo ya majaribio"
+
+msgid "Company details, contact, registration and feature switches."
+msgstr "Taarifa za kampuni, mawasiliano, usajili na vipengele vinavyowashwa."
+
+msgid "Prices, lengths and what each plan includes."
+msgstr "Bei, muda na kilichomo katika kila kifurushi."
+
+msgid "The numbers members pay to and how payments are confirmed."
+msgstr "Namba ambazo wanachama hulipia na jinsi malipo yanavyothibitishwa."
+
+msgid "Daily limits and the waiting period."
+msgstr "Vikomo vya kila siku na kipindi cha kusubiri."
+
+msgid "Reward amounts for each campaign."
+msgstr "Kiasi cha zawadi kwa kila tangazo."
+
+msgid "Minimum and maximum amounts, fees and limits."
+msgstr "Kiasi cha chini na cha juu, ada na vikomo."
+
+msgid "Qualification, reward and limits for referrals."
+msgstr "Kufuzu, zawadi na vikomo vya mialiko."
+
+msgid "Where videos are kept and how much space is used."
+msgstr "Mahali video zinapohifadhiwa na nafasi iliyotumika."
+
+msgid "Groups members browse videos by."
+msgstr "Makundi ambayo wanachama hutumia kutafuta video."
+
+msgid "Staff accounts, roles and what each person may do."
+msgstr "Akaunti za wafanyakazi, majukumu na kile kila mtu anaruhusiwa kufanya."
+
+msgid "Background jobs, email, storage and data checks."
+msgstr "Kazi za nyuma, barua pepe, hifadhi na ukaguzi wa data."
+
+msgid "Local copy created. Upload its video file below."
+msgstr "Nakala ya ndani imeundwa. Pakia faili lake la video hapa chini."
+
+msgid "Video uploaded. Check the details, then publish it."
+msgstr "Video imepakiwa. Hakiki taarifa zake, kisha uichapishe."
+
+msgid "Choose a video file."
+msgstr "Chagua faili la video."
+
+msgid "The video was saved as a draft, but the file was not accepted: %(reason)s"
+msgstr "Video imehifadhiwa kama rasimu, lakini faili halikukubaliwa: %(reason)s"
+
+msgid "Administrator"
+msgstr "Msimamizi"
+
+msgid "Member · Advertiser"
+msgstr "Mwanachama · Mtangazaji"
+
+msgid "Who can watch (membership plans)"
+msgstr "Nani anaweza kutazama (vifurushi vya uanachama)"
+
+msgid "Filled in from the file when possible. Enter it only if it is missing."
+msgstr "Hujazwa kutoka kwenye faili inapowezekana. Iandike tu ikiwa haipo."
+
+msgid "Video file (MP4)"
+msgstr "Faili la video (MP4)"
+
+msgid "A compressed MP4 (H.264 video, AAC sound) plays in every browser."
+msgstr "MP4 iliyobanwa (video H.264, sauti AAC) huchezwa kwenye kila kivinjari."
+
+msgid "Thumbnail image (optional)"
+msgstr "Picha ndogo ya video (si lazima)"
+
+msgid "JPEG or PNG, up to 2 MB."
+msgstr "JPEG au PNG, hadi MB 2."
+
+msgid "no plan yet"
+msgstr "bado hakuna kifurushi"
+
+msgid "This video is not stored locally. Create a local copy to upload a file."
+msgstr "Video hii haijahifadhiwa ndani. Unda nakala ya ndani ili kupakia faili."
+
+msgid "This video already has its file."
+msgstr "Video hii tayari ina faili lake."
+
+msgid "There is not enough video storage left. Archive and delete old video files, or ask for a larger storage limit."
+msgstr "Hifadhi ya video iliyobaki haitoshi. Hifadhi kwenye kumbukumbu na ufute faili za video za zamani, au omba kikomo kikubwa zaidi."
+
+msgid "Upload an MP4 video (H.264). Other formats cannot play in every browser."
+msgstr "Pakia video ya MP4 (H.264). Aina nyingine haziwezi kuchezwa kwenye kila kivinjari."
+
+msgid "This video is already stored locally."
+msgstr "Video hii tayari imehifadhiwa ndani."
+
+msgid "The file is larger than %(mb)s MB. Compress it and try again."
+msgstr "Faili ni kubwa kuliko MB %(mb)s. Libane kisha ujaribu tena."
+
+msgid "The thumbnail must be smaller than 2 MB."
+msgstr "Picha ndogo lazima iwe chini ya MB 2."
+
+msgid "The thumbnail must be a JPEG or PNG image."
+msgstr "Picha ndogo lazima iwe JPEG au PNG."
+
+msgid "Only archived local videos can have their file deleted."
+msgstr "Ni video za ndani zilizohifadhiwa kwenye kumbukumbu tu zinazoweza kufutiwa faili."
+
+msgid "Local storage"
+msgstr "Hifadhi ya ndani"
+
+msgid "Find a page"
+msgstr "Tafuta ukurasa"
+
+msgid "Find a page…"
+msgstr "Tafuta ukurasa…"
+
+msgid "No page matches."
+msgstr "Hakuna ukurasa unaolingana."
+
+msgid "Operations console menu"
+msgstr "Menyu ya mfumo wa usimamizi"
+
+msgid "Back to the website"
+msgstr "Rudi kwenye tovuti"
+
+msgid "The job runner has never checked in on this database."
+msgstr "Kiendeshaji cha kazi hakijawahi kuripoti kwenye hifadhidata hii."
+
+msgid "Last check-in %(s)s seconds ago."
+msgstr "Iliripoti mara ya mwisho sekunde %(s)s zilizopita."
+
+msgid "Background jobs send emails, clear and reconcile rewards, qualify referrals, expire memberships and check payouts. On the hosting account they run from a cron job every minute; nothing needs to run permanently."
+msgstr "Kazi za nyuma hutuma barua pepe, hukamilisha na kulinganisha zawadi, hufuzisha mialiko, humaliza uanachama ulioisha muda na hukagua malipo. Kwenye akaunti ya hosting huendeshwa na cron kila dakika; hakuna kinachohitaji kuendeshwa muda wote."
+
+msgid "Cron command (cPanel → Cron Jobs)"
+msgstr "Amri ya cron (cPanel → Cron Jobs)"
+
+msgid "Waiting jobs"
+msgstr "Kazi zinazosubiri"
+
+msgid "Scheduled jobs"
+msgstr "Kazi zilizopangwa"
+
+msgid "Job"
+msgstr "Kazi"
+
+msgid "Every"
+msgstr "Kila"
+
+msgid "%(n)s s"
+msgstr "sekunde %(n)s"
+
+msgid "Run ClipCash from here: members, payments, videos and payouts."
+msgstr "Simamia ClipCash kutoka hapa: wanachama, malipo, video na pesa zinazotumwa."
+
+msgid "Nothing is waiting for you."
+msgstr "Hakuna kinachokusubiri."
+
+msgid "Money summary"
+msgstr "Muhtasari wa fedha"
+
+msgid "Real money only. Test payments and demo credits are never included."
+msgstr "Pesa halisi tu. Malipo ya majaribio na alama za maonyesho hazijumuishwi kamwe."
+
+msgid "Use the menu to open the areas you work in."
+msgstr "Tumia menyu kufungua maeneo unayoyashughulikia."
+
+msgid "Every setting you are allowed to change, in one place."
+msgstr "Kila mpangilio unaoruhusiwa kubadilisha, mahali pamoja."
+
+msgid "Your role has no settings to change."
+msgstr "Jukumu lako halina mipangilio ya kubadilisha."
+
+msgid "Real-money switches (rewards, withdrawals and referral rewards) are set by the hosting configuration after approval, not here."
+msgstr "Swichi za pesa halisi (zawadi, kutoa pesa na zawadi za mialiko) huwekwa kwenye usanidi wa hosting baada ya idhini, si hapa."
+
+msgid "Preview"
+msgstr "Hakiki"
+
+msgid "To keep this video on ClipCash's own storage, make a local copy and upload its file. This video, its campaigns and its viewing history stay unchanged."
+msgstr "Ili kuhifadhi video hii kwenye hifadhi ya ClipCash yenyewe, unda nakala ya ndani na upakie faili lake. Video hii, matangazo yake na historia yake ya utazamaji hubaki bila kubadilika."
+
+msgid "Make a local copy"
+msgstr "Unda nakala ya ndani"
+
+msgid "Deleting the file is permanent"
+msgstr "Kufuta faili ni kwa kudumu"
+
+msgid "Delete the video file"
+msgstr "Futa faili la video"
+
+msgid "Upload the video file"
+msgstr "Pakia faili la video"
+
+msgid "MP4 (H.264), up to %(mb)s MB. The file is kept on ClipCash's own hosting and only members with access can play it."
+msgstr "MP4 (H.264), hadi MB %(mb)s. Faili huhifadhiwa kwenye hosting ya ClipCash yenyewe na wanachama wenye ruhusa tu ndio wanaoweza kulicheza."
+
+msgid "Upload"
+msgstr "Pakia"
+
+msgid "Uploading… {percent}"
+msgstr "Inapakia… {percent}"
+
+msgid "Saving the video…"
+msgstr "Inahifadhi video…"
+
+msgid "The upload stopped. Check your connection and try again."
+msgstr "Upakiaji umesimama. Hakiki mtandao wako kisha ujaribu tena."
+
+msgid "Demo mode: this creates a labelled demo record. No file is uploaded."
+msgstr "Hali ya majaribio: hii huunda rekodi ya majaribio yenye alama. Hakuna faili linalopakiwa."
+
+msgid "Enter the details and choose the MP4 file (up to %(mb)s MB). The video stays a draft until you publish it."
+msgstr "Jaza taarifa na uchague faili la MP4 (hadi MB %(mb)s). Video hubaki rasimu hadi uichapishe."
+
+msgid "Videos uploaded to ClipCash are kept on the hosting account, outside the public website folder."
+msgstr "Video zinazopakiwa kwenye ClipCash huhifadhiwa kwenye akaunti ya hosting, nje ya folda ya tovuti ya umma."
+
+msgid "Used"
+msgstr "Imetumika"
+
+msgid "%(p)s%% of the limit"
+msgstr "%(p)s%% ya kikomo"
+
+msgid "Storage limit"
+msgstr "Kikomo cha hifadhi"
+
+msgid "Up to %(size)s per video"
+msgstr "Hadi %(size)s kwa kila video"
+
+msgid "Left for videos"
+msgstr "Iliyobaki kwa video"
+
+msgid "%(size)s free on the disk"
+msgstr "%(size)s wazi kwenye diski"
+
+msgid "Storage used"
+msgstr "Hifadhi iliyotumika"
+
+msgid "Stored videos"
+msgstr "Video zilizohifadhiwa"
+
+msgid "Size"
+msgstr "Ukubwa"
+
+msgid "File missing"
+msgstr "Faili halipo"
+
+msgid "No video files yet."
+msgstr "Bado hakuna faili za video."
+
+msgid "Videos kept elsewhere"
+msgstr "Video zilizohifadhiwa kwingine"
+
+msgid "Demo samples"
+msgstr "Sampuli za majaribio"
+
+msgid "These stay where they are. To store one locally, open it and choose “Make a local copy”."
+msgstr "Hizi hubaki zilipo. Ili kuhifadhi moja ndani, ifungue kisha uchague “Unda nakala ya ndani”."
+
+msgid "Video provider for new uploads"
+msgstr "Mtoa huduma wa video kwa upakiaji mpya"
+
+msgid "Storage folder"
+msgstr "Folda ya hifadhi"
+
+msgid "Your real ledger balance."
+msgstr "Salio lako halisi la leja."
+
+msgid "Cash rewards are not active yet."
+msgstr "Zawadi za pesa bado hazijawashwa."
+
+msgid "Pending: available after the waiting period."
+msgstr "Inasubiri: itapatikana baada ya kipindi cha kusubiri."
+
+msgid "None pending"
+msgstr "Hakuna inayosubiri"
+
+msgid "Watch sponsored videos that show a TZS reward to earn."
+msgstr "Tazama video zinazodhaminiwa zenye zawadi ya TZS ili upate."
+
+msgid "Cash rewards and withdrawals are not active yet."
+msgstr "Zawadi za pesa na kutoa pesa bado havijawashwa."
+
+msgid "Your membership payments and what ClipCash decided."
+msgstr "Malipo yako ya uanachama na uamuzi wa ClipCash."
+
+msgid "Your membership payments"
+msgstr "Malipo yako ya uanachama"
+
+msgid "No membership payments yet."
+msgstr "Bado hakuna malipo ya uanachama."
+
+msgid "Email delivery"
+msgstr "Utumaji wa barua pepe"
+
+msgid "Video provider"
+msgstr "Mtoa huduma wa video"
+
+msgid "Sandbox payments and reconciliation"
+msgstr "Malipo ya majaribio na ulinganisho"
+
+msgid "Wallet integrity"
+msgstr "Usahihi wa pochi"
+
+msgid "Demo payouts"
+msgstr "Malipo ya majaribio kwa wanachama"
+
+msgid "Advertiser and campaign reviews"
+msgstr "Ukaguzi wa watangazaji na matangazo"
+
+msgid "Database privilege separation"
+msgstr "Utenganishaji wa ruhusa za hifadhidata"
+
+msgid "Healthy"
+msgstr "Iko sawa"
+
+msgid "Attention required"
+msgstr "Inahitaji kushughulikiwa"
+
+msgid "Not configured"
+msgstr "Haijasanidiwa"
+
+msgid "Not checked"
+msgstr "Haijakaguliwa"
+
+msgid "%(n)s scheduled job"
+msgid_plural "%(n)s scheduled jobs"
+msgstr[0] "Kazi %(n)s iliyopangwa"
+msgstr[1] "Kazi %(n)s zilizopangwa"
+
+msgid "preferred language"
+msgstr "lugha inayopendelewa"
+
+msgid "Chosen with the language switch. Empty: no choice yet."
+msgstr "Huchaguliwa kwa kitufe cha kubadili lugha. Tupu: bado hakuna chaguo."

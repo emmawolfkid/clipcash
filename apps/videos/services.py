@@ -195,7 +195,7 @@ def update_video(actor, video, changes):
             raise InvalidState(_("Archived videos cannot be edited."))
         if "slug" in changes and changes["slug"] != video.slug and video.published_at is not None:
             raise ValidationError({"slug": _("The address of a published video cannot change.")})
-        if "duration_seconds" in changes and video.provider != Video.Provider.DEMO:
+        if "duration_seconds" in changes and video.provider == Video.Provider.BUNNY:
             changes.pop("duration_seconds")
         if "category" in changes and changes["category"] != video.category:
             _check_category(changes["category"])
@@ -454,6 +454,13 @@ def request_media_deletion(actor, video):
 
     _require(is_super_admin, actor, "video.delete_media", video)
     video = Video.objects.get(pk=video.pk)
+    if video.provider == Video.Provider.LOCAL:
+        from .local_storage import LocalStorageError, delete_file
+
+        try:
+            return delete_file(actor, video)
+        except LocalStorageError as error:
+            raise InvalidState(str(error)) from None
     if video.publication_status != PUB.ARCHIVED or video.provider != Video.Provider.BUNNY or not video.provider_video_id:
         raise InvalidState(_("Only archived Bunny videos can have their media deleted."))
     with transaction.atomic():
@@ -507,8 +514,8 @@ def member_catalogue(subscription):
     return library_queryset().filter(required_entitlement__in=list(subscription.entitlements or []))
 
 
-def authorize_playback(user, video):
-    """(reason, Playback | None). ``reason`` is "ok" or why playback is refused."""
+def playback_decision(user, video):
+    """(reason, None): "ok" or why this member may not play the video now (no provider call)."""
     if not features.is_enabled("videos"):
         return "feature_disabled", None
     if not video.is_playable or (video.is_demo and not demo_allowed()):
@@ -516,13 +523,36 @@ def authorize_playback(user, video):
     decision = check_access(user, entitlement=video.required_entitlement)
     if not decision:
         return decision.reason, None
+    return "ok", None
+
+
+def authorize_playback(user, video):
+    """(reason, Playback | None). ``reason`` is "ok" or why playback is refused."""
+    reason, _none = playback_decision(user, video)
+    if reason != "ok":
+        return reason, None
     try:
+        # OPS-01: local playback links are bound to the viewer (re-checked on every request).
         playback = get_provider(video.provider).playback(video.provider_video_id,
-                                                         expires_in=settings.VIDEO_PLAYBACK_TOKEN_SECONDS)
+                                                         expires_in=settings.VIDEO_PLAYBACK_TOKEN_SECONDS,
+                                                         viewer=user)
     except (ProviderError, ProviderNotConfigured):
         return "unavailable", None
     playback_authorized.send(sender=Video, user=user, video=video, expires_at=playback.expires_at)
     return "ok", playback
+
+
+def staff_preview(user, video):
+    """OPS-01: a playback link for console staff (no membership needed), or None."""
+    if not can_use_video_console(user) or not video.provider_video_id or video.processing_status != P.READY:
+        return None
+    if video.is_demo and not demo_allowed():
+        return None
+    try:
+        return get_provider(video.provider).playback(video.provider_video_id,
+                                                     expires_in=settings.VIDEO_PLAYBACK_TOKEN_SECONDS, viewer=user)
+    except (ProviderError, ProviderNotConfigured):
+        return None
 
 
 def thumbnail_url(video):

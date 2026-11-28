@@ -11,6 +11,7 @@ from .base import (  # noqa: F401
 )
 from .bunny import BunnyStreamProvider
 from .demo import DemoProvider
+from .local import LocalStorageProvider
 
 
 def demo_allowed():
@@ -18,7 +19,7 @@ def demo_allowed():
 
 
 def default_provider_code():
-    return "DEMO" if settings.VIDEO_PROVIDER == "demo" else "BUNNY"
+    return {"demo": "DEMO", "local": "LOCAL"}.get(settings.VIDEO_PROVIDER, "BUNNY")
 
 
 def get_provider(code=None):
@@ -28,6 +29,8 @@ def get_provider(code=None):
         if not demo_allowed():
             raise ProviderNotConfigured("Demo videos are disabled in this environment.")
         return DemoProvider(sample_url=settings.VIDEO_DEMO_SAMPLE_URL)
+    if code == "LOCAL":
+        return LocalStorageProvider(root=settings.VIDEO_LOCAL_ROOT)
     if code == "BUNNY":
         return BunnyStreamProvider(
             library_id=settings.BUNNY_STREAM_LIBRARY_ID,

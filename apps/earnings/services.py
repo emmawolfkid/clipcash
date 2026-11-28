@@ -631,6 +631,12 @@ def check_consistency():
     available_ledger = ledger_total(wallets.values("available_account_id"))
     pending_records = total(SessionReward.objects.filter(status=RS.PENDING))
     available_records = total(SessionReward.objects.filter(status__in=[RS.AVAILABLE, RS.RECOVERY_REQUIRED]))
+    # REF-01: referral rewards share the member wallet (kept apart in records, history and reports).
+    from apps.referrals.services import reward_totals
+
+    referral_pending, referral_cleared = reward_totals()
+    pending_records += referral_pending
+    available_records += referral_cleared
     # FIN-02: cleared rewards are now in the available balance, reserved for a withdrawal, or paid out.
     from apps.withdrawals.models import WithdrawalRequest
 

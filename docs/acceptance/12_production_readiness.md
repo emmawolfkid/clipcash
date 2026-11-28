@@ -36,3 +36,20 @@ advertising, viewing, demo-labelled rewards) with real members' personal data.
 Live payments (AzamPay or other), real-money rewards, real withdrawals/payouts, real campaign funding. Each requires a
 separately approved architecture, legal/provider approval (Render B7), reviewed migrations replacing the current
 locks, and the prerequisites in [05_financial_integrity.md §7](05_financial_integrity.md).
+
+## 4. Release readiness notes for the financial phases (FIN-01, FIN-02, REF-01)
+
+* **DB-01 deployment concern.** Older databases may lack `core_transaction_lock`, `clipcash_guard_triggers` and the
+  three `authorization_permissions_*` triggers, because `core.0004` was modified after it had been applied (commit
+  `5e8cc2a`, 15 Nov 2026). Deployment preparation must run the version-controlled, idempotent repair and
+  verification command `manage.py repair_guard_objects` (preview, then `--apply` after a verified backup) on every
+  database and confirm `guard findings: none` with the full expected trigger count
+  ([netpoa_mariadb_runbook.md §6](../deployment/netpoa_mariadb_runbook.md)). Never edit an applied migration again:
+  new guards always ship in new migrations.
+* **Expected guard triggers after REF-01:** 151 on MariaDB (134 before REF-01 plus 17 referral guards; the two wallet
+  posting guards are replaced in place by wallets 0008).
+* **Referral rewards (REF-01)** stay off until `DJANGO_REFERRAL_REWARDS` and `DJANGO_REFERRAL_REWARDS_APPROVED` are
+  both set after: legal and regulatory review of the referral programme (including consumer-protection and
+  promotion rules), an accountant's sign-off on treating ClipCash's own marketing budget as a restricted liability,
+  a verified marketing deposit, and approved programme rules (four-eyes). Referral tracking works without them.
+

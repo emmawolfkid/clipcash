@@ -1,0 +1,20 @@
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}">{% endblock %}
+{% block title %}{% translate "Payments" %}{% endblock %}
+{% block member_content %}
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="coins" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{% translate "Payments" %}</h1>
+    <p class="page-banner__subtitle">{% translate "Your membership payments and what ClipCash decided." %}</p></div>
+</header>
+<section class="panel" aria-labelledby="payments-title"><h2 class="panel__title" id="payments-title">{% translate "Membership payments" %}</h2>
+{% if claims %}<table class="table financial-table"><caption class="visually-hidden">{% translate "Your membership payments" %}</caption>
+<thead><tr><th scope="col">{% translate "Date" %}</th><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Plan" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
+<tbody>{% for claim in claims %}<tr><td>{{ claim.created_at|date:"SHORT_DATE_FORMAT" }}</td>
+  <td>{% if manual_on %}<a href="{% url 'payments:manual_claim' claim.pk %}">{{ claim.reference }}</a>{% else %}{{ claim.reference }}{% endif %}</td>
+  <td>{{ claim.plan_name }}</td><td class="financial-amount">{{ claim.amount|tzs }}</td>
+  <td><span class="badge badge--{% if claim.status == 'APPROVED' %}approved{% elif claim.status == 'PENDING_VERIFICATION' %}pending{% else %}rejected{% endif %}">{{ claim.get_status_display }}</span></td></tr>{% endfor %}</tbody></table>
+{% else %}<p class="empty-state">{% translate "No membership payments yet." %}</p>{% endif %}
+<p><a class="button button--action" href="{% url 'memberships:mine' %}">{% translate "Membership" %}</a></p>
+</section>
+{% endblock %}

@@ -74,7 +74,7 @@ class InstantSignUpTests(ManualPaymentTestCase):
         page = self.client.get(REGISTER)
         self.assertEqual(list(page.context["form"].fields),
                          ["first_name", "last_name", "contact_method", "email", "phone_number", "username",
-                          "password1", "password2"])
+                          "password1", "password2", "referral_code"])  # REF-01: optional code.
         self.assertContains(page, "Your account is ready at once")
 
     def test_every_method_is_signed_in_at_once_and_nothing_is_emailed(self):

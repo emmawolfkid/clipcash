@@ -1,0 +1,99 @@
+/* OPS-01: Operations Console on the member portal shell (member-portal.css provides the navy top bar,
+   fixed collapsible sidebar and drawer). This file adds console sections, page search, the collapsed
+   rail, the business dashboard and calmer page furniture. Page-specific rules stay in pages/administration/. */
+
+/* ---- Sidebar: search ------------------------------------------------------------------------- */
+.console-search { position: relative; margin: 0 var(--space-3) var(--space-1); }
+.console-search__icon { position: absolute; z-index: 1; inset-block-start: 0.6rem; inset-inline-start: 0.7rem; color: #9aa6c7; pointer-events: none; }
+.console-search__icon .nav-icon { width: 1.05rem; height: 1.05rem; }
+/* Specific enough to win over the shared form-field styles (forms.css), which are for page forms. */
+.portal--console .console-search .console-search__input { width: 100%; min-height: 2.4rem; margin: 0; padding: 0.4rem 0.75rem 0.4rem 2.2rem; color: #fff; background: rgb(255 255 255 / 7%); border: 1px solid rgb(255 255 255 / 14%); border-radius: 0.5rem; box-shadow: none; font-size: 0.875rem; }
+.portal--console .console-search .console-search__input::placeholder { color: #9aa6c7; }
+.portal--console .console-search .console-search__input:focus { background: rgb(255 255 255 / 12%); border-color: var(--portal-gold); outline: none; }
+.console-search__empty { margin: var(--space-2) 0 0; color: #c6cee4; font-size: 0.8125rem; }
+
+/* ---- Sidebar: groups, sections and pages ------------------------------------------------------- */
+.portal--console .console-nav__group { margin: var(--space-2) 0 0; padding-inline: 0.875rem; color: #8f9bbd; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.portal--console .console-nav__group:first-child { margin-top: 0; }
+.console-nav__section { list-style: none; }
+.console-nav__details > summary { list-style: none; cursor: pointer; }
+.console-nav__details > summary::-webkit-details-marker { display: none; }
+.console-nav__chevron { margin-inline-start: auto; color: #8f9bbd; transition: transform 0.15s ease; }
+.console-nav__chevron .nav-icon { width: 1rem; height: 1rem; flex-basis: 1rem; }
+.console-nav__details[open] > summary .console-nav__chevron { transform: rotate(90deg); }
+.portal--console .console-nav__summary.is-current-parent { color: #fff; background: rgb(255 255 255 / 6%); }
+.console-nav__pages { display: grid; gap: 0.125rem; margin: 0.125rem 0 0.375rem; padding: 0 0 0 2.6rem; list-style: none; }
+.console-nav__page { display: block; padding: 0.45rem 0.75rem; color: #cfd6ea; font-size: 0.875rem; line-height: 1.3; text-decoration: none; border-radius: 0.375rem; }
+.console-nav__page:hover { color: #fff; background: var(--portal-sidebar-hover); }
+.console-nav__page.is-current { color: #fff; font-weight: 600; background: var(--portal-royal); }
+.console-nav__rail-link { display: none; }
+.console-nav__section[hidden] { display: none; }
+
+@media (min-width: 64rem) {
+  /* Collapsed rail: section icons only; the label is the tooltip (member-portal.css). */
+  .sidebar-collapsed .portal--console .console-search,
+  .sidebar-collapsed .portal--console .console-nav__group,
+  .sidebar-collapsed .portal--console .console-nav__details { display: none; }
+  .sidebar-collapsed .portal--console .console-nav__rail-link { display: flex; }
+}
+
+/* ---- Page furniture: one title row, one primary action ----------------------------------------- */
+.portal--console .app-main { display: grid; gap: var(--space-4); align-content: start; }
+.portal--console .page-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin: 0; }
+.portal--console .page-title { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.01em; color: var(--portal-navy); }
+.portal--console .page-intro, .portal--console .page-heading + .lead { margin: 0.25rem 0 0; color: var(--portal-muted); font-size: 0.9375rem; }
+.portal--console .workspace-section { padding: var(--space-4) var(--space-5); background: #fff; border: 1px solid var(--portal-line); border-radius: var(--portal-radius); box-shadow: 0 1px 2px rgb(15 23 42 / 4%); }
+.portal--console .workspace-section__title { margin: 0 0 var(--space-3); font-size: 1.0625rem; color: var(--portal-navy); }
+.portal--console .breadcrumbs { margin: 0; }
+
+/* ---- Business dashboard ------------------------------------------------------------------------ */
+.console-welcome { padding: var(--space-5) var(--space-6); color: #fff; background: linear-gradient(120deg, var(--portal-navy) 0%, #1b3fb0 70%, var(--portal-royal) 100%); border-radius: var(--portal-radius); }
+.console-welcome__title { margin: 0; font-size: 1.5rem; font-weight: 800; }
+.console-welcome__text { margin: 0.25rem 0 0; color: #d6ddf3; font-size: 0.9375rem; }
+.console-alerts { display: grid; gap: var(--space-2); }
+.console-alert { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); padding: var(--space-3) var(--space-4); color: #7a4a00; background: #fff7e0; border: 1px solid #f5d27a; border-radius: 0.625rem; font-size: 0.9375rem; }
+.console-alert .nav-icon { flex: none; color: #b7791f; }
+.console-alert a { margin-inline-start: auto; font-weight: 600; }
+.console-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--space-3); margin: 0; }
+.console-stat { padding: var(--space-4); background: #fff; border: 1px solid var(--portal-line); border-radius: var(--portal-radius); }
+.console-stat dt { color: var(--portal-muted); font-size: 0.875rem; }
+.console-stat dd { margin: 0.25rem 0 0; color: var(--portal-navy); font-size: 1.75rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.console-stat__note { display: block; margin-top: 0.25rem; color: var(--portal-muted); font-size: 0.75rem; font-weight: 500; }
+.console-section-title { margin: var(--space-2) 0 0; color: var(--portal-navy); font-size: 1.125rem; font-weight: 800; }
+.console-quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.console-quick__item { display: grid; justify-items: center; gap: var(--space-2); padding: var(--space-4) var(--space-3); color: var(--portal-navy); text-align: center; text-decoration: none; background: #fff; border: 1px solid var(--portal-line); border-radius: var(--portal-radius); font-weight: 700; }
+.console-quick__item:hover { border-color: var(--portal-royal); box-shadow: 0 6px 16px rgb(23 72 213 / 12%); }
+.console-quick__icon { display: inline-grid; place-items: center; width: 2.75rem; height: 2.75rem; color: #fff; border-radius: 0.75rem; }
+.console-quick__icon .nav-icon { width: 1.4rem; height: 1.4rem; }
+.console-quick__icon--purple { background: #7c3aed; }
+.console-quick__icon--gold { background: #d99a06; }
+.console-quick__icon--blue { background: var(--portal-royal); }
+.console-quick__icon--green { background: #15803d; }
+.console-columns { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-4); }
+.console-panel { padding: var(--space-4) var(--space-5); background: #fff; border: 1px solid var(--portal-line); border-radius: var(--portal-radius); }
+.console-panel__title { margin: 0 0 var(--space-3); color: var(--portal-navy); font-size: 1.0625rem; font-weight: 800; }
+.console-tasks { display: grid; margin: 0; padding: 0; list-style: none; }
+.console-tasks li + li { border-top: 1px solid var(--portal-line); }
+.console-tasks a { display: flex; align-items: center; gap: var(--space-3); padding: 0.7rem 0; color: var(--portal-text); text-decoration: none; }
+.console-tasks a:hover .console-tasks__label { color: var(--portal-royal); text-decoration: underline; }
+.console-tasks__count { min-width: 2rem; margin-inline-start: auto; padding: 0.1rem 0.5rem; color: #8a5a00; text-align: center; background: #fff1c7; border-radius: 0.375rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.console-tasks .nav-icon { width: 1rem; height: 1rem; color: #94a3b8; }
+.console-money { display: grid; gap: var(--space-3); margin: 0; }
+.console-money dt { color: var(--portal-muted); font-size: 0.8125rem; }
+.console-money dd { margin: 0.125rem 0 0; color: var(--portal-navy); font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.console-money__note { margin: var(--space-3) 0 0; color: var(--portal-muted); font-size: 0.75rem; }
+.console-activity { display: grid; margin: 0; padding: 0; list-style: none; }
+.console-activity li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 var(--space-3); padding: 0.55rem 0; border-top: 1px solid var(--portal-line); font-size: 0.9375rem; }
+.console-activity li:first-child { border-top: 0; }
+.console-activity time { color: var(--portal-muted); font-size: 0.8125rem; }
+.console-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.console-links a { display: grid; gap: 0.25rem; height: 100%; padding: var(--space-4); color: var(--portal-navy); text-decoration: none; background: #fff; border: 1px solid var(--portal-line); border-radius: var(--portal-radius); }
+.console-links a:hover { border-color: var(--portal-royal); }
+.console-links strong { font-size: 1rem; }
+.console-links span { color: var(--portal-muted); font-size: 0.875rem; }
+
+@media (max-width: 52rem) {
+  .console-columns { grid-template-columns: minmax(0, 1fr); }
+  .console-welcome { padding: var(--space-4); }
+}
+.storage-meter { width: 100%; height: 0.75rem; accent-color: var(--portal-royal); }

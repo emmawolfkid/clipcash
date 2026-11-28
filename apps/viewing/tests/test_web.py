@@ -110,7 +110,10 @@ class ConsoleTests(ViewingTestCase):
         self.assertEqual(response.status_code, 200)
         session.refresh_from_db()
         self.assertEqual(session.outcome, "VERIFIED_EVIDENCE")  # Only sessions awaiting review can change.
-        viewing = self.client.get(reverse("administration:overview")).context["sections"]["viewing"]
+        from apps.administration import summary  # OPS-01: the overview figures' read model.
+
+        self.assertEqual(self.client.get(reverse("administration:overview")).status_code, 200)
+        viewing = summary.overview(self.root)[1]["viewing"]
         self.assertEqual(viewing["outcomes"]["VERIFIED_EVIDENCE"], 1)
 
     def test_list_has_no_n_plus_one(self):

@@ -1,0 +1,48 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Referral programme rules" %}{% endblock %}
+{% block console_content %}
+{% translate "Referral programme rules" as title %}{% include "administration/referrals/_header.html" %}
+<p class="lead">{% translate "Every change is a new version. One person proposes it and a different person approves it. Each referral keeps the version in force when the new member joined; a later version can lower or stop an unpaid reward but never raise it." %}</p>
+
+<section class="workspace-section" aria-labelledby="current-title"><h2 class="workspace-section__title" id="current-title">{% blocktranslate with v=current.version %}Rules in force (version {{ v }}){% endblocktranslate %}</h2>
+{% include "administration/referrals/_policy.html" with p=current %}</section>
+
+{% if proposal %}<section class="workspace-section" aria-labelledby="proposal-title"><h2 class="workspace-section__title" id="proposal-title">{% blocktranslate with v=proposal.version %}Proposed version {{ v }}{% endblocktranslate %}</h2>
+<p>{% translate "Proposed by" %} {{ proposal.created_by.sign_in_identifier }} · {{ proposal.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ proposal.reason }}</p>
+{% include "administration/referrals/_policy.html" with p=proposal %}
+{% if can_approve and proposal.created_by_id != request.user.pk %}
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="proposal" value="{{ proposal.pk }}">
+  <label for="d-note">{% translate "Decision note (required to reject)" %}</label><input id="d-note" name="note" maxlength="300">
+  <div class="actions"><button class="button" name="action" value="approve">{% translate "Approve this version" %}</button>
+  <button class="button button--danger" name="action" value="reject">{% translate "Reject" %}</button></div></form>
+{% elif can_approve %}<p class="lead">{% translate "A different person must approve the change you proposed." %}</p>{% endif %}
+</section>{% endif %}
+
+{% if can_propose and not proposal %}
+<section class="workspace-section" aria-labelledby="propose-title"><h2 class="workspace-section__title" id="propose-title">{% translate "Propose a change" %}</h2>
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="propose"><input type="hidden" name="expected_version" value="{{ current.version }}">
+  <label><input type="checkbox" name="tracking_open"{% if current.tracking_open %} checked{% endif %}> {% translate "Record new referrals (programme available)" %}</label>
+  <label><input type="checkbox" name="rewards_open"{% if current.rewards_open %} checked{% endif %}> {% translate "Offer referral rewards (still needs the deployment's financial activation and budget)" %}</label>
+  <label for="p-amount">{% translate "Reward per qualified referral (TZS)" %}</label><input id="p-amount" name="reward_amount" type="number" min="0" max="1000000" step="1" value="{{ current.reward_amount }}">
+  <label><input type="checkbox" name="referrer_requires_membership"{% if current.referrer_requires_membership %} checked{% endif %}> {% translate "Referrer needs an active membership" %}</label>
+  <label><input type="checkbox" name="referred_requires_membership"{% if current.referred_requires_membership %} checked{% endif %}> {% translate "New member needs an active membership" %}</label>
+  <label for="p-age">{% translate "Minimum account age (days)" %}</label><input id="p-age" name="min_account_age_days" type="number" min="0" max="365" value="{{ current.min_account_age_days }}" required>
+  <label for="p-views">{% translate "Verified sponsored views required" %}</label><input id="p-views" name="required_verified_views" type="number" min="1" max="500" value="{{ current.required_verified_views }}" required>
+  <label for="p-days">{% translate "Different days with verified views" %}</label><input id="p-days" name="required_view_days" type="number" min="1" max="365" value="{{ current.required_view_days }}" required>
+  <label for="p-window">{% translate "Qualification period (days)" %}</label><input id="p-window" name="qualification_days" type="number" min="1" max="365" value="{{ current.qualification_days }}" required>
+  <label for="p-daily">{% translate "Rewards per referrer per day (empty: no limit)" %}</label><input id="p-daily" name="daily_reward_limit" type="number" min="1" max="1000" value="{{ current.daily_reward_limit|default_if_none:'' }}">
+  <label for="p-life">{% translate "Rewards per referrer in total (empty: no limit)" %}</label><input id="p-life" name="lifetime_reward_limit" type="number" min="1" max="100000" value="{{ current.lifetime_reward_limit|default_if_none:'' }}">
+  <label for="p-clear">{% translate "Clearance period (hours)" %}</label><input id="p-clear" name="clearance_hours" type="number" min="0" max="720" value="{{ current.clearance_hours }}" required>
+  <label for="p-reason">{% translate "Reason for the change" %}</label><input id="p-reason" name="reason" maxlength="300" required>
+  <button class="button" type="submit">{% translate "Propose for approval" %}</button>
+</form></section>{% endif %}
+
+<section class="workspace-section" aria-labelledby="budget-title"><h2 class="workspace-section__title" id="budget-title">{% translate "Funding" %}</h2>
+<p>{% translate "Remaining referral budget" %}: <strong class="financial-amount">{{ budget.programme_balance|tzs }}</strong> · <a href="{% url 'administration:referral_funding' %}">{% translate "Manage the referral budget" %}</a></p></section>
+
+<section class="workspace-section" aria-labelledby="history-title"><h2 class="workspace-section__title" id="history-title">{% translate "Versions" %}</h2>
+<table class="table workspace-table"><caption class="visually-hidden">{% translate "Versions" %}</caption>
+<thead><tr><th scope="col">{% translate "Version" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Reward" %}</th><th scope="col">{% translate "Proposed by" %}</th><th scope="col">{% translate "Decided by" %}</th></tr></thead>
+<tbody>{% for v in history %}<tr><td>v{{ v.version }}{% if v.reason %}<br><small>{{ v.reason }}</small>{% endif %}</td><td>{{ v.get_status_display }}</td><td>{% if v.rewards_open %}{{ v.reward_amount|tzs }}{% else %}—{% endif %}</td><td>{{ v.created_by.sign_in_identifier|default:"—" }}</td><td>{% if v.decided_by %}{{ v.decided_by.sign_in_identifier }} · {{ v.decided_at|date:"SHORT_DATE_FORMAT" }}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table>
+</section>
+{% endblock %}

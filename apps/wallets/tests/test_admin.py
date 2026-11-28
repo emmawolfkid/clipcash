@@ -50,8 +50,9 @@ class LedgerAdminTests(LedgerTestCase):
     def test_filters_and_search(self):
         self.client.force_login(self.root)
         cases = {
-            # Campaign funding, member reward liability and platform withdrawal clearing.
-            f"{LIST_URLS[0]}?funding_class__exact=REWARD_RESTRICTED": 3,
+            # Campaign funding, member reward liability, platform withdrawal clearing and (REF-01) the
+            # referral programme funding account.
+            f"{LIST_URLS[0]}?funding_class__exact=REWARD_RESTRICTED": 4,
             f"{LIST_URLS[0]}?q=payment_clearing": 1,
             f"{LIST_URLS[1]}?q=PROV-ADMIN-1": 1,
             f"{LIST_URLS[1]}?posting_type__exact=advertiser.funding_received": 1,

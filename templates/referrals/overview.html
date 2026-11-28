@@ -1,0 +1,69 @@
+{% extends "members/layout.html" %}{% load static i18n money %}
+{% block page_styles %}<link rel="stylesheet" href="{% static 'css/components/page-banner.css' %}"><link rel="stylesheet" href="{% static 'css/pages/referrals/referrals.css' %}">{% endblock %}
+{% block page_scripts %}<script src="{% static 'js/referral-share.js' %}" defer></script>{% endblock %}
+{% block title %}{% translate "Referrals" %}{% endblock %}
+{% block member_content %}
+<header class="page-banner">
+  <span class="page-banner__icon">{% include "components/nav_icon.html" with icon="users" %}</span>
+  <div class="page-banner__text"><h1 class="page-title">{% translate "Referrals" %}</h1>
+    <p class="page-banner__subtitle">{% translate "Invite people you know to ClipCash and follow their progress." %}</p></div>
+</header>
+<div class="referral-page">
+{% if eligibility == "staff_account" %}
+  <p class="empty-state">{% translate "Staff accounts do not take part in the referral programme." %}</p>
+{% elif not code %}
+  <p class="empty-state">{% translate "Your account cannot refer new members at the moment." %}</p>
+{% else %}
+  {% if not policy.tracking_open %}<p class="notice notice--warning" role="status">{% translate "The referral programme is paused. New sign-ups with your code are not recorded until it reopens." %}</p>{% endif %}
+  <section class="referral-share" aria-labelledby="referral-share-title">
+    <h2 id="referral-share-title" class="referral-share__title">{% translate "Your referral code and link" %}</h2>
+    <dl class="referral-share__values">
+      <div class="referral-share__item"><dt>{% translate "Referral code" %}</dt><dd><span class="referral-share__code">{{ code.code }}</span>
+        <button type="button" class="button button--secondary button--compact" data-copy-value="{{ code.code }}" data-copied="{% translate 'Code copied.' %}" aria-describedby="ref-code-status" hidden>{% translate "Copy code" %}</button>
+        <span class="referral-share__status" id="ref-code-status" role="status"></span></dd></div>
+      <div class="referral-share__item"><dt>{% translate "Referral link" %}</dt><dd><span class="referral-share__link">{{ link }}</span>
+        <button type="button" class="button button--secondary button--compact" data-copy-value="{{ link }}" data-copied="{% translate 'Link copied.' %}" aria-describedby="ref-link-status" hidden>{% translate "Copy link" %}</button>
+        <span class="referral-share__status" id="ref-link-status" role="status"></span></dd></div>
+    </dl>
+    <p class="referral-share__actions">
+      <a class="button button--action" href="{{ whatsapp_url }}" target="_blank" rel="noopener noreferrer">{% include "components/nav_icon.html" with icon="share" %}{% translate "Share on WhatsApp" %}</a>
+      <button type="button" class="button button--secondary" data-native-share data-share-title="ClipCash" data-share-text="{{ share_text }}" data-share-url="{{ link }}" hidden>{% translate "Share…" %}</button>
+    </p>
+    <p class="referral-share__note">{% translate "Only invite people who want to use ClipCash. Do not promise income: rewards depend on the programme rules and the available budget, and can stop at any time." %}</p>
+  </section>
+
+  <dl class="referral-stats">
+    <div class="referral-stat"><dt>{% translate "Total referrals" %}</dt><dd>{{ overview.counts.total }}</dd></div>
+    <div class="referral-stat"><dt>{% translate "Awaiting qualification" %}</dt><dd>{{ overview.counts.awaiting }}</dd></div>
+    <div class="referral-stat"><dt>{% translate "Qualified" %}</dt><dd>{{ overview.counts.qualified }}</dd></div>
+    <div class="referral-stat"><dt>{% translate "Pending referral rewards" %}</dt><dd class="financial-amount">{{ overview.pending_total|tzs }}</dd></div>
+    <div class="referral-stat"><dt>{% translate "Cleared referral rewards" %}</dt><dd class="financial-amount">{{ overview.cleared_total|tzs }}</dd></div>
+    <div class="referral-stat"><dt>{% translate "Total referral earnings" %}</dt><dd class="financial-amount">{{ overview.earned_total|tzs }}</dd></div>
+  </dl>
+
+  <section class="panel" aria-labelledby="referral-rules-title"><h2 class="panel__title" id="referral-rules-title">{% translate "How a referral qualifies" %}</h2>
+    <ul class="referral-rules">
+      <li>{% blocktranslate count n=policy.required_verified_views %}The new member completes {{ n }} verified sponsored view on ClipCash{% plural %}The new member completes {{ n }} verified sponsored views on ClipCash{% endblocktranslate %} {% blocktranslate count n=policy.required_view_days %}on at least {{ n }} day{% plural %}on at least {{ n }} different days{% endblocktranslate %}, {% blocktranslate count n=policy.qualification_days %}within {{ n }} day of joining.{% plural %}within {{ n }} days of joining.{% endblocktranslate %}</li>
+      {% if policy.min_account_age_days %}<li>{% blocktranslate count n=policy.min_account_age_days %}Their account must be at least {{ n }} day old.{% plural %}Their account must be at least {{ n }} days old.{% endblocktranslate %}</li>{% endif %}
+      {% if policy.referred_requires_membership %}<li>{% translate "The new member needs an active membership." %}</li>{% endif %}
+      {% if policy.referrer_requires_membership %}<li>{% translate "You need an active membership to earn a referral reward." %}</li>{% endif %}
+      <li>{% translate "Signing up or buying a membership alone never earns a reward. Only one person can be credited for each new member, and only direct referrals count." %}</li>
+      {% if rewards_active and policy.rewards_open %}<li>{% blocktranslate with amount=policy.reward_amount|tzs count hours=policy.clearance_hours %}A qualified referral can earn {{ amount }}, while the referral budget lasts. It is pending for {{ hours }} hour, then available in your wallet.{% plural %}A qualified referral can earn {{ amount }}, while the referral budget lasts. It is pending for {{ hours }} hours, then available in your wallet.{% endblocktranslate %}{% if policy.daily_reward_limit %} {% blocktranslate count n=policy.daily_reward_limit %}At most {{ n }} reward per day.{% plural %}At most {{ n }} rewards per day.{% endblocktranslate %}{% endif %}{% if policy.lifetime_reward_limit %} {% blocktranslate count n=policy.lifetime_reward_limit %}At most {{ n }} reward in total.{% plural %}At most {{ n }} rewards in total.{% endblocktranslate %}{% endif %}</li>
+      {% else %}<li><strong>{% translate "Referral rewards are not available at the moment." %}</strong> {% translate "Referrals are still recorded, but they earn no money." %}</li>{% endif %}
+      <li>{% translate "ClipCash may review a referral before any reward and reverses rewards obtained against the rules." %}</li>
+    </ul>
+  </section>
+
+  <section class="panel" aria-labelledby="referral-history-title"><h2 class="panel__title" id="referral-history-title">{% translate "Referral history" %}</h2>
+  {% if overview.history %}<table class="table financial-table referral-history"><caption class="visually-hidden">{% translate "Your referrals" %}</caption>
+    <thead><tr><th scope="col">{% translate "Joined" %}</th><th scope="col">{% translate "Member" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Reward" %}</th><th scope="col">{% translate "Details" %}</th></tr></thead>
+    <tbody>{% for referral in overview.history %}<tr>
+      <td>{{ referral.created_at|date:"SHORT_DATE_FORMAT" }}</td><td>{{ referral.label }}</td><td>{% include "referrals/_status.html" %}</td>
+      <td>{% if referral.reward %}<span class="financial-amount">{{ referral.reward.amount|tzs }}</span>{% else %}—{% endif %}</td>
+      <td>{{ referral.explanation }}{% if referral.status == "REWARD_PENDING" and referral.reward %} {% blocktranslate with date=referral.reward.clears_at|date:"DATE_FORMAT" %}Available from {{ date }}.{% endblocktranslate %}{% endif %}</td></tr>{% endfor %}</tbody></table>
+  {% else %}<p class="empty-state">{% translate "No referrals yet. When someone signs up with your code, they appear here." %}</p>{% endif %}
+  <p class="referral-history__note">{% translate "For privacy, members you referred are shown by their initials only." %} <a href="{% url 'wallets:wallet' %}">{% translate "See referral rewards in your wallet history" %}</a></p>
+  </section>
+{% endif %}
+</div>
+{% endblock %}

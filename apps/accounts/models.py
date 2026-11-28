@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.core.models import BaseModel
+from apps.core.validators import validate_language
 
 from .managers import DERIVED_ACCESS_FIELDS, UserManager
 from .phone_numbers import E164_PATTERN, normalize_phone_number, validate_e164
@@ -151,6 +152,13 @@ class User(AbstractUser):
         _("email needs confirmed ownership before sign-in"), default=False, editable=False,
         help_text=_("Created by public sign-up: the email address signs in and recovers the account only after "
                     "its ownership is confirmed."),
+    )
+
+    # ACC-01: the language this person chose with the EN/SW switch while signed in (or on the sign-up
+    # page). Empty: no choice yet. Restored at every sign-in and used for their emails.
+    preferred_language = models.CharField(
+        _("preferred language"), max_length=8, blank=True, default="", validators=[validate_language],
+        help_text=_("Chosen with the language switch. Empty: no choice yet."),
     )
 
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)

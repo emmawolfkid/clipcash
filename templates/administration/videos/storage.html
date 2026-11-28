@@ -1,0 +1,24 @@
+{% extends "administration/layout.html" %}{% load i18n %}
+{% block title %}{% translate "Video storage" %}{% endblock %}
+{% block console_content %}
+<div class="page-heading"><div><h1 class="page-title">{% translate "Video storage" %}</h1>
+  <p class="page-intro">{% translate "Videos uploaded to ClipCash are kept on the hosting account, outside the public website folder." %}</p></div>
+  <a class="button" href="{% url 'administration:video_create' %}">{% translate "Upload video" %}</a></div>
+<dl class="console-stats">
+  <div class="console-stat"><dt>{% translate "Used" %}</dt><dd>{{ storage.used|filesizeformat }}<span class="console-stat__note">{% blocktranslate with p=used_percent %}{{ p }}% of the limit{% endblocktranslate %}</span></dd></div>
+  <div class="console-stat"><dt>{% translate "Storage limit" %}</dt><dd>{{ storage.total_bytes|filesizeformat }}<span class="console-stat__note">{% blocktranslate with size=storage.file_bytes|filesizeformat %}Up to {{ size }} per video{% endblocktranslate %}</span></dd></div>
+  <div class="console-stat"><dt>{% translate "Left for videos" %}</dt><dd>{{ storage.remaining|filesizeformat }}{% if storage.free_disk is not None %}<span class="console-stat__note">{% blocktranslate with size=storage.free_disk|filesizeformat %}{{ size }} free on the disk{% endblocktranslate %}</span>{% endif %}</dd></div>
+</dl>
+<progress class="storage-meter" max="100" value="{{ used_percent }}" aria-label="{% translate 'Storage used' %}">{{ used_percent }}%</progress>
+<section class="workspace-section" aria-labelledby="files-title"><h2 class="workspace-section__title" id="files-title">{% translate "Stored videos" %}</h2>
+{% if storage.videos %}<table class="table workspace-table"><caption class="visually-hidden">{% translate "Stored videos" %}</caption>
+<thead><tr><th scope="col">{% translate "Video" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col" class="table__numeric">{% translate "Size" %}</th></tr></thead>
+<tbody>{% for row in storage.videos %}<tr><td><a href="{% url 'administration:video_detail' row.video.pk %}">{{ row.video.title }}</a></td><td>{{ row.video.get_publication_status_display }}</td><td class="table__numeric">{% if row.size is None %}<span class="badge badge--failed">{% translate "File missing" %}</span>{% else %}{{ row.size|filesizeformat }}{% endif %}</td></tr>{% endfor %}</tbody></table>
+{% else %}<p class="empty-state">{% translate "No video files yet." %}</p>{% endif %}
+</section>
+{% if other_providers %}<section class="workspace-section" aria-labelledby="other-title"><h2 class="workspace-section__title" id="other-title">{% translate "Videos kept elsewhere" %}</h2>
+<p>{% for row in other_providers %}{% if row.provider == "BUNNY" %}{% translate "Bunny Stream" %}{% elif row.provider == "DEMO" %}{% translate "Demo samples" %}{% else %}{{ row.provider }}{% endif %}: {{ row.n }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+<p class="lead">{% translate "These stay where they are. To store one locally, open it and choose “Make a local copy”." %}</p></section>{% endif %}
+{% if show_location %}<details class="workspace-section"><summary>{% translate "Technical details" %}</summary>
+<dl class="details"><dt>{% translate "Video provider for new uploads" %}</dt><dd>{{ provider }}</dd><dt>{% translate "Storage folder" %}</dt><dd><code>{{ location }}</code></dd></dl></details>{% endif %}
+{% endblock %}

@@ -91,6 +91,13 @@ def _membership_receipt_used(method, key):
     return receipts.filter(external_reference__startswith="BANK", external_reference__endswith=f":{key}").exists()
 
 
+def _marketing_reference_used(lock):
+    """REF-01: a transaction already recorded as a ClipCash marketing deposit cannot fund a campaign."""
+    from apps.referrals.models import MarketingDeposit
+
+    return MarketingDeposit.objects.filter(reference_lock=lock).exists()
+
+
 def _amount(raw, field="amount"):
     if isinstance(raw, str):
         raw = raw.strip().replace(",", "")
@@ -119,8 +126,9 @@ def record_deposit(actor, *, organization, method, amount, external_reference, p
         raise ValidationError({"paid_on": _("Enter the payment date (today or within the last 90 days).")})
     lock = _channel_reference(method, key)
     if (CampaignDeposit.objects.filter(reference_lock=lock).exists()
-            or JournalEntry.objects.filter(source_type=SOURCE_TYPE, external_reference=lock).exists()
-            or _membership_receipt_used(method, key)):
+            or JournalEntry.objects.filter(source_type__in=[SOURCE_TYPE, "marketing_deposit"],
+                                           external_reference=lock).exists()
+            or _marketing_reference_used(lock) or _membership_receipt_used(method, key)):
         raise ValidationError({"external_reference": _("This transaction reference has already been used.")})
     try:
         with transaction.atomic():

@@ -5,7 +5,9 @@ Every flag has an explicit default. Business flags are stored on
 SiteConfiguration and can be changed only by Super Administrators (see
 apps.core.services). Financial flags have no storage and no admin override.
 live_payments is locked off in code. FIN-02: withdrawals needs DJANGO_WITHDRAWALS
-and DJANGO_WITHDRAWALS_APPROVED; withdrawal_settlement only the approval. FIN-01: real_money_rewards
+and DJANGO_WITHDRAWALS_APPROVED; withdrawal_settlement only the approval. REF-01:
+referral_rewards needs DJANGO_REFERRAL_REWARDS and DJANGO_REFERRAL_REWARDS_APPROVED;
+referral_settlement only the approval. FIN-01: real_money_rewards
 is off unless the deployment sets BOTH DJANGO_REAL_MONEY_REWARDS (the switch)
 and DJANGO_REAL_MONEY_REWARDS_APPROVED (the recorded operational, legal and
 accounting approval), and never in a restricted demonstration.
@@ -67,6 +69,14 @@ FEATURES = {
         # never strands money that is already reserved.
         Feature("withdrawal_settlement", _("Settlement of existing withdrawals"), False, financial=True,
                 demo_restricted=True, setting="WITHDRAWALS_APPROVED"),
+        # REF-01: new referral rewards (funded by the verified marketing budget) need BOTH settings.
+        # Referral tracking needs neither: switching tracking on never enables money.
+        Feature("referral_rewards", _("Referral rewards"), False, financial=True, demo_restricted=True,
+                setting="REFERRAL_REWARDS_ENABLED", requires_setting="REFERRAL_REWARDS_APPROVED"),
+        # REF-01: clearing or reversing referral rewards that already exist, and releasing unused
+        # budget, needs only the approval, so pausing new rewards never strands an obligation.
+        Feature("referral_settlement", _("Settlement of existing referral rewards"), False, financial=True,
+                demo_restricted=True, setting="REFERRAL_REWARDS_APPROVED"),
         # PAY-01: real membership fees paid manually (Airtel Lipa) and verified by staff.
         # Environment-owned, off by default and never on in a restricted demonstration.
         # Not one of the locked FINANCIAL_FEATURES: it moves no money out of ClipCash and

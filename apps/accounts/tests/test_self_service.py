@@ -833,7 +833,7 @@ class NavigationTests(SelfServiceTestCase):
     def test_console_links_to_the_account_pages(self):
         self.client.force_login(make_user("root@example.com", role=User.Role.SUPER_ADMIN))
         console = self.client.get(reverse("administration:overview"))
-        self.assertContains(console, f'class="app-nav__link" href="{PROFILE}"')
+        self.assertContains(console, f'href="{PROFILE}"')  # OPS-01: in the account menu of the console header.
         self.assertEqual(self.client.get(PROFILE).status_code, 200)
 
 

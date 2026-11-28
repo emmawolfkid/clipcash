@@ -69,7 +69,7 @@
     <ul class="checklist">{% for message in preview.messages %}<li class="checklist__item checklist__item--no">{{ message }}</li>{% endfor %}</ul>
     {% if preview.high_risk %}<p class="lead">{% translate "Amounts this large would need two ClipCash reviewers." %}</p>{% endif %}{% endif %}
 </section>{% endif %}
-{% if demos %}<section class="panel"><h2 class="panel__title">{% translate "Demo scenarios (simulated)" %}</h2>{% include "components/demo_withdrawal_notice.html" %}
+{% if demos and simulation_tools %}<section class="panel"><h2 class="panel__title">{% translate "Demo scenarios (simulated)" %}</h2>{% include "components/demo_withdrawal_notice.html" %}
 <table class="table financial-table withdrawal-demo-table"><caption>{% translate "Simulated withdrawal scenarios" %}</caption><thead><tr><th scope="col">{% translate "Reference" %}</th><th scope="col">{% translate "Simulated amount" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
 <tbody>{% for d in demos %}<tr><td><a class="financial-reference" href="{% url 'withdrawals:demo' d.pk %}">{{ d.reference }}</a></td><td><span class="financial-amount">{{ d.simulated_amount|tzs }}</span> <span class="badge badge--sandbox">{% translate "Demo" %}</span></td><td><span class="badge badge--{{ d.status|lower }}">{{ d.get_status_display }}</span></td></tr>{% endfor %}</tbody></table></section>{% endif %}
 <section class="panel withdrawal-safety"><h2 class="panel__title">{% translate "Stay safe" %}</h2>

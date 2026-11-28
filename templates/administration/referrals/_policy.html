@@ -1,0 +1,8 @@
+{% load i18n money %}{# REF-01: one referral policy version. Context: p. #}<dl class="details">
+  <dt>{% translate "New referrals" %}</dt><dd>{% if p.tracking_open %}{% translate "Recorded" %}{% else %}{% translate "Paused" %}{% endif %}</dd>
+  <dt>{% translate "Reward" %}</dt><dd>{% if p.rewards_open %}<span class="financial-amount">{{ p.reward_amount|tzs }}</span>{% else %}{% translate "No reward offered" %}{% endif %}</dd>
+  <dt>{% translate "Membership" %}</dt><dd>{% if p.referrer_requires_membership %}{% translate "Referrer needs an active membership" %}{% else %}{% translate "Not required for the referrer" %}{% endif %} · {% if p.referred_requires_membership %}{% translate "New member needs an active membership" %}{% else %}{% translate "Not required for the new member" %}{% endif %}</dd>
+  <dt>{% translate "Qualification" %}</dt><dd>{% blocktranslate with views=p.required_verified_views days=p.required_view_days window=p.qualification_days age=p.min_account_age_days %}{{ views }} verified views on {{ days }} different days within {{ window }} days; account at least {{ age }} days old{% endblocktranslate %}</dd>
+  <dt>{% translate "Limits per referrer" %}</dt><dd>{% if p.daily_reward_limit %}{% blocktranslate with n=p.daily_reward_limit %}{{ n }} per day{% endblocktranslate %}{% else %}{% translate "no daily limit" %}{% endif %} · {% if p.lifetime_reward_limit %}{% blocktranslate with n=p.lifetime_reward_limit %}{{ n }} in total{% endblocktranslate %}{% else %}{% translate "no lifetime limit" %}{% endif %}</dd>
+  <dt>{% translate "Clearance period" %}</dt><dd>{% blocktranslate with n=p.clearance_hours %}{{ n }} hours{% endblocktranslate %}</dd>
+</dl>

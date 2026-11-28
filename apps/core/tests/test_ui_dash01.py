@@ -51,10 +51,14 @@ class PortalShellTests(SimpleTestCase):
         self.assertEqual(html.count('id="member-menu"'), 1)
 
     def test_console_and_public_pages_keep_their_existing_chrome(self):
+        # OPS-01: the console now uses the approved portal shell (its own menu and brand link).
         console = render_to_string("administration/layout.html", self.context("/manage/", can={}))
+        self.assertIn('class="portal portal--console"', console)
+        self.assertEqual(console.count('id="console-menu"'), 1)
+        self.assertIn('aria-controls="console-menu"', console)
         public = render_to_string("memberships/plan_list.html",
                                   self.context("/memberships/", authenticated=False))
-        for html in (console, public):
+        for html in (public,):
             self.assertNotIn('class="portal"', html)
             self.assertNotIn("portal-header", html)
             self.assertNotIn("sidebar-state.js", html)
@@ -65,15 +69,16 @@ class PortalShellTests(SimpleTestCase):
         html = render_to_string("components/member_sidebar.html", self.context("/dashboard/", sandbox_payments=False,
                                                                                unread_notifications=105))
         order = ["/dashboard/", "/videos/", "/watch/", "/dashboard/activity/", "/rewards/", "/memberships/mine/",
-                 "/wallet/", "/withdrawals/", "/advertisers/", "/notifications/", "/support/", "/accounts/"]
+                 "/wallet/", "/withdrawals/", "/referrals/", "/advertisers/", "/notifications/", "/support/",
+                 "/accounts/"]
         positions = [html.index(f'href="{route}"') for route in order]
         self.assertEqual(positions, sorted(positions))
         self.assertEqual(html.count('class="app-nav__list"'), 3)
         self.assertIn(">99+<", html)
         self.assertIn("Settings", html)
-        self.assertNotIn("/referral", html)
+        self.assertIn('href="/referrals/"', html)  # REF-01: the referral programme exists now.
         # Every visible label is a real element (it doubles as the collapsed tooltip).
-        self.assertEqual(html.count('class="app-nav__label"'), 13)
+        self.assertEqual(html.count('class="app-nav__label"'), 14)
 
 
 class DashboardRedesignTests(SimpleTestCase):
@@ -164,7 +169,7 @@ class DashboardRedesignTests(SimpleTestCase):
     def test_swahili_dashboard(self):
         html = self.render(language="sw")
         for text in ("Karibu tena, Member", "Salio lako", "Video zilizotazamwa", "Zilizothibitishwa leo",
-                     "Mipango ya uanachama", "Chagua", "Mipangilio", "Kunja menyu ya pembeni"):
+                     "Vifurushi vya uanachama", "Chagua", "Mipangilio", "Kunja menyu ya pembeni"):
             self.assertIn(text, html)
         self.assertIn("TZS 711", html)
 

@@ -227,5 +227,9 @@ class ConsoleTests(AdvertisingTestCase):
     def test_overview_counts(self):
         services.submit_campaign(self.owner, self.make_campaign())
         self.client.force_login(self.root)
-        advertising = self.client.get(reverse("administration:overview")).context["sections"]["advertising"]
+        from apps.administration import summary  # OPS-01: the overview figures' read model.
+
+        page = self.client.get(reverse("administration:overview"))
+        self.assertIn("Campaigns awaiting approval", [str(task.label) for task in page.context["tasks"]])
+        advertising = summary.overview(self.root)[1]["advertising"]
         self.assertEqual((advertising["organizations"]["APPROVED"], advertising["campaigns"]["SUBMITTED"]), (1, 1))

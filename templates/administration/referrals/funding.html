@@ -1,0 +1,56 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Referral budget" %}{% endblock %}
+{% block console_content %}
+{% translate "Referral budget" as title %}{% include "administration/referrals/_header.html" %}
+<p class="lead">{% translate "Referral rewards are paid only from ClipCash's own marketing money: record each transfer into the payout float, have a different person verify it in the Airtel Lipa or bank records, then commit verified money to the referral programme. Membership fees, advertiser money and simulated credits can never fund referral rewards." %}</p>
+
+<section class="workspace-section" aria-labelledby="figures-title"><h2 class="workspace-section__title" id="figures-title">{% translate "Budget" %}</h2>
+<dl class="details">
+  <dt>{% translate "Verified marketing deposits" %}</dt><dd class="financial-amount">{{ budget.verified|tzs }}{% if budget.awaiting_verification %} · {{ budget.awaiting_verification|tzs }} {% translate "awaiting verification" %}{% endif %}</dd>
+  <dt>{% translate "Verified, not yet committed" %}</dt><dd class="financial-amount">{{ budget.unallocated|tzs }}</dd>
+  <dt>{% translate "Committed to referral rewards" %}</dt><dd class="financial-amount">{{ budget.committed|tzs }}{% if budget.released %} · {{ budget.released|tzs }} {% translate "released" %}{% endif %}</dd>
+  <dt>{% translate "Pending reward obligations" %}</dt><dd class="financial-amount">{{ budget.pending|tzs }}</dd>
+  <dt>{% translate "Cleared referral rewards" %}</dt><dd class="financial-amount">{{ budget.cleared|tzs }}</dd>
+  <dt>{% translate "Remaining referral budget" %}</dt><dd class="financial-amount"><strong>{{ budget.programme_balance|tzs }}</strong></dd>
+</dl></section>
+
+{% if can_allocate %}<section class="workspace-section" aria-labelledby="commit-title"><h2 class="workspace-section__title" id="commit-title">{% translate "Commit or release budget" %}</h2>
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="commit">
+  <label for="c-amount">{% translate "Commit verified marketing money (TZS)" %}</label><input id="c-amount" name="amount" type="number" min="1" step="1" required>
+  <label for="c-note">{% translate "Note" %}</label><input id="c-note" name="note" maxlength="300">
+  <button class="button" type="submit">{% translate "Commit to referral rewards" %}</button></form>
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="release">
+  <label for="r-amount">{% translate "Release unused budget (TZS)" %}</label><input id="r-amount" name="amount" type="number" min="1" step="1" required>
+  <label for="r-reason">{% translate "Reason" %}</label><input id="r-reason" name="reason" maxlength="300" required>
+  <button class="button button--secondary" type="submit">{% translate "Release to the marketing budget" %}</button></form>
+</section>{% endif %}
+
+{% if can_record %}<section class="workspace-section" aria-labelledby="record-title"><h2 class="workspace-section__title" id="record-title">{% translate "Record a marketing deposit" %}</h2>
+<form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="record">
+  <label for="d-method">{% translate "Payment method" %}</label><select id="d-method" name="method" required>{% for value, label in methods %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+  <label for="d-amount">{% translate "Amount (TZS)" %}</label><input id="d-amount" name="amount" type="number" min="1" step="1" required>
+  <label for="d-ref">{% translate "Transaction reference" %}</label><input id="d-ref" name="external_reference" maxlength="40" autocomplete="off" required>
+  <label for="d-date">{% translate "Date paid" %}</label><input id="d-date" name="paid_on" type="date" max="{{ today }}" required>
+  <label for="d-note">{% translate "Supporting information" %}</label><textarea id="d-note" name="note" rows="2" maxlength="300"></textarea>
+  <p class="lead">{% translate "Recording a deposit moves no money. The reference alone is never proof of payment." %}</p>
+  <button class="button" type="submit">{% translate "Record and send for verification" %}</button></form></section>{% endif %}
+
+<section class="workspace-section" aria-labelledby="deposits-title"><h2 class="workspace-section__title" id="deposits-title">{% translate "Marketing deposits" %}</h2>
+<form class="toolbar" method="get"><label class="visually-hidden" for="f-status">{% translate "Status" %}</label><select id="f-status" name="status"><option value="">{% translate "All" %}</option>{% for value, label in statuses %}<option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select><button class="button button--secondary" type="submit">{% translate "Filter" %}</button></form>
+<table class="table workspace-table hide-narrow-3"><caption class="visually-hidden">{% translate "Marketing deposits" %}</caption>
+<thead><tr><th scope="col">{% translate "Deposit" %}</th><th scope="col">{% translate "Amount" %}</th><th scope="col">{% translate "Recorded by" %}</th><th scope="col">{% translate "Status" %}</th></tr></thead>
+<tbody>{% for d in page.object_list %}<tr>
+  <td>{{ d.reference }}<br><small>{{ d.get_method_display }} · {{ d.external_reference }} · {{ d.paid_on|date:"SHORT_DATE_FORMAT" }}</small></td>
+  <td class="financial-amount">{{ d.amount|tzs }}</td><td>{{ d.recorded_by.sign_in_identifier }}</td>
+  <td><span class="badge badge--{{ d.status|lower }}">{{ d.get_status_display }}</span>{% if d.decided_by %}<br><small>{{ d.decided_by.sign_in_identifier }}{% if d.decision_note %} · {{ d.decision_note }}{% endif %}</small>{% endif %}
+  {% if can_verify and d.status == "RECORDED" and d.recorded_by_id != request.user.pk %}
+    <form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="verify"><input type="hidden" name="deposit" value="{{ d.pk }}">
+      <label><input type="checkbox" name="receipt_confirmed" required> {% translate "I found this payment in the Airtel Lipa business records or the bank statement" %}</label>
+      <button class="button" type="submit">{% translate "Verify" %}</button></form>
+    <form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="reject_deposit"><input type="hidden" name="deposit" value="{{ d.pk }}">
+      <label for="rj-{{ d.pk }}">{% translate "Reason" %}</label><input id="rj-{{ d.pk }}" name="reason" maxlength="300" required>
+      <button class="button button--danger" type="submit">{% translate "Reject" %}</button></form>
+  {% elif can_verify and d.status == "RECORDED" %}<br><small>{% translate "A different person must verify the deposit you recorded." %}</small>{% endif %}</td></tr>{% empty %}<tr><td colspan="4">{% translate "No marketing deposits recorded." %}</td></tr>{% endfor %}</tbody></table>
+{% include "components/pagination.html" %}
+</section>
+{% endblock %}

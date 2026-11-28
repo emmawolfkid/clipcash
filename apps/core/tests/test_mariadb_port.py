@@ -148,8 +148,9 @@ class SchemaTests(TestCase):
         # 102 existing guards + 3 permission mutexes + 3 immutable-quote guards + 3 PRD-04 evidence guards
         # + 3 CR-01 credit-terms guards + 13 FIN-01 guards (campaign funding evidence, policy reward type,
         # 11 real-reward / deposit / funding-movement guards; the two wallet locks are replaced, not added)
-        # + 10 FIN-02 withdrawal guards - the 3 Phase 10 real-withdrawal locks they replace.
-        self.assertEqual(len(installed), 134)
+        # + 10 FIN-02 withdrawal guards - the 3 Phase 10 real-withdrawal locks they replace
+        # + 17 REF-01 referral guards (the two wallet posting locks are replaced, not added).
+        self.assertEqual(len(installed), 151)
 
     def test_database_and_connection_settings(self):
         with connection.cursor() as cursor:

@@ -52,10 +52,13 @@ class AccessTests(DashboardTestCase):
     def test_content_manager_sees_only_video_areas(self):
         self.client.force_login(self.manager)
         page = self.client.get(OVERVIEW)
-        self.assertEqual(set(page.context["sections"]), {"videos"})
-        for hidden in ("Member directory", "Financial simulation", "Security summary", "Demo rewards"):
+        # OPS-01: the dashboard shows only figures this role may see: no member, payment or payout cards.
+        self.assertEqual([str(stat["label"]) for stat in page.context["stats"]], [])
+        self.assertIsNone(page.context["money"])
+        for hidden in ("Member directory", "Testing tools", "Security", "Demo rewards", "Withdrawal requests"):
             self.assertNotContains(page, hidden)
         self.assertContains(page, reverse("administration:videos"))
+        self.assertContains(page, reverse("administration:video_create"))  # Quick action: Upload video.
         for name in ("administration:members", "administration:security"):
             self.assertEqual(self.client.get(reverse(name)).status_code, 403)
         member = self.client.get(reverse("administration:member", args=[self.member.pk]))
@@ -66,11 +69,9 @@ class AccessTests(DashboardTestCase):
     def test_super_admin_sees_everything_and_links_work(self):
         self.client.force_login(self.root)
         page = self.client.get(OVERVIEW)
-        self.assertEqual(set(page.context["sections"]),
-                         {"members", "advertising", "videos", "viewing", "rewards", "payments", "wallets",
-                          "withdrawals", "jobs"})
-        for group in ("Overview", "Members and memberships", "Advertising", "Videos and viewing", "Financial simulation",
-                      "Operations", "Security and audit"):
+        self.assertEqual([str(stat["label"]) for stat in page.context["stats"]][:2], ["Members", "Active memberships"])
+        self.assertIn("Pending withdrawals", [str(stat["label"]) for stat in page.context["stats"]])
+        for group in ("Overview", "Management", "Finance", "Services and reports", "System", "Testing tools"):
             self.assertContains(page, f">{group}</p>")
         self.assertContains(page, 'aria-current="page" href="' + OVERVIEW + '"')
         links = set(re.findall(r'href="(/(?:manage|admin)/[^"?#]*)"', page.content.decode()))
@@ -114,9 +115,12 @@ class ReadOnlyAndAccuracyTests(DashboardTestCase):
         self.assertEqual(sections["advertising"]["funded"], 0)
         self.assertEqual(sections["members"]["current_memberships"], 1)
         page = self.client_for(self.root).get(OVERVIEW)
-        self.assertContains(page, "simulated, not money")
-        self.assertContains(page, "Not real cash")
-        self.assertContains(page, "Every balance must be TZS 0")
+        # OPS-01: three separate real-money lines; sandbox payments and demo credits are never included.
+        labels = [str(label) for label, _amount in page.context["money"]]
+        self.assertEqual(labels, ["Confirmed membership income", "Rewards owed to members (funded)",
+                                  "Paid out to members"])
+        self.assertEqual([amount for _label, amount in page.context["money"]], [0, 0, 0])
+        self.assertContains(page, "Real money only. Test payments and demo credits are never included.")
 
     def membership_intent_for(self, member):
         from apps.memberships import services as memberships
@@ -165,7 +169,8 @@ class HealthTests(DashboardTestCase):
         checks = self.checks()
         self.assertEqual(checks["jobs"].status, summary.NOT_CHECKED)  # No worker heartbeat yet.
         self.client.force_login(self.root)
-        self.assertContains(self.client.get(OVERVIEW), "Not checked")  # Overview agrees with the health page.
+        # OPS-01: the dashboard shows a short alert; the detail stays on System health.
+        self.assertContains(self.client.get(OVERVIEW), "Background jobs are not running")
         self.assertEqual(checks["email"].status, summary.NOT_CONFIGURED)  # Test (locmem) backend.
         self.assertEqual(checks["video_provider"].status, summary.NOT_CHECKED)  # Configured, never "healthy".
         self.assertEqual(checks["payments"].status, summary.HEALTHY)

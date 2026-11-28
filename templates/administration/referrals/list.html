@@ -1,0 +1,37 @@
+{% extends "administration/layout.html" %}{% load i18n money %}
+{% block title %}{% translate "Referral programme" %}{% endblock %}
+{% block console_content %}
+{% translate "Referral programme" as title %}{% include "administration/referrals/_header.html" %}
+
+<section class="workspace-section" aria-labelledby="overview-title"><h2 class="workspace-section__title" id="overview-title">{% translate "Overview" %}</h2>
+<dl class="details">
+  <dt>{% translate "Referred registrations" %}</dt><dd>{{ counts.total }}</dd>
+  <dt>{% translate "Awaiting qualification" %}</dt><dd>{{ counts.awaiting }}</dd>
+  <dt>{% translate "Under review" %}</dt><dd>{{ counts.review }}</dd>
+  <dt>{% translate "Qualified" %}</dt><dd>{{ counts.qualified }} · {% blocktranslate with rate=counts.conversion %}{{ rate }}% of registrations{% endblocktranslate %}</dd>
+  <dt>{% translate "Rejected or reversed" %}</dt><dd>{{ counts.rejected }}</dd>
+  <dt>{% translate "Did not qualify in time" %}</dt><dd>{{ counts.expired }}</dd>
+  <dt>{% translate "Pending reward obligations" %}</dt><dd class="financial-amount">{{ budget.pending|tzs }}</dd>
+  <dt>{% translate "Cleared referral rewards" %}</dt><dd class="financial-amount">{{ budget.cleared|tzs }}</dd>
+  <dt>{% translate "Verified marketing funding" %}</dt><dd class="financial-amount">{{ budget.verified|tzs }}</dd>
+  <dt>{% translate "Remaining referral budget" %}</dt><dd class="financial-amount"><strong>{{ budget.programme_balance|tzs }}</strong>{% if budget.affordable_rewards is not None %} · {% blocktranslate count n=budget.affordable_rewards %}enough for {{ n }} reward{% plural %}enough for {{ n }} rewards{% endblocktranslate %}{% endif %}</dd>
+  <dt>{% translate "Current rules" %}</dt><dd>v{{ policy.version }} · {% if policy.rewards_open %}{{ policy.reward_amount|tzs }}{% else %}{% translate "no reward offered" %}{% endif %}{% if not policy.tracking_open %} · {% translate "new referrals paused" %}{% endif %}</dd>
+</dl></section>
+
+<section class="workspace-section" aria-labelledby="referrals-title"><h2 class="workspace-section__title" id="referrals-title">{% translate "Referrals" %}</h2>
+<form class="toolbar" method="get">
+  <label class="visually-hidden" for="f-q">{% translate "Search" %}</label><input id="f-q" name="q" value="{{ filters.q }}" placeholder="{% translate 'Reference, code, phone, email or username' %}">
+  <label class="visually-hidden" for="f-status">{% translate "Status" %}</label><select id="f-status" name="status"><option value="">{% translate "All statuses" %}</option>{% for value, label in statuses %}<option value="{{ value }}"{% if filters.status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <label for="f-start">{% translate "From" %}</label><input id="f-start" name="start" type="date" value="{{ filters.start }}">
+  <label for="f-end">{% translate "To" %}</label><input id="f-end" name="end" type="date" value="{{ filters.end }}">
+  <button class="button button--secondary" type="submit">{% translate "Filter" %}</button></form>
+<table class="table workspace-table hide-narrow-3 hide-narrow-5"><caption class="visually-hidden">{% translate "Referrals" %}</caption>
+<thead><tr><th scope="col">{% translate "Referral" %}</th><th scope="col">{% translate "Referrer" %}</th><th scope="col">{% translate "New member" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Reward" %}</th></tr></thead>
+<tbody>{% for referral in page.object_list %}<tr>
+  <td><a href="{% url 'administration:referral' referral.pk %}">{{ referral.reference }}</a><br><small>{{ referral.created_at|date:"SHORT_DATETIME_FORMAT" }} · {{ referral.code }}</small></td>
+  <td>{{ referral.referrer.sign_in_identifier }}</td><td>{{ referral.referred.sign_in_identifier }}</td>
+  <td>{% include "referrals/_status.html" %}{% if referral.risk_flags %} <span class="badge badge--suspicious_review">{% blocktranslate count n=referral.risk_flags|length %}{{ n }} risk signal{% plural %}{{ n }} risk signals{% endblocktranslate %}</span>{% endif %}</td>
+  <td>{% if referral.reward %}<span class="financial-amount">{{ referral.reward.amount|tzs }}</span>{% else %}—{% endif %}</td></tr>{% empty %}<tr><td colspan="5">{% translate "No referrals match." %}</td></tr>{% endfor %}</tbody></table>
+{% include "components/pagination.html" %}
+</section>
+{% endblock %}

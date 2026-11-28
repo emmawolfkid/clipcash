@@ -1,17 +1,17 @@
-{% extends "base.html" %}{% load i18n static %}
+{% extends "base.html" %}{% load i18n static console_nav %}
+{# OPS-01: the console uses the approved member portal shell (navy top bar, fixed collapsible sidebar with a saved preference, drawer below 64rem; member-portal.css + member-nav.js), with console sections and search (console.css, console-nav.js). #}
 {% block layout_styles %}
 <link rel="stylesheet" href="{% static 'css/layouts/member.css' %}">
+<link rel="stylesheet" href="{% static 'css/layouts/member-portal.css' %}">
 <link rel="stylesheet" href="{% static 'css/layouts/admin.css' %}">
+<link rel="stylesheet" href="{% static 'css/layouts/console.css' %}">
 {% endblock %}
+{% block head_scripts %}{% include "components/member_portal_head.html" %}<script src="{% static 'js/console-nav.js' %}" defer></script>{% endblock %}
+{% block body_class %} class="portal portal--console"{% endblock %}
+{% block site_header %}{% include "components/member_header.html" with portal_menu="console-menu" %}{% endblock %}
 {% block main %}
-<div class="app-shell app-shell--console">
-  <aside class="app-sidebar" tabindex="-1">
-    <button type="button" class="drawer-close" data-nav-close hidden>{% translate "Close navigation" %} <span aria-hidden="true">×</span></button>
-    <p class="app-sidebar__title">{% translate "Administration" %}</p>
-    <button type="button" class="app-nav__toggle" aria-expanded="true" aria-controls="console-menu" hidden>{% translate "Menu" %}</button>
-    {# ADMIN-01: both membership payment pages pass nav="membership_payments"; the URL name tells them apart. #}
-    {% if request.resolver_match.url_name == 'payment_instructions' %}{% include "administration/_sidebar.html" with console_active="payment_instructions" %}{% else %}{% include "administration/_sidebar.html" with console_active=nav %}{% endif %}
-  </aside>
+<div class="app-shell app-shell--portal app-shell--console">
+  {% console_sidebar %}
   <main id="content" class="app-main" tabindex="-1">
     {% if breadcrumbs %}<nav class="breadcrumbs" aria-label="{% translate 'Breadcrumb' %}"><ol>{% for label, url_name in breadcrumbs %}<li><a href="{% url url_name %}">{% translate label %}</a></li>{% endfor %}<li aria-current="page">{% block crumb %}{% endblock %}</li></ol></nav>{% endif %}
     {% include "components/messages.html" %}

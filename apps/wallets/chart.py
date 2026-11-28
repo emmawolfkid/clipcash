@@ -83,9 +83,23 @@ ACCOUNT_TYPES = {
         AccountType("ADVERTISER_FUNDING_VERIFIED", "2110", "Advertiser funds verified, unallocated",
                     Classification.LIABILITY, FundingClass.ADVERTISER_VERIFIED, Scope.ADVERTISER, True,
                     "Verified advertiser money not yet committed to a campaign."),
+        # REF-01: ClipCash's own marketing budget for referral rewards. It follows the same
+        # received -> independently verified -> committed path as advertiser deposits, so it reuses
+        # those funding classes and the unchanged database funding-separation rules (never
+        # membership money; rewards only from verified, committed funds). Separate account types
+        # keep it apart from advertiser and campaign money in every report.
+        AccountType("MARKETING_FUNDING_PENDING", "2140", "ClipCash marketing funds received, pending verification",
+                    Classification.LIABILITY, FundingClass.ADVERTISER_UNVERIFIED, Scope.PLATFORM, True,
+                    "ClipCash marketing money received but not yet independently verified; funds nothing."),
+        AccountType("MARKETING_FUNDING_VERIFIED", "2150", "ClipCash marketing budget verified, unallocated",
+                    Classification.LIABILITY, FundingClass.ADVERTISER_VERIFIED, Scope.PLATFORM, True,
+                    "Verified ClipCash marketing money not yet committed to the referral programme."),
         AccountType("CAMPAIGN_RESTRICTED_FUNDING", "2200", "Campaign restricted reward funding",
                     Classification.LIABILITY, FundingClass.REWARD_RESTRICTED, Scope.CAMPAIGN, True,
                     "Verified advertiser money committed to one campaign; the only source of rewards."),
+        AccountType("REFERRAL_PROGRAMME_FUNDING", "2210", "Referral programme restricted funding",
+                    Classification.LIABILITY, FundingClass.REWARD_RESTRICTED, Scope.PLATFORM, True,
+                    "Verified marketing budget committed to referral rewards; their only source."),
         AccountType("REWARD_LIABILITY", "2300", "Rewards owed to members",
                     Classification.LIABILITY, FundingClass.REWARD_RESTRICTED, Scope.MEMBER, True,
                     "Rewards allocated from campaign funding; not withdrawable in this phase."),

@@ -253,6 +253,20 @@ def _jobs():
     return jobs
 
 
+def job_details():
+    """OPS-01: what the background job runner does and whether it runs (stored data only)."""
+    from apps.core.jobs.schedules import SCHEDULES
+    from apps.core.models import Job
+
+    jobs = _jobs()
+    waiting = list(Job.objects.filter(status__in=["PENDING", "RETRY_WAIT"]).values_list("job_type")
+                   .annotate(n=Count("id")).order_by("-n")[:10])
+    schedules = sorted(({"name": s.name, "every": s.interval_seconds, "description": s.description}
+                        for s in SCHEDULES.values()), key=lambda row: row["name"])
+    return {**jobs, "waiting": waiting, "schedules": schedules,
+            "cron": "* * * * * /bin/bash <app>/scripts/netpoa/run_jobs_cron.sh <virtualenv>/bin/python"}
+
+
 # --- Operational health ------------------------------------------------------------------------
 
 
@@ -413,6 +427,16 @@ def _video_check(videos):
     if videos["provider"] == "demo":
         return HealthCheck("video_provider", "Video provider", NOT_CONFIGURED,
                            "Demo provider: no Bunny Stream connection.", "administration:videos")
+    if videos["provider"] == "local":  # OPS-01: files on the hosting account; checked on disk.
+        from apps.videos import local_storage
+
+        storage = local_storage.storage_summary()
+        missing = sum(1 for row in storage["videos"] if row["size"] is None and row["video"].processing_status == "READY")
+        used = round(100 * storage["used"] / storage["total_bytes"]) if storage["total_bytes"] else 0
+        status = ATTENTION if missing or used >= 90 else HEALTHY
+        return HealthCheck("video_provider", "Video storage", status,
+                           f"Local storage: {used}% of the video limit used, {missing} file(s) missing.",
+                           "administration:video_storage")
     required = ("BUNNY_STREAM_LIBRARY_ID", "BUNNY_STREAM_API_KEY", "BUNNY_STREAM_CDN_HOSTNAME",
                 "BUNNY_STREAM_TOKEN_SECURITY_KEY")
     missing = [name for name in required if not getattr(settings, name, "")]

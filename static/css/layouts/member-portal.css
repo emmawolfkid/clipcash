@@ -31,7 +31,7 @@
 .portal-header .profile-menu__trigger { gap: var(--space-3); padding: var(--space-1); }
 .portal-header .profile-menu__avatar { width: 2.5rem; height: 2.5rem; color: var(--portal-royal); background: #e8eeff; box-shadow: 0 0 0 2px rgb(255 255 255 / 85%); }
 .portal-header .profile-menu__identity { max-width: 11rem; line-height: 1.25; font-size: 0.9375rem; }
-.portal-header .profile-menu__account-id { max-width: 11rem; margin-top: 0.125rem; font-size: 0.6875rem; color: #b8c2dc; }
+.portal-header .profile-menu__role { max-width: 11rem; margin-top: 0.125rem; font-size: 0.6875rem; color: #b8c2dc; }
 .portal-header .profile-menu__chevron { font-size: 1.1rem; line-height: 1; color: var(--nav-muted); }
 
 /* ---- Page frame ---------------------------------------------------------------------------- */

@@ -1,15 +1,27 @@
 {% extends "administration/layout.html" %}{% load i18n %}
-{% block title %}{% translate "Operational health" %}{% endblock %}
-{% block crumb %}{% translate "Operational health" %}{% endblock %}
+{% block title %}{% translate "System health" %}{% endblock %}
 {% block console_content %}
-<h1 class="page-title">{% translate "Operational health" %}</h1>
-<p class="lead">{% translate "Based on stored data only. External services are never contacted from this page, so a configured service shows Not checked rather than Healthy." %}</p>
-{% if checks %}<table class="table workspace-table"><caption class="visually-hidden">{% translate "Health checks" %}</caption>
+<div class="page-heading"><div><h1 class="page-title">{% translate "System health" %}</h1>
+<p class="page-intro">{% translate "Based on stored data only. External services are never contacted from this page, so a configured service shows Not checked rather than Healthy." %}</p></div></div>
+{% if checks %}<section class="workspace-section"><table class="table workspace-table"><caption class="visually-hidden">{% translate "Health checks" %}</caption>
   <thead><tr><th scope="col">{% translate "Area" %}</th><th scope="col">{% translate "Status" %}</th><th scope="col">{% translate "Detail" %}</th></tr></thead>
-  <tbody>{% for c in checks %}<tr><td>{% if c.url_name %}<a href="{% url c.url_name %}">{{ c.title }}</a>{% else %}{{ c.title }}{% endif %}</td>
-    <td><span class="badge badge--health-{{ c.status }}">{{ c.label }}</span></td><td>{{ c.detail }}</td></tr>{% endfor %}</tbody>
-</table>{% else %}<p class="empty-state">{% translate "No health checks are available for your role." %}</p>{% endif %}
-{% if client_ip %}<section class="workspace-section"><h2 class="workspace-section__title">{% translate "Client address resolution (your request)" %}</h2>
+  <tbody>{% for c in checks %}<tr><td>{% if c.url_name %}<a href="{% url c.url_name %}">{% translate c.title %}</a>{% else %}{% translate c.title %}{% endif %}</td>
+    <td><span class="badge badge--health-{{ c.status }}">{% translate c.label %}</span></td><td>{{ c.detail }}</td></tr>{% endfor %}</tbody>
+</table></section>{% else %}<p class="empty-state">{% translate "No health checks are available for your role." %}</p>{% endif %}
+
+{% if jobs %}<section class="workspace-section" aria-labelledby="jobs-title"><h2 class="workspace-section__title" id="jobs-title">{% translate "Background jobs" %}</h2>
+<p><span class="badge badge--health-{{ jobs.status }}">{% translate jobs.status_label %}</span>
+{% if jobs.heartbeat_age_seconds is None %}{% translate "The job runner has never checked in on this database." %}{% else %}{% blocktranslate with s=jobs.heartbeat_age_seconds|floatformat:0 %}Last check-in {{ s }} seconds ago.{% endblocktranslate %}{% endif %}</p>
+<p>{% translate "Background jobs send emails, clear and reconcile rewards, qualify referrals, expire memberships and check payouts. On the hosting account they run from a cron job every minute; nothing needs to run permanently." %}</p>
+<dl class="details"><dt>{% translate "Cron command (cPanel → Cron Jobs)" %}</dt><dd><code>{{ jobs.cron }}</code></dd>
+<dt>{% translate "Waiting jobs" %}</dt><dd>{% for job_type, n in jobs.waiting %}{{ job_type }}: {{ n }}{% if not forloop.last %} · {% endif %}{% empty %}{% translate "none" %}{% endfor %}</dd>
+<dt>{% translate "Failed in the last 24 hours" %}</dt><dd>{{ jobs.failed_last_24h }}</dd></dl>
+<details><summary>{% blocktranslate count n=jobs.schedules|length %}{{ n }} scheduled job{% plural %}{{ n }} scheduled jobs{% endblocktranslate %}</summary>
+<table class="table workspace-table"><caption class="visually-hidden">{% translate "Scheduled jobs" %}</caption><thead><tr><th scope="col">{% translate "Job" %}</th><th scope="col">{% translate "Every" %}</th><th scope="col">{% translate "Purpose" %}</th></tr></thead>
+<tbody>{% for s in jobs.schedules %}<tr><td><code>{{ s.name }}</code></td><td>{% blocktranslate with n=s.every %}{{ n }} s{% endblocktranslate %}</td><td>{{ s.description }}</td></tr>{% endfor %}</tbody></table></details>
+</section>{% endif %}
+
+{% if client_ip %}<details class="workspace-section"><summary>{% translate "Client address resolution (your request)" %}</summary>
 <dl class="details">
   <dt>{% translate "Connection from" %}</dt><dd>{{ client_ip.remote_addr|default:"—" }}</dd>
   <dt>{% translate "X-Forwarded-For entries" %}</dt><dd>{% for entry in client_ip.forwarded %}{{ entry }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "none" %}{% endfor %}</dd>
@@ -17,5 +29,5 @@
   <dt>{% translate "Connection from a trusted proxy network" %}</dt><dd>{% if not client_ip.networks %}{% translate "No network list (every connection is treated as the proxy)" %}{% elif client_ip.peer_trusted %}{% translate "Yes" %}{% else %}{% translate "No: forwarded headers ignored" %}{% endif %}</dd>
   <dt>{% translate "Resolved client address" %}</dt><dd>{{ client_ip.address|default:"—" }} {% if client_ip.resolved %}<span class="badge badge--health-healthy">{% translate "Resolved" %}</span>{% else %}<span class="badge badge--health-attention">{% translate "Not resolved: per-IP limits skipped" %}</span>{% endif %}</dd>
 </dl>
-<p class="lead">{% translate "The resolved address must be your own public address (check it with a what-is-my-IP service). Then send a request with a made-up X-Forwarded-For header: the resolved address must not change." %}</p></section>{% endif %}
+<p class="lead">{% translate "The resolved address must be your own public address (check it with a what-is-my-IP service). Then send a request with a made-up X-Forwarded-For header: the resolved address must not change." %}</p></details>{% endif %}
 {% endblock %}

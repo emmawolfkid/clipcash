@@ -50,6 +50,38 @@ Every check also requires an active staff account.
 
 ## Providers (`apps/videos/providers/`)
 
+### Local storage (OPS-01, default)
+
+`VIDEO_PROVIDER=local` (the default) keeps videos on the hosting account itself
+(`apps/videos/providers/local.py`, `apps/videos/local_storage.py`, `apps/videos/media.py`). Bunny Stream
+stays available (`VIDEO_PROVIDER=bunny`); existing videos keep the provider they were made with.
+
+* **Upload** (console "Upload video"): title, description, category, who can watch (each access level
+  lists the membership plans that include it), the MP4 file and an optional JPEG/PNG thumbnail, in one
+  step with a progress bar. Django spools large uploads to a temporary file; the file is never held in
+  memory. Checks: MP4 container (`ftyp`), per-file limit (`DJANGO_VIDEO_LOCAL_MAX_FILE_MB`, 500), total
+  limit (`DJANGO_VIDEO_LOCAL_TOTAL_MB`, 3,072, not the whole hosting quota), thumbnail type and size.
+  Files get random names (`media/<32 hex>.mp4`, `thumbnails/<id>.jpg|png`); user file names are never used.
+* **Duration** without FFmpeg: read from the MP4 header (`mvhd`; fragmented files use `mehd`). When the
+  file states no length, the length the uploader's browser measured is used, and staff can type it in
+  the video details. Upload **pre-compressed H.264/AAC MP4** files; nothing is transcoded.
+* **Storage**: `DJANGO_VIDEO_LOCAL_ROOT` (default `<project>/private/videos`) must be outside the public
+  folder and outside the release folder on NetPoa, e.g. `/home/<account>/clipcash/private/videos`
+  (`chmod 700`). Include it in backups.
+* **Playback**: `authorize_playback` returns a signed link to `/videos/media/<id>/` bound to the
+  signed-in viewer (valid `DJANGO_VIDEO_LOCAL_TOKEN_SECONDS`, default 6 h). Every request re-checks
+  access: console staff (preview) or a member whose membership includes the video (published, ready).
+  Copied links fail for other accounts and signed-out visitors. HTTP Range (206) gives seeking; files
+  stream in 256 KB chunks. Optional hand-off to the web server (`DJANGO_VIDEO_SENDFILE_HEADER`, e.g.
+  `X-Sendfile` with Apache mod_xsendfile) only after the host confirms support.
+* Sponsored viewing and verified views are unchanged: the watch page plays the same `<video>` element.
+* **Deletion**: video records are never deleted (database guard). A Super Administrator can delete the
+  **file** of an archived local video; the record and viewing history stay.
+* **Bunny or demo videos**: "Make a local copy" creates a local draft with the same details for a file
+  upload; the original, its campaigns and history are untouched (its provider id cannot change).
+* **Storage page** (console → Videos → Video storage): used space, limits, free disk, per-video sizes and
+  missing files. System health reports local storage too.
+
 ### Bunny Stream
 
 Bunny uses two different secrets. Do not mix them up.

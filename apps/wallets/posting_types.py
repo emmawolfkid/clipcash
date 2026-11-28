@@ -103,6 +103,30 @@ POSTING_TYPES = {
         _type("withdrawal.paid_manual", "Withdrawal paid manually and verified",
               ["MEMBER_WITHDRAWAL_RESERVED"], ["CASH", "OTHER_OPERATING_REVENUE"], "withdrawal_settlement",
               requires_external_reference=True),
+        # REF-01: referral rewards (apps.referrals), funded only by ClipCash's marketing budget. A
+        # marketing transfer is recorded, then verified in the provider or bank records by a different
+        # person (received + verified in one transaction), then committed to the programme. A qualified
+        # referral moves the policy amount from the programme to the referrer's PENDING balance; after
+        # clearance it is AVAILABLE and withdrawable under FIN-02. Reversals return it to the programme.
+        # New money and new rewards need "referral_rewards"; settling what exists needs only
+        # "referral_settlement".
+        _type("marketing.deposit_received", "ClipCash marketing deposit received (manual, staff-verified)",
+              ["CASH"], ["MARKETING_FUNDING_PENDING"], "referral_rewards", requires_external_reference=True),
+        _type("marketing.deposit_verified", "ClipCash marketing deposit verified (manual)",
+              ["MARKETING_FUNDING_PENDING"], ["MARKETING_FUNDING_VERIFIED"], "referral_rewards",
+              related_type="marketing.deposit_received", related_amount_must_match=True),
+        _type("referral.funding_committed", "Verified marketing budget committed to referral rewards",
+              ["MARKETING_FUNDING_VERIFIED"], ["REFERRAL_PROGRAMME_FUNDING"], "referral_rewards"),
+        _type("referral.funding_released", "Unused referral budget released",
+              ["REFERRAL_PROGRAMME_FUNDING"], ["MARKETING_FUNDING_VERIFIED"], "referral_settlement"),
+        _type("referral.reward_pending", "Referral reward pending clearance",
+              ["REFERRAL_PROGRAMME_FUNDING"], ["MEMBER_REWARD_PENDING"], "referral_rewards"),
+        _type("referral.reward_cleared", "Referral reward cleared to the available balance",
+              ["MEMBER_REWARD_PENDING"], ["REWARD_LIABILITY"], "referral_settlement"),
+        _type("referral.pending_reversed", "Pending referral reward reversed",
+              ["MEMBER_REWARD_PENDING"], ["REFERRAL_PROGRAMME_FUNDING"], "referral_settlement"),
+        _type("referral.cleared_reversed", "Cleared referral reward reversed",
+              ["REWARD_LIABILITY"], ["REFERRAL_PROGRAMME_FUNDING"], "referral_settlement"),
         # Withdrawals (automated provider path, not used)
         _type("withdrawal.approved", "Withdrawal approved",
               ["REWARD_LIABILITY"], ["WITHDRAWAL_CLEARING"], "withdrawals"),
@@ -123,7 +147,12 @@ POSTING_TYPES = {
 # Posting types whose related entry may be used only once (no double
 # verification, no double payout). Also enforced by a partial unique index.
 SINGLE_USE_RELATED_TYPES = ("advertiser.funding_verified", "withdrawal.paid",
-                            "advertiser.manual_deposit_verified")
+                            "advertiser.manual_deposit_verified", "marketing.deposit_verified")
 # FIN-01: the only posting types the database accepts on wallet-linked accounts (wallets 0006).
 WALLET_POSTING_TYPES = ("reward.pending", "reward.cleared", "reward.pending_reversed", "reward.cleared_reversed",
-                        "withdrawal.reserved", "withdrawal.released", "withdrawal.paid_manual")
+                        "withdrawal.reserved", "withdrawal.released", "withdrawal.paid_manual",
+                        # REF-01 (wallets 0008)
+                        "referral.reward_pending", "referral.reward_cleared", "referral.pending_reversed",
+                        "referral.cleared_reversed")
+# REF-01: referral postings, kept apart from video rewards in wallet history and reports.
+REFERRAL_WALLET_POSTING_TYPES = WALLET_POSTING_TYPES[-4:]

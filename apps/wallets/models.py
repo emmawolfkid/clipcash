@@ -328,6 +328,10 @@ class WalletTransaction(UUIDModel):
     class Category(models.TextChoices):
         REWARD_CREDIT = "REWARD_CREDIT", _("Reward")
         REWARD_CLEARANCE = "REWARD_CLEARANCE", _("Reward cleared")
+        # REF-01: referral rewards stay separate from video rewards in the history.
+        REFERRAL_CREDIT = "REFERRAL_CREDIT", _("Referral reward")
+        REFERRAL_CLEARANCE = "REFERRAL_CLEARANCE", _("Referral reward cleared")
+        REFERRAL_REVERSAL = "REFERRAL_REVERSAL", _("Referral reward reversed")
         WITHDRAWAL_RESERVATION = "WITHDRAWAL_RESERVATION", _("Withdrawal reserved")
         WITHDRAWAL_SETTLEMENT = "WITHDRAWAL_SETTLEMENT", _("Withdrawal paid")
         WITHDRAWAL_RELEASE = "WITHDRAWAL_RELEASE", _("Withdrawal released")

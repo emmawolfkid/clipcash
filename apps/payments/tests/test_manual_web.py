@@ -208,7 +208,7 @@ class ConsoleTests(ManualPaymentTestCase):
         self.assertContains(queue, 'aria-current="page">Pending <span class="payment-queue__count">1</span>')
         self.assertContains(queue, "official provider business records")
         self.assertContains(self.client.get(reverse("administration:overview")),
-                            "Membership payments awaiting verification")
+                            "Membership payments to verify")
         detail = self.client.get(review_url(claim))
         self.assertContains(detail, "Confirm Payment &amp; Activate Membership")
         self.assertContains(detail, 'name="receipt_confirmed"')

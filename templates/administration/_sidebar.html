@@ -1,70 +1,38 @@
-{% load i18n %}{# ADMIN-01: the console menu. Context: can (console_links), console_active (the current entry's key). Each group appears only when it holds at least one entry this staff member may open; every target still enforces its own permission. #}
-    <nav id="console-menu" class="app-nav" aria-label="{% translate 'Administration menu' %}">
-      <p class="app-nav__group" id="console-overview">{% translate "Overview" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-overview">
-        {% include "administration/_nav_link.html" with target="administration:overview" key="overview" label=_("Overview") %}
-        {% include "administration/_nav_link.html" with target="administration:health" key="health" label=_("Operational health") %}
+{% load i18n %}{# OPS-01: console menu. Groups -> sections -> pages, only what this staff member may open (apps.administration.navigation). A section opens to its pages (native details/summary, no script needed); the current section is open. The collapsed rail shows section icons with their labels as tooltips. #}
+  <aside class="app-sidebar console-sidebar" tabindex="-1" data-collapsible data-drawer-query="(max-width: 63.99rem)">
+    <button type="button" class="drawer-close" data-nav-close hidden>{% translate "Close navigation" %} <span aria-hidden="true">×</span></button>
+    <a class="app-sidebar__brand" href="{% url 'administration:overview' %}">{% include "components/wordmark.html" %}<span class="app-sidebar__tagline">{% translate "Operations console" %}</span></a>
+    <div class="console-search" role="search">
+      <label class="visually-hidden" for="console-search">{% translate "Find a page" %}</label>
+      <span class="console-search__icon">{% include "components/nav_icon.html" with icon="search" %}</span>
+      <input id="console-search" class="console-search__input" type="search" autocomplete="off" placeholder="{% translate 'Find a page…' %}" data-console-search aria-controls="console-menu">
+      <p class="console-search__empty" data-console-search-empty hidden>{% translate "No page matches." %}</p>
+    </div>
+    <nav id="console-menu" class="app-nav console-nav" aria-label="{% translate 'Operations console menu' %}">
+      {% for group in groups %}
+      <p class="app-nav__group console-nav__group" id="console-group-{{ group.key }}">{{ group.label }}</p>
+      <ul class="app-nav__list" aria-labelledby="console-group-{{ group.key }}">
+        {% for section in group.sections %}
+        <li class="console-nav__section{% if section.current %} is-current-section{% endif %}" data-console-section>
+          {% if section.items|length == 1 %}{% with item=section.items.0 %}
+          <a class="app-nav__link{% if item.current %} is-current{% endif %}"{% if item.current %} aria-current="page"{% endif %} href="{{ item.url }}" data-search="{{ item.search }}">{% include "components/nav_icon.html" with icon=section.icon %}<span class="app-nav__label">{{ section.label }}</span>{% if section.key == "notifications" and unread_notifications %} <span class="badge badge--pending app-nav__count">{% if unread_notifications > 99 %}99+{% else %}{{ unread_notifications }}{% endif %}<span class="visually-hidden"> {% translate "unread" %}</span></span>{% endif %}</a>
+          {% endwith %}{% else %}
+          <details class="console-nav__details"{% if section.open %} open{% endif %}>
+            <summary class="app-nav__link console-nav__summary{% if section.current %} is-current-parent{% endif %}">{% include "components/nav_icon.html" with icon=section.icon %}<span class="app-nav__label">{{ section.label }}</span><span class="console-nav__chevron">{% include "components/nav_icon.html" with icon="chevron" %}</span></summary>
+            <ul class="console-nav__pages">
+              {% for item in section.items %}<li><a class="console-nav__page{% if item.current %} is-current{% endif %}"{% if item.current %} aria-current="page"{% endif %} href="{{ item.url }}" data-search="{{ item.search }}">{{ item.label }}</a></li>{% endfor %}
+            </ul>
+          </details>
+          <a class="app-nav__link console-nav__rail-link{% if section.current %} is-current{% endif %}" href="{{ section.url }}" tabindex="-1" aria-hidden="true">{% include "components/nav_icon.html" with icon=section.icon %}<span class="app-nav__label">{{ section.label }}</span></a>
+          {% endif %}
+        </li>
+        {% endfor %}
       </ul>
-      {% if can.members or can.plans %}<p class="app-nav__group" id="console-members">{% translate "Members and memberships" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-members">
-        {% if can.members %}{% include "administration/_nav_link.html" with target="administration:members" key="members" label=_("Member directory") %}{% endif %}
-        {% if can.plans %}{% include "administration/_nav_link.html" with target="administration:plans" key="plans" label=_("Membership plans") %}{% endif %}
-        {% if can.members %}{% include "administration/_nav_link.html" with target="admin:accounts_user_changelist" nav_external=True label=_("User accounts (admin)") %}{% endif %}
-      </ul>{% endif %}
-      {% if can.membership_payments or can.payment_instructions %}<p class="app-nav__group" id="console-membership-payments">{% translate "Membership payments" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-membership-payments">
-        {% if can.payment_instructions %}{% include "administration/_nav_link.html" with target="administration:payment_instructions" key="payment_instructions" label=_("Payment methods") %}{% endif %}
-        {% if can.membership_payments %}{% include "administration/_nav_link.html" with target="administration:membership_payments" key="membership_payments" label=_("Verification queue") %}{% endif %}
-      </ul>{% endif %}
-      {% if can.videos or can.categories or can.viewing %}<p class="app-nav__group" id="console-content">{% translate "Videos and viewing" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-content">
-        {% if can.videos %}{% include "administration/_nav_link.html" with target="administration:videos" key="videos" label=_("Video management") %}{% endif %}
-        {% if can.categories %}{% include "administration/_nav_link.html" with target="administration:categories" key="categories" label=_("Categories") %}{% endif %}
-        {% if can.viewing %}{% include "administration/_nav_link.html" with target="administration:viewing" key="viewing" label=_("Viewing review") %}{% endif %}
-      </ul>{% endif %}
-      {% if can.advertisers or can.campaigns or can.campaign_manage %}<p class="app-nav__group" id="console-advertising">{% translate "Advertising" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-advertising">
-        {% if can.advertisers %}{% include "administration/_nav_link.html" with target="administration:advertisers" key="advertisers" label=_("Advertisers") %}{% endif %}
-        {% if can.campaigns %}{% include "administration/_nav_link.html" with target="administration:campaigns" key="campaigns" label=_("Campaigns") %}{% endif %}
-        {% if can.campaign_manage %}{% include "administration/_nav_link.html" with target="administration:campaign_create" key="campaign_new" label=_("New campaign") %}{% endif %}
-      </ul>{% endif %}
-      {% if can.video_rewards or can.campaign_funding or can.earning_rules or can.withdrawal_requests or can.withdrawal_settings or can.withdrawal_identities %}<p class="app-nav__group" id="console-rewards">{% translate "Rewards and payouts" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-rewards">
-        {% if can.video_rewards %}{% include "administration/_nav_link.html" with target="administration:video_rewards" key="video_rewards" label=_("Video rewards") %}{% endif %}
-        {% if can.campaign_funding %}{% include "administration/_nav_link.html" with target="administration:campaign_funding" key="campaign_funding" label=_("Campaign funding") %}{% endif %}
-        {% if can.earning_rules %}{% include "administration/_nav_link.html" with target="administration:earning_rules" key="earning_rules" label=_("Earning limits") %}{% endif %}
-        {% if can.withdrawal_requests %}{% include "administration/_nav_link.html" with target="administration:withdrawal_requests" key="withdrawal_requests" label=_("Withdrawals") %}{% endif %}
-        {% if can.withdrawal_identities %}{% include "administration/_nav_link.html" with target="administration:withdrawal_identities" key="withdrawal_identities" label=_("Identity checks") %}{% endif %}
-        {% if can.withdrawal_settings %}{% include "administration/_nav_link.html" with target="administration:withdrawal_settings" key="withdrawal_settings" label=_("Withdrawal settings") %}{% endif %}
-      </ul>{% endif %}
-      {% if can.rewards or can.payments or can.wallets or can.withdrawals %}<p class="app-nav__group" id="console-finance">{% translate "Financial simulation" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-finance">
-        {% if can.rewards %}{% include "administration/_nav_link.html" with target="administration:demo_rewards" key="rewards" label=_("Demo rewards") %}{% endif %}
-        {% if can.payments %}{% include "administration/_nav_link.html" with target="administration:payments" key="payments" label=_("Payments (sandbox)") %}{% endif %}
-        {% if can.wallets %}{% include "administration/_nav_link.html" with target="administration:wallets" key="wallets" label=_("Wallets (real ledger)") %}{% endif %}
-        {% if can.withdrawals %}{% include "administration/_nav_link.html" with target="administration:withdrawals" key="withdrawals" label=_("Withdrawals (demo)") %}{% endif %}
-      </ul>{% endif %}
-      {% if can.support %}<p class="app-nav__group" id="console-support">{% translate "Customer support" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-support">
-        {% include "administration/_nav_link.html" with target="administration:support" key="support" label=_("Support queue") %}
-      </ul>{% endif %}
-      {% if can.analytics or can.reports %}<p class="app-nav__group" id="console-reports">{% translate "Reports" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-reports">
-        {% if can.analytics %}{% include "administration/_nav_link.html" with target="administration:analytics" key="analytics" label=_("Analytics") %}{% endif %}
-        {% if can.reports %}{% include "administration/_nav_link.html" with target="administration:reports" key="reports" label=_("Reports") %}{% endif %}
-      </ul>{% endif %}
-      {% if can.settings %}<p class="app-nav__group" id="console-operations">{% translate "Operations" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-operations">
-        {% include "administration/_nav_link.html" with target="admin:core_siteconfiguration_changelist" nav_external=True label=_("System settings") %}
-      </ul>{% endif %}
-      {% if can.audit %}<p class="app-nav__group" id="console-security">{% translate "Security and audit" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-security">
-        {% include "administration/_nav_link.html" with target="administration:security" key="security" label=_("Security summary") %}
-        {% include "administration/_nav_link.html" with target="admin:audit_auditevent_changelist" nav_external=True label=_("Audit logs") %}
-      </ul>{% endif %}
-      <p class="app-nav__group" id="console-account">{% translate "Your account" %}</p>
-      <ul class="app-nav__list" aria-labelledby="console-account">
-        {% include "administration/_nav_link.html" with target="notifications:inbox" nav_external=True label=_("My notifications") nav_badge=unread_notifications %}
-        {% include "administration/_nav_link.html" with target="accounts:profile" nav_external=True label=_("My account") %}
+      {% endfor %}
+      <p class="app-nav__group console-nav__group" id="console-group-account">{% translate "Your account" %}</p>
+      <ul class="app-nav__list" aria-labelledby="console-group-account">
+        <li><a class="app-nav__link" href="{% url 'home' %}">{% include "components/nav_icon.html" with icon="dashboard" %}<span class="app-nav__label">{% translate "Back to the website" %}</span></a></li>
+        <li><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit" class="app-nav__link app-nav__button">{% include "components/nav_icon.html" with icon="logout" %}<span class="app-nav__label">{% translate "Sign out" %}</span></button></form></li>
       </ul>
     </nav>
+  </aside>

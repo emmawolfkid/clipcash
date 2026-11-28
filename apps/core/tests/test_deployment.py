@@ -124,7 +124,7 @@ class ProductionSettingsTests(SimpleTestCase):
         self.assertEqual(values["PAYMENTS_MODE"], "disabled")
         self.assertFalse(values["sandbox_active"])
         self.assertEqual(values["financial_enabled"], [])
-        self.assertEqual(values["VIDEO_PROVIDER"], "bunny")
+        self.assertEqual(values["VIDEO_PROVIDER"], "local")  # OPS-01: hosting storage first; Bunny optional.
 
     def test_restricted_demo_by_default(self):
         values = production_settings()

@@ -1,8 +1,13 @@
 {% extends "administration/layout.html" %}{% load i18n static %}
 {% block page_styles %}<link rel="stylesheet" href="{% static 'css/pages/administration/videos/detail.css' %}">{% endblock %}
 {% block title %}{{ video.title }}{% endblock %}
+{% block page_scripts %}{% if local_upload_allowed and can_manage %}<script src="{% static 'js/local-video-upload.js' %}" defer></script>{% endif %}{% endblock %}
 {% block console_content %}
 <div class="page-heading"><h1 class="page-title">{{ video.title }}</h1><a href="{% url 'administration:videos' %}">{% translate "All videos" %}</a></div>
+{% if preview %}<section class="workspace-section video-preview" aria-labelledby="preview-title"><h2 class="workspace-section__title" id="preview-title">{% translate "Preview" %}</h2>
+  {% if preview.kind == "video" %}<video class="player__frame" src="{{ preview.url }}" controls preload="metadata" playsinline></video>
+  {% elif preview.kind == "iframe" %}<iframe class="player__frame" src="{{ preview.url }}" title="{{ video.title }}" loading="lazy" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe>{% endif %}
+</section>{% endif %}
 <div class="console-split">
   <section>
     <h2 class="workspace-section__title">{% translate "Status" %}</h2>
@@ -16,6 +21,7 @@
     </dl>
     {% if video.processing_error %}<p class="errorlist nonfield">{{ video.processing_error }}</p>{% endif %}
     {% if video.is_demo %}<p class="notice">{% translate "Demo sample: no real upload or processing took place." %}</p>{% endif %}
+    {% if video.provider != "LOCAL" and can_manage %}<p class="lead">{% translate "To keep this video on ClipCash's own storage, make a local copy and upload its file. This video, its campaigns and its viewing history stay unchanged." %}</p>{% endif %}
     <div class="actions">
       {% if can_publish %}
         {% if video.publication_status == "DRAFT" %}<form method="post" action="{% url 'administration:video_action' video.pk 'publish' %}">{% csrf_token %}<button class="button" type="submit"{% if video.processing_status != "READY" %} disabled{% endif %}>{% translate "Publish" %}</button></form>{% endif %}
@@ -23,10 +29,26 @@
         {% if video.publication_status != "ARCHIVED" %}<form method="post" class="confirm-form" action="{% url 'administration:video_action' video.pk 'archive' %}">{% csrf_token %}<label><input type="checkbox" name="confirm" value="yes" required> {% translate "Archiving is permanent" %}</label><button class="button button--secondary" type="submit">{% translate "Archive" %}</button></form>{% endif %}
       {% endif %}
       {% if can_manage and video.provider == "BUNNY" and video.provider_video_id %}<form method="post" action="{% url 'administration:video_action' video.pk 'sync' %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Check status" %}</button></form>{% endif %}
+      {% if can_manage and video.provider != "LOCAL" %}<form method="post" action="{% url 'administration:video_action' video.pk 'local-copy' %}">{% csrf_token %}<button class="button button--secondary" type="submit">{% translate "Make a local copy" %}</button></form>{% endif %}
+      {% if can_delete_media and video.publication_status == "ARCHIVED" and video.provider == "LOCAL" and video.provider_video_id and video.processing_status == "READY" %}<form method="post" class="confirm-form" action="{% url 'administration:video_action' video.pk 'delete-media' %}">{% csrf_token %}<label><input type="checkbox" name="confirm" value="yes" required> {% translate "Deleting the file is permanent" %}</label><button class="button button--secondary" type="submit">{% translate "Delete the video file" %}</button></form>{% endif %}
       {% if can_delete_media and video.publication_status == "ARCHIVED" and video.provider == "BUNNY" and video.provider_video_id %}<form method="post" class="confirm-form" action="{% url 'administration:video_action' video.pk 'delete-media' %}">{% csrf_token %}<label><input type="checkbox" name="confirm" value="yes" required> {% translate "Deleting the media is permanent" %}</label><button class="button button--secondary" type="submit">{% translate "Delete media from Bunny" %}</button></form>{% endif %}
     </div>
     {% if video.publication_status == "DRAFT" and video.processing_status != "READY" %}<p class="lead">{% translate "Publishing becomes available when processing is ready." %}</p>{% endif %}
   </section>
+  {% if local_upload_allowed and can_manage %}
+  <section class="local-upload" data-local-upload-form>
+    <h2 class="workspace-section__title">{% translate "Upload the video file" %}</h2>
+    <p class="lead">{% blocktranslate with mb=local_max_mb %}MP4 (H.264), up to {{ mb }} MB. The file is kept on ClipCash's own hosting and only members with access can play it.{% endblocktranslate %}</p>
+    <form class="form" method="post" enctype="multipart/form-data" action="{% url 'administration:video_local_upload' video.pk %}">{% csrf_token %}
+      <label for="{{ local_form.media.id_for_label }}">{{ local_form.media.label }}</label>{{ local_form.media }}
+      <label for="{{ local_form.thumbnail.id_for_label }}">{{ local_form.thumbnail.label }}</label>{{ local_form.thumbnail }}
+      {{ local_form.reported_duration }}
+      <button class="button" type="submit">{% translate "Upload" %}</button>
+    </form>
+    <progress class="upload-progress" data-local-progress max="100" value="0" hidden></progress>
+    <p class="lead" data-local-status role="status" aria-live="polite" data-uploading="{% translate 'Uploading… {percent}' %}" data-processing="{% translate 'Saving the video…' %}" data-failed="{% translate 'The upload stopped. Check your connection and try again.' %}"></p>
+  </section>
+  {% endif %}
   {% if upload_allowed and can_manage %}
   <section id="upload-panel" data-authorize-url="{% url 'administration:video_upload' video.pk 'authorize' %}"
            data-finished-url="{% url 'administration:video_upload' video.pk 'finished' %}"

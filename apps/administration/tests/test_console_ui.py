@@ -107,23 +107,22 @@ class ConsoleTestCase(RewardsTestCase):
 
 
 class OverviewTests(ConsoleTestCase):
-    def test_summary_is_a_metric_row_and_tables_not_cards(self):
+    def test_dashboard_has_cards_quick_actions_tasks_and_money(self):
         page = self.client.get(OVERVIEW)
-        self.assertContains(page, 'class="metric-row"')
-        self.assertContains(page, "Needs attention")
-        self.assertContains(page, "By area")
-        self.assertNotContains(page, "summary-card")
+        for marker in ('class="console-stats"', 'class="console-quick"', "Needs attention", "Money summary"):
+            self.assertContains(page, marker)
+        self.assertNotContains(page, "By area")  # The old technical tables moved to System health and reports.
 
     def test_attention_lists_real_open_work_with_working_links(self):
         submitted = advertising.submit_campaign(self.owner, self.make_campaign(name="Waiting"))
         self.assertEqual(submitted.status, "SUBMITTED")
         page = self.client.get(OVERVIEW)
-        items = {str(item["label"]): item for item in page.context["attention"]}
-        self.assertEqual(items["Campaigns awaiting review"]["count"], 1)
-        self.assertContains(page, console("campaigns"))
-        for item in page.context["attention"]:
-            with self.subTest(item=str(item["label"])):
-                self.assertEqual(self.client.get(reverse(item["url_name"]) + item["query"]).status_code, 200)
+        items = {str(task.label): task for task in page.context["tasks"]}
+        self.assertEqual(items["Campaigns awaiting approval"].count, 1)
+        self.assertContains(page, console("campaigns") + "?status=SUBMITTED")
+        for task in page.context["tasks"]:
+            with self.subTest(item=str(task.label)):
+                self.assertEqual(self.client.get(task.url).status_code, 200)
 
     def test_attention_is_built_only_from_permitted_sections(self):
         self.assertEqual(summary.attention_items({}), [])
@@ -136,9 +135,10 @@ class OverviewTests(ConsoleTestCase):
     @SANDBOX
     def test_financial_categories_stay_named_and_are_never_summed(self):
         page = self.client.get(OVERVIEW)
-        for text in ("simulated, not money", "Not real cash", "Every balance must be TZS 0",
-                     "Real withdrawals are locked", "Wallets (real ledger)"):
-            self.assertContains(page, text)
+        labels = [str(label) for label, _amount in page.context["money"]]
+        self.assertEqual(len(labels), len(set(labels)))  # Each real-money line stands alone.
+        self.assertNotIn("Sandbox", " ".join(labels))
+        self.assertContains(page, "Real money only. Test payments and demo credits are never included.")
         self.assertNotContains(page, "Total revenue")
         self.assertNotContains(page, "Total balance")
 
@@ -156,8 +156,10 @@ class NavigationTests(ConsoleTestCase):
         self.assertContains(page, ">Your account</p>")
         html = page.content.decode()
         menu = html.split('id="console-menu"', 1)[1].split("</nav>", 1)[0]
-        self.assertEqual(menu.count(f'href="{reverse("accounts:profile")}"'), 1)
+        self.assertEqual(menu.count(f'href="{reverse("home")}"'), 1)  # Back to the website.
         self.assertEqual(menu.count(f'href="{reverse("notifications:inbox")}"'), 1)
+        self.assertEqual(menu.count(f'action="{reverse("accounts:logout")}"'), 1)
+        self.assertEqual(html.count(f'href="{reverse("accounts:profile")}"'), 1)  # Profile: the account menu.
 
     def test_active_entry_follows_the_page(self):
         self.assertContains(self.client.get(console("campaigns")), f'aria-current="page" href="{console("campaigns")}"')

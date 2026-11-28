@@ -174,6 +174,17 @@ def check_financial_locks(app_configs, **kwargs):
         if not protect.available():
             errors.append(Error("Real withdrawals need DJANGO_PAYOUT_DATA_KEYS to encrypt payout destinations.",
                                 id="core.E014"))
+    if getattr(settings, "REFERRAL_REWARDS_APPROVED", False) and settings.RESTRICTED_DEMO_MODE:
+        errors.append(Error("Referral rewards are approved in a restricted demonstration.",
+                            hint="Demo mode never creates real liabilities: unset DJANGO_REFERRAL_REWARDS(_APPROVED).",
+                            id="core.E015"))
+    if getattr(settings, "REFERRAL_REWARDS_ENABLED", False) and settings.PAYMENTS_MODE == "sandbox":
+        errors.append(Error("Referral rewards are switched on together with sandbox payments.",
+                            hint="Set DJANGO_PAYMENTS_MODE=disabled.", id="core.E016"))
+    if is_enabled("referral_rewards") or is_enabled("referral_settlement"):
+        errors.append(CheckWarning("Referral rewards are ACTIVE: qualified referrals create real TZS obligations.",
+                                   hint="Confirm the verified marketing budget and the accounting, legal and "
+                                        "regulatory approval are current.", id="core.W017"))
     if is_enabled("real_money_rewards"):
         errors.append(CheckWarning("Real-money rewards are ACTIVE: verified views create real TZS obligations.",
                                    hint="Confirm funding, accounting, legal and regulatory approval are current.",

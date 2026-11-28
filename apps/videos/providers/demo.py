@@ -36,7 +36,7 @@ class DemoProvider:
     def upload_authorization(self, video_id, **kwargs):
         raise ProviderPermanentError("Demo mode has no uploads. Configure Bunny Stream to upload videos.")
 
-    def playback(self, video_id, *, expires_in):
+    def playback(self, video_id, *, expires_in, viewer=None):
         if self.sample_url:
             return Playback(kind="video", url=self.sample_url)
         return Playback(kind="placeholder")

@@ -163,6 +163,28 @@ Precondition: §1 has no STOP, §3 done, §4 drilled on the scratch database.
 into `app/` (public runbook §3). 3. `pip install -r requirements/mariadb.txt`. 4. If the release has migrations:
 optional maintenance mode (Site configuration), then §5.4. 5. `check --deploy`, `collectstatic`, restart, public
 runbook §14 checks. 6. `mig check_mariadb_logins` after every release with migrations.
+7. **DB-01 guard repair (every database, every release with migrations):** run
+`mig repair_guard_objects` (preview). A database first migrated before 15 Nov 2026 can lack the `core.0004`
+objects (`clipcash_guard_triggers`, `core_transaction_lock`, `authorization_permissions_insert/_update/_delete`)
+because that migration was changed after it had been applied. If anything shows `MISSING`: take a verified backup
+(§4.2), run `mig repair_guard_objects --apply` (migration login), and continue only when it prints
+`guard findings: none` and the installed trigger count equals the expected count. The command only creates missing
+objects from the migration's own statements; it never drops, recreates or edits migration history.
+
+## 6a. Videos on the hosting account (OPS-01)
+
+1. `mkdir -p ~/clipcash/private/videos && chmod 700 ~/clipcash/private ~/clipcash/private/videos` (outside
+   `public_html` and outside `~/clipcash/app`, which each release replaces).
+2. `.env`: `VIDEO_PROVIDER=local`, `DJANGO_VIDEO_LOCAL_ROOT=/home/<account>/clipcash/private/videos`,
+   `DJANGO_VIDEO_LOCAL_MAX_FILE_MB` and `DJANGO_VIDEO_LOCAL_TOTAL_MB` sized to the plan (the database,
+   code, logs and backups share the quota; check cPanel → Disk Usage).
+3. Allow request bodies at least as large as the per-file limit for `/manage/videos/` (cPanel/LiteSpeed or
+   Apache `LimitRequestBody`); confirm the Passenger upload timeout with the host.
+4. Optional: if the host confirms `mod_xsendfile` (Apache) or an internal location (LiteSpeed/Nginx), set
+   `DJANGO_VIDEO_SENDFILE_HEADER` (and `DJANGO_VIDEO_SENDFILE_PREFIX`); otherwise ClipCash streams the file.
+5. Add the folder to the backup cron line so videos are backed up with the database.
+6. Background jobs need the `run_jobs_cron.sh` line from §5 (every minute); System health shows when the
+   runner last checked in.
 
 ## 7. Rollback
 

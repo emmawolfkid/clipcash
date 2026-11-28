@@ -69,7 +69,8 @@ class DashboardProfileUITests(SimpleTestCase):
         self.assertNotIn('href="/videos/"',html)
         self.assertNotIn('href="/ref',html)
         self.assertNotIn('data-copy-value',html)
-        self.assertIn('Referral sharing is not available yet',html)
+        # REF-01: an account without referral eligibility gets an honest, disabled panel and no link.
+        self.assertIn('Referral sharing is not available on your account.',html)
         self.assertIn('Destination support does not mean live payouts are enabled',html)
 
     def test_public_plan_actions_are_detail_links_and_ids_are_unique(self):
@@ -121,6 +122,6 @@ class DashboardProfileUITests(SimpleTestCase):
             html=render_to_string('members/dashboard.html',self.context())
             self.assertIn('Tazama Video Sasa',html)
             self.assertIn('Mialiko',html)
-            self.assertIn('Kushiriki mialiko bado hakupatikani.',html)
+            self.assertIn('Kushiriki mialiko hakupatikani kwenye akaunti yako.',html)
             self.assertIn('TZS 711',html)
             self.assertIn('TZS 321',html)

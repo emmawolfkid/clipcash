@@ -43,6 +43,7 @@ class Video(BaseModel):
     class Provider(models.TextChoices):
         BUNNY = "BUNNY", _("Bunny Stream")
         DEMO = "DEMO", _("Demo sample (no real media)")
+        LOCAL = "LOCAL", _("Local storage")  # OPS-01: files on the hosting account (apps.videos.providers.local).
 
     class Processing(models.TextChoices):
         PENDING = "PENDING", _("Waiting for upload")
@@ -114,7 +115,7 @@ class Video(BaseModel):
                 name="video_published_requires_ready"),
             models.CheckConstraint(condition=~Q(publication_status="ARCHIVED") | Q(archived_at__isnull=False),
                                    name="video_archived_has_time"),
-            models.CheckConstraint(condition=Q(provider__in=["BUNNY", "DEMO"]), name="video_provider_valid"),
+            models.CheckConstraint(condition=Q(provider__in=["BUNNY", "DEMO", "LOCAL"]), name="video_provider_valid"),
         ]
 
     def __str__(self):

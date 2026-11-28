@@ -19,14 +19,14 @@ class NavigationShellTests(SimpleTestCase):
                  ('membership', '/memberships/mine/'), ('payments', '/payments/'),
                  ('wallet', '/wallet/'), ('withdrawals', '/withdrawals/'),
                  ('advertiser', '/advertisers/'), ('notifications', '/notifications/'),
-                 ('support', '/support/'), ('profile', '/accounts/')]
+                 ('support', '/support/'), ('profile', '/accounts/'), ('referrals', '/referrals/')]
         for nav, target in cases:
             with self.subTest(nav=nav):
                 html = render_to_string('components/member_sidebar.html', self.context(nav=nav, sandbox_payments=True))
                 current = [a for tag, a in Elements(html).items if tag == 'a' and a.get('aria-current') == 'page']
                 self.assertEqual([a['href'] for a in current], [target])
-                self.assertNotIn('/referral', html)
-                self.assertEqual(html.count('class="nav-icon"'), 14)
+                self.assertIn('href="/referrals/"', html)  # REF-01
+                self.assertEqual(html.count('class="nav-icon"'), 15)
                 self.assertIn('data-nav-close', html)
 
     def test_disabled_features_remove_destinations(self):

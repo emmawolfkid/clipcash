@@ -1,6 +1,7 @@
 from django.urls import path
 
 from apps.earnings import console as earnings_console
+from apps.referrals import console as referrals_console
 from apps.withdrawals import console as withdrawals_console
 from apps.reports import views as reports
 from apps.support import console as support
@@ -12,6 +13,7 @@ app_name = "administration"
 
 urlpatterns = [
     path("", views.OverviewView.as_view(), name="overview"),
+    path("settings/", views.SettingsHubView.as_view(), name="settings"),
     path("health/", views.HealthView.as_view(), name="health"),
     path("members/", views.MemberDirectoryView.as_view(), name="members"),
     path("members/<uuid:pk>/", views.MemberDetailView.as_view(), name="member"),
@@ -29,7 +31,9 @@ urlpatterns = [
     path("videos/", views.VideoListView.as_view(), name="videos"),
     path("videos/new/", views.VideoCreateView.as_view(), name="video_create"),
     path("videos/<uuid:pk>/", views.VideoDetailView.as_view(), name="video_detail"),
+    path("videos/storage/", views.VideoStorageView.as_view(), name="video_storage"),
     path("videos/<uuid:pk>/upload/<str:step>/", views.UploadView.as_view(), name="video_upload"),
+    path("videos/<uuid:pk>/local-upload/", views.VideoLocalUploadView.as_view(), name="video_local_upload"),
     path("videos/<uuid:pk>/<str:action>/", views.VideoActionView.as_view(), name="video_action"),
     path("categories/", views.CategoryListView.as_view(), name="categories"),
     path("categories/<uuid:pk>/", views.CategoryEditView.as_view(), name="category_edit"),
@@ -55,6 +59,11 @@ urlpatterns = [
     path("payouts/<uuid:pk>/", withdrawals_console.WithdrawalRequestView.as_view(), name="withdrawal_request"),
     path("payouts/settings/", withdrawals_console.WithdrawalSettingsView.as_view(), name="withdrawal_settings"),
     path("payouts/identity/", withdrawals_console.WithdrawalIdentitiesView.as_view(), name="withdrawal_identities"),
+    # REF-01: referral programme.
+    path("referrals/", referrals_console.ReferralListView.as_view(), name="referrals"),
+    path("referrals/programme/", referrals_console.ReferralProgrammeView.as_view(), name="referral_programme"),
+    path("referrals/funding/", referrals_console.ReferralFundingView.as_view(), name="referral_funding"),
+    path("referrals/<uuid:pk>/", referrals_console.ReferralDetailView.as_view(), name="referral"),
     path("rewards/policies/", views.RewardPolicyListView.as_view(), name="reward_policies"),
     path("rewards/policies/<uuid:pk>/", views.RewardPolicyView.as_view(), name="reward_policy"),
     path("payments/", views.PaymentListView.as_view(), name="payments"),

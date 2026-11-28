@@ -21,9 +21,12 @@ from datetime import timedelta
 from typing import Callable
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db import transaction
-from django.utils import timezone
+from django.utils import timezone, translation
+
+from apps.core import language
 
 from apps.audit.services import record_business_event
 from apps.core.jobs.errors import PermanentJobError, RetryableJobError
@@ -154,7 +157,10 @@ def deliver_email(payload, job):
     if kind is None:
         raise PermanentJobError(f"Unknown email kind {email.kind}")
     try:
-        subject, body = kind.builder(email)
+        # ACC-01: written in the recipient's saved language (else the site default language).
+        recipient = get_user_model().objects.filter(pk=email.user_id).first() if email.user_id else None
+        with translation.override(language.for_user(recipient)):
+            subject, body = kind.builder(email)
     except SkipEmail as skip:
         email.status = OutboundEmail.Status.SKIPPED
         email.skip_reason = skip.reason

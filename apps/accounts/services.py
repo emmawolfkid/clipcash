@@ -110,7 +110,8 @@ def is_awaiting_email_confirmation(user):
                 and not user.email_verified)
 
 
-def register_member(*, contact_method, contact, password, first_name, last_name, request=None):
+def register_member(*, contact_method, contact, password, first_name, last_name, request=None, referral_code="",
+                    referral_source="CODE"):
     """
     PRD-03A: create ONE ACTIVE member from the public sign-up form: a first and last name, a
     password and the sign-in identifier the member chose, ``contact_method`` "email" (a
@@ -128,6 +129,10 @@ def register_member(*, contact_method, contact, password, first_name, last_name,
     in use, in any letter case or number format, including by a concurrent request (the unique
     constraints decide). Instant sign-up cannot hide that an identifier is taken; the view
     rate-limits attempts.
+
+    REF-01: ``referral_code`` (optional) records who referred the new member, in the same
+    transaction and only here: a referral can never be added to an existing account. A refused
+    referral never blocks the registration.
     """
     if contact_method not in CONTACT_METHODS:
         raise ValueError(f"Unknown contact method {contact_method!r}.")
@@ -139,6 +144,10 @@ def register_member(*, contact_method, contact, password, first_name, last_name,
                 contact if contact_method == "email" else None, password, first_name=first_name, last_name=last_name,
                 role=Role.MEMBER, status=Status.ACTIVE, email_ownership_required=True, **values)
             record_business_event("account.registered", actor=user, target=user, metadata={"method": contact_method})
+            if referral_code:
+                from apps.referrals.services import attribute_new_member
+
+                attribute_new_member(user, referral_code, source=referral_source)
     except (IntegrityError, ValidationError):
         existing = User.objects.filter(**{field: contact}).first()
         if existing is None:
